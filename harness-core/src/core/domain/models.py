@@ -1,7 +1,8 @@
 import re
 from datetime import datetime, timezone
 from typing import List, Optional
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator
+
 
 class Relationship(BaseModel):
     rel_type: str
@@ -10,22 +11,34 @@ class Relationship(BaseModel):
     @field_validator("rel_type")
     @classmethod
     def validate_rel_type(cls, value: str) -> str:
-        valid_types = {"depende-de", "substitui", "refina", "relaciona", "estende", "bloqueia"}
+        valid_types = {
+            "depende-de",
+            "substitui",
+            "refina",
+            "relaciona",
+            "estende",
+            "bloqueia",
+        }
         if value.lower() not in valid_types:
-            raise ValueError(f"Tipo de relação inválido: {value}. Deve ser um de {valid_types}")
+            raise ValueError(
+                f"Tipo de relação inválido: {value}. Deve ser um de {valid_types}"
+            )
         return value.lower()
 
     @field_validator("target_id")
     @classmethod
     def validate_target_id(cls, value: str) -> str:
         if not re.match(r"^MD-\d{4}$", value):
-            raise ValueError(f"ID alvo inválido: {value}. Deve seguir o formato MD-XXXX")
+            raise ValueError(
+                f"ID alvo inválido: {value}. Deve seguir o formato MD-XXXX"
+            )
         return value
+
 
 class Decision(BaseModel):
     id: str
     gancho: str
-    status: str = "ativo" # ativo | descartado
+    status: str = "ativo"  # ativo | descartado
     relationships: List[Relationship] = Field(default_factory=list)
     filepath: Optional[str] = None
     raw_content: Optional[str] = None
@@ -54,32 +67,58 @@ class Decision(BaseModel):
         # Validar cabeçalho H1 com o ID correto
         h1_pattern = rf"^#\s+{self.id}\b"
         if not re.search(h1_pattern, self.raw_content, re.MULTILINE):
-            errors.append(f"Cabeçalho H1 com o ID '{self.id}' não encontrado no Markdown.")
+            errors.append(
+                f"Cabeçalho H1 com o ID '{self.id}' não encontrado no Markdown."
+            )
 
         required_patterns = {
             "D": r"-\s+\*\*D:?\*\*:?",
             "PORQUÊ": r"-\s+\*\*PORQUÊ:?\*\*:?",
             "DESCARTADO": r"-\s+\*\*DESCARTADO:?\*\*:?",
-            "ESTADO": r"-\s+\*\*ESTADO:?\*\*:?"
+            "ESTADO": r"-\s+\*\*ESTADO:?\*\*:?",
         }
 
         for section, pattern in required_patterns.items():
             if not re.search(pattern, self.raw_content, re.IGNORECASE):
-                errors.append(f"Seção obrigatória '{section}' não encontrada no formato '- **{section}:**'.")
+                errors.append(
+                    f"Seção obrigatória '{section}' não encontrada no formato '- **{section}:**'."
+                )
 
         return errors
+
+
+class SessionNarrative(BaseModel):
+    """Narrativa de retomada da sessão. Value-object dentro de SessionState.
+
+    Cada campo mapeia para uma seção do corpo de `.harness/estado-da-sessao.md`.
+    É escrita pelo agente; a CLI a carrega e a reinjeta, nunca a inventa.
+    """
+
+    feito: List[str] = Field(default_factory=list)
+    proximos_passos: List[str] = Field(default_factory=list)
+    pendencias: List[str] = Field(default_factory=list)
+    ponteiros: List[str] = Field(default_factory=list)
+
+    def is_empty(self) -> bool:
+        return not (
+            self.feito or self.proximos_passos or self.pendencias or self.ponteiros
+        )
+
 
 class SessionState(BaseModel):
     commit_hash: str
     active_feature: str
     start_time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     is_active: bool = True
+    narrative: SessionNarrative = Field(default_factory=SessionNarrative)
 
     @field_validator("commit_hash")
     @classmethod
     def validate_commit_hash(cls, value: str) -> str:
         if not re.match(r"^[a-f0-9]{40}$", value):
-            raise ValueError(f"Commit hash inválido: {value}. Deve ser um hash SHA1 de 40 caracteres.")
+            raise ValueError(
+                f"Commit hash inválido: {value}. Deve ser um hash SHA1 de 40 caracteres."
+            )
         return value
 
     def start_session(self, feature_name: str, commit_hash: str):

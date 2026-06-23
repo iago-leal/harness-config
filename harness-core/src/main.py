@@ -92,7 +92,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     # 4. Comando: cmd
-    parser_cmd = subparsers.add_parser("cmd", help="Executa um slash command de sessão")
+    parser_cmd = subparsers.add_parser(
+        "cmd",
+        help=(
+            "Executa um slash command de sessão. `resume` reinjeta o estado de "
+            ".harness/estado-da-sessao.md no contexto do harness ativo (JSON no "
+            "stdout para Claude/Gemini; arquivo para Antigravity)."
+        ),
+    )
     parser_cmd.add_argument(
         "cmd_name",
         help="Nome do comando (ex: encerrar-sessao, resume, handoff, clarificar)",
@@ -176,15 +183,35 @@ def main():
             sys.exit(1)
 
     elif args.command == "cmd":
+        from src.core.session.sinks import get_sink
+        from src.core.session.errors import MalformedSessionStateError
+
         service = CommandService(fs, git)
-        session_file = "ESTADO-DA-SESSAO.md"
-        result_msg = service.execute_command(
-            command=args.cmd_name,
-            args=args.cmd_args,
-            repo_path=os.getcwd(),
-            session_filepath=session_file,
-        )
-        print(result_msg)
+        session_file = ".harness/estado-da-sessao.md"
+        cmd_name_norm = args.cmd_name.strip().lower().lstrip("/")
+        try:
+            result_msg = service.execute_command(
+                command=args.cmd_name,
+                args=args.cmd_args,
+                repo_path=os.getcwd(),
+                session_filepath=session_file,
+            )
+        except MalformedSessionStateError as exc:
+            # Erro barulhento, porém não-bloqueante no boot: evita um exit 2 que
+            # travaria o SessionStart do agente. O aviso vai para stderr.
+            print(
+                f"Aviso: estado de sessão malformado em {session_file}: {exc}",
+                file=sys.stderr,
+            )
+            sys.exit(0)
+
+        # Só o `resume` alimenta o SessionStart: entrega via sink do harness ativo.
+        # Os demais comandos (encerrar-sessao, handoff, clarificar) imprimem normal.
+        if cmd_name_norm == "resume":
+            sink = get_sink(config["harness"]["active_harness"], fs)
+            sink.emit(result_msg)
+        else:
+            print(result_msg)
         sys.exit(0)
 
     elif args.command == "doc-gen":

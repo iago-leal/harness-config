@@ -1,6 +1,11 @@
 import pytest
-from datetime import datetime
-from src.core.domain.models import Relationship, Decision, SessionState
+from src.core.domain.models import (
+    Relationship,
+    Decision,
+    SessionState,
+    SessionNarrative,
+)
+
 
 def test_relationship_validation():
     # Relação válida
@@ -16,6 +21,7 @@ def test_relationship_validation():
     with pytest.raises(ValueError):
         Relationship(rel_type="refina", target_id="invalid-id")
 
+
 def test_decision_validation():
     # ID válido
     dec = Decision(id="MD-0001", gancho="pre-commit", status="ativo")
@@ -25,12 +31,14 @@ def test_decision_validation():
     with pytest.raises(ValueError):
         Decision(id="invalid-id", gancho="pre-commit")
 
+
 def test_decision_add_relationship():
     dec = Decision(id="MD-0001", gancho="pre-commit")
     dec.add_relationship("refina", "MD-0002")
     assert len(dec.relationships) == 1
     assert dec.relationships[0].rel_type == "refina"
     assert dec.relationships[0].target_id == "MD-0002"
+
 
 def test_decision_integrity_validation():
     # Markdown válido contendo H1 e as 4 seções
@@ -55,6 +63,7 @@ def test_decision_integrity_validation():
     assert len(errors) == 1
     assert "PORQUÊ" in errors[0]
 
+
 def test_session_state_lifecycle():
     initial_hash = "a" * 40
     session = SessionState(commit_hash=initial_hash, active_feature="feat-1")
@@ -71,3 +80,17 @@ def test_session_state_lifecycle():
     assert session.is_active is True
     assert session.active_feature == "feat-2"
     assert session.commit_hash == initial_hash
+
+
+def test_session_narrative():
+    nar = SessionNarrative()
+    assert nar.feito == []
+    assert nar.is_empty()
+
+    nar2 = SessionNarrative(feito=["fez x"], ponteiros=["MD-0002"])
+    assert not nar2.is_empty()
+    assert nar2.feito == ["fez x"]
+
+    # SessionState ganha narrativa por padrão, sem quebrar a construção existente
+    state = SessionState(commit_hash="a" * 40, active_feature="f")
+    assert state.narrative.is_empty()

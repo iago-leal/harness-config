@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "name": "harness-resume",
+            "type": "command",
+            "command": "./harness cmd resume",
+            "timeout": 12
+          }
+        ]
+      }
+    ]
+  }
+}

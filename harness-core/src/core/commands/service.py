@@ -1,10 +1,9 @@
-import os
-import re
-from datetime import datetime, timezone
 from typing import Optional, List
 from src.core.ports.fs import FileSystemPort
 from src.core.ports.git import GitPort
-from src.core.domain.models import SessionState
+from src.core.domain.models import SessionState, SessionNarrative
+from src.core.session import serializer
+
 
 class CommandService:
     def __init__(self, fs: FileSystemPort, git: GitPort):
@@ -12,60 +11,23 @@ class CommandService:
         self.git = git
 
     def load_session(self, filepath: str) -> Optional[SessionState]:
-        """
-        Carrega o estado da sessão a partir de um arquivo Markdown de sessão.
+        """Carrega o estado de sessão do arquivo canônico.
+
+        Arquivo ausente → ``None`` (sessão nova, normal). Arquivo presente mas
+        malformado → ``MalformedSessionStateError`` (RN-N4: erro barulhento, nunca
+        degrada em silêncio para "sem sessão").
         """
         if not self.fs.exists(filepath):
             return None
-
-        content = self.fs.read_file(filepath)
-        
-        feature_match = re.search(r"-\s+\*\*Active Feature:\*\* (.*)", content, re.IGNORECASE)
-        commit_match = re.search(r"-\s+\*\*Commit Hash:\*\* (.*)", content, re.IGNORECASE)
-        time_match = re.search(r"-\s+\*\*Start Time:\*\* (.*)", content, re.IGNORECASE)
-        status_match = re.search(r"-\s+\*\*Status:\*\* (.*)", content, re.IGNORECASE)
-
-        if not (feature_match and commit_match):
-            return None
-
-        active_feature = feature_match.group(1).strip()
-        commit_hash = commit_match.group(1).strip()
-        
-        is_active = True
-        if status_match:
-            is_active = status_match.group(1).strip().lower() == "active"
-
-        start_time = datetime.now(timezone.utc)
-        if time_match:
-            try:
-                start_time = datetime.fromisoformat(time_match.group(1).strip())
-                if start_time.tzinfo is None:
-                    start_time = start_time.replace(tzinfo=timezone.utc)
-            except Exception:
-                pass
-
-        return SessionState(
-            commit_hash=commit_hash,
-            active_feature=active_feature,
-            start_time=start_time,
-            is_active=is_active
-        )
+        return serializer.parse(self.fs.read_file(filepath))
 
     def save_session(self, filepath: str, state: SessionState) -> None:
-        """
-        Salva o SessionState de forma atômica em um arquivo Markdown de sessão.
-        """
-        status_str = "active" if state.is_active else "inactive"
-        content = (
-            "# Estado da Sessão\n\n"
-            f"- **Active Feature:** {state.active_feature}\n"
-            f"- **Commit Hash:** {state.commit_hash}\n"
-            f"- **Start Time:** {state.start_time.isoformat()}\n"
-            f"- **Status:** {status_str}\n"
-        )
-        self.fs.write_file_atomic(filepath, content)
+        """Salva o SessionState de forma atômica no formato canônico (round-trip)."""
+        self.fs.write_file_atomic(filepath, serializer.render(state))
 
-    def execute_command(self, command: str, args: List[str], repo_path: str, session_filepath: str) -> str:
+    def execute_command(
+        self, command: str, args: List[str], repo_path: str, session_filepath: str
+    ) -> str:
         """
         Executa um slash command de forma agnóstica à IDE.
         """
@@ -88,20 +50,25 @@ class CommandService:
                 # Se não existir sessão anterior, cria uma padrão
                 current_commit = self.git.get_head_commit(repo_path)
                 feature_name = args[0] if args else "default_feature"
-                session = SessionState(commit_hash=current_commit, active_feature=feature_name)
+                session = SessionState(
+                    commit_hash=current_commit, active_feature=feature_name
+                )
                 self.save_session(session_filepath, session)
                 return f"Nova sessão iniciada para a feature '{feature_name}'."
 
             current_commit = self.git.get_head_commit(repo_path)
-            
+
             # Validação da Âncora de Integridade Git
             warning_msg = ""
             if session.commit_hash != current_commit:
                 warning_msg = f"⚠️ ALERTA: O commit HEAD atual ({current_commit}) diverge do commit âncora da sessão anterior ({session.commit_hash})!\n"
 
+            # start_session reativa preservando a narrativa escrita pelo agente
             session.start_session(session.active_feature, current_commit)
             self.save_session(session_filepath, session)
-            return f"{warning_msg}Sessão retomada com sucesso para a feature '{session.active_feature}' no commit {current_commit}."
+            body = serializer.render_narrative(session.narrative or SessionNarrative())
+            footer = f"Sessão retomada com sucesso para a feature '{session.active_feature}' no commit {current_commit}."
+            return f"{warning_msg}{body}\n{footer}"
 
         elif cmd_normalized == "clarificar":
             return (
