@@ -1,5 +1,8 @@
+import toml
 from pydantic import BaseModel, Field
 from typing import List, Literal
+
+from src.core.ports.fs import FileSystemPort
 
 
 class HarnessSection(BaseModel):
@@ -16,10 +19,17 @@ class SyncSection(BaseModel):
     remote_check_enabled: bool = True
 
 
+class DecisionsSection(BaseModel):
+    dir: str = ".harness/decisoes"
+    index_file: str = ".harness/microdecisoes.md"
+    header_file: str = ".harness/decisoes/_cabecalho.md"
+
+
 class HarnessConfig(BaseModel):
     harness: HarnessSection = Field(default_factory=HarnessSection)
     formatting: FormattingSection = Field(default_factory=FormattingSection)
     sync: SyncSection = Field(default_factory=SyncSection)
+    decisions: DecisionsSection = Field(default_factory=DecisionsSection)
 
 
 def load_config(fs: FileSystemPort, config_path: str = "harness.toml") -> HarnessConfig:

@@ -10,3 +10,8 @@ opt_out_file = ".no-autoformat"
 [sync]
 cache_ttl_hours = 24
 remote_check_enabled = true
+
+[decisions]
+dir = ".harness/decisoes"
+index_file = ".harness/microdecisoes.md"
+header_file = ".harness/decisoes/_cabecalho.md"

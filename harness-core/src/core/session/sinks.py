@@ -1,6 +1,6 @@
 """Estratégia de entrega do estado ao contexto do agente (na borda).
 
-Duas famílias confirmadas (ver `decisoes/MD-0003.md`):
+Duas famílias confirmadas (ver `.harness/decisoes/MD-0003.md`):
 - HookContextSink: hook `SessionStart` + `hookSpecificOutput.additionalContext`
   no stdout. Serve Claude Code e Gemini CLI (mesmo contrato).
 - FileProjectionSink: projeta o estado num arquivo estático relido a cada boot.

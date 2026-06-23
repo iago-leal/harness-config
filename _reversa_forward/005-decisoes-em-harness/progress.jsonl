@@ -1,0 +1,8 @@
+{"ts":"2026-06-23T23:44:24Z","action":"T001","status":"done","files":[".harness/decisoes/",".harness/microdecisoes.md"],"note":"git mv de decisoes/ e microdecisoes.md para .harness/ (renames preservam histórico)"}
+{"ts":"2026-06-23T23:44:24Z","action":"T003","status":"done","files":["harness-core/src/core/domain/config.py"],"note":"DecisionsSection (defaults .harness/) + correção de imports faltantes (toml, FileSystemPort) que mantinham load_config quebrado"}
+{"ts":"2026-06-23T23:44:24Z","action":"T002","status":"done","files":["harness-core/tests/test_domain.py"],"note":"3 testes: defaults de DecisionsSection, override via toml, ausência de arquivo"}
+{"ts":"2026-06-23T23:44:24Z","action":"T004","status":"done","files":["harness-core/harness.toml"],"note":"seção [decisions] explícita (camada de override; defaults já cobrem a raiz)"}
+{"ts":"2026-06-23T23:44:24Z","action":"T005","status":"done","files":["harness-core/src/main.py"],"note":"branch decisions lê load_config(fs).decisions; removido import lazy redundante que causava UnboundLocalError"}
+{"ts":"2026-06-23T23:44:24Z","action":"T006","status":"done","files":["harness-core/src/adapters/mcp/server.py"],"note":"process_decisions toma defaults None e resolve via load_config(fs).decisions"}
+{"ts":"2026-06-23T23:44:24Z","action":"T007","status":"done","files":[".harness/microdecisoes.md"],"note":"./harness decisions: zero erros, índice regenerado em .harness/; raiz limpa; 55 testes verdes; hook Stop inalterado"}
+{"ts":"2026-06-23T23:44:24Z","action":"T008","status":"done","files":[".harness/decisoes/_cabecalho.md","harness-core/src/core/install/template.md","harness-core/src/core/session/sinks.py"],"note":"referências de doc realinhadas para .harness/decisoes e .harness/microdecisoes.md"}

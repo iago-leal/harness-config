@@ -5,6 +5,8 @@ from src.core.domain.models import (
     SessionState,
     SessionNarrative,
 )
+from src.core.domain.config import HarnessConfig, load_config
+from tests.helpers import MockFileSystem
 
 
 def test_relationship_validation():
@@ -94,3 +96,25 @@ def test_session_narrative():
     # SessionState ganha narrativa por padrão, sem quebrar a construção existente
     state = SessionState(commit_hash="a" * 40, active_feature="f")
     assert state.narrative.is_empty()
+
+
+def test_decisions_config_defaults():
+    # Os caminhos de decisão moram em .harness/ por padrão (feature 005).
+    cfg = HarnessConfig()
+    assert cfg.decisions.dir == ".harness/decisoes"
+    assert cfg.decisions.index_file == ".harness/microdecisoes.md"
+    assert cfg.decisions.header_file == ".harness/decisoes/_cabecalho.md"
+
+
+def test_load_config_decisions_override():
+    # [decisions] no harness.toml sobrescreve apenas os campos presentes.
+    fs = MockFileSystem()
+    fs.write_file("harness.toml", '[decisions]\ndir = "custom/dec"\n')
+    cfg = load_config(fs)
+    assert cfg.decisions.dir == "custom/dec"
+    assert cfg.decisions.index_file == ".harness/microdecisoes.md"
+
+
+def test_load_config_absent_uses_decisions_defaults():
+    cfg = load_config(MockFileSystem())
+    assert cfg.decisions.dir == ".harness/decisoes"

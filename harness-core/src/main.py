@@ -15,6 +15,7 @@ from src.core.formatting.service import FormattingService
 from src.core.decisions.service import DecisionService
 from src.core.commands.service import CommandService
 from src.core.documentation.service import DocumentationService
+from src.core.domain.config import load_config
 
 
 def load_harness_config(fs: LocalFileSystemAdapter) -> dict:
@@ -158,9 +159,10 @@ def main():
 
     elif args.command == "decisions":
         service = DecisionService(fs)
-        decisoes_dir = "decisoes"
-        output_file = "microdecisoes.md"
-        header_file = "decisoes/_cabecalho.md"
+        config = load_config(fs)
+        decisoes_dir = config.decisions.dir
+        output_file = config.decisions.index_file
+        header_file = config.decisions.header_file
 
         try:
             decisions = service.load_decisions(decisoes_dir)
@@ -290,7 +292,6 @@ def main():
 
     elif args.command == "install-prompt":
         from src.core.install.service import InstallPromptService
-        from src.core.domain.config import load_config
 
         cfg = load_config(fs)
         service = InstallPromptService(fs)

@@ -18,36 +18,55 @@ fs = LocalFileSystemAdapter()
 git = SubprocessGitAdapter()
 process = HostFormatterAdapter()
 
-@mcp.tool(name="format_file", description="Formata automaticamente um arquivo suportado (Python, JS/TS/JSON, Rust)")
+
+@mcp.tool(
+    name="format_file",
+    description="Formata automaticamente um arquivo suportado (Python, JS/TS/JSON, Rust)",
+)
 def format_file(file_path: str) -> str:
     service = FormattingService(fs, process)
     # format_file retorna sempre 0 (sucesso/não bloqueia)
     service.format_file(file_path)
     return f"Formatação processada para: {file_path}"
 
-@mcp.tool(name="check_repository_sync", description="Verifica se o repositório Git local está sincronizado com a branch remota")
+
+@mcp.tool(
+    name="check_repository_sync",
+    description="Verifica se o repositório Git local está sincronizado com a branch remota",
+)
 def check_repository_sync(repo_path: Optional[str] = None) -> str:
     path = repo_path or os.getcwd()
     # Carrega configurações para ler o cache_file
     cache_filepath = ".harness/sync_cache.json"
     cache_ttl = 24
-    
-    service = SyncService(fs, git, cache_filepath=cache_filepath, cache_ttl_hours=cache_ttl)
+
+    service = SyncService(
+        fs, git, cache_filepath=cache_filepath, cache_ttl_hours=cache_ttl
+    )
     in_sync = service.check_sync(path)
     if in_sync:
         return "Sincronizado: O repositório está atualizado ou checado no TTL."
     else:
         return "Alerta: O repositório local está defasado em relação à branch remota."
 
-@mcp.tool(name="process_decisions", description="Carrega, valida integridade do grafo e compila o índice consolidado de microdecisões")
-def process_decisions(decisoes_dir: str = "decisoes", output_file: str = "microdecisoes.md") -> str:
+
+@mcp.tool(
+    name="process_decisions",
+    description="Carrega, valida integridade do grafo e compila o índice consolidado de microdecisões",
+)
+def process_decisions(
+    decisoes_dir: Optional[str] = None, output_file: Optional[str] = None
+) -> str:
+    config = load_config(fs)
+    decisoes_dir = decisoes_dir or config.decisions.dir
+    output_file = output_file or config.decisions.index_file
     service = DecisionService(fs)
     header_file = os.path.join(decisoes_dir, "_cabecalho.md")
-    
+
     try:
         decisions = service.load_decisions(decisoes_dir)
         errors = service.validate_integrity(decisions)
-        
+
         result_msg = ""
         if errors:
             result_msg += "Erros de integridade encontrados no grafo de decisões:\n"
@@ -59,19 +78,23 @@ def process_decisions(decisoes_dir: str = "decisoes", output_file: str = "microd
         service.compile_index(decisions, output_file, header_file)
         result_msg += f"Índice de decisões compilado com sucesso em '{output_file}'."
         return result_msg
-        
+
     except Exception as e:
         return f"Erro ao processar decisões: {e}"
 
-@mcp.tool(name="session_command", description="Executa um comando de sessão interativa (encerrar-sessao, resume, handoff, clarificar)")
+
+@mcp.tool(
+    name="session_command",
+    description="Executa um comando de sessão interativa (encerrar-sessao, resume, handoff, clarificar)",
+)
 def session_command(cmd_name: str, active_feature: Optional[str] = None) -> str:
     service = CommandService(fs, git)
     session_file = "ESTADO-DA-SESSAO.md"
     args = [active_feature] if active_feature else []
-    
+
     return service.execute_command(
         command=cmd_name,
         args=args,
         repo_path=os.getcwd(),
-        session_filepath=session_file
+        session_filepath=session_file,
     )

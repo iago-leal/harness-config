@@ -24,7 +24,7 @@ Cole este prompt no agente. Ele executa a instalação local do harness-core, et
 
 ## Passo 4 — Índice de decisões
 
-- Rode `./harness decisions`. Deve validar o grafo e derivar `microdecisoes.md` sem erros.
+- Rode `./harness decisions`. Deve validar o grafo e derivar `.harness/microdecisoes.md` sem erros.
 
 ## Passo 5 — Verificação de saúde
 
@@ -39,7 +39,7 @@ Confira cada item e reporte aprovado/pendente:
 - [ ] Ganchos aplicados no `.claude/settings.json` do projeto
 - [ ] `./harness decisions` retorna verde
 
-> **Pendência conhecida (não é falha de instalação):** o `SessionStart` ainda não reinjeta o estado da última sessão no contexto — regressão registrada em `decisoes/MD-0001.md`, a ser fechada na feature 004. Reporte-a como **pendente conhecida**, não como erro.
+> **Pendência conhecida (não é falha de instalação):** o `SessionStart` ainda não reinjeta o estado da última sessão no contexto — regressão registrada em `.harness/decisoes/MD-0001.md`, a ser fechada na feature 004. Reporte-a como **pendente conhecida**, não como erro.
 
 ## Resultado
 
