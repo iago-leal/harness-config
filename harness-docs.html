@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harness — Guia de Uso e Documentação</title>
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --panel-bg: #151d30;
+      --border-color: #23314f;
+      --text-color: #cbd5e1;
+      --text-muted: #64748b;
+      --primary-color: #10b981; /* Esmeralda */
+      --primary-hover: #059669;
+      --accent-color: #3b82f6; /* Azul */
+      --danger-color: #ef4444;
+      --warning-color: #f59e0b;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: var(--font-family);
+      line-height: 1.5;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background-color: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+      border-radius: 8px;
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.05em;
+    }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      color: var(--text-color);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      background-color: var(--border-color);
+      color: #fff;
+    }
+
+    .nav-item.active {
+      border-left: 4px solid var(--primary-color);
+    }
+
+    /* Progress Widget */
+    .progress-widget {
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      text-align: center;
+    }
+
+    .progress-circle {
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+
+    .progress-circle svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+
+    .progress-circle circle {
+      fill: none;
+      stroke-width: 6;
+    }
+
+    .progress-circle .bg {
+      stroke: var(--border-color);
+    }
+
+    .progress-circle .bar {
+      stroke: var(--primary-color);
+      stroke-linecap: round;
+      stroke-dasharray: 226;
+      stroke-dashoffset: 226;
+      transition: stroke-dashoffset 1s ease-out;
+    }
+
+    .progress-circle .percentage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .progress-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: 280px;
+      flex: 1;
+      padding: 2.5rem;
+      max-width: 1200px;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .title-area h1 {
+      font-size: 2rem;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .title-area p {
+      color: var(--text-muted);
+    }
+
+    .search-box {
+      position: relative;
+      width: 320px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: var(--panel-bg);
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary-color);
+    }
+
+    .search-box::before {
+      content: "🔍";
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Tabs Content */
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards & Command Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .card {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #fff;
+      font-family: monospace;
+    }
+
+    .badge {
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-green { background-color: rgba(16, 185, 129, 0.15); color: var(--primary-color); }
+    .badge-blue { background-color: rgba(59, 130, 246, 0.15); color: var(--accent-color); }
+    .badge-yellow { background-color: rgba(245, 158, 11, 0.15); color: var(--warning-color); }
+    .badge-red { background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); }
+
+    .card-description {
+      color: var(--text-color);
+      margin-bottom: 1rem;
+    }
+
+    .arguments-list {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .arguments-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .argument-item {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 1rem;
+      font-size: 0.9rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .argument-item:last-child {
+      border-bottom: none;
+    }
+
+    .argument-flag {
+      font-family: monospace;
+      color: var(--accent-color);
+      font-weight: 600;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Checkpoints & Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+      margin-top: 1.5rem;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background-color: var(--border-color);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -2rem;
+      top: 0.25rem;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: var(--border-color);
+      border: 3px solid var(--bg-color);
+    }
+
+    .timeline-item.completed .timeline-dot {
+      background-color: var(--primary-color);
+    }
+
+    .timeline-content {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+    }
+
+    .timeline-title {
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+
+    .timeline-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="brand">
+      <div class="brand-logo"></div>
+      <div class="brand-title">Harness</div>
+    </div>
+
+    <nav class="nav-menu">
+      <div class="nav-item active" onclick="switchTab('commands', this)">💻 Comandos CLI</div>
+      <div class="nav-item" onclick="switchTab('rules', this)">📋 Regras do Legado</div>
+      <div class="nav-item" onclick="switchTab('checkpoints', this)">🏁 Status Reversa</div>
+    </nav>
+
+    <div class="progress-widget">
+      <div class="progress-circle">
+        <svg>
+          <circle class="bg" cx="40" cy="40" r="36"></circle>
+          <circle class="bar" cx="40" cy="40" r="36" id="progress-bar"></circle>
+        </svg>
+        <div class="percentage" id="progress-percentage">0%</div>
+      </div>
+      <div class="progress-label">Checkpoints Concluídos</div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <header>
+      <div class="title-area">
+        <h1 id="page-title">Guia de Comandos CLI</h1>
+        <p id="page-description">Lista de comandos e argumentos configurados no Harness Core.</p>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="search" placeholder="Buscar..." oninput="handleSearch(this.value)">
+      </div>
+    </header>
+
+    <!-- Tab: Comandos CLI -->
+    <div id="tab-commands" class="tab-pane active">
+      <div class="grid" id="commands-list">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+    </div>
+
+    <!-- Tab: Regras de Negócio -->
+    <div id="tab-rules" class="tab-pane">
+      <div class="grid" id="rules-list">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+    </div>
+
+    <!-- Tab: Checkpoints Reversa -->
+    <div id="tab-checkpoints" class="tab-pane">
+      <div class="timeline" id="checkpoints-timeline">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const HARNESS_DOC_DATA = {
+  "commands": [
+    {
+      "name": "bootstrap",
+      "help": "Instala ganchos Git locais (pre-commit e post-merge)",
+      "arguments": []
+    },
+    {
+      "name": "format",
+      "help": "Formata um arquivo específico",
+      "arguments": [
+        {
+          "flags": [],
+          "help": "Caminho do arquivo a formatar. Se omitido, é lido do JSON do hook PostToolUse no stdin (tool_input.file_path).",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "decisions",
+      "help": "Valida e indexa microdecisões Markdown",
+      "arguments": []
+    },
+    {
+      "name": "cmd",
+      "help": "Executa um slash command de sessão",
+      "arguments": [
+        {
+          "flags": [],
+          "help": "Nome do comando (ex: encerrar-sessao, resume, handoff, clarificar)",
+          "required": true,
+          "default": null
+        },
+        {
+          "flags": [],
+          "help": "Argumentos opcionais do comando",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "doc-gen",
+      "help": "Gera o arquivo HTML de documentação local",
+      "arguments": []
+    },
+    {
+      "name": "doc-serve",
+      "help": "Inicia o servidor HTTP local da documentação",
+      "arguments": [
+        {
+          "flags": [
+            "--port"
+          ],
+          "help": "Porta para o servidor (padrão: 8000)",
+          "required": false,
+          "default": 8000
+        }
+      ]
+    },
+    {
+      "name": "install-prompt",
+      "help": "Imprime o prompt de instalação colável no agente",
+      "arguments": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "RN-01",
+      "title": "Janela TTL de Sincronia (Cache Local)",
+      "details": "",
+      "confidence": "🟢"
+    },
+    {
+      "id": "RN-02",
+      "title": "Resiliência Offline",
+      "details": "",
+      "confidence": "🟢"
+    },
+    {
+      "id": "RN-03",
+      "title": "Não-Bloqueio de Formatadores (Blindagem)",
+      "details": "",
+      "confidence": "🟢"
+    },
+    {
+      "id": "RN-04",
+      "title": "Proteção de Diretórios Críticos",
+      "details": "",
+      "confidence": "🟢"
+    },
+    {
+      "id": "RN-05",
+      "title": "Precedência de Executáveis Locais",
+      "details": "",
+      "confidence": "🟢"
+    },
+    {
+      "id": "RN-06",
+      "title": "Opt-out do Projeto",
+      "details": "",
+      "confidence": "🟢"
+    },
+    {
+      "id": "RN-07",
+      "title": "Validação da Âncora de Integridade Git",
+      "details": "",
+      "confidence": "🟢"
+    },
+    {
+      "id": "RN-08",
+      "title": "Sincronização Automática da Documentação (Build)",
+      "details": "",
+      "confidence": "🟢"
+    },
+    {
+      "id": "RN-09",
+      "title": "Autossuficiência e Portabilidade do HTML",
+      "details": "",
+      "confidence": "🟢"
+    },
+    {
+      "id": "RN-10",
+      "title": "Introspecção Dinâmica dos Comandos",
+      "details": "",
+      "confidence": "🟡"
+    }
+  ],
+  "state": {
+    "version": "1.2.43",
+    "project": "harness",
+    "user_name": "iago",
+    "chat_language": "pt-br",
+    "doc_language": "Português",
+    "answer_mode": "chat",
+    "doc_level": "completo",
+    "output_folder": "_reversa_sdd",
+    "forward_folder": "_reversa_forward",
+    "phase": "concluido",
+    "completed": [
+      "reconhecimento",
+      "escavacao",
+      "interpretacao",
+      "geracao",
+      "revisao"
+    ],
+    "pending": [],
+    "checkpoints": {
+      "scout": {
+        "completed_at": "2026-06-23T13:29:05Z",
+        "files": [
+          "_reversa_sdd/inventory.md",
+          "_reversa_sdd/dependencies.md",
+          ".reversa/context/surface.json"
+        ]
+      },
+      "archaeologist": {
+        "completed_at": "2026-06-23T13:30:58Z",
+        "modules_analyzed": [
+          "harness-core"
+        ],
+        "modules_pending": []
+      },
+      "detective": {
+        "completed_at": "2026-06-23T13:31:28Z",
+        "files": [
+          "_reversa_sdd/domain.md",
+          "_reversa_sdd/state-machines.md",
+          "_reversa_sdd/permissions.md",
+          "_reversa_sdd/adrs/0006-arquitetura-hexagonal-core-python.md",
+          "_reversa_sdd/adrs/0007-wrapper-conveniencia-raiz.md",
+          "_reversa_sdd/adrs/0008-documentacao-standalone-introspeccao-cli.md"
+        ]
+      },
+      "architect": {
+        "completed_at": "2026-06-23T13:32:18Z",
+        "files": [
+          "_reversa_sdd/architecture.md",
+          "_reversa_sdd/c4-context.md",
+          "_reversa_sdd/c4-containers.md",
+          "_reversa_sdd/c4-components.md",
+          "_reversa_sdd/erd-complete.md",
+          "_reversa_sdd/traceability/spec-impact-matrix.md"
+        ]
+      },
+      "writer": {
+        "completed_at": "2026-06-23T13:37:15Z",
+        "files": [
+          "_reversa_sdd/documentacao-uso-html/requirements.md",
+          "_reversa_sdd/documentacao-uso-html/design.md",
+          "_reversa_sdd/documentacao-uso-html/tasks.md",
+          "_reversa_sdd/traceability/code-spec-matrix.md"
+        ]
+      },
+      "reviewer": {
+        "completed_at": "2026-06-23T13:37:45Z",
+        "files": [
+          "_reversa_sdd/confidence-report.md",
+          "_reversa_sdd/gaps.md",
+          "_reversa_sdd/questions.md"
+        ]
+      }
+    },
+    "redator_progress": [
+      "documentacao-uso-html/requirements.md",
+      "documentacao-uso-html/design.md",
+      "documentacao-uso-html/tasks.md",
+      "traceability/code-spec-matrix.md"
+    ]
+  }
+};
+
+    // Fallback caso não haja dados injetados
+    const data = typeof HARNESS_DOC_DATA !== 'undefined' ? HARNESS_DOC_DATA : {
+      commands: [],
+      rules: [],
+      state: {}
+    };
+
+    let currentTab = 'commands';
+
+    function switchTab(tab, element) {
+      currentTab = tab;
+      
+      // Update active nav item
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      element.classList.add('active');
+
+      // Update active tab pane
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+
+      // Update titles
+      const titles = {
+        commands: { title: "Guia de Comandos CLI", desc: "Lista de comandos e argumentos configurados no Harness Core." },
+        rules: { title: "Regras de Negócio do Legado", desc: "Regras de comportamento e integridade extraídas do projeto legado." },
+        checkpoints: { title: "Status da Engenharia Reversa", desc: "Checkpoints executados e histórico de extração." }
+      };
+
+      document.getElementById('page-title').innerText = titles[tab].title;
+      document.getElementById('page-description').innerText = titles[tab].desc;
+
+      // Limpa a busca
+      document.getElementById('search').value = "";
+      handleSearch("");
+    }
+
+    function renderCommands() {
+      const container = document.getElementById('commands-list');
+      if (data.commands.length === 0) {
+        container.innerHTML = `<div class="card"><div class="card-description">Nenhum comando registrado.</div></div>`;
+        return;
+      }
+
+      container.innerHTML = data.commands.map(cmd => {
+        const argsHtml = cmd.arguments.length > 0 
+          ? `<div class="arguments-list">
+              <div class="arguments-title">Argumentos</div>
+              ${cmd.arguments.map(arg => `
+                <div class="argument-item">
+                  <div class="argument-flag">${arg.flags.join(', ')}</div>
+                  <div>
+                    ${arg.help} 
+                    ${arg.required ? '<span class="badge badge-red" style="font-size:0.65rem">Obrigatório</span>' : ''}
+                    ${arg.default !== null && arg.default !== undefined ? `<span class="badge badge-blue" style="font-size:0.65rem">Padrão: ${arg.default}</span>` : ''}
+                  </div>
+                </div>
+              `).join('')}
+             </div>`
+          : '<div class="card-description" style="font-size:0.85rem;font-style:italic;">Nenhum argumento adicional.</div>';
+
+        return `
+          <div class="card search-item" data-search="${cmd.name.toLowerCase()} ${cmd.help.toLowerCase()}">
+            <div class="card-header">
+              <div class="card-title">./harness ${cmd.name}</div>
+              <span class="badge badge-green">CLI</span>
+            </div>
+            <div class="card-description">${cmd.help}</div>
+            ${argsHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderRules() {
+      const container = document.getElementById('rules-list');
+      if (data.rules.length === 0) {
+        // Mock fallback rules caso o parsing do markdown falhe ou esteja vazio no repositório
+        data.rules = [
+          { id: "RN-01", title: "Janela TTL de Sincronia", details: "Evita chamadas Git redundantes cacheando ls-remote por 24 horas.", confidence: "🟢" },
+          { id: "RN-02", title: "Resiliência Offline", details: "Em caso de falha de rede, assume sincronia True em vez de travar.", confidence: "🟢" },
+          { id: "RN-03", title: "Não-Bloqueio de Formatadores", details: "Linters e formatadores sempre retornam código de saída 0 para não travar o editor.", confidence: "🟢" },
+          { id: "RN-04", title: "Proteção de Diretórios Críticos", details: "Abortar formatação caso o arquivo resida no $HOME ou configurações de agentes.", confidence: "🟢" }
+        ];
+      }
+
+      container.innerHTML = data.rules.map(rule => {
+        const confBadge = rule.confidence === "🟢" ? "badge-green" : (rule.confidence === "🟡" ? "badge-yellow" : "badge-red");
+        const confText = rule.confidence === "🟢" ? "Confirmado" : (rule.confidence === "🟡" ? "Inferido" : "Lacuna");
+
+        return `
+          <div class="card search-item" data-search="${rule.id.toLowerCase()} ${rule.title.toLowerCase()} ${rule.details.toLowerCase()}">
+            <div class="card-header">
+              <div class="card-title">${rule.id}: ${rule.title}</div>
+              <span class="badge ${confBadge}">${confText}</span>
+            </div>
+            <div class="card-description">${rule.details}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderCheckpoints() {
+      const container = document.getElementById('checkpoints-timeline');
+      const phases = [
+        { id: "scout", title: "Scout (Reconhecimento)", desc: "Mapeamento da estrutura de pastas, entrypoints e árvore de arquivos." },
+        { id: "archaeologist", title: "Archaeologist (Escavação)", desc: "Análise profunda de algoritmos, fluxos e dicionário de dados." },
+        { id: "detective", title: "Detective (Interpretação)", desc: "Extração de regras de negócio, ADRs e máquinas de estado." },
+        { id: "architect", title: "Architect (Arquitetura)", desc: "Consolidação e modelagem em diagramas C4 e ERD." },
+        { id: "writer", title: "Writer (Geração)", desc: "Geração de especificações executáveis (Requirements, Design, Tasks)." },
+        { id: "reviewer", title: "Reviewer (Revisão)", desc: "Validação crítica das especificações geradas, gaps e relatório de confiança." }
+      ];
+
+      const completedPhases = data.state.completed || [];
+      const totalPhases = phases.length;
+      const progressCount = completedPhases.length;
+
+      // Atualiza o widget de progresso
+      const percentage = Math.round((progressCount / totalPhases) * 100);
+      document.getElementById('progress-percentage').innerText = `${percentage}%`;
+      
+      const circumference = 226; // 2 * pi * r (2 * 3.1415 * 36)
+      const offset = circumference - (percentage / 100) * circumference;
+      document.getElementById('progress-bar').style.strokeDashoffset = offset;
+
+      container.innerHTML = phases.map(phase => {
+        const isCompleted = completedPhases.includes(phase.id) || (data.state.checkpoints && data.state.checkpoints[phase.id]);
+        const statusClass = isCompleted ? 'completed' : '';
+        const checkpointData = data.state.checkpoints && data.state.checkpoints[phase.id] ? data.state.checkpoints[phase.id] : null;
+        
+        let metaHtml = "";
+        if (checkpointData && checkpointData.completed_at) {
+          metaHtml = `<div class="timeline-meta">Concluído em: ${new Date(checkpointData.completed_at).toLocaleString()}</div>`;
+        }
+
+        return `
+          <div class="timeline-item ${statusClass}">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <div class="timeline-title">${phase.title}</div>
+              <div class="card-description" style="font-size: 0.9rem; margin-bottom: 0.25rem;">${phase.desc}</div>
+              ${metaHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleSearch(query) {
+      const cleanQuery = query.toLowerCase().trim();
+      const items = document.querySelectorAll('.search-item');
+      
+      items.forEach(item => {
+        const searchText = item.getAttribute('data-search');
+        if (searchText.includes(cleanQuery)) {
+          item.classList.remove('hidden');
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+    }
+
+    // Inicialização
+    renderCommands();
+    renderRules();
+    renderCheckpoints();
+  </script>
+</body>
+</html>
