@@ -112,6 +112,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--port", type=int, default=8000, help="Porta para o servidor (padrão: 8000)"
     )
 
+    # 7. Comando: install-prompt
+    subparsers.add_parser(
+        "install-prompt",
+        help="Imprime o prompt de instalação colável no agente",
+    )
+
     return parser
 
 
@@ -254,6 +260,15 @@ def main():
         except Exception as e:
             print(f"Erro ao iniciar o servidor HTTP: {e}")
             sys.exit(1)
+
+    elif args.command == "install-prompt":
+        from src.core.install.service import InstallPromptService
+        from src.core.domain.config import load_config
+
+        cfg = load_config(fs)
+        service = InstallPromptService(fs)
+        print(service.render(cfg.harness.active_harness, build_parser()))
+        sys.exit(0)
 
 
 if __name__ == "__main__":

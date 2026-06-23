@@ -1,0 +1,10 @@
+{
+  "schema-version": 1,
+  "feature-dir": "_reversa_forward/003-instalacao-por-prompt",
+  "feature-id": "003",
+  "short-name": "instalacao-por-prompt",
+  "started-at": "2026-06-23T17:49:27Z",
+  "current-stage": "requirements",
+  "stages-completed": [],
+  "paused-features": []
+}

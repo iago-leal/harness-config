@@ -1,0 +1,9 @@
+{"ts":"2026-06-23T18:15:14Z","action":"T001","status":"done","files":["harness-core/src/core/install/__init__.py","harness-core/src/core/install/service.py"]}
+{"ts":"2026-06-23T18:15:14Z","action":"T002","status":"done","files":["harness-core/src/core/install/template.md"]}
+{"ts":"2026-06-23T18:15:14Z","action":"T003","status":"done","files":["harness-core/src/core/domain/config.py"]}
+{"ts":"2026-06-23T18:15:14Z","action":"T004","status":"done","files":["harness-core/tests/test_install.py"]}
+{"ts":"2026-06-23T18:15:14Z","action":"T005","status":"done","files":["harness-core/src/core/install/service.py"]}
+{"ts":"2026-06-23T18:15:14Z","action":"T006","status":"done","files":["harness-core/src/core/install/harness_profiles.py"]}
+{"ts":"2026-06-23T18:15:14Z","action":"T007","status":"done","files":["harness-core/src/core/install/service.py"]}
+{"ts":"2026-06-23T18:15:14Z","action":"T008","status":"done","files":["harness-core/src/main.py"]}
+{"ts":"2026-06-23T18:15:14Z","action":"T009","status":"done","files":["harness-core/src/core/install/template.md"]}
