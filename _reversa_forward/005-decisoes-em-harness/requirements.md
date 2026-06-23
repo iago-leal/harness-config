@@ -40,9 +40,9 @@ Consolidar os artefatos de decisão sob o diretório neutro `.harness/`, no mesm
 3. **RN-N3: Sistema de microdecisões preservado** 🟢
    - Formato `MD-NNNN`, front-matter, índice derivado, backlinks e validação de integridade inalterados (origem: `_reversa_sdd/code-analysis.md#2.4`).
    - Tipo: nova (invariante de preservação)
-4. **RN-N4: Referências externas realinhadas** 🟡
-   - O guardrail global `~/.agent-memory/bin/guardrail-decisoes.sh` (vigia `decisoes/*.md`) e o hook `UserPromptSubmit` (lembrete que cita `microdecisoes.md`/`decisoes/`) passam a apontar para `.harness/`. Escopo a confirmar (são externos a este repo).
-   - Tipo: alterada
+4. **RN-N4: Referências externas — diferidas para a feature de config canônica** 🟢
+   - O guardrail global `~/.agent-memory/bin/guardrail-decisoes.sh` (`Stop`) e o lembrete `~/.agent-memory/bin/microdecisoes-guard.py` (`UserPromptSubmit`, ambos ligados pelo `~/.claude/settings.json`) **não são tocados pela 005**. O realinhamento para `.harness/` entra na feature nova (harness-core como config canônica), com item de manutenção. Até lá, a camada nativa `./harness decisions` cobre a validação/indexação deste repo.
+   - Tipo: fora do escopo desta feature
 
 ## 5. Requisitos Funcionais
 
@@ -51,7 +51,7 @@ Consolidar os artefatos de decisão sob o diretório neutro `.harness/`, no mesm
 | RF-01 | `./harness decisions` lê `.harness/decisoes/` e escreve `.harness/microdecisoes.md` | Must | Após mover, `./harness decisions` valida zero-erros e regenera o índice no novo local | 🟢 |
 | RF-02 | Mover os arquivos preservando histórico git | Must | `git mv` aplicado a `decisoes/` e `microdecisoes.md`; `git log --follow` mostra o histórico | 🟢 |
 | RF-03 | Hook Stop segue funcionando sem mudança de comando | Must | `./harness decisions` (mesmo subcomando) opera no novo local; nenhum ajuste no `.claude/settings.json` | 🟢 |
-| RF-04 | Referências externas atualizadas para `.harness/` | Should | Guardrail global e hook de lembrete apontam para `.harness/decisoes/` e `.harness/microdecisoes.md` | 🟡 |
+| RF-04 | Referências externas (guardrail + lembrete globais) — diferidas para a feature de config canônica | Won't (nesta feature) | Não tocadas pela 005; realinhamento a `.harness/` vira item de manutenção na feature nova | 🟢 |
 | RF-05 | Sistema de microdecisões preservado | Must | Backlinks, validação e formato `MD-NNNN` idênticos antes e depois (MD-0001..0003 reindexados sem diferença semântica) | 🟢 |
 
 ## 6. Requisitos Não Funcionais
@@ -61,7 +61,7 @@ Consolidar os artefatos de decisão sob o diretório neutro `.harness/`, no mesm
 | Manutenibilidade | Todos os artefatos do harness-core sob `.harness/` | Coerência com MD-0002/MD-0003; agrupamento | 🟢 |
 | Acoplamento | Caminhos só na borda (`main.py`); domínio intacto | `DecisionService` já parametrizável | 🟢 |
 | Reprodutibilidade | Histórico git preservado na movimentação | `git mv` / `git log --follow` | 🟢 |
-| Observabilidade | Guardrail e lembrete continuam ativos pós-mudança | Erros barulhentos; não cegar os ganchos | 🟡 |
+| Observabilidade | Validação/indexação garantida pela camada nativa `./harness decisions`; guardrail/lembrete globais diferidos (item de manutenção) | Erros barulhentos; a cobertura global de `.harness/` entra na feature de config canônica | 🟢 |
 
 ## 7. Critérios de Aceitação
 
@@ -91,19 +91,25 @@ Cenário (negativo): caminho antigo não ressurge
 | RF-02 git mv com histórico | Must | Reprodutibilidade |
 | RF-03 hook Stop intacto | Must | Não pode regredir o ciclo de decisões |
 | RF-05 sistema preservado | Must | Mudança é de local, não de comportamento |
-| RF-04 referências externas | Should | Material, mas escopo (externos ao repo) a confirmar no clarify |
+| RF-04 referências externas | Won't (nesta feature) | Diferido para a feature de config canônica, com item de manutenção (clarify 2026-06-23) |
 
 ## 9. Esclarecimentos
 
-> Nenhuma sessão de dúvidas registrada ainda. Rode `/reversa-clarify` quando houver `[DÚVIDA]` pendente.
+### Sessão 2026-06-23
+
+- **Q:** Localização exata do hook `UserPromptSubmit` do lembrete de consultar `microdecisoes.md` (DÚVIDA #2).
+  **R:** Resolvida por investigação. O lembrete é o hook `UserPromptSubmit` no global `~/.claude/settings.json`, que executa `~/.agent-memory/bin/microdecisoes-guard.py`; o guardrail correspondente é o `Stop` → `~/.agent-memory/bin/guardrail-decisoes.sh`. Ambos procuram `<raiz>/microdecisoes.md`, `<raiz>/.claude/decisoes/` e `<raiz>/decisoes/` — nenhum reconhece `.harness/` hoje.
+- **Q:** Escopo das referências externas (RF-04): a 005 atualiza os scripts globais de observabilidade (guardrail + lembrete) ou só o harness-core? (DÚVIDA #1).
+  **R:** Diferido (opção c). A 005 entrega apenas o move dos artefatos + o ajuste dos três caminhos no `main.py`. A camada global de observabilidade (guardrail `Stop` e lembrete `UserPromptSubmit`) será tratada junto da feature nova de config canônica (harness-core como referência), com item de manutenção explícito. Até lá, a validação/indexação deste repo segue garantida pela camada nativa `./harness decisions`.
 
 ## 10. Lacunas
 
-- 🟡 [DÚVIDA] Escopo das referências externas (RF-04): a 005 atualiza o guardrail global `~/.agent-memory/bin/guardrail-decisoes.sh` e o hook `UserPromptSubmit` (ambos fora deste repo), ou só o harness-core, deixando os externos como ajuste manual documentado?
-- 🟡 [DÚVIDA] Localização exata do hook `UserPromptSubmit` que injeta o lembrete de consultar `microdecisoes.md` (global `~/.claude/settings.json` vs `~/.agent-memory`) — a confirmar na investigação do `/reversa-plan`.
+- ✅ Dúvidas resolvidas na clarify de 2026-06-23 (ver §9). Nenhuma `[DÚVIDA]` pendente.
+- 📌 Diferido (item de manutenção, fora da 005): ensinar os scripts globais de observabilidade (`guardrail-decisoes.sh`, `microdecisoes-guard.py`) a reconhecerem `.harness/decisoes/` e `.harness/microdecisoes.md` — a tratar na feature de config canônica (harness-core como referência).
 
 ## 11. Histórico de alterações
 
 | Data | Alteração | Autor |
 |------|-----------|-------|
 | 2026-06-23 | Versão inicial gerada por `/reversa-requirements` | reversa |
+| 2026-06-23 | Clarify: DÚVIDA #2 resolvida por investigação; DÚVIDA #1 diferida para a feature de config canônica (opção c) | reversa |
