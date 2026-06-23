@@ -299,5 +299,6 @@
   ".reversa/config.user.toml": "59a1a98ae308ad6799e831e51fad9cc2af8941ef3cc08712c361544224ef5561",
   ".reversa/plan.md": "b93eded15a6d6616229ed91c5a56df076203d05d14a2fb9fa3c4a9347a9a18b3",
   ".reversa/version": "e9c2bcffc3e97f8df729023b9bd111a809b3141eece6faa18b0f8b6061249795",
-  ".reversa/_config/manifest.yaml": "ba2568f2686ff49608c720608c5cbb466d80eb58a23c382d8694eb75de226664"
+  ".reversa/_config/manifest.yaml": "ba2568f2686ff49608c720608c5cbb466d80eb58a23c382d8694eb75de226664",
+  "AGENTS.md": "8f315836e93d767f5a39d7a61498147bcb1b41c3e66f3bd43c5558f875e6f59e"
 }

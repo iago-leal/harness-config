@@ -1,0 +1,12 @@
+# Configurações globais do Harness
+
+[harness]
+active_harness = "claude"     # claude | gemini | antigravity
+
+[formatting]
+exclude_paths = ["~/Notas", "~/.claude"]
+opt_out_file = ".no-autoformat"
+
+[sync]
+cache_ttl_hours = 24
+remote_check_enabled = true

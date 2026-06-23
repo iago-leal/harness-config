@@ -9,18 +9,95 @@
   "output_folder": "_reversa_sdd",
   "forward_folder": "_reversa_forward",
   "phase": null,
-  "completed": [],
-  "pending": [
+  "completed": [
     "reconhecimento",
     "escavacao",
     "interpretacao",
     "geracao",
     "revisao"
   ],
-  "checkpoints": {},
+  "pending": [],
+  "checkpoints": {
+    "scout": {
+      "completed_at": "2026-06-23T13:14:00Z",
+      "files": [
+        "_reversa_sdd/inventory.md",
+        "_reversa_sdd/dependencies.md",
+        ".reversa/context/surface.json"
+      ]
+    },
+    "archaeologist": {
+      "modules_analyzed": [
+        "bin",
+        "commands",
+        "decisoes",
+        "hooks"
+      ],
+      "modules_pending": []
+    },
+    "detective": {
+      "completed_at": "2026-06-23T13:29:00Z",
+      "files": [
+        "_reversa_sdd/domain.md",
+        "_reversa_sdd/state-machines.md",
+        "_reversa_sdd/permissions.md",
+        "_reversa_sdd/adrs/0001-particionamento-microdecisoes.md",
+        "_reversa_sdd/adrs/0002-formatacao-automatica-post-tool-use.md",
+        "_reversa_sdd/adrs/0003-sincronizacao-nao-bloqueante-session-start.md",
+        "_reversa_sdd/adrs/0004-ancora-git-sessao.md",
+        "_reversa_sdd/adrs/0005-protocolo-e-limites-clarificacao.md"
+      ]
+    },
+    "architect": {
+      "completed_at": "2026-06-23T13:35:00Z",
+      "files": [
+        "_reversa_sdd/architecture.md",
+        "_reversa_sdd/c4-context.md",
+        "_reversa_sdd/c4-containers.md",
+        "_reversa_sdd/c4-components.md",
+        "_reversa_sdd/erd-complete.md",
+        "_reversa_sdd/traceability/spec-impact-matrix.md"
+      ]
+    },
+    "writer": {
+      "completed_at": "2026-06-23T13:45:00Z",
+      "units_generated": 5,
+      "total_files": 19,
+      "files": [
+        "_reversa_sdd/bootstrap/requirements.md",
+        "_reversa_sdd/bootstrap/design.md",
+        "_reversa_sdd/bootstrap/tasks.md",
+        "_reversa_sdd/sync-check/requirements.md",
+        "_reversa_sdd/sync-check/design.md",
+        "_reversa_sdd/sync-check/tasks.md",
+        "_reversa_sdd/sync-check/contracts.md",
+        "_reversa_sdd/format-on-edit/requirements.md",
+        "_reversa_sdd/format-on-edit/design.md",
+        "_reversa_sdd/format-on-edit/tasks.md",
+        "_reversa_sdd/format-on-edit/contracts.md",
+        "_reversa_sdd/microdecisoes/requirements.md",
+        "_reversa_sdd/microdecisoes/design.md",
+        "_reversa_sdd/microdecisoes/tasks.md",
+        "_reversa_sdd/comandos-customizados/requirements.md",
+        "_reversa_sdd/comandos-customizados/design.md",
+        "_reversa_sdd/comandos-customizados/tasks.md",
+        "_reversa_sdd/user-stories/fluxo-de-sincronia-e-sessao.md",
+        "_reversa_sdd/traceability/code-spec-matrix.md"
+      ]
+    },
+    "reviewer": {
+      "completed_at": "2026-06-23T13:50:00Z",
+      "files": [
+        "_reversa_sdd/confidence-report.md",
+        "_reversa_sdd/questions.md",
+        "_reversa_sdd/gaps.md"
+      ]
+    }
+  },
   "engines": [
     "claude-code",
-    "gemini-cli"
+    "gemini-cli",
+    "antigravity"
   ],
   "agents": [
     "reversa",
@@ -186,6 +263,7 @@
     ".reversa/config.user.toml",
     ".reversa/plan.md",
     ".reversa/version",
-    ".reversa/_config/manifest.yaml"
+    ".reversa/_config/manifest.yaml",
+    "AGENTS.md"
   ]
 }

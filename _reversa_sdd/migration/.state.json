@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 2,
+  "startedAt": "2026-06-23T14:00:00Z",
+  "lastCheckpoint": "Handoff gerado. Pipeline de migração concluído com sucesso.",
+  "completedAgents": [
+    "paradigm_advisor",
+    "curator",
+    "strategist",
+    "designer",
+    "screen_translator",
+    "inspector"
+  ],
+  "pendingAgents": [],
+  "currentAgent": {
+    "agent": null,
+    "phase": null,
+    "status": "complete",
+    "topologyApproved": true,
+    "screenModeApproved": false
+  },
+  "pendingDecisions": [],
+  "artifacts": {
+    "_reversa_sdd/migration/migration_brief.md": {
+      "hash": "bedaa873a6a8ba29f5ea14cfc222bc6dcde8d4140f854065a1ff266f6d7c931b",
+      "generatedAt": "2026-06-23T14:02:00Z"
+    },
+    "_reversa_sdd/migration/paradigm_decision.md": {
+      "hash": "c168ae603684142dccd7da5add4f83682f832808622913cc22a5ebfcdad9e1f8",
+      "generatedAt": "2026-06-23T14:06:00Z"
+    },
+    "_reversa_sdd/migration/target_business_rules.md": {
+      "hash": "6900919e7c3a14cf492ac630ba98317feff97d533a4f4c4d53c83c2ef71036d8",
+      "generatedAt": "2026-06-23T14:07:00Z"
+    },
+    "_reversa_sdd/migration/discard_log.md": {
+      "hash": "075f87c783904093436168d1dc5bf674f58da5386344df7db3d601ddd8eee869",
+      "generatedAt": "2026-06-23T14:07:00Z"
+    },
+    "_reversa_sdd/migration/ambiguity_log.md": {
+      "hash": "806ea2602dd6afc75ece4e88aabf7f9ef26046104d73845bdcd70008a53ed067",
+      "generatedAt": "2026-06-23T14:10:00Z"
+    },
+    "_reversa_sdd/migration/migration_strategy.md": {
+      "hash": "df8d61e5961bccdf36b8ec41de8bd2d465d310cdd3e5de44822e30534baf43f5",
+      "generatedAt": "2026-06-23T14:15:00Z"
+    },
+    "_reversa_sdd/migration/risk_register.md": {
+      "hash": "842fed2f2edca6197b2af9357a07cf21763d7f2b082d99d5f95cb47d10e797e0",
+      "generatedAt": "2026-06-23T14:14:00Z"
+    },
+    "_reversa_sdd/migration/cutover_plan.md": {
+      "hash": "d08b3eaa858f6c7e6e2f2b9eea6f1258318cb35890c815185165340c0553e943",
+      "generatedAt": "2026-06-23T14:14:00Z"
+    },
+    "_reversa_sdd/migration/topology_decision.md": {
+      "hash": "5ab6501e8993b9170cefe805a988ec4ec3a2f8ac5cf1e7923622e6002d4f4661",
+      "generatedAt": "2026-06-23T14:17:00Z"
+    },
+    "_reversa_sdd/migration/target_architecture.md": {
+      "hash": "0361d35f512dc6b74b3ebe9ec1b9ebfc964e98485e08f6d2b1eb45a4e13ec77a",
+      "generatedAt": "2026-06-23T14:20:00Z"
+    },
+    "_reversa_sdd/migration/target_domain_model.md": {
+      "hash": "5d15c0e2295484730d5d46546d0ad5d76118c501ff71ef81471dc2de1a4789a2",
+      "generatedAt": "2026-06-23T14:20:00Z"
+    },
+    "_reversa_sdd/migration/target_data_model.md": {
+      "hash": "7d796fdf4e9e6bde4c5c289fbd093c3161c07127a0821b8e610e47e14e486952",
+      "generatedAt": "2026-06-23T14:20:00Z"
+    },
+    "_reversa_sdd/migration/data_migration_plan.md": {
+      "hash": "db8cb3991ba931683a463037eca89aaf4253d1c8f030432f4c2dacbef53dd18b",
+      "generatedAt": "2026-06-23T14:20:00Z"
+    },
+    "_reversa_sdd/migration/parity_specs.md": {
+      "hash": "00f869718b9516a3ffe0a9839b107e601333c4d88260b708b9b2f8b69eb47587",
+      "generatedAt": "2026-06-23T14:22:00Z"
+    },
+    "_reversa_sdd/migration/parity_tests/01-sync-check.feature": {
+      "hash": "dca84e4f18d67c0637eb4398dce7a9b60f5fde69171c575bdb7b47b6466e2b20",
+      "generatedAt": "2026-06-23T14:22:00Z"
+    },
+    "_reversa_sdd/migration/parity_tests/02-format-on-edit.feature": {
+      "hash": "36864d005326f27882d4e5b3a057a4a34840bbe19f21a20bfd02771376c03bf2",
+      "generatedAt": "2026-06-23T14:22:00Z"
+    },
+    "_reversa_sdd/migration/parity_tests/03-decision-graph.feature": {
+      "hash": "38ddb31a464baee4f06e67ae3630f9d463cbb1405182710ace2c346f3d86dde3",
+      "generatedAt": "2026-06-23T14:22:00Z"
+    },
+    "_reversa_sdd/migration/parity_tests/04-interactive-commands.feature": {
+      "hash": "6151d5d3edf9bca70d695fceb067291b1c067a84de99e6eac8138b702933b615",
+      "generatedAt": "2026-06-23T14:22:00Z"
+    },
+    "_reversa_sdd/migration/handoff.md": {
+      "hash": "8c8243a4eab8fb43a7006e6452b4338d4cf2a00509a956a4389dc74193520c07",
+      "generatedAt": "2026-06-23T14:24:00Z"
+    }
+  },
+  "auto": false,
+  "engine": "antigravity",
+  "reversaVersion": "1.2.43",
+  "briefPath": "_reversa_sdd/migration/migration_brief.md",
+  "expectedLegacyArtifacts": "references/expected_legacy_artifacts.yaml"
+}

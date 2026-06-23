@@ -1,0 +1,15 @@
+2026-06-23T14:00:00Z - [orchestrator] - Pipeline de migração iniciado.
+2026-06-23T14:02:00Z - [orchestrator] - Entrevista finalizada. migration_brief.md gerado.
+2026-06-23T14:06:00Z - [paradigm_advisor] - Análise de paradigma concluída. Opção 1 (Transformational em Python OOP + MCP) selecionada. paradigm_decision.md gerado.
+2026-06-23T14:07:00Z - [curator] - Triagem de regras de negócio concluída. target_business_rules.md e discard_log.md gerados.
+2026-06-23T14:10:00Z - [orchestrator] - Inicialização do ambiguity_log.md com a pendência BR-HUMANA-001.
+2026-06-23T14:12:44Z - [orchestrator] - Pausa Humana: Usuário selecionou Opção B (Servidor MCP Local) para a decisão BR-HUMANA-001. ambiguity_log.md atualizado.
+2026-06-23T14:14:00Z - [strategist] - Análise de estratégias concluída. migration_strategy.md, risk_register.md e cutover_plan.md gerados.
+2026-06-23T14:15:36Z - [orchestrator] - Pausa Humana: Usuário aprovou Estratégia B (Parallel Run). migration_strategy.md atualizado.
+2026-06-23T14:17:00Z - [designer] - Fase 1 concluída. topology_decision.md gerado com recomendação moderna (Hexagonal em Python OOP).
+2026-06-23T14:17:08Z - [orchestrator] - Pausa Humana: Usuário escolheu Opção 2 (Topologia moderna Hexagonal). topology_decision.md atualizado.
+2026-06-23T14:20:00Z - [designer] - Fase 2 concluída. target_architecture.md, target_domain_model.md, target_data_model.md e data_migration_plan.md gerados.
+2026-06-23T14:20:10Z - [orchestrator] - Pausa Humana: Usuário aprovou o design técnico detalhado.
+2026-06-23T14:20:10Z - [screen_translator] - Agente executado em modo "skipped" por ausência de telas no legado. Registro correspondente gravado no ambiguity_log.md.
+2026-06-23T14:22:00Z - [inspector] - Especificação de testes de paridade Gherkin concluída. parity_specs.md e 4 arquivos .feature sob parity_tests/ gerados.
+2026-06-23T14:24:00Z - [orchestrator] - Handoff compilado em handoff.md. Pipeline de migração concluído com sucesso.

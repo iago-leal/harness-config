@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-06-23T13:14:00Z",
+  "project_root": "/Users/iagoleal/dev/harness/harness-config",
+  "languages": [
+    { "name": "Markdown", "extensions": [".md"], "file_count": 28 },
+    { "name": "Shell", "extensions": [".sh"], "file_count": 5 },
+    { "name": "JSON", "extensions": [".json"], "file_count": 1 }
+  ],
+  "primary_language": "Shell",
+  "frameworks": [
+    { "name": "Claude Code Settings", "version": "1.0.0", "source": "settings.json" }
+  ],
+  "package_manager": "custom",
+  "entry_points": [
+    { "path": "bin/bootstrap.sh", "type": "bootstrap" },
+    { "path": "bin/sync-check.sh", "type": "session_start_hook" },
+    { "path": "hooks/format-on-edit.sh", "type": "post_tool_use_hook" }
+  ],
+  "config_files": [
+    "settings.json",
+    "skills.active"
+  ],
+  "ci_cd": [],
+  "test_framework": "custom",
+  "test_file_count": 1,
+  "modules": [
+    "bin",
+    "commands",
+    "decisoes",
+    "hooks"
+  ],
+  "total_files": 35,
+  "organization_suggestion": {
+    "granularity": "feature",
+    "rationale": "A estrutura de pastas do harness-config é baseada em camadas técnicas (scripts, ganchos, decisões). A organização por feature funcional (ex: bootstrap, sync-check, microdecisoes) é o mais recomendado para mapeamento semântico.",
+    "signals": [],
+    "features": [
+      "bootstrap",
+      "sync-check",
+      "format-on-edit",
+      "microdecisoes",
+      "comandos-customizados"
+    ]
+  }
+}
