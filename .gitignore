@@ -1,5 +1,8 @@
-claude-config/
-harness-config/
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
 
 # Reversa
 .reversa/config.user.toml

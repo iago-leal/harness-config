@@ -1,0 +1,27 @@
+#!/bin/bash
+# Wrapper de execução local do Harness Core
+
+# Caminhos relativos a partir da raiz do projeto
+VENV_PYTHON="harness-core/.venv/bin/python3"
+MAIN_PY="harness-core/src/main.py"
+
+# Resolve o caminho absoluto baseado no diretório onde o script está
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ABS_VENV_PYTHON="$SCRIPT_DIR/$VENV_PYTHON"
+ABS_MAIN_PY="$SCRIPT_DIR/$MAIN_PY"
+
+# Valida a presença da venv e do main.py
+if [ ! -f "$ABS_VENV_PYTHON" ]; then
+    echo "Erro: O ambiente virtual do harness-core não está configurado em: $VENV_PYTHON" >&2
+    echo "Por favor, execute o setup do ambiente conforme o onboarding.md:" >&2
+    echo "  cd harness-core && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt" >&2
+    exit 1
+fi
+
+if [ ! -f "$ABS_MAIN_PY" ]; then
+    echo "Erro: O script principal do harness-core não foi encontrado em: $MAIN_PY" >&2
+    exit 1
+fi
+
+# Executa o core repassando todos os argumentos
+exec "$ABS_VENV_PYTHON" "$ABS_MAIN_PY" "$@"

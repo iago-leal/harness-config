@@ -2,12 +2,38 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|resume",
+        "matcher": "startup|resume|clear",
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/carregar-estado-sessao.sh",
-            "timeout": 10
+            "command": "${CLAUDE_PROJECT_DIR}/harness cmd resume",
+            "timeout": 12,
+            "statusMessage": "Iniciando sessão do Harness..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/harness format",
+            "timeout": 30,
+            "statusMessage": "Formatando código com o Harness..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/harness decisions",
+            "timeout": 10,
+            "statusMessage": "Consolidando decisões..."
           }
         ]
       }
