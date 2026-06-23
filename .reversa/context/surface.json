@@ -1,45 +1,52 @@
 {
-  "generated_at": "2026-06-23T13:14:00Z",
-  "project_root": "/Users/iagoleal/dev/harness/harness-config",
+  "generated_at": "2026-06-23T16:28:40Z",
+  "project_root": "/Users/iagoleal/dev/harness",
   "languages": [
-    { "name": "Markdown", "extensions": [".md"], "file_count": 28 },
+    { "name": "Python", "extensions": [".py"], "file_count": 45 },
+    { "name": "Markdown", "extensions": [".md"], "file_count": 43 },
     { "name": "Shell", "extensions": [".sh"], "file_count": 5 },
+    { "name": "HTML", "extensions": [".html"], "file_count": 2 },
+    { "name": "TOML", "extensions": [".toml"], "file_count": 1 },
     { "name": "JSON", "extensions": [".json"], "file_count": 1 }
   ],
-  "primary_language": "Shell",
+  "primary_language": "Python",
   "frameworks": [
-    { "name": "Claude Code Settings", "version": "1.0.0", "source": "settings.json" }
+    { "name": "Claude Code Settings", "version": "1.0.0", "source": "claude-config/settings.json" },
+    { "name": "Harness Core Python", "version": "2.0.0", "source": "harness-core/src/main.py" }
   ],
-  "package_manager": "custom",
+  "package_manager": "pip",
   "entry_points": [
-    { "path": "bin/bootstrap.sh", "type": "bootstrap" },
-    { "path": "bin/sync-check.sh", "type": "session_start_hook" },
-    { "path": "hooks/format-on-edit.sh", "type": "post_tool_use_hook" }
+    { "path": "harness", "type": "wrapper" },
+    { "path": "harness-core/src/main.py", "type": "core" },
+    { "path": "claude-config/bin/bootstrap.sh", "type": "bootstrap_legacy" },
+    { "path": "claude-config/bin/sync-check.sh", "type": "session_start_hook_legacy" },
+    { "path": "claude-config/hooks/format-on-edit.sh", "type": "post_tool_use_hook_legacy" }
   ],
   "config_files": [
-    "settings.json",
-    "skills.active"
+    "claude-config/settings.json",
+    "claude-config/skills.active",
+    "harness-core/harness.toml"
   ],
   "ci_cd": [],
-  "test_framework": "custom",
-  "test_file_count": 1,
+  "test_framework": "pytest",
+  "test_file_count": 13,
   "modules": [
-    "bin",
-    "commands",
-    "decisoes",
-    "hooks"
+    "claude-config",
+    "harness-core"
   ],
-  "total_files": 35,
+  "total_files": 101,
   "organization_suggestion": {
     "granularity": "feature",
-    "rationale": "A estrutura de pastas do harness-config é baseada em camadas técnicas (scripts, ganchos, decisões). A organização por feature funcional (ex: bootstrap, sync-check, microdecisoes) é o mais recomendado para mapeamento semântico.",
+    "rationale": "A estrutura de pastas do harness-config é baseada em camadas técnicas. A organização por feature funcional (ex: bootstrap, sync-check, microdecisoes, documentacao-uso-html) é o recomendado para mapeamento semântico.",
     "signals": [],
     "features": [
       "bootstrap",
       "sync-check",
       "format-on-edit",
       "microdecisoes",
-      "comandos-customizados"
+      "comandos-customizados",
+      "run-harness-core-local",
+      "documentacao-uso-html"
     ]
   }
 }

@@ -14,16 +14,11 @@
 
 ## Decisão de organização das specs 🗂️
 
-> Entre o Scout e o Arqueólogo, o Reversa pergunta como você quer organizar as specs (por módulo, caso de uso, endpoint, híbrida, por features ou customizada). A escolha fica persistida em `.reversa/config.toml` na seção `[specs]` e não será reperguntada em execuções futuras. Para reapresentar o menu, remova manualmente a seção.
+> Entre o Scout e o Arqueólogo, o Reversa pergunta como você quer organizar as specs (por módulo, caso de uso, endpoint, híbrida, por features ou customizada). A escolha fica persistida em `.reversa/config.toml` na seção `[specs]` e não será reagendada em execuções futuras. Para reapresentar o menu, remova manualmente a seção.
 
 ## Fase 2: Escavação 🏗️
 
-> O Reversa preenche esta seção com os módulos reais após o Scout concluir o reconhecimento.
-
-- [x] **Archaeologist** — Análise do módulo `bin`
-- [x] **Archaeologist** — Análise do módulo `commands`
-- [x] **Archaeologist** — Análise do módulo `decisoes`
-- [x] **Archaeologist** — Análise do módulo `hooks`
+- [x] **Archaeologist** — Análise do módulo `harness-core`
 
 ## Fase 3: Interpretação 🧠
 
@@ -37,32 +32,19 @@
 ## Fase 4: Geração 📝
 
 - [x] **Redator** — Specs SDD por componente
-- [x] **Redator** — OpenAPI (não aplicável ao projeto)
-- [x] **Redator** — User Stories (se aplicável)
 - [x] **Redator** — Code/Spec Matrix
 
 ## Fase 5: Revisão ✅
 
-- [x] **Revisor** — Revisão cruzada de specs
-- [x] **Revisor** — Resolução de lacunas com o usuário
 - [x] **Revisor** — Relatório de confiança final
 
 ---
 
 ## Agentes Independentes
 
-> Execute estes agentes quando os recursos estiverem disponíveis — podem rodar em qualquer fase.
+> Execute estes agentes quando os recursos estiverem disponíveis — podem rodar in-place em qualquer fase.
 
 - [ ] **Visor** — Análise de interface via screenshots
 - [ ] **Data Master** — Análise completa do banco de dados
 - [ ] **Design System** — Extração de tokens de design
 - [ ] **Tracer** — Análise dinâmica (requer sistema acessível)
-
----
-
-## Próximo passo
-
-Após o Time de Descoberta concluir e o `_reversa_sdd/` estar populado, você pode disparar um dos fluxos seguintes:
-
-- `/reversa-migrate`: orquestrador do **Time de Migração** (Paradigm Advisor → Curator → Strategist → Designer → Screen Translator → Inspector). Gera as specs do sistema novo. Saída em `_reversa_sdd/migration/` e `_reversa_sdd/screens/`.
-- `/reversa-reconstructor`: gera plano bottom-up para reimplementar o software a partir das specs do legado (uma tarefa por sessão).

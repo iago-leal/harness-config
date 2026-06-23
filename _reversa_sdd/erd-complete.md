@@ -1,52 +1,51 @@
-# Entity Relationship Diagram (ERD) — harness-config
+# Modelo de Entidades e Relacionamentos (ERD) — harness-core
 
 > Gerado pelo Architect em 2026-06-23
 > Nível de Documentação: **Completo**
 
-Este documento detalha o modelo de dados físico e lógico implícito mapeado nos arquivos de persistência do projeto `harness-config`.
+Este documento apresenta o modelo relacional lógico das entidades persistidas e conceituais do `harness-core`.
 
 ---
 
 ```mermaid
 erDiagram
-    Microdecisao {
-        string id PK "Formato MD-NNNN"
-        string titulo "Título da decisão"
-        string gancho "Gatilho de contexto"
-        string decisao "Decisão técnica"
-        string porque "Justificativa"
-        string descartado "Alternativas descartadas"
-        string estado "aceito | rejeitado | em_revisao"
+    %% Entidades Físicas
+    SESSION_STATE {
+        string active_feature PK "Kebab-case ID da feature"
+        string commit_hash "Hash SHA-1 do commit âncora"
+        datetime start_time "Timestamp ISO 8601 de início"
+        string status "Status: active / inactive"
     }
 
-    Bastao {
-        string objetivo "Objetivo da tarefa ativa"
-        string estado_atual "Descrição de Fatos e Inferências"
-        string decisoes_tomadas "Decisões de design tomadas"
-        string proximos_passos "Fila de tarefas pendentes"
+    SYNC_CACHE {
+        string commit_hash PK "SHA-1 remoto detectado"
+        datetime last_checked_time "Timestamp ISO 8601 do check"
     }
 
-    AncoraGit {
-        string commit_hash PK "SHA-1 do commit de encerramento"
-        string branch_name "Ramificação Git ativa"
-        timestamp data_fechamento "Data de encerramento da sessão"
+    %% Entidades Conceituais (Markdown Front-matter)
+    DECISION {
+        string id PK "MD-NNNN ID único"
+        string gancho "Gatilho de ciclo de vida associado"
+        string status "Vigência: ativo, em-revisao, rejeitado"
+        string filepath "Caminho do arquivo MD"
     }
 
-    Microdecisao ||--o{ Microdecisao : "depende-de / refina / substitui"
-    Bastao ||--o| AncoraGit : "referencia commit âncora"
+    RELATIONSHIP {
+        string rel_type "Tipo de relação: refina, depende-de, substitui"
+        string target_id FK "ID da microdecisão de destino"
+    }
+
+    %% Relacionamentos do Grafo de Decisões
+    DECISION ||--o{ RELATIONSHIP : "contém"
+    RELATIONSHIP }o--|| DECISION : "aponta-para"
 ```
 
 ---
 
-## 📋 Descrição das Entidades e Atributos
+## 📖 Descrição das Relações
 
-1. **Microdecisao (`decisoes/MD-*.md`):**
-   * **`id` (Chave Primária):** String incremental no formato `MD-NNNN`. Utilizada como referência estável de integridade nos backlinks do sistema.
-   * **`relacoes` (Auto-relacionamento):** Uma microdecisão pode se relacionar com várias outras decisões históricas sob as chaves:
-     * `depende-de`: Dependência técnica direta.
-     * `refina`: Evolução ou detalhamento de uma escolha anterior.
-     * `substitui`: Deprecia e anula uma decisão anterior (que passa ao estado `rejeitado`).
-2. **Bastão de Handoff (`~/.agent-memory/BASTAO.md`):**
-   * Contém as chaves funcionais para passagem de estado semântico entre sessões. É um arquivo de escrita destrutiva (sobrescrito a cada handoff).
-3. **Âncora Git (`ESTADO-DA-SESSAO.md`):**
-   * Armazena dados de commit do repositório físico do host. Utilizado na inicialização do agente para certificar que ele está atuando sobre a revisão correta, evitando regressão de código.
+1. **Relação de Grafo de Decisões:**
+   - Uma **`DECISION`** (Microdecisão) pode conter zero ou mais **`RELATIONSHIP`** (Arestas de relações) declaradas em seu Front-matter.
+   - Cada **`RELATIONSHIP`** aponta para outra **`DECISION`** por meio do seu ID único (target_id). A consistência destas referências é validada pelo `DecisionService`, reportando referências órfãs caso o ID destino não exista fisicamente em disco.
+2. **Isolamento de Cache e Sessão:**
+   - As entidades **`SESSION_STATE`** e **`SYNC_CACHE`** operam de forma isolada, servindo puramente de controle de infraestrutura local do projeto.

@@ -1,62 +1,55 @@
-# Máquinas de Estado (State Machines) — harness
+# Máquinas de Estado (State Machines) — harness-core
 
-> Gerado pelo Detetive em 2026-06-23
+> Gerado pelo Detective em 2026-06-23
 > Nível de Documentação: **Completo**
 
-Este documento detalha o ciclo de vida e as transições de estado das duas entidades centrais do sistema que possuem comportamento de estado explícito: as **Microdecisões** e o **Bastão de Handoff**.
+Este documento detalha o ciclo de vida e as transições de estado das entidades centrais do `harness-core` que possuem status explícitos: a **Sessão do Agente** e as **Microdecisões**.
 
 ---
 
-## 📄 1. Máquina de Estados: Microdecisão (`Microdecisao`)
+## 🤝 1. Máquina de Estados: Sessão do Agente (`SessionState`)
 
-O campo `estado` em cada arquivo `MD-NNNN.md` reflete o status de validação daquela tomada de decisão de design de arquitetura.
+O estado da sessão do agente local é persistido em `ESTADO-DA-SESSAO.md` e gerencia as transições de boot e encerramento.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> EM_REVISAO : Criação da proposta (ID novo)
-    [*] --> ACEITO : Decisão trivial aceita direto
+    [*] --> INACTIVE : Arquivo ausente ou status=inactive
     
-    EM_REVISAO --> ACEITO : Revisada e homologada pelo Humano
+    INACTIVE --> ACTIVE : Comando: ./harness cmd resume\n(Gatilha SessionStart no agente)
+    
+    ACTIVE --> INACTIVE : Comando: ./harness cmd encerrar-sessao\n(Grava commit âncora)
+    
+    ACTIVE --> ACTIVE : Alterações de arquivos (PostToolUse)\nou novos commits Git
+```
+
+### ⚡ Transições e Condições (Sessão do Agente)
+
+| Origem | Destino | Gatilho / Condição | Confiança |
+| :--- | :--- | :--- | :--- |
+| `INACTIVE` | `ACTIVE` | Execução de `cmd resume`. Se a hash do HEAD atual divergir da âncora anterior, emite alerta, mas avança. | 🟢 CONFIRMADO |
+| `ACTIVE` | `INACTIVE` | Execução de `cmd encerrar-sessao`. Valida se o diretório do repositório está limpo e grava a hash do commit âncora no arquivo de estado. | 🟢 CONFIRMADO |
+
+---
+
+## 📄 2. Máquina de Estados: Microdecisão (`Decision`)
+
+O status de vigência das decisões arquiteturais tomadas no projeto.
+
+```mermaid
+stateDiagram-v2
+    [*] --> EM_REVISAO : Criação da proposta (Front-matter: estado=em-revisao)
+    [*] --> ATIVO : Decisão trivial aceita (Front-matter: estado=ativo)
+    
+    EM_REVISAO --> ATIVO : Homologada e aprovada pelo Humano
     EM_REVISAO --> REJEITADO : Descartada ou inviabilizada
     
-    ACEITO --> REJEITADO : Substituída por nova decisão (ex: MD-XXXX)
-    ACEITO --> EM_REVISAO : Reaberta para refinamento técnico
-    
-    REJEITADO --> [*] : Arquivada no histórico
-    ACEITO --> [*] : Vigente no projeto ativo
+    ATIVO --> REJEITADO : Substituída por nova decisão (YAML: relacao "substitui MD-XXXX")
+    ATIVO --> EM_REVISAO : Reaberta para alteração ou refinamento técnico
 ```
 
 ### ⚡ Transições e Condições (Microdecisão)
 
 | Origem | Destino | Gatilho / Condição | Confiança |
 | :--- | :--- | :--- | :--- |
-| `EM_REVISAO` | `ACEITO` | Usuário humano aprova a lógica proposta pelo agente. | 🟢 CONFIRMADO |
-| `ACEITO` | `REJEITADO` | Criação de uma nova decisão de design contendo metadado `substitui MD-NNNN`. O script `gerar-index-decisoes.sh` atualiza os backlinks correlacionados. | 🟢 CONFIRMADO |
-| `ACEITO` | `EM_REVISAO` | Identificação de bugs de portabilidade ou necessidade de modificação estrutural. | 🟡 INFERIDO |
-
----
-
-## 🤝 2. Máquina de Estados: Bastão de Handoff (`Bastao`)
-
-O estado da sincronização do Bastão física sob `~/.agent-memory/BASTAO.md` gerencia o fluxo de trabalho colaborativo cross-agent.
-
-```mermaid
-stateDiagram-v2
-    [*] --> SEM_HANDOFF_ATIVO : Inicialização limpa do ambiente
-    
-    SEM_HANDOFF_ATIVO --> ATIVO : Comando /handoff (executa handoff.sh commit)
-    ARQUIVADO --> ATIVO : Comando /handoff com nova demanda
-    
-    ATIVO --> ARQUIVADO : Comando /resume (executa handoff.sh archive após processar)
-    ATIVO --> SEM_HANDOFF_ATIVO : Handoff cancelado ou redefinido de forma manual
-    
-    ARQUIVADO --> [*] : Histórico limpo
-```
-
-### ⚡ Transições e Condições (Bastão)
-
-| Origem | Destino | Gatilho / Condição | Confiança |
-| :--- | :--- | :--- | :--- |
-| `SEM_HANDOFF_ATIVO` | `ATIVO` | Criação do arquivo `BASTAO.md` com estrutura de Objetivo, Estado Atual, Decisões e Próximos Passos pelo comando `/handoff`. | 🟢 CONFIRMADO |
-| `ATIVO` | `ARQUIVADO` | Comando `/resume` detecta o bastão ativo, consome as informações para ambientar o novo agente e executa a limpeza pós-leitura arquivando o bastão anterior. | 🟢 CONFIRMADO |
-| `ATIVO` | `SEM_HANDOFF_ATIVO` | Remoção manual ou limpeza do arquivo de memória compartilhada. | 🟡 INFERIDO |
+| `EM_REVISAO` | `ATIVO` | Alteração manual do campo `estado` no front-matter do markdown correspondente. | 🟢 CONFIRMADO |
+| `ATIVO` | `REJEITADO` | Criação de uma microdecisão que possui a relação `substitui MD-XXXX`. O indexador recompila o backlinks e atualiza o grafo. | 🟢 CONFIRMADO |

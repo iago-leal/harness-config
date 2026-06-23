@@ -1,9 +1,9 @@
-# C4 Context Diagram (Nível 1) — harness-config
+# C4 Context Diagram (Nível 1) — harness-core
 
 > Gerado pelo Architect em 2026-06-23
 > Nível de Documentação: **Completo**
 
-Este diagrama apresenta o sistema `harness-config` no centro, ilustrando as fronteiras do sistema, seus usuários (desenvolvedores e agentes) e as integrações externas.
+Este diagrama apresenta o sistema `harness-core` no centro, ilustrando as fronteiras do sistema, seus usuários (desenvolvedores e agentes) e as integrações externas.
 
 ---
 
@@ -11,26 +11,22 @@ Este diagrama apresenta o sistema `harness-config` no centro, ilustrando as fron
 graph TB
     %% Atores
     User["Humano (Iago)<br/>[Desenvolvedor / Revisor]"]
-    Claude["Claude Code<br/>[Agente de IA Primário]"]
-    Gemini["Gemini CLI / Antigravity<br/>[Agente de IA Secundário]"]
+    IA_Agent["Agente de IA (Antigravity/Claude)<br/>[Editor / Automação]"]
 
     %% Sistema Central
-    Harness["Sistema harness-config<br/>[Ganchos, automação e decisões de infraestrutura]"]
+    HarnessCore["Sistema harness-core<br/>[Núcleo em Python de ciclo de vida, formatação e decisões]"]
 
     %% Sistemas Externos
     GitRemote["GitHub / Git Remote<br/>[Repositório de Código e Memória]"]
-    HostOS["Ambiente macOS / Linux<br/>[Interpretador Bash & Ferramentas locais]"]
-    Obsidian["Vault Obsidian / Notas<br/>[Repositório pessoal de documentação]"]
+    HostOS["Ambiente do Host (macOS/Linux)<br/>[Formatadores de terceiros, venv e subprocessos]"]
 
     %% Relacionamentos Atores -> Sistema
-    User -->|Executa comandos, edita e valida| Harness
-    Claude -->|Executa slash-commands, lê memórias e edita| Harness
-    Gemini -->|Lê bastão e executa tarefas de engenharia reversa| Harness
+    User -->|Executa comandos via wrapper local| HarnessCore
+    IA_Agent -->|Invocado em ganchos SessionStart e PostToolUse| HarnessCore
 
     %% Relacionamentos Sistema -> Sistemas Externos
-    Harness -->|Consulta hashes de branch via ls-remote| GitRemote
-    Harness -->|Roda formatadores e resolve PATH| HostOS
-    Harness -->|Lê e grava notas ONDE PAREI| Obsidian
+    HarnessCore -->|Consulta commits de branch via ls-remote| GitRemote
+    HarnessCore -->|Dispara binários locais e globais| HostOS
 ```
 
 ---
@@ -38,10 +34,8 @@ graph TB
 ## 🛠️ Descrição dos Relacionamentos
 
 1. **Atores e Agentes:**
-   * **Humano (Iago):** Interage com o sistema editando arquivos, escrevendo decisões e aprovando/travando propostas de IAs.
-   * **Claude Code:** CLI executada no host local que interage diretamente com o `harness-config` executando os ganchos (SessionStart, PostToolUse) e slash commands customizados.
-   * **Gemini CLI:** Agente alternativo que entra no fluxo de trabalho via handoff consumindo dados de memória compartilhada.
+   * **Humano (Iago):** Interage com o sistema rodando a CLI local via wrapper `./harness` e editando arquivos de microdecisões e documentação.
+   * **Agente de IA (Antigravity/Claude):** Interage diretamente com o `harness-core` executando os ganchos do ciclo de vida (como formatar arquivos modificados e atualizar backlinks ao parar).
 2. **Integrações de Infraestrutura:**
-   * **GitHub / Git Remote:** Usado no `sync-check.sh` para verificar de forma read-only se o estado local está defasado em relação ao remote.
-   * **Host OS:** Sistema que fornece o ambiente Unix, shebang bash e binários de formatação (ruff, prettier, rustfmt, shfmt).
-   * **Vault Obsidian / Notas:** Pasta de documentos de texto que servem de histórico cross-host e registro de pendências de atividades.
+   * **GitHub / Git Remote:** Usado no `SyncService` para obter o commit HEAD do repositório remoto.
+   * **Ambiente do Host:** Fornece o ecossistema Python 3, a pasta virtualenv e os formatadores locais/globais (ruff, prettier, rustfmt).

@@ -1,60 +1,67 @@
-# C4 Containers Diagram (Nível 2) — harness-config
+# C4 Container Diagram (Nível 2) — harness-core
 
-> Gerado pelo Architect em 2026-06-23
+> Gerado pelo Architect em 2026-06-23 (Re-extração após Feature 002)
 > Nível de Documentação: **Completo**
 
-Este diagrama detalha as aplicações, serviços, scripts e estruturas de persistência em disco que compõem o sistema `harness-config`.
+Este diagrama detalha a divisão em containers lógicos do `harness-core`, ilustrando a comunicação, tecnologias e armazenamento.
 
 ---
 
 ```mermaid
 graph TB
     %% Atores
-    User["Humano (Iago)<br/>[Desenvolvedor]"]
-    
-    %% Containers
-    subgraph harness_containers [Containers do Sistema]
-        ClaudeCLI["Claude Code CLI<br/>[Node.js / Editor Sandbox]<br/>Orquestra comandos e hooks de ciclo de vida."]
+    User["Humano (Iago)<br/>[Desenvolvedor / Revisor]"]
+    IA_Agent["Agente de IA (Antigravity/Claude)<br/>[Editor / Automação]"]
+
+    subgraph ProjectRoot [Diretório do Projeto: harness]
+        %% Containers Lógicos
+        Wrapper["Script Wrapper (harness)<br/>[Bash Script]<br/>Interface simplificada de raiz que localiza a venv Python."]
         
-        AutomationScripts["Scripts de Automação<br/>[Bash / CLI em bin/]<br/>bootstrap.sh, sync-check.sh, gerar-index-decisoes.sh."]
+        Venv["Ambiente Virtual (.venv)<br/>[Python 3 venv]<br/>Isolamento local de dependências (toml, mcp, pytest, yaml)."]
         
-        FormatterHook["Roteador format-on-edit.sh<br/>[Bash / PostToolUse Hook]<br/>Intercepta edições e despacha para formatadores."]
+        CoreCLI["Harness Core CLI (main.py)<br/>[Python 3 CLI]<br/>Ponto de entrada que carrega os serviços e trata parâmetros."]
         
-        DiskState["Estrutura de Persistência em Disco<br/>[Arquivos Locais MD/JSON/TOML]<br/>Decisões particionadas, estado de sessão e configs."]
+        MCPServer["Servidor MCP (server.py)<br/>[Python 3 / Starlette]<br/>Protocolo de comunicação local para integração direta com a IDE."]
         
-        SharedMemory["Pasta de Memória Compartilhada<br/>[~/.agent-memory/]<br/>Contém BASTAO.md e ALICERCE.md."]
+        %% Armazenamento / Visualização
+        SessionFile["Arquivo de Sessão<br/>[ESTADO-DA-SESSAO.md]<br/>Markdown registrando a hash âncora Git e status da feature."]
+        
+        CacheFile["Cache de Sincronia<br/>[JSON Cache]<br/>Arquivo registrando timestamp e commit hash do remote origin."]
+
+        DocHTML["Documentação Consolidada (harness-docs.html)<br/>[HTML/CSS/JS Estático]<br/>Documentação de comandos, regras de domínio e checkpoints do Reversa."]
     end
 
-    %% Relações Externas e Atores
-    User -->|Interage com a CLI| ClaudeCLI
-    ClaudeCLI -->|Dispara SessionStart e encerramento| AutomationScripts
-    ClaudeCLI -->|Dispara PostToolUse após escrita| FormatterHook
-    
-    %% Comunicação Interna
-    AutomationScripts -->|Lê e grava estado / compila backlinks| DiskState
-    FormatterHook -->|Consulta manifestos e .no-autoformat| DiskState
-    AutomationScripts -->|Arquiva e recupera bastão| SharedMemory
-    
-    %% Interação com Host OS (Formatadores)
-    FormatterOS["Formatadores do Host OS<br/>[Ruff, Prettier, Rustfmt, Shfmt]<br/>Ferramentas de estilização de código."]
-    FormatterHook -->|Executa de forma local ou global| FormatterOS
+    %% Integrações do Host
+    Formatters["Formatadores Locais/Globais<br/>[Ruff / Prettier / Rustfmt]<br/>Binários compilados disparados em subprocesso."]
+    GitCli["Git CLI Subprocess<br/>[Subprocess Git]<br/>Sistema de arquivos Git local."]
+
+    %% Fluxos Humano
+    User -->|Executa comandos| Wrapper
+    User -->|Consulta documentação local| DocHTML
+    Wrapper -->|Invoca interpretador com dependências| Venv
+    Venv -->|Executa script principal| CoreCLI
+
+    %% Fluxos IA
+    IA_Agent -->|Chama ganchos do ciclo de vida| Wrapper
+    IA_Agent -->|Consome ferramentas e contexto| MCPServer
+    MCPServer -->|Chama serviços locais| CoreCLI
+
+    %% Fluxos do Core CLI
+    CoreCLI -->|Lê/Grava estado| SessionFile
+    CoreCLI -->|Lê/Grava cache local| CacheFile
+    CoreCLI -->|Formata arquivos modificados| Formatters
+    CoreCLI -->|Verifica commits locais e remote| GitCli
+    CoreCLI -->|Gera HTML standalone| DocHTML
+    CoreCLI -->|Inicia servidor HTTP local para expor| User
 ```
 
 ---
 
-## 🏗️ Detalhamento dos Containers
+## 🛠️ Descrição dos Containers
 
-1. **Claude Code CLI:**
-   * **Papel:** O container de execução principal que atua como interpretador e sandbox para os agentes de IA. Ele gerencia as configurações locais e dispara os ganchos do ciclo de vida definidos em `settings.json`.
-2. **Scripts de Automação (bin/):**
-   * **Tecnologia:** Bash puro.
-   * **Papel:** Automatiza tarefas de bootstrapping de hosts novos, verificação periódica de sincronia de código (ls-remote com TTL cache) e compilação do índice de microdecisões resolvendo backlinks de relações inversas.
-3. **Roteador `format-on-edit.sh`:**
-   * **Tecnologia:** Bash puro.
-   * **Papel:** Escuta gravações e edições feitas pelo Claude Code e aciona ferramentas de linting/formatting de forma síncrona não-bloqueante (retorna status 0).
-4. **Estrutura de Persistência em Disco:**
-   * **Tecnologia:** Sistema de arquivos local.
-   * **Papel:** Persiste os dados estruturados de estado da sessão (`ESTADO-DA-SESSAO.md`), configurações globais e individuais do Claude (`settings.json`, `.claude/`), e a base de conhecimento de decisões técnicas em arquivos Markdown individuais (`decisoes/MD-NNNN.md`).
-5. **Pasta de Memória Compartilhada:**
-   * **Tecnologia:** Sistema de arquivos local sob `~/.agent-memory/`.
-   * **Papel:** Serve como ponte de comunicação assíncrona entre o Claude e o Gemini, permitindo a troca de bastões sem dependência de rede.
+1. **Script Wrapper (harness):** Utilitário simples e idempotente que localiza o executável correto da venv Python local e despacha chamadas.
+2. **Ambiente Virtual (.venv):** Contém o runtime Python 3 e as dependências isoladas instaladas a partir de `requirements.txt`.
+3. **Harness Core CLI:** Container contendo os serviços principais de ciclo de vida, decisões, sincronia, formatação e o novo serviço de documentação.
+4. **Servidor MCP (Model Context Protocol):** Comunicação baseada em JSON-RPC via `stdin`/`stdout` que disponibiliza ganchos e comandos diretamente ao editor.
+5. **ESTADO-DA-SESSAO.md:** Persistência em arquivo Markdown do estado da sessão da feature ativa.
+6. **harness-docs.html:** Arquivo consolidado HTML standalone que serve como central informativa e interativa de comandos CLI, regras legadas e progresso do Reversa.

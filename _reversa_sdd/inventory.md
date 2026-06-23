@@ -1,55 +1,52 @@
-# Inventário do Projeto — harness-config
+# Inventário do Projeto — harness
 
-> Gerado pelo Scout em 2026-06-23
+> Gerado pelo Scout em 2026-06-23 (Re-extração após Feature 002)
 
-Mapeamento da superfície de código e arquivos de configuração do diretório `harness-config`.
+Mapeamento da superfície de código e arquivos de configuração do diretório `/Users/iagoleal/dev/harness`.
 
 ---
 
 ## 📊 Estatísticas Gerais
 
-* **Diretório Alvo:** `/Users/iagoleal/dev/harness/harness-config`
-* **Total de Arquivos:** 35
+* **Diretório Alvo:** `/Users/iagoleal/dev/harness`
+* **Total de Arquivos:** 101 arquivos (excluindo `.venv`, `.git`, `node_modules` e pastas temporárias)
 * **Linguagens Principais:**
-  * **Markdown (`.md`)**: 28 arquivos (Documentação, Decisões, Comandos)
-  * **Shell Script (`.sh`)**: 5 arquivos (Utilitários, Hooks, Testes)
-  * **JSON (`.json`)**: 1 arquivo (Configurações)
-  * **Outros (`.active`, `.gitignore`)**: 2 arquivos
+  * **Python (`.py`)**: 45 arquivos (núcleo, testes do `harness-core` e novos módulos de documentação)
+  * **Markdown (`.md`)**: 43 arquivos (documentação, decisões e features forward)
+  * **Shell Script (`.sh`, `harness`)**: 6 arquivos (scripts legados e wrapper de raiz)
+  * **HTML (`.html`)**: 2 arquivos (template de documentação e o consolidado `harness-docs.html` na raiz)
+  * **TOML (`.toml`)**: 1 arquivo (`harness-core/harness.toml`)
+  * **JSON (`.json`, `.snippet`)**: 4 arquivos (configurações, snippets de regras e estado de sessões)
 
 ---
 
 ## 📂 Estrutura de Diretórios e Arquivos
 
-### 🛠️ Scripts e Utilitários (`bin/`)
-* **`bin/bootstrap.sh`**: Script para reconstruir as dependências por-host e symlinks do Claude Code. Altamente idempotente.
-* **`bin/sync-check.sh`**: Hook de inicialização (SessionStart) que verifica se os repositórios locais estão desatualizados em relação ao remote.
-* **`bin/test_sync_check.sh`**: Suite de testes e validação isolada (smoke tests) para o `sync-check.sh`.
-* **`bin/gerar-index-decisoes.sh`**: Script utilitário para compilar e atualizar o índice de microdecisões em `microdecisoes.md`.
+### ⚡ Wrapper de conveniência (Raiz do Projeto)
+* **`harness`**: Script Bash executável que invoca o interpretador Python da venv local e encaminha argumentos para `harness-core/src/main.py`.
+* **`harness-docs.html`**: Arquivo HTML standalone consolidando a documentação e uso do Harness CLI, regras de negócio e progresso do Reversa.
 
-### ⚙️ Configurações Gerais
-* **`settings.json`**: Arquivo de configurações do Claude Code (regras de hooks, plugins habilitados, marketplaces de terceiros).
-* **`skills.active`**: Manifesto contendo a lista de skills ativas a serem recriadas como symlinks pelo script de bootstrap.
-* **`.gitignore`**: Configurado em modo whitelist para ignorar tudo por padrão e expor apenas arquivos de configuração seguros.
+### 📦 Núcleo Python (`harness-core/`)
+* **`harness-core/src/main.py`**: Ponto de entrada principal da CLI do núcleo. Adicionado os subcomandos `doc-gen` e `doc-serve`.
+* **`harness-core/src/core/`**: Regras de negócio do Harness (bootstrap, formatação, sincronia, decisões, comandos, e o novo serviço de documentação).
+* **`harness-core/src/core/documentation/`**: Novo módulo de documentação contendo `service.py` e o template visual `template.html`.
+* **`harness-core/src/adapters/`**: Implementações de infraestrutura física (sistema de arquivos, subprocessos Git, integradores de formato).
+* **`harness-core/tests/`**: Suite de testes pytest cobrindo adaptadores, comandos, ganchos, wrapper e documentação (`test_documentation.py`).
+* **`harness-core/harness.toml`**: Arquivo de configurações do ciclo de vida e formatação.
 
-### 📋 Memória e Estado
-* **`CLAUDE.md`**: Instruções globais de preferências, princípios operacionais (OOP, reprodutibilidade, proporções de rigor) e ganchos.
-* **`microdecisoes.md`**: Índice gerado e validado contendo referências cruzadas das microdecisões do projeto.
-* **`ESTADO-DA-SESSAO.md`**: Registro do estado atual da última sessão de trabalho para guiar a retomada de tarefas.
+### 📋 Mapeamento de Configuração Legado (`claude-config/`)
+* **`claude-config/settings.json`**: Arquivo de ganchos Git e configurações do Claude Code legado.
+* **`claude-config/bin/`**: Scripts Bash de bootstrap, validação e sincronia legados.
+* **`claude-config/hooks/format-on-edit.sh`**: Hook legado de pós-edição de arquivos.
+* **`claude-config/decisoes/`**: Fichas de microdecisões de design arquitetural numeradas de `MD-0001` a `MD-0017`.
+* **`claude-config/commands/`**: Definições de comandos customizados (clarificar, handoff, resume, etc.).
 
-### 📥 Comandos Personalizados (`commands/`)
-* **`commands/clarificar.md`**: Definição e contrato do comando `/clarificar` baseado em PCCP.
-* **`commands/encerrar-sessao.md`**: Contrato do comando `/encerrar-sessao` para consolidar o estado e atualizar índices.
-* **`commands/handoff.md`**: Comando para passar o bastão de tarefas para outro agente.
-* **`commands/resume.md`**: Comando para retomar tarefas na sessão.
+### ⚙️ Metadados de Controle do Reversa (`.reversa/`)
+* **`.reversa/state.json`**: Estado atual do pipeline de engenharia reversa.
+* **`.reversa/setup.json`**: Configurações gerais do Reversa (formatos de ID, regras de proteção).
+* **`.reversa/active-requirements.json`**: Registro da feature em andamento no ciclo forward.
+* **`.reversa/settings.json.snippet`**: Snippet de ganchos sugeridos para o agente de IA local.
 
-### 🧠 Decisões Arquiteturais (`decisoes/`)
-* **`decisoes/_cabecalho.md`**: Cabeçalho padrão inserido no início do índice de decisões.
-* **`decisoes/MD-0001.md`** a **`decisoes/MD-0017.md`**: Microdecisões numeradas cobrindo desde a modularização do repositório até hooks de pre-commit e regras de reprodutibilidade.
-
-### 📖 Documentação Geral (`docs/`)
-* **`docs/pccp.md`**: Guia metodológico para Clarificação Centrada no Problema.
-* **`docs/reprodutibilidade.md`**: Regra de reprodução limpa sem depender do código de produção.
-
-### ⚓ Ganchos de Ciclo de Vida (`hooks/`)
-* **`hooks/README.md`**: Documentação explicativa sobre ganchos Git e Claude.
-* **`hooks/format-on-edit.sh`**: Script para formatar e padronizar o código imediatamente após gravação/edição.
+### 🔄 Features Forward (`_reversa_forward/`)
+* **`_reversa_forward/001-run-harness-core-local/`**: Pasta de artefatos de requisitos, plano técnico e tarefas da execução local.
+* **`_reversa_forward/002-documentacao-uso-html/`**: Pasta de requisitos, plano técnico e tarefas do gerador de documentação HTML.

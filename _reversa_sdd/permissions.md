@@ -1,37 +1,29 @@
-# Matriz de Permissões e Papéis (Permissions) — harness
+# Matriz de Permissões (Permissions) — harness-core
 
-> Gerado pelo Detetive em 2026-06-23
+> Gerado pelo Detective em 2026-06-23
 > Nível de Documentação: **Completo**
 
-Este documento detalha os papéis operacionais, matriz de permissões (ACL) e restrições de escrita/execução que regem as interações entre o desenvolvedor Humano e os Agentes de IA no ambiente `harness-config`.
+Este documento detalha o controle de privilégios de execução no `harness-core`. Embora o sistema seja monousuário local, a divisão reside entre as automações automatizadas do agente de IA (Hooks) versus a intervenção manual do Desenvolvedor Humano.
 
 ---
 
-## 👥 1. Definição de Papéis
+## 🔑 1. Atores do Sistema
 
-* **Humano (Owner/Revisor):** O desenvolvedor responsável por validar decisões arquiteturais, autorizar o envio de código para o repositório remoto, aprovar planos complexos e arbitrar em dúvidas e conflitos.
-* **Claude Code (Agente Principal):** Agente primário de desenvolvimento interativo de software. Possui permissão de edição e execução de ferramentas dentro do sandbox.
-* **Gemini CLI / Antigravity (Agente de Descoberta/Migração):** Agente de engenharia reversa e orquestração de migrações estruturais do Reversa.
-
----
-
-## 📊 2. Matriz de Permissões (ACL)
-
-A tabela abaixo define as ações permitidas por papel dentro do ambiente do repositório:
-
-| Ação / Operação | Humano | Claude Code | Gemini CLI | Condição / Regra de Negócio |
-| :--- | :---: | :---: | :---: | :--- |
-| **Criar/Aprovar Microdecisões (`decisoes/`)** | **Sim** | **Proposta** | **Proposta** | O agente pode propor fichas no estado `em_revisao`. A aprovação final (estado `aceito`) é exclusiva do Humano. |
-| **Modificar Scripts e Hooks (`bin/`, `hooks/`)** | **Sim** | **Sim** | **Não** | Claude Code altera scripts para evolução do ambiente. Gemini/Reversa atua apenas em modo leitura sobre o código legado. |
-| **Commit Automático de Estado** | **Sim** | **Sim** | **Não** | Claude Code cria commits atômicos de progresso ao rodar `/encerrar-sessao`. |
-| **Git Push (Remote Origin)** | **Sim** | **Interativo** | **Não** | O agente de IA deve obrigatoriamente solicitar aprovação humana antes de executar `git push`. |
-| **Executar Formatação (`format-on-edit.sh`)** | **Sim** | **Automático** | **Não** | Disparado automaticamente no Claude Code via hook `PostToolUse` após gravação de arquivos. |
-| **Leitura de Caches de Sincronia** | **Sim** | **Sim** | **Sim** | Acesso irrestrito a `$HOME/.claude/.sync-check/*` para avaliar status de ramificações. |
-| **Bypass de Sandbox de Comandos** | **Sim** | **Interativo** | **Interativo** | Requer consentimento expresso do desenvolvedor Humano na interface CLI. |
+* **Desenvolvedor Humano (iago):** Mantenedor único do projeto. Executa ações com privilégios administrativos e intervenção direta via CLI.
+* **Agente de IA (Antigravity/Claude):** Assistente rodando no host. Executa automações em sub-shells sob ganchos do ciclo de vida, sem permissão para quebrar o sistema.
 
 ---
 
-## 🛑 3. Restrições e Regras de Segurança
+## 📊 2. Matriz de Permissões
 
-* **Isolamento de Diretório:** O agente de IA não possui permissão para aplicar ganchos ou formatar arquivos fora do escopo de um projeto de software válido (opt-out local via `.no-autoformat` é sempre respeitado).
-* **Bloqueio de Commits Inconsistentes:** A execução de commits que modifiquem microdecisões sem a compilação do índice `microdecisoes.md` é travada de forma automática pelo hook de pre-commit instalado no ambiente de desenvolvimento.
+A tabela a seguir consolida as operações permitidas por tipo de ator no projeto:
+
+| Operação | Descrição | Agente de IA | Desenvolvedor Humano | Confiança |
+| :--- | :--- | :---: | :---: | :--- |
+| **bootstrap** | Instalar ou atualizar hooks locais Git (`.git/hooks/`). | ❌ Negado | 🟢 Permitido | 🟢 CONFIRMADO |
+| **format** | Formatar e padronizar arquivos editados. | 🟢 Permitido | 🟢 Permitido | 🟢 CONFIRMADO |
+| **decisions** | Validar e atualizar o grafo de microdecisões. | 🟢 Permitido | 🟢 Permitido | 🟢 CONFIRMADO |
+| **cmd resume** | Retomar sessão de trabalho de uma feature. | 🟢 Permitido | 🟢 Permitido | 🟢 CONFIRMADO |
+| **cmd encerrar-sessao** | Fechar sessão ativa gravando a âncora Git. | 🟢 Permitido | 🟢 Permitido | 🟢 CONFIRMADO |
+| **cmd handoff** | Gerar dados do bastão de handoff. | 🟢 Permitido | 🟢 Permitido | 🟢 CONFIRMADO |
+| **Paralelismo (Shadow)** | Configurar execução paralela (Shadow Mode). | ❌ Negado | 🟢 Permitido | 🟢 CONFIRMADO |

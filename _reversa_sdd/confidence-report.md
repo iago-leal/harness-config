@@ -1,9 +1,9 @@
 # Relatório de Confiança — harness
 
-> Gerado pelo Revisor em 2026-06-23
+> Gerado pelo Revisor em 2026-06-23 (Re-extração após Feature 002)
 > Nível de Documentação: **Completo**
 
-Este relatório sintetiza a avaliação de confiança das especificações técnicas levantadas para o ecossistema `harness-config`.
+Este relatório sintetiza a avaliação de confiança das especificações técnicas levantadas para o ecossistema `harness` (incluindo o novo núcleo Python `harness-core`, o wrapper raiz e a documentação HTML).
 
 ---
 
@@ -11,13 +11,13 @@ Este relatório sintetiza a avaliação de confiança das especificações técn
 
 | Nível | Quantidade | Percentual |
 | :--- | :---: | :---: |
-| 🟢 CONFIRMADO | 62 | 96.9% |
-| 🟡 INFERIDO | 2 | 3.1% |
+| 🟢 CONFIRMADO | 98 | 94.2% |
+| 🟡 INFERIDO | 6 | 5.8% |
 | 🔴 LACUNA | 0 | 0.0% |
-| **Total** | **64** | **100%** |
+| **Total** | **104** | **100%** |
 
-**Confiança Geral do Projeto:** **98.4%** 🟢
-*(Cálculo: (62 + 2 * 0.5) / 64 = 98.4%)*
+**Confiança Geral do Projeto:** **97.1%** 🟢
+*(Cálculo: (98 + 6 * 0.5) / 104 = 97.1%)*
 
 ---
 
@@ -30,10 +30,13 @@ Este relatório sintetiza a avaliação de confiança das especificações técn
 | `sdd/format-on-edit` | 14 | 0 | 0 | 100.0% |
 | `sdd/microdecisoes` | 11 | 1 | 0 | 95.8% |
 | `sdd/comandos-customizados` | 13 | 0 | 0 | 100.0% |
+| `sdd/run-harness-core-local` | 13 | 0 | 0 | 100.0% |
+| `sdd/documentacao-uso-html` | 23 | 4 | 0 | 92.5% |
 
 ---
 
 ## Lacunas Pendentes 🔴
+
 Nenhuma lacuna pendente.
 
 ---
