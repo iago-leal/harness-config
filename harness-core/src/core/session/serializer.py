@@ -26,8 +26,14 @@ _ATTR_BY_TITLE = {title: attr for title, attr in _SECTIONS}
 _REQUIRED_META = ("commit", "feature", "start_time", "status")
 
 
-def parse(text: str) -> SessionState:
-    """Lê o arquivo de estado. Levanta MalformedSessionStateError se inválido."""
+def parse(text: str) -> Optional[SessionState]:
+    """Lê o arquivo de estado de sessão.
+
+    Retorna ``None`` quando o conteúdo é o template inicial gravado pelo ``init``
+    (os campos obrigatórios todos ``null``): equivale a "sem sessão", como um
+    arquivo ausente. Levanta ``MalformedSessionStateError`` para corrupção real —
+    front-matter ausente, YAML inválido, campos faltando ou nulos PARCIAIS (RN-N4).
+    """
     match = _FRONTMATTER_RE.match(text.strip() + "\n")
     if not match:
         raise MalformedSessionStateError(
@@ -47,6 +53,12 @@ def parse(text: str) -> SessionState:
         raise MalformedSessionStateError(
             f"Front-matter sem campos obrigatórios: {', '.join(missing)}."
         )
+
+    if all(meta[k] is None for k in _REQUIRED_META):
+        # Estado inicial do `init`: todos os obrigatórios null. Sessão inexistente,
+        # não corrupção — não há degradação em silêncio porque o nulo é total e
+        # explícito. Nulo PARCIAL não entra aqui e segue para o caminho barulhento.
+        return None
 
     start_time = _coerce_datetime(meta["start_time"])
     try:

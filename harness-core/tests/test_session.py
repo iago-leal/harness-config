@@ -61,3 +61,20 @@ def test_parse_invalid_commit_raises():
     )
     with pytest.raises(MalformedSessionStateError):
         serializer.parse(bad)
+
+
+def test_parse_estado_inicial_vazio_retorna_none():
+    # Template que o `init` grava: os 4 campos obrigatórios null. Equivale a
+    # "sem sessão" (como arquivo ausente), não a corrupção — retorna None.
+    inicial = (
+        "---\ncommit: null\nfeature: null\n"
+        "start_time: null\nstatus: null\n---\n# Estado de Sessão\n"
+    )
+    assert serializer.parse(inicial) is None
+
+
+def test_parse_nulo_parcial_ainda_malformado():
+    # Nulo PARCIAL não é o sentinela inicial: o barulho do RN-N4 é preservado.
+    bad = "---\ncommit: null\nfeature: null\nstart_time: null\nstatus: active\n---\n\n"
+    with pytest.raises(MalformedSessionStateError):
+        serializer.parse(bad)

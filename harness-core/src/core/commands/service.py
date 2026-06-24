@@ -13,9 +13,10 @@ class CommandService:
     def load_session(self, filepath: str) -> Optional[SessionState]:
         """Carrega o estado de sessão do arquivo canônico.
 
-        Arquivo ausente → ``None`` (sessão nova, normal). Arquivo presente mas
-        malformado → ``MalformedSessionStateError`` (RN-N4: erro barulhento, nunca
-        degrada em silêncio para "sem sessão").
+        Arquivo ausente, ou presente no estado inicial do ``init`` (campos
+        obrigatórios todos ``null``) → ``None`` (sessão nova, normal). Arquivo
+        presente mas malformado → ``MalformedSessionStateError`` (RN-N4: erro
+        barulhento, nunca degrada em silêncio para "sem sessão").
         """
         if not self.fs.exists(filepath):
             return None
