@@ -9,6 +9,7 @@ from src.core.formatting.service import FormattingService
 from src.core.sync.service import SyncService
 from src.core.decisions.service import DecisionService
 from src.core.commands.service import CommandService
+from src.core.domain.config import load_config
 
 # Criação do Servidor FastMCP
 mcp = FastMCP("Harness")
@@ -89,7 +90,7 @@ def process_decisions(
 )
 def session_command(cmd_name: str, active_feature: Optional[str] = None) -> str:
     service = CommandService(fs, git)
-    session_file = "ESTADO-DA-SESSAO.md"
+    session_file = ".harness/estado-da-sessao.md"
     args = [active_feature] if active_feature else []
 
     return service.execute_command(

@@ -2,6 +2,7 @@
 import os
 import sys
 import argparse
+import json
 import toml
 
 # Adiciona o diretório contendo 'src' ao sys.path para imports absolutos funcionarem de qualquer lugar
