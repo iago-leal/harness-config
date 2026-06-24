@@ -3,6 +3,22 @@ from typing import List
 from src.core.ports.fs import FileSystemPort
 
 
+class NotAGitRepositoryError(Exception):
+    """Levantada quando `install_hooks` é chamado fora de um repositório git.
+
+    Os hooks vivem em `.git/hooks`; sem um `.git` legítimo, instalá-los apenas
+    criaria um diretório degenerado. A oferta de inicializar o repositório
+    (`git init`) cabe à camada de apresentação, não ao domínio.
+    """
+
+    def __init__(self, repo_path: str):
+        self.repo_path = repo_path
+        super().__init__(
+            f"O diretório '{repo_path}' não é um repositório git "
+            "(falta a subpasta .git)."
+        )
+
+
 class BootstrapService:
     def __init__(self, fs: FileSystemPort):
         self.fs = fs
@@ -12,7 +28,13 @@ class BootstrapService:
         Instala os hooks Git locais (pre-commit e post-merge) apontando
         diretamente para a CLI Python do harness-core. Operação idempotente:
         reescreve os arquivos a cada execução.
+
+        Recusa-se a operar fora de um repositório git (`NotAGitRepositoryError`)
+        para não criar um `.git/hooks` órfão.
         """
+        if not self.fs.exists(os.path.join(repo_path, ".git")):
+            raise NotAGitRepositoryError(repo_path)
+
         hooks_dir = os.path.join(repo_path, ".git", "hooks")
         self.fs.makedirs(hooks_dir)
 

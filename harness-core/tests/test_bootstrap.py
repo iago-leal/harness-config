@@ -1,10 +1,16 @@
 import os
-from src.core.bootstrap.service import BootstrapService
+import pytest
+from src.core.bootstrap.service import BootstrapService, NotAGitRepositoryError
 from tests.helpers import MockFileSystem
 
 
+def _git_repo_fs():
+    """MockFileSystem simulando um repositório git (subpasta .git presente)."""
+    return MockFileSystem(existing_files={os.path.join("repo", ".git")})
+
+
 def test_bootstrap_install_hooks():
-    fs = MockFileSystem()
+    fs = _git_repo_fs()
     service = BootstrapService(fs)
     repo_path = "repo"
 
@@ -38,7 +44,7 @@ def test_post_merge_hook_does_not_forward_git_args_to_decisions():
     # O subcomando `decisions` não aceita posicional; repassar "$@" quebrava o
     # hook com "unrecognized arguments: 0". O gerador não deve repassar os args
     # do git ao `decisions`.
-    fs = MockFileSystem()
+    fs = _git_repo_fs()
     service = BootstrapService(fs)
 
     service.install_hooks("repo")
@@ -48,3 +54,16 @@ def test_post_merge_hook_does_not_forward_git_args_to_decisions():
     invocation = next(line for line in content.splitlines() if "decisions" in line)
     assert invocation.strip().endswith("decisions")
     assert '"$@"' not in invocation
+
+
+def test_install_hooks_refuses_outside_git_repo():
+    # Sem repositório git, install_hooks recusa e não escreve nada — em vez de
+    # criar um .git/hooks degenerado. A oferta de `git init` fica a cargo da
+    # camada de apresentação (CLI).
+    fs = MockFileSystem()
+    service = BootstrapService(fs)
+
+    with pytest.raises(NotAGitRepositoryError):
+        service.install_hooks("repo")
+
+    assert fs.written_files == {}

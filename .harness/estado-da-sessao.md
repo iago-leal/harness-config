@@ -1,6 +1,6 @@
 ---
-commit: 8b3cd4c
-feature: correção pós-009 — hook post-merge (MD-0006)
+commit: 69a8e6c
+feature: correções pós-009 — hooks (MD-0006, MD-0007)
 start_time: "2026-06-24T16:57:44+00:00"
 status: active
 ---
@@ -11,12 +11,17 @@ status: active
 - **Correção do hook post-merge (MD-0006)** — `BootstrapService._post_merge_script()` repassava `"$@"` ao subcomando `decisions`. O git invoca `post-merge` com o flag de squash (`0`/`1`) como posicional, e `decisions` (parser sem `add_argument`) o recusava com `unrecognized arguments: 0`. Disparou no merge da 009. Defeito no **gerador**, não na instância — regressão viva desde `af4a034`, preservada por `5624f78`; propaga a todo projeto criado por `harness init`. Conduzido como **TDD direto + registro leve**, fora do pipeline forward (Princípio nº 4), por decisão do mantenedor.
   - Teste de regressão em `test_bootstrap.py`: invertido o assert que codificava o bug (`'decisions "$@"' in post_content`) e adicionado `test_post_merge_hook_does_not_forward_git_args_to_decisions`. Vermelho antes, verde depois.
   - Correção de uma linha em `service.py:53` (remoção do `"$@"`).
-  - Hook da raiz regenerado via `./harness bootstrap`. Provado de ponta a ponta: `./.git/hooks/post-merge 0` retorna `exit 0`.
-- **Suíte verde: 111 passed** (`.venv/bin/python -m pytest` a partir de `harness-core/`).
+  - Hook da raiz regenerado via `./harness bootstrap`. Provado de ponta a ponta: `./.git/hooks/post-merge 0` retorna `exit 0`. Commitado em `69a8e6c`.
+- **Endurecimento do bootstrap (MD-0007)** — `install_hooks` instalava em `os.getcwd()/.git/hooks` sem verificar o `.git`, criando um `.git` degenerado quando rodado fora da raiz (acidente da sessão anterior). Agora `BootstrapService.install_hooks` recusa fora de repo git (`NotAGitRepositoryError`), e a CLI **oferece** `git init` antes de instalar; sem TTY, aborta com `exit 1` sem instalar. `GitPort` ganhou `init_repo`. Também TDD direto + registro leve.
+  - Domínio: guarda em `service.py` (`fs.exists(.git)`) + exceção nomeada.
+  - Apresentação: `offer_git_init()` em `main.py` (espelha `sys.stdin.isatty()` de `resolve_format_target`) e novo fluxo no handler do `bootstrap`.
+  - Infra: `SubprocessGitAdapter.init_repo` (`git init`).
+  - Provado: sem git → recusa/`exit 1` sem criar `.git`; com git → instala os dois hooks.
+- **Suíte verde: 117 passed** (`.venv/bin/python -m pytest` a partir de `harness-core/`).
 
 ## Próximos passos
 
-- **Cuidado operacional registrado:** `./harness bootstrap` instala em `os.getcwd()/.git/hooks`. Rodá-lo com o cwd dentro de `harness-core/` cria um `.git` degenerado lá (só `hooks/`, sem HEAD/objects) — aconteceu uma vez nesta sessão e foi removido. Rodar sempre a partir da raiz do projeto.
+- Commit do MD-0007 e arquivos relacionados pendente de aval (após o `69a8e6c` da correção anterior).
 
 ## Pendências / bloqueios
 
@@ -25,7 +30,7 @@ status: active
 
 ## Ponteiros
 
-- Microdecisão da correção: `.harness/decisoes/MD-0006.md` (relaciona MD-0005, footprint per-projeto).
-- Gerador do hook: `harness-core/src/core/bootstrap/service.py::_post_merge_script` (linha ~53).
-- Testes: `harness-core/tests/test_bootstrap.py`.
-- Memória do bug: `post-merge-hook-arg-bug.md` (atualizar para resolvido).
+- Microdecisões: `.harness/decisoes/MD-0006.md` (post-merge `"$@"`) e `MD-0007.md` (bootstrap recusa/oferta `git init`).
+- Gerador dos hooks: `harness-core/src/core/bootstrap/service.py` (`install_hooks`, `_post_merge_script`, `NotAGitRepositoryError`).
+- Oferta na CLI: `harness-core/src/main.py::offer_git_init` + handler `bootstrap`. Porta: `ports/git.py::init_repo`; adapter: `adapters/git/subprocess.py`.
+- Testes: `harness-core/tests/test_bootstrap.py`, `test_cli.py`, `test_adapters.py`.

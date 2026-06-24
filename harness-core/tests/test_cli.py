@@ -1,5 +1,6 @@
 import subprocess
 import os
+from unittest import mock
 
 
 def test_cli_help():
@@ -100,3 +101,68 @@ def test_main_dropped_legacy_config_loader():
     main_mod = importlib.import_module("src.main")
     assert not hasattr(main_mod, "load_harness_config")
     assert hasattr(main_mod, "load_config")
+
+
+def test_bootstrap_refuses_without_git_repo(tmp_path):
+    # Sem repositório git e sem TTY (subprocess), `bootstrap` recusa: não instala
+    # hooks, não cria um .git degenerado, e falha de forma barulhenta (exit != 0).
+    main_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../src/main.py")
+    )
+    python_bin = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../.venv/bin/python3")
+    )
+
+    result = subprocess.run(
+        [python_bin, main_path, "bootstrap"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode != 0
+    assert "repositório git" in (result.stdout + result.stderr)
+    assert not (tmp_path / ".git").exists()
+
+
+def test_bootstrap_installs_hooks_in_git_repo(tmp_path):
+    # Com um repositório git presente, `bootstrap` instala os dois hooks.
+    main_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../src/main.py")
+    )
+    python_bin = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../.venv/bin/python3")
+    )
+
+    subprocess.run(["git", "init"], cwd=str(tmp_path), capture_output=True)
+
+    result = subprocess.run(
+        [python_bin, main_path, "bootstrap"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode == 0
+    assert (tmp_path / ".git" / "hooks" / "pre-commit").exists()
+    assert (tmp_path / ".git" / "hooks" / "post-merge").exists()
+
+
+def test_offer_git_init_noninteractive_returns_false():
+    # Sem TTY, a oferta não pergunta nada e recusa (o chamador então aborta).
+    from src.main import offer_git_init
+
+    with mock.patch("sys.stdin.isatty", return_value=False):
+        assert offer_git_init("/qualquer/caminho") is False
+
+
+def test_offer_git_init_parses_affirmative_answers():
+    from src.main import offer_git_init
+
+    with mock.patch("sys.stdin.isatty", return_value=True):
+        for sim in ("s", "S", "sim", "y", "yes", " Sim "):
+            with mock.patch("builtins.input", return_value=sim):
+                assert offer_git_init("/repo") is True
+        for nao in ("", "n", "não", "nope", "x"):
+            with mock.patch("builtins.input", return_value=nao):
+                assert offer_git_init("/repo") is False

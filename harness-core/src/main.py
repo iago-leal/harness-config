@@ -44,6 +44,22 @@ def resolve_format_target(arg_path):
     return tool_input.get("file_path")
 
 
+def offer_git_init(repo_path: str) -> bool:
+    """Oferece ao usuário inicializar um repositório git em repo_path.
+
+    Retorna True se o usuário aceitar. Em contexto não-interativo (sem TTY),
+    retorna False sem perguntar — cabe ao chamador abortar sem instalar nada.
+    Espelha a guarda de ``sys.stdin.isatty()`` usada em ``resolve_format_target``.
+    """
+    if not sys.stdin.isatty():
+        return False
+    resposta = input(
+        f"Não há repositório git em '{repo_path}'. "
+        "Inicializar agora com 'git init'? [s/N] "
+    )
+    return resposta.strip().lower() in ("s", "sim", "y", "yes")
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Configura e retorna o parser de argumentos CLI do Harness Core."""
     parser = argparse.ArgumentParser(description="Harness Core CLI v2.0.0")
@@ -178,7 +194,25 @@ def main():
     # Execução das sub-ações da CLI
     if args.command == "bootstrap":
         service = BootstrapService(fs)
-        installed = service.install_hooks(os.getcwd())
+        cwd = os.getcwd()
+        if not fs.exists(os.path.join(cwd, ".git")):
+            # Sem repositório git: oferece a inicialização em vez de instalar
+            # cegamente e criar um .git/hooks órfão.
+            if not offer_git_init(cwd):
+                print(
+                    f"Erro: '{cwd}' não é um repositório git. "
+                    "Os hooks não foram instalados. Inicialize o repositório "
+                    "('git init') e rode novamente.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+            git.init_repo(cwd)
+            print(f"Repositório git inicializado em '{cwd}'.")
+        try:
+            installed = service.install_hooks(cwd)
+        except NotAGitRepositoryError as e:
+            print(f"Erro: {e}", file=sys.stderr)
+            sys.exit(1)
         print(
             f"Sucesso: Hooks Git instalados com sucesso. Arquivos: {', '.join(installed)}"
         )
