@@ -36,7 +36,6 @@ class InitMockFileSystem(FileSystemPort):
             return rel
         return path
 
-
     def read_file(self, path: str) -> str:
         path = self._norm(path)
         return self.files.get(path, "")
@@ -68,12 +67,12 @@ class InitMockFileSystem(FileSystemPort):
         prefix = path + "/" if path != "." and path != "" else ""
         for f in self.files:
             if f.startswith(prefix):
-                rel = f[len(prefix):]
+                rel = f[len(prefix) :]
                 parts = rel.split("/")
                 results.add(parts[0])
         for d in self.dirs:
             if d.startswith(prefix):
-                rel = d[len(prefix):]
+                rel = d[len(prefix) :]
                 parts = rel.split("/")
                 if parts[0]:
                     results.add(parts[0])
@@ -107,8 +106,6 @@ class InitMockFileSystem(FileSystemPort):
         return res
 
 
-
-
 class MockProcessPort(ProcessPort):
     def __init__(self):
         self.commands = []
@@ -118,7 +115,9 @@ class MockProcessPort(ProcessPort):
     ) -> Tuple[int, str, str]:
         return 0, "", ""
 
-    def run_command(self, args: List[str], cwd: Optional[str] = None) -> Tuple[int, str, str]:
+    def run_command(
+        self, args: List[str], cwd: Optional[str] = None
+    ) -> Tuple[int, str, str]:
         self.commands.append((args, cwd))
         return 0, "mock stdout", "mock stderr"
 
@@ -130,7 +129,9 @@ def test_init_not_git_directory():
 
     # Inicializar em uma pasta que não tem .git deve falhar barulhento
     with pytest.raises(ValueError, match="não é um repositório git válido"):
-        service.initialize_project(target_path="destino-sem-git", upstream_path="harness")
+        service.initialize_project(
+            target_path="destino-sem-git", upstream_path="harness"
+        )
 
 
 def test_init_success():
@@ -139,15 +140,23 @@ def test_init_success():
     service = InitializationService(fs, process)
 
     # Executa a inicialização a partir da pasta de origem de simulação
-    service.initialize_project(target_path="/Users/iagoleal/dev/harness/destino", active_harness="claude", upstream_path="/Users/iagoleal/dev/harness")
+    service.initialize_project(
+        target_path="/Users/iagoleal/dev/harness/destino",
+        active_harness="claude",
+        upstream_path="/Users/iagoleal/dev/harness",
+    )
 
     print("\nCHAVES GRAVADAS:", list(fs.files.keys()))
 
     # Verifica se os arquivos foram copiados
     assert fs.exists("/Users/iagoleal/dev/harness/destino/harness-core/src/main.py")
-    assert fs.exists("/Users/iagoleal/dev/harness/destino/harness-core/src/core/bootstrap/init_service.py")
+    assert fs.exists(
+        "/Users/iagoleal/dev/harness/destino/harness-core/src/core/bootstrap/init_service.py"
+    )
     assert fs.exists("/Users/iagoleal/dev/harness/destino/harness")
-    assert fs.exists("/Users/iagoleal/dev/harness/destino/.harness/decisoes/_cabecalho.md")
+    assert fs.exists(
+        "/Users/iagoleal/dev/harness/destino/.harness/decisoes/_cabecalho.md"
+    )
     assert fs.exists("/Users/iagoleal/dev/harness/destino/.harness/estado-da-sessao.md")
     assert fs.exists("/Users/iagoleal/dev/harness/destino/harness.toml")
 
@@ -166,11 +175,23 @@ def test_init_success():
 def test_upgrade_success():
     fs = InitMockFileSystem()
     # Adiciona versão antiga no destino e versão nova na origem
-    fs.write_file("/Users/iagoleal/dev/harness/destino/harness.toml", '[harness]\nupstream_path = "/Users/iagoleal/dev/harness/origem"\nversion = "1.2.0"\n')
-    fs.write_file("/Users/iagoleal/dev/harness/origem/harness-core/src/main.py", "print('versao nova main')")
-    fs.write_file("/Users/iagoleal/dev/harness/origem/harness-core/requirements.txt", "pydantic\ntoml")
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/destino/harness.toml",
+        '[harness]\nupstream_path = "/Users/iagoleal/dev/harness/origem"\nversion = "1.2.0"\n',
+    )
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/origem/harness-core/src/main.py",
+        "print('versao nova main')",
+    )
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/origem/harness-core/requirements.txt",
+        "pydantic\ntoml",
+    )
     fs.write_file("/Users/iagoleal/dev/harness/origem/harness", "wrapper_novo")
-    fs.write_file("/Users/iagoleal/dev/harness/destino/.harness/decisoes/MD-0001.md", "decisao original")
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/destino/.harness/decisoes/MD-0001.md",
+        "decisao original",
+    )
 
     process = MockProcessPort()
     service = InitializationService(fs, process)
@@ -179,12 +200,75 @@ def test_upgrade_success():
     service.upgrade_project(target_path="/Users/iagoleal/dev/harness/destino")
 
     # Core deve ter sido atualizado com o código do upstream
-    assert fs.read_file("/Users/iagoleal/dev/harness/destino/harness-core/src/main.py") == "print('versao nova main')"
+    assert (
+        fs.read_file("/Users/iagoleal/dev/harness/destino/harness-core/src/main.py")
+        == "print('versao nova main')"
+    )
     assert fs.read_file("/Users/iagoleal/dev/harness/destino/harness") == "wrapper_novo"
 
     # Decisões do usuário em .harness/ devem ter sido preservadas
-    assert fs.read_file("/Users/iagoleal/dev/harness/destino/.harness/decisoes/MD-0001.md") == "decisao original"
-    
-    # Configuração de versão deve ter sido atualizada no toml
-    assert 'version = "1.2.43"' in fs.read_file("/Users/iagoleal/dev/harness/destino/harness.toml")
+    assert (
+        fs.read_file("/Users/iagoleal/dev/harness/destino/.harness/decisoes/MD-0001.md")
+        == "decisao original"
+    )
 
+    # Configuração de versão deve ter sido atualizada no toml
+    assert 'version = "1.2.43"' in fs.read_file(
+        "/Users/iagoleal/dev/harness/destino/harness.toml"
+    )
+
+
+def test_init_antigravity_materializes_hooks_json():
+    """Cobre a fiação init -> materialize_hooks_json (não só a rotina isolada).
+
+    Antes da feature 009, `materialize_hooks_json` era chamado mas nunca importado;
+    este teste exercita o ramo `active_harness="antigravity"` ponta-a-ponta para
+    barrar a regressão do NameError no CI.
+    """
+    fs = InitMockFileSystem()
+    process = MockProcessPort()
+    service = InitializationService(fs, process)
+
+    service.initialize_project(
+        target_path="/Users/iagoleal/dev/harness/destino",
+        active_harness="antigravity",
+        upstream_path="/Users/iagoleal/dev/harness",
+    )
+
+    hooks_path = "/Users/iagoleal/dev/harness/destino/.agents/hooks.json"
+    assert fs.exists(hooks_path)
+    content = fs.read_file(hooks_path)
+    assert '"harness"' in content
+    # O `<ABS>` deve ter sido resolvido para o caminho absoluto do projeto-alvo.
+    assert "/Users/iagoleal/dev/harness/destino/harness agy-hook" in content
+    assert "<ABS>" not in content
+
+
+def test_upgrade_antigravity_materializes_hooks_json():
+    """Cobre a fiação upgrade -> materialize_hooks_json para harness antigravity."""
+    fs = InitMockFileSystem()
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/destino/harness.toml",
+        '[harness]\nactive_harness = "antigravity"\nupstream_path = "/Users/iagoleal/dev/harness/origem"\nversion = "1.2.0"\n',
+    )
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/origem/harness-core/src/main.py",
+        "print('versao nova main')",
+    )
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/origem/harness-core/requirements.txt",
+        "pydantic\ntoml",
+    )
+    fs.write_file("/Users/iagoleal/dev/harness/origem/harness", "wrapper_novo")
+
+    process = MockProcessPort()
+    service = InitializationService(fs, process)
+
+    service.upgrade_project(target_path="/Users/iagoleal/dev/harness/destino")
+
+    hooks_path = "/Users/iagoleal/dev/harness/destino/.agents/hooks.json"
+    assert fs.exists(hooks_path)
+    content = fs.read_file(hooks_path)
+    assert '"harness"' in content
+    assert "/Users/iagoleal/dev/harness/destino/harness agy-hook" in content
+    assert "<ABS>" not in content

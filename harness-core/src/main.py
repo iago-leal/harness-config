@@ -105,23 +105,38 @@ def build_parser() -> argparse.ArgumentParser:
 
     # 8. Comando: init
     parser_init = subparsers.add_parser(
-        "init", help="Inicializa um projeto de destino com o Harness Core de forma física e isolada"
+        "init",
+        help="Inicializa um projeto de destino com o Harness Core de forma física e isolada",
     )
     parser_init.add_argument("target_path", help="Caminho do repositório de destino")
     parser_init.add_argument(
         "--harness",
         choices=["claude", "gemini", "antigravity"],
         default="claude",
-        help="Harness ativo no destino (padrão: claude)"
+        help="Harness ativo no destino (padrão: claude)",
     )
 
     # 9. Comando: upgrade
     subparsers.add_parser(
-        "upgrade", help="Atualiza a instalação do Harness Core no projeto a partir do upstream configurado"
+        "upgrade",
+        help="Atualiza a instalação do Harness Core no projeto a partir do upstream configurado",
+    )
+
+    # 10. Comando: agy-hook
+    parser_agy_hook = subparsers.add_parser(
+        "agy-hook",
+        help=(
+            "Driver de borda dos ganchos do Antigravity. Lê o payload JSON no "
+            "stdin e emite o JSON exigido por evento no stdout (não-bloqueante)."
+        ),
+    )
+    parser_agy_hook.add_argument(
+        "event",
+        choices=["pre-tool-use", "post-tool-use", "stop"],
+        help="Evento do ciclo de vida do Antigravity a tratar",
     )
 
     return parser
-
 
 
 def main():
@@ -133,19 +148,31 @@ def main():
     git = SubprocessGitAdapter()
     process = HostFormatterAdapter()
 
-    # Carrega configurações (via única tipada — feature 006 removeu o dict legado)
-    config = load_config(fs)
+    # Carrega configurações (via única tipada — feature 006 removeu o dict legado).
+    # Pulado para `agy-hook`: o gancho de borda precisa carregar a config dentro do
+    # seu próprio try/except não-bloqueante, para que um harness.toml malformado não
+    # escape como traceback antes do ramo. `init`/`upgrade` também não usam esta
+    # config (recarregam o que precisam internamente).
+    config = None
+    if args.command not in ("init", "upgrade", "agy-hook"):
+        config = load_config(fs)
 
     # Alerta de atualização passiva
-    if args.command not in ("init", "upgrade") and config.harness.upstream_path:
+    if (
+        args.command not in ("init", "upgrade", "agy-hook")
+        and config.harness.upstream_path
+    ):
         from src.core.sync.service import SyncService
+
         sync_service = SyncService(fs, git, ".harness/sync-cache.json")
-        new_ver = sync_service.check_version_update(config.harness.version, config.harness.upstream_path)
+        new_ver = sync_service.check_version_update(
+            config.harness.version, config.harness.upstream_path
+        )
         if new_ver:
             print(
                 f"\n⚠️  Aviso: Uma nova versão do Harness Core ({new_ver}) está disponível no upstream.\n"
                 f"   Execute './harness upgrade' para atualizar seu núcleo local.\n",
-                file=sys.stderr
+                file=sys.stderr,
             )
 
     # Execução das sub-ações da CLI
@@ -308,10 +335,13 @@ def main():
 
     elif args.command == "init":
         from src.core.bootstrap.init_service import InitializationService
+
         service = InitializationService(fs, process)
         try:
             service.initialize_project(args.target_path, args.harness)
-            print(f"Sucesso: Projeto em '{args.target_path}' inicializado com Harness Core.")
+            print(
+                f"Sucesso: Projeto em '{args.target_path}' inicializado com Harness Core."
+            )
             sys.exit(0)
         except Exception as e:
             print(f"Erro ao inicializar projeto: {e}", file=sys.stderr)
@@ -319,6 +349,7 @@ def main():
 
     elif args.command == "upgrade":
         from src.core.bootstrap.init_service import InitializationService
+
         service = InitializationService(fs, process)
         try:
             service.upgrade_project(os.getcwd())
@@ -328,6 +359,43 @@ def main():
             print(f"Erro ao atualizar Harness Core: {e}", file=sys.stderr)
             sys.exit(1)
 
+    elif args.command == "agy-hook":
+        # Driver de borda do Antigravity. Constrói os mesmos adaptadores concretos
+        # já usados pela CLI e delega ao adaptador, que fala o protocolo de ganchos
+        # e emite o stdout JSON exigido por evento (sempre não-bloqueante, exit 0).
+        #
+        # Garantia não-bloqueante de borda: TODO o ramo — resolução de config,
+        # leitura do stdin, construção dos serviços/bridge e a delegação — roda
+        # sob try/except. O fallback exigido por evento é pré-computado a partir
+        # de `args.event` (já validado pelo argparse) ANTES de qualquer operação
+        # que possa lançar, de modo que config corrompida/parcial, stdin ilegível
+        # ou qualquer outra falha ainda emite o stdout exigido e encerra com 0.
+        fallback = '{"decision": "allow"}' if args.event == "pre-tool-use" else "{}"
+        try:
+            from src.adapters.antigravity.hook_bridge import AntigravityHookBridge
+
+            agy_config = load_config(fs)
+            formatting_service = FormattingService(fs, process, agy_config)
+            decision_service = DecisionService(fs)
+            bridge = AntigravityHookBridge(
+                fs=fs,
+                formatting_service=formatting_service,
+                decision_service=decision_service,
+                decisions_dir=agy_config.decisions.dir,
+                decisions_index_file=agy_config.decisions.index_file,
+                decisions_header_file=agy_config.decisions.header_file,
+            )
+
+            stdin_text = "" if sys.stdin.isatty() else sys.stdin.read()
+            print(bridge.handle(args.event, stdin_text))
+        except Exception as exc:
+            print(
+                f"Aviso: gancho agy-hook {args.event!r} falhou de forma "
+                f"não-bloqueante: {exc}",
+                file=sys.stderr,
+            )
+            print(fallback)
+        sys.exit(0)
 
 
 if __name__ == "__main__":

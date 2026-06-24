@@ -21,7 +21,7 @@
   "pending": [],
   "checkpoints": {
     "scout": {
-      "completed_at": "2026-06-24T14:15:00Z",
+      "completed_at": "2026-06-24T15:20:00-03:00",
       "files": [
         "_reversa_sdd/inventory.md",
         "_reversa_sdd/dependencies.md",
@@ -29,14 +29,12 @@
       ]
     },
     "archaeologist": {
-      "completed_at": "2026-06-24T14:16:00Z",
-      "modules_analyzed": [
-        "harness-core"
-      ],
+      "completed_at": "2026-06-24T15:30:00-03:00",
+      "modules_analyzed": ["harness-core", "antigravity-hooks"],
       "modules_pending": []
     },
     "detective": {
-      "completed_at": "2026-06-24T14:17:00Z",
+      "completed_at": "2026-06-24T15:45:00-03:00",
       "files": [
         "_reversa_sdd/domain.md",
         "_reversa_sdd/state-machines.md",
@@ -47,11 +45,12 @@
         "_reversa_sdd/adrs/0012-caminhos-decisao-por-configuracao.md",
         "_reversa_sdd/adrs/0013-harness-core-modulo-per-projeto-footprint.md",
         "_reversa_sdd/adrs/0014-bootstrap-e-evolucao-do-tooling.md",
-        "_reversa_sdd/adrs/0015-reprodutibilidade-e-configuracoes-dinamicas-de-formatacao.md"
+        "_reversa_sdd/adrs/0015-reprodutibilidade-e-configuracoes-dinamicas-de-formatacao.md",
+        "_reversa_sdd/adrs/0016-ganchos-antigravity-driver-de-borda.md"
       ]
     },
     "architect": {
-      "completed_at": "2026-06-24T14:17:30Z",
+      "completed_at": "2026-06-24T15:55:00-03:00",
       "files": [
         "_reversa_sdd/architecture.md",
         "_reversa_sdd/c4-context.md",
@@ -91,32 +90,28 @@
   ],
   "last_reextraction": {
     "type": "cirurgica",
-    "scope": "feature-008-reprodutibilidade-e-config",
-    "anchor_commit": "1b23498",
-    "started_at": "2026-06-24T11:35:46-03:00",
-    "completed_at": "2026-06-24T14:45:00-03:00",
-    "method": "workflow re-extração pós-feature 008",
-    "artifacts_reconciled": 15,
-    "new_adr": "0015-reprodutibilidade-e-configuracoes-dinamicas-de-formatacao",
+    "scope": "feature-009-hooks-antigravity",
+    "anchor_commit": "fea976b",
+    "started_at": "2026-06-24T15:17:10-03:00",
+    "completed_at": "2026-06-24T15:26:00-03:00",
+    "method": "workflow re-extração pós-feature 009",
+    "artifacts_reconciled": 16,
+    "new_adr": "0016-ganchos-antigravity-driver-de-borda",
     "reconciled_with": [
       "1b23498 (feature 007)",
-      "feature 008 uncommitted"
+      "feature 008",
+      "fea976b (feature 009)"
     ],
     "regression_check": {
-      "features": 8,
-      "watch_items": 24,
-      "green": 23,
+      "features": 9,
+      "watch_items": 33,
+      "green": 32,
       "yellow": 1,
       "red": 0,
-      "yellow_detail": "003/W003 - template.md ainda sinaliza pendencia do SessionStart ja paga pela 004 (defasagem documental, mantido por decisao do mantenedor)"
+      "yellow_detail": "009/W009 - premissa de runtime do Antigravity nao verificavel localmente (estabilidade do stepIdx entre Pre/PostToolUse e acesso ao artifactDirectoryPath); validar contra o Antigravity real quando disponivel. Nota: a feature 009 removeu a nota obsoleta do SessionStart do template.md, resolvendo o antigo amarelo 003/W003 (agora verde)."
     }
   },
-  "engines": [
-    "claude-code",
-    "codex",
-    "gemini-cli",
-    "antigravity"
-  ],
+  "engines": ["claude-code", "codex", "gemini-cli", "antigravity"],
   "agents": [
     "reversa",
     "reversa-scout",
