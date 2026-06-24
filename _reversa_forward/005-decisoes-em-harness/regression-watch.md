@@ -5,12 +5,12 @@
 
 ## Watch items
 
-| ID | Origem (arquivo, seção) | Regra esperada após a mudança | Tipo de verificação | Sinal de violação |
-|----|--------------------------|-------------------------------|---------------------|-------------------|
-| W001 | `code-analysis.md#2.4` · RN-N1 | Os artefatos de decisão vivem em `.harness/decisoes/` (fichas + `_cabecalho.md`) e `.harness/microdecisoes.md` | presença | Ressurgir `decisoes/` ou `microdecisoes.md` na raiz do repo |
-| W002 | `architecture.md` · RN-N2 | CLI (`main.py`) e MCP (`server.py`) leem os caminhos de `load_config().decisions` — sem literal chumbado | ausência | Reaparecer `"decisoes"` / `"microdecisoes.md"` chumbado em `main.py` ou `server.py` |
-| W003 | `config.py` · D-01/B | `load_config` é funcional (imports `toml` e `FileSystemPort` presentes) | presença | `NameError`/`UnboundLocalError` ao rodar `./harness decisions`, `install-prompt` ou o tool MCP |
-| W004 | `code-analysis.md#2.4` | `./harness decisions` valida o grafo com zero erros e regenera o índice idêntico (mesmos IDs e backlinks) | redação | Diferença semântica no índice ou erro de integridade após reextração |
+| ID   | Origem (arquivo, seção)        | Regra esperada após a mudança                                                                                  | Tipo de verificação | Sinal de violação                                                                              |
+| ---- | ------------------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------- |
+| W001 | `code-analysis.md#2.4` · RN-N1 | Os artefatos de decisão vivem em `.harness/decisoes/` (fichas + `_cabecalho.md`) e `.harness/microdecisoes.md` | presença            | Ressurgir `decisoes/` ou `microdecisoes.md` na raiz do repo                                    |
+| W002 | `architecture.md` · RN-N2      | CLI (`main.py`) e MCP (`server.py`) leem os caminhos de `load_config().decisions` — sem literal chumbado       | ausência            | Reaparecer `"decisoes"` / `"microdecisoes.md"` chumbado em `main.py` ou `server.py`            |
+| W003 | `config.py` · D-01/B           | `load_config` é funcional (imports `toml` e `FileSystemPort` presentes)                                        | presença            | `NameError`/`UnboundLocalError` ao rodar `./harness decisions`, `install-prompt` ou o tool MCP |
+| W004 | `code-analysis.md#2.4`         | `./harness decisions` valida o grafo com zero erros e regenera o índice idêntico (mesmos IDs e backlinks)      | redação             | Diferença semântica no índice ou erro de integridade após reextração                           |
 
 ## Observações (sem peso de regressão)
 
@@ -19,14 +19,23 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-24 08:10
+
+| ID   | Veredito | Observação                                                                                                                                                                                                                                                                                                          |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Diretório `.harness/decisoes/` contém as 4 fichas (MD-0001 a MD-0004) + `_cabecalho.md` e índice em `.harness/microdecisoes.md`. Nenhuma `decisoes/` ou `microdecisoes.md` na raiz. Regra confirmada em código.                                                                                                     |
+| W002 | 🟢 verde | Ambos main.py (linhas 19, 163, 297) e server.py (linha 12) importam e usam `load_config(fs)`. Zero hardcoding de `"decisoes"` ou `"microdecisoes.md"` detectado. Regra mantida.                                                                                                                                     |
+| W003 | 🟢 verde | Bug T1 corrigido no commit cf73980: `load_config` está importado em server.py (linha 12). config.py funcional com imports de `toml` (linha 1) e `FileSystemPort` (linha 5). Tool MCP `process_decisions` invoca `load_config(fs)` corretamente sem erro. Sinal de violação anterior foi mascarado; agora resolvido. |
+| W004 | 🟢 verde | Índice `.harness/microdecisoes.md` apresenta 4 IDs (MD-0001 a MD-0004) com backlinks (refinado-por, refina, relacionado-com) semanticamente consistentes e idênticos ao último veredito. Sem diffs no git; regra de idempotência e preservação de semântica mantida.                                                |
+
 ### Re-extração 2026-06-23 21:58
 
-| ID | Veredito | Observação |
-|----|----------|------------|
-| W001 | 🟢 verde | Decisões em `.harness/decisoes/` (MD-0001..MD-0004 + `_cabecalho.md`) e índice em `.harness/microdecisoes.md`; raiz sem `decisoes/` nem `microdecisoes.md`. Confirmado em `_reversa_sdd/domain.md` (RN-N12). |
-| W002 | 🟢 verde | Nenhum literal `"decisoes"`/`"microdecisoes.md"` chumbado em `main.py` nem em `adapters/mcp/server.py`; os drivers derivam de `load_config().decisions`. |
+| ID   | Veredito    | Observação                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ---- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde    | Decisões em `.harness/decisoes/` (MD-0001..MD-0004 + `_cabecalho.md`) e índice em `.harness/microdecisoes.md`; raiz sem `decisoes/` nem `microdecisoes.md`. Confirmado em `_reversa_sdd/domain.md` (RN-N12).                                                                                                                                                                                                                                                                            |
+| W002 | 🟢 verde    | Nenhum literal `"decisoes"`/`"microdecisoes.md"` chumbado em `main.py` nem em `adapters/mcp/server.py`; os drivers derivam de `load_config().decisions`.                                                                                                                                                                                                                                                                                                                                |
 | W003 | 🔴 vermelho | Regra estrita 🟢 — `config.py` `load_config` permanece funcional (imports `toml`/`FileSystemPort` presentes). PORÉM o sinal de violação "ao rodar o tool MCP" disparou: `adapters/mcp/server.py:60` chama `load_config(fs)` sem importar `load_config` (imports nas linhas 1–11) → `NameError` mascarado pelo `except` (linha 82). Ferramenta MCP de decisões inoperante (bug T1, provavelmente introduzido pela própria 005; os testes não exercitam o driver MCP real). Abrir ticket. |
-| W004 | 🟢 verde | `./harness decisions` validou o grafo com zero erros (exit 0) e regenerou `.harness/microdecisoes.md` idêntico (idempotente; sem diff git). IDs e backlinks preservados. |
+| W004 | 🟢 verde    | `./harness decisions` validou o grafo com zero erros (exit 0) e regenerou `.harness/microdecisoes.md` idêntico (idempotente; sem diff git). IDs e backlinks preservados.                                                                                                                                                                                                                                                                                                                |
 
 ## Arquivadas
 
