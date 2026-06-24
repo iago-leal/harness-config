@@ -103,7 +103,25 @@ def build_parser() -> argparse.ArgumentParser:
         help="Imprime o prompt de instalação colável no agente",
     )
 
+    # 8. Comando: init
+    parser_init = subparsers.add_parser(
+        "init", help="Inicializa um projeto de destino com o Harness Core de forma física e isolada"
+    )
+    parser_init.add_argument("target_path", help="Caminho do repositório de destino")
+    parser_init.add_argument(
+        "--harness",
+        choices=["claude", "gemini", "antigravity"],
+        default="claude",
+        help="Harness ativo no destino (padrão: claude)"
+    )
+
+    # 9. Comando: upgrade
+    subparsers.add_parser(
+        "upgrade", help="Atualiza a instalação do Harness Core no projeto a partir do upstream configurado"
+    )
+
     return parser
+
 
 
 def main():
@@ -117,6 +135,18 @@ def main():
 
     # Carrega configurações (via única tipada — feature 006 removeu o dict legado)
     config = load_config(fs)
+
+    # Alerta de atualização passiva
+    if args.command not in ("init", "upgrade") and config.harness.upstream_path:
+        from src.core.sync.service import SyncService
+        sync_service = SyncService(fs, git, ".harness/sync-cache.json")
+        new_ver = sync_service.check_version_update(config.harness.version, config.harness.upstream_path)
+        if new_ver:
+            print(
+                f"\n⚠️  Aviso: Uma nova versão do Harness Core ({new_ver}) está disponível no upstream.\n"
+                f"   Execute './harness upgrade' para atualizar seu núcleo local.\n",
+                file=sys.stderr
+            )
 
     # Execução das sub-ações da CLI
     if args.command == "bootstrap":
@@ -274,6 +304,29 @@ def main():
         service = InstallPromptService(fs)
         print(service.render(cfg.harness.active_harness, build_parser()))
         sys.exit(0)
+
+    elif args.command == "init":
+        from src.core.bootstrap.init_service import InitializationService
+        service = InitializationService(fs, process)
+        try:
+            service.initialize_project(args.target_path, args.harness)
+            print(f"Sucesso: Projeto em '{args.target_path}' inicializado com Harness Core.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Erro ao inicializar projeto: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    elif args.command == "upgrade":
+        from src.core.bootstrap.init_service import InitializationService
+        service = InitializationService(fs, process)
+        try:
+            service.upgrade_project(os.getcwd())
+            print("Sucesso: Harness Core atualizado com sucesso a partir do upstream.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Erro ao atualizar Harness Core: {e}", file=sys.stderr)
+            sys.exit(1)
+
 
 
 if __name__ == "__main__":

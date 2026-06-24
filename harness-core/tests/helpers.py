@@ -33,6 +33,12 @@ class MockFileSystem(FileSystemPort):
         if path in self.written_files:
             del self.written_files[path]
 
+    def is_dir(self, path: str) -> bool:
+        for f in self.written_files:
+            if f.startswith(path + "/"):
+                return True
+        return False
+
 
 class FootprintViolation(AssertionError):
     """Levantada pelo RecordingFileSystem quando uma escrita do harness
@@ -98,3 +104,10 @@ class RecordingFileSystem(FileSystemPort):
         self._guard(path)
         self.existing_files.discard(path)
         self.written_files.pop(path, None)
+
+    def is_dir(self, path: str) -> bool:
+        for f in self.written_files:
+            if f.startswith(path + "/"):
+                return True
+        return False
+

@@ -1,12 +1,14 @@
 import toml
 from pydantic import BaseModel, Field
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from src.core.ports.fs import FileSystemPort
 
 
 class HarnessSection(BaseModel):
     active_harness: Literal["claude", "gemini", "antigravity"] = "claude"
+    upstream_path: Optional[str] = None
+    version: str = "1.2.43"
 
 
 class FormattingSection(BaseModel):

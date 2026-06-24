@@ -29,3 +29,8 @@ class FileSystemPort(ABC):
     @abstractmethod
     def remove(self, path: str) -> None:
         pass
+
+    @abstractmethod
+    def is_dir(self, path: str) -> bool:
+        pass
+

@@ -42,3 +42,7 @@ class LocalFileSystemAdapter(FileSystemPort):
     def remove(self, path: str) -> None:
         if os.path.exists(path):
             os.remove(path)
+
+    def is_dir(self, path: str) -> bool:
+        return os.path.isdir(path)
+

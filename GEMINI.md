@@ -18,6 +18,10 @@ Quando o usuário digitar `/reversa` ou a palavra `reversa` sozinha em uma mensa
 Nunca apague, modifique ou sobrescreva arquivos pré-existentes do projeto legado.
 O Reversa escreve **apenas** em `.reversa/` e `_reversa_sdd/`.
 
+## Comandos do Harness
+
+- Inicializar o Harness em um novo projeto: `./harness init <caminho-destino> [--harness {claude,gemini,antigravity}]`
+- Atualizar o Harness Core local a partir do upstream: `./harness upgrade`
 
 ---
 
@@ -40,3 +44,9 @@ Quando o usuário digitar `/reversa` ou a palavra `reversa` sozinha em uma mensa
 
 Nunca apague, modifique ou sobrescreva arquivos pré-existentes do projeto legado.
 O Reversa escreve **apenas** em `.reversa/` e `_reversa_sdd/`.
+
+## Comandos do Harness
+
+- Inicializar o Harness em um novo projeto: `./harness init <caminho-destino> [--harness {claude,gemini,antigravity}]`
+- Atualizar o Harness Core local a partir do upstream: `./harness upgrade`
+

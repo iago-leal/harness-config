@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 class ProcessPort(ABC):
     @abstractmethod
@@ -14,3 +14,12 @@ class ProcessPort(ABC):
         Retorna (exit_code, stdout, stderr).
         """
         pass
+
+    @abstractmethod
+    def run_command(self, args: List[str], cwd: Optional[str] = None) -> Tuple[int, str, str]:
+        """
+        Executa um comando genérico em subprocesso no terminal do host.
+        Retorna (exit_code, stdout, stderr).
+        """
+        pass
+

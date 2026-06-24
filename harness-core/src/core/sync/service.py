@@ -1,4 +1,6 @@
 import json
+import os
+import re
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from src.core.ports.fs import FileSystemPort
@@ -67,3 +69,24 @@ class SyncService:
             # Exibe o erro no stdout/stderr mas retorna True
             print(f"Aviso de Sincronia: Falha ao checar rede Git ({e}). Prosseguindo de forma resiliente.")
             return True
+
+    def check_version_update(self, local_version: str, upstream_path: Optional[str]) -> Optional[str]:
+        """Compara a versão local com a do upstream. Retorna a versão mais recente se houver update."""
+        if not upstream_path:
+            return None
+        
+        try:
+            config_path = os.path.join(upstream_path, "harness-core", "src", "core", "domain", "config.py")
+            if not self.fs.exists(config_path):
+                return None
+            
+            content = self.fs.read_file(config_path)
+            match = re.search(r'version:\s*str\s*=\s*["\']([^"\']+)["\']', content)
+            if match:
+                upstream_version = match.group(1)
+                if upstream_version != local_version:
+                    return upstream_version
+        except Exception:
+            pass
+        return None
+
