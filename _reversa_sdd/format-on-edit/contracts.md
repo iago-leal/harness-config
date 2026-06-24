@@ -1,53 +1,56 @@
-# Format-on-Edit, Contratos e Payloads (Contracts)
+# Format-on-Edit (Formatting) — Contratos e Payloads (Contracts)
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [format-on-edit.sh](file:///Users/iagoleal/dev/harness/harness-config/hooks/format-on-edit.sh)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração)
+> Interface de dados consumida/produzida pela unit no estado ATUAL (core Python). Escala: 🟢 / 🟡 / 🔴
 
-Este documento define formalmente a interface de dados e os contratos de payloads JSON consumidos e produzidos pela unidade `format-on-edit`.
+> ⚠️ **Reescrita vs versão anterior:** no estado atual a formatação roda pela CLI Python (`./harness format`). O hook `PostToolUse` do Claude entrega o caminho do arquivo via stdin (JSON). **Importante (T3):** o parsing do stdin em `main.py:63` usa `json.loads` sem `import json`, então o caminho via stdin levanta `NameError` (capturado, no-op). Por argumento posicional (`./harness format <arquivo>`), funciona.
 
 ---
 
-## 📥 1. Payload de Entrada (STDIN)
+## 📥 1. Entrada
 
-Disparado no ciclo de vida `PostToolUse` (matchers `Write|Edit`) do Claude Code. O script extrai o caminho do arquivo utilizando fallbacks lógicos.
+### 1.1 Por argumento (caminho direto) 🟢
 
-### Schema Lógico
-* **`tool_input`** (Objeto, Opcional):
-  * **`file_path`** (Texto, Opcional): O caminho absoluto ou relativo para o arquivo alterado.
-* **`tool_response`** (Objeto, Opcional):
-  * **`filePath`** (Texto, Opcional): Caminho alternativo do arquivo físico.
+```
+./harness format <caminho-do-arquivo>
+```
 
-### Exemplo de Entrada (Formato tool_input)
+O serviço `FormattingService.format_file(file_path)` recebe o caminho e formata.
+
+### 1.2 Por stdin (hook `PostToolUse`) 🟡
+
+Payload JSON entregue pelo Claude Code no evento `PostToolUse` (matchers `Write|Edit`):
+
 ```json
 {
   "tool_input": {
-    "file_path": "/Users/iagoleal/dev/harness/harness-config/hooks/format-on-edit.sh"
+    "file_path": "/Users/iagoleal/dev/harness/harness-core/src/main.py"
   }
 }
 ```
 
-### Exemplo de Entrada (Formato tool_response)
-```json
-{
-  "tool_response": {
-    "filePath": "/Users/iagoleal/dev/harness/harness-config/hooks/format-on-edit.sh"
-  }
-}
-```
+`main.py` tentaria extrair `tool_input.file_path` via `json.loads`. 🟡 **T3:** falha por `import json` ausente; o `except` retorna `None` e a formatação não ocorre.
 
 ---
 
-## 📤 2. Payload de Saída (STDOUT)
+## 📤 2. Saída 🟢
 
-Ecoado apenas se o formatador padronizar o conteúdo do arquivo com sucesso resultando em alterações físicas no arquivo. Em caso de abortos de denylist ou se a formatação não alterar o conteúdo, o stdout deve retornar vazio.
+`FormattingService.format_file` retorna **sempre `0`** (não-bloqueio, RN-03). Não há payload JSON de saída (`systemMessage`) nem log — comportamento do legado removido. O efeito observável é o arquivo formatado no disco, quando o formatador roda.
 
-### Schema Lógico
-* **`systemMessage`** (Texto, Obrigatório): Notificação visual direcionada à IDE Claude Code informando qual ferramenta efetuou a alteração.
+| Código de retorno | Significado |
+|---|---|
+| `0` | Sempre. Formatado, no-op por blindagem/opt-out/extensão, ou exceção capturada. |
 
-### Exemplo de Saída
-```json
-{
-  "systemMessage": "🎨 prettier padronizou hooks/format-on-edit.sh"
-}
-```
+---
+
+## 🔌 3. Contrato com o adaptador de processo 🟢
+
+`ProcessPort.execute_formatter(formatter, file_path, executable?) -> (exit_code, stdout, stderr)`. O serviço **ignora** o `exit_code` (não-bloqueio). Mapeamento em `HostFormatterAdapter`:
+
+| Formatador | Comando |
+|---|---|
+| `ruff` | `ruff format <file>` |
+| `prettier` | `prettier --write <file>` |
+| `rustfmt` | `rustfmt <file>` |
+
+Formatador ausente no host → `(127, "", <erro>)`, ignorado pelo serviço.

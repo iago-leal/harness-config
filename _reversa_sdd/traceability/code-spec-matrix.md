@@ -1,67 +1,90 @@
 # Matriz de Rastreabilidade Código-Especificação (Code-Spec Matrix)
 
-> Gerado pelo Redator em 2026-06-23 (Re-extração após Feature 002)
-> Nível de Documentação: **Completo**
+> Regenerado pelo Writer em 2026-06-24 (Re-extração após as features 003, 004 e 005)
+> Layout das specs: `feature-folder`, granularity `feature`. Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · n/a (sem unit dedicada).
 
-Esta matriz correlaciona cada arquivo do repositório legado e as classes/adaptadores do novo `harness-core` com as respectivas unidades de especificação funcional e o nível de cobertura de mapeamento.
+Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As pastas de spec mapeiam capacidades/features do `harness-core`. Arquivos de framework (`.claude/skills/`, `.agents/skills/`) e artefatos do próprio Reversa (`.reversa/`, `_reversa_sdd/`, `_reversa_forward/`) ficam fora do escopo.
 
----
-
-## 📊 Matriz de Rastreabilidade
-
-### 1. Mapeamento do Legado (Claude Config)
-
-| Arquivo do Legado | Unit Correspondente | Cobertura | Observações / Justificativa |
-| :--- | :--- | :---: | :--- |
-| `claude-config/bin/bootstrap.sh` | `bootstrap/` | 🟢 | Cobertura total das rotinas de instalação de hooks e sincronia. |
-| `claude-config/bin/sync-check.sh` | `sync-check/` | 🟢 | Cobertura total da verificação com cache TTL e direções push/pull. |
-| `claude-config/bin/test_sync_check.sh` | `sync-check/` | 🟢 | Mapeado na seção de Tarefas de Teste (cobertura de testes legada). |
-| `claude-config/bin/gerar-index-decisoes.sh` | `microdecisoes/` | 🟢 | Mapeado nas lógicas de compilação de grafo e backlinks. |
-| `claude-config/hooks/format-on-edit.sh` | `format-on-edit/` | 🟢 | Cobertura total do roteador de formatadores PostToolUse. |
-| `claude-config/hooks/README.md` | `format-on-edit/` | 🟢 | Documentação integrada nas regras de precedência e symlinks. |
-| `claude-config/commands/clarificar.md` | `comandos-customizados/` | 🟢 | Mapeado nas regras e fluxos do slash-command `/clarificar`. |
-| `claude-config/commands/encerrar-sessao.md` | `comandos-customizados/` | 🟢 | Mapeado nas regras de consolidação e âncora de sessão `/encerrar-sessao`. |
-| `claude-config/commands/handoff.md` | `comandos-customizados/` | 🟢 | Mapeado no fluxo de escrita do bastão de tarefas `/handoff`. |
-| `claude-config/commands/resume.md` | `comandos-customizados/` | 🟢 | Mapeado no fluxo de retomada de tarefas `/resume`. |
-| `claude-config/decisoes/` (MD-0001 a MD-0017) | `microdecisoes/` | 🟢 | Mapeado na definição de modelo de dados de decisões. |
-| `claude-config/settings.json` | `comandos-customizados/` | 🟢 | Contém os mapeamentos de ativação de hooks e ganchos de comandos. |
-| `claude-config/skills.active` | `bootstrap/` | 🟢 | Utilizado no boot de dependências de skills ativas. |
-| `microdecisoes.md` | `microdecisoes/` | 🟢 | Arquivo compilado pelo script de geração de índices. |
-| `ESTADO-DA-SESSAO.md` | `comandos-customizados/` | 🟢 | Contém a âncora Git atualizada no encerramento. |
-
-### 2. Mapeamento do Núcleo Hexagonal (`harness-core`)
-
-| Componente / Arquivo do Core | Unit Correspondente | Cobertura | Observações / Justificativa |
-| :--- | :--- | :---: | :--- |
-| `harness` (raiz do projeto) | `run-harness-core-local/` | 🟢 | Script Bash wrapper de conveniência que encapsula execução via venv. |
-| `.reversa/settings.json.snippet` | `run-harness-core-local/` | 🟢 | Snippet de hooks de lifecycle da IDE sugerido para o agente. |
-| `harness-core/tests/test_wrapper.py` | `run-harness-core-local/` | 🟢 | Suite de testes unitários e de integração do wrapper local. |
-| `harness-core/src/main.py` | `bootstrap/` | 🟢 | Ponto de entrada (CLI Entry Point) e injeção de dependência física. Registro dos comandos de doc. |
-| `harness-core/src/core/ports/fs.py` | *Transversal (Ports)* | 🟢 | Interface `FileSystemPort` para abstração de operações de E/S. |
-| `harness-core/src/core/ports/git.py` | *Transversal (Ports)* | 🟢 | Interface `GitPort` para abstração de comandos do Git local/remoto. |
-| `harness-core/src/core/ports/process.py` | *Transversal (Ports)* | 🟢 | Interface `ProcessPort` para abstração de execução de processos do host. |
-| `harness-core/src/core/bootstrap/service.py` | `bootstrap/` | 🟢 | Classe `BootstrapService` de instalação e gestão dos hooks. |
-| `harness-core/src/core/formatting/service.py` | `format-on-edit/` | 🟢 | Classe `FormattingService` de linting/formatting de arquivos. |
-| `harness-core/src/core/sync/service.py` | `sync-check/` | 🟢 | Classe `SyncService` que coordena o fluxo de status de sincronia. |
-| `harness-core/src/core/decisions/service.py` | `microdecisoes/` | 🟢 | Classe `DecisionService` que indexa microdecisões e backlinks. |
-| `harness-core/src/core/commands/service.py` | `comandos-customizados/` | 🟢 | Classe `CommandService` para lifecycle de sessões e commands. |
-| `harness-core/src/core/documentation/service.py` | `documentacao-uso-html/` | 🟢 | Classe `DocumentationService` de compilação da documentação HTML. |
-| `harness-core/src/core/documentation/template.html` | `documentacao-uso-html/` | 🟢 | Template de design visual interativo do HTML de documentação. |
-| `harness-core/tests/test_documentation.py` | `documentacao-uso-html/` | 🟢 | Suite de testes unitários e de integração de documentação. |
-| `harness-docs.html` (raiz do projeto) | `documentacao-uso-html/` | 🟢 | HTML consolidado autossuficiente e offline de documentação gerado. |
-| `harness-core/src/core/domain/models.py` | `comandos-customizados/` | 🟢 | Modelos ricos de domínio como `SessionState` e `Decision`. |
-| `harness-core/src/core/domain/config.py` | *Transversal (Domain)* | 🟢 | Entidade de configuração centralizada `HarnessConfig`. |
-| `harness-core/src/core/domain/cache.py` | `sync-check/` | 🟢 | Objeto de valor `SyncCache` para controle de TTL de checagem. |
-| `harness-core/src/adapters/fs/local.py` | *Transversal (Adapters)* | 🟢 | `LocalFileSystemAdapter` implementando chamadas em disco do SO. |
-| `harness-core/src/adapters/git/subprocess.py` | *Transversal (Adapters)* | 🟢 | `SubprocessGitAdapter` invocando a CLI do Git através do shell. |
-| `harness-core/src/adapters/process/formatter.py` | `format-on-edit/` | 🟢 | `HostFormatterAdapter` que gerencia Ruff, Prettier, etc. |
-| `harness-core/src/adapters/mcp/server.py` | `bootstrap/` | 🟢 | Adaptador de protocolo de servidor MCP para o Harness Core. |
+> ⚠️ **Mudança vs versão anterior:** o módulo `claude-config/` (scripts shell `bootstrap.sh`, `format-on-edit.sh`, `sync-check.sh`, `gerar-index-decisoes.sh`, `commands/*.md`) **não existe mais** (purgado, commit `5624f78`). As specs antes ancoradas nele foram **reescritas** sobre o core Python equivalente. Surgiram as units `install/` (f003) e `session/` (f004).
 
 ---
 
-## 📈 Métricas de Cobertura Estimada
+## 📁 1. Núcleo de domínio (`harness-core/src/core/`)
 
-* **Arquivos do Legado Mapeados:** 15 de 15 arquivos de infraestrutura relevantes analisados.
-* **Componentes do Core Mapeados:** 23 de 23 componentes estruturais identificados no C4.
-* **Percentual de Cobertura de Engenharia Reversa:** **100%** 🟢
-* **Arquivos Sem Mapeamento (Candidatos a Descarte):** Nenhum. Todos os scripts, ganchos e ficheiros de configuração foram completamente rastreados até as unidades do modelo de desenvolvimento direcionado a especificações (SDD).
+| Arquivo do legado | Unit correspondente | Cobertura |
+|---|---|---|
+| `core/bootstrap/service.py` | `bootstrap/` | 🟢 |
+| `core/formatting/service.py` | `format-on-edit/` | 🟢 |
+| `core/sync/service.py` | `sync-check/` | 🟢 |
+| `core/decisions/service.py` | `microdecisoes/` | 🟢 |
+| `core/commands/service.py` | `comandos-customizados/` | 🟢 |
+| `core/documentation/service.py` | `documentacao-uso-html/` | 🟢 |
+| `core/documentation/template.html` | `documentacao-uso-html/` | 🟢 |
+| `core/install/service.py` ✨ | `install/` | 🟢 |
+| `core/install/harness_profiles.py` ✨ | `install/` | 🟢 |
+| `core/install/template.md` ✨ | `install/` | 🟢 |
+| `core/session/serializer.py` ✨ | `session/` | 🟢 |
+| `core/session/sinks.py` ✨ | `session/` | 🟢 |
+| `core/session/errors.py` ✨ | `session/` | 🟢 |
+
+## 📁 2. Domínio compartilhado (`core/domain/`, `core/ports/`)
+
+| Arquivo do legado | Unit correspondente | Cobertura |
+|---|---|---|
+| `core/domain/models.py` | `session/` + `microdecisoes/` (transversal) | 🟢 |
+| `core/domain/config.py` | `microdecisoes/` (origem de `[decisions]`); `install/` (origem de `active_harness`) | 🟢 |
+| `core/domain/cache.py` | `sync-check/` | 🟢 |
+| `core/ports/fs.py` | transversal (todas as units que fazem I/O) | 🟡 |
+| `core/ports/git.py` | `sync-check/`, `comandos-customizados/`, `bootstrap/` | 🟡 |
+| `core/ports/process.py` | `format-on-edit/` | 🟡 |
+
+## 📁 3. Adaptadores (`harness-core/src/adapters/`)
+
+| Arquivo do legado | Unit correspondente | Cobertura |
+|---|---|---|
+| `adapters/fs/local.py` | transversal (gravação atômica) | 🟡 |
+| `adapters/git/subprocess.py` | `sync-check/`, `comandos-customizados/` | 🟢 |
+| `adapters/process/formatter.py` | `format-on-edit/` (contracts.md) | 🟢 |
+| `adapters/mcp/server.py` | transversal — `format-on-edit/`, `sync-check/`, `microdecisoes/`, `session/` (expõe as 4 tools; T1/T2) | 🟡 |
+
+## 📁 4. Drivers e wrapper
+
+| Arquivo do legado | Unit correspondente | Cobertura |
+|---|---|---|
+| `src/main.py` (CLI v2.0.0) | `run-harness-core-local/` (wrapper→CLI) + cada unit pelo seu subcomando | 🟢 |
+| `harness` (wrapper Bash de raiz) | `run-harness-core-local/` | 🟢 |
+
+## 📁 5. Configuração e artefatos versionados
+
+| Arquivo do legado | Unit correspondente | Cobertura |
+|---|---|---|
+| `harness-core/harness.toml` | `microdecisoes/` (`[decisions]`), `format-on-edit/` (`[formatting]`, T4), `sync-check/` (`[sync]`) | 🟢 |
+| `harness-core/requirements.txt` | n/a (manifesto de dependências; ver `dependencies.md`) | n/a |
+| `.harness/estado-da-sessao.md` | `session/` + `comandos-customizados/` | 🟢 |
+| `.harness/decisoes/MD-*.md` | `microdecisoes/` | 🟢 |
+| `.harness/decisoes/_cabecalho.md` | `microdecisoes/` | 🟢 |
+| `.harness/microdecisoes.md` (índice derivado) | `microdecisoes/` | 🟢 |
+| `.claude/settings.json` | transversal (hooks `SessionStart`/`PostToolUse`/`Stop`) — `session/`, `format-on-edit/`, `microdecisoes/`, `install/` | 🟡 |
+| `.gemini/settings.json` | `session/`, `install/` (hook `SessionStart`) | 🟡 |
+| `harness-docs.html` | `documentacao-uso-html/` | 🟢 |
+
+## 📁 6. Instruções de agente (ativação do Reversa)
+
+| Arquivo do legado | Unit correspondente | Cobertura |
+|---|---|---|
+| `CLAUDE.md` / `GEMINI.md` / `AGENTS.md` | n/a (ativação do framework Reversa, não é produto) | n/a |
+
+---
+
+## 📂 7. Pacotes `__init__.py`
+
+Todos os `__init__.py` em `harness-core/src/**` são marcadores de pacote (sem lógica de negócio): cobertura **n/a**, herdam a unit do pacote a que pertencem.
+
+---
+
+## 📊 8. Resumo de cobertura
+
+- **Arquivos de produto com lógica mapeados a uma unit:** todos os `service.py`/módulos de `core/*`, os 3 adaptadores físicos, o driver MCP, a CLI e o wrapper → **cobertura 🟢/🟡 completa**.
+- **`n/a` (candidatos a análise adicional / não-produto):** `requirements.txt`, `CLAUDE.md`/`GEMINI.md`/`AGENTS.md`, os `__init__.py`, e as duas árvores de skills do Reversa (framework).
+- **Units de spec ativas (9):** `bootstrap/`, `format-on-edit/`, `sync-check/`, `microdecisoes/`, `comandos-customizados/`, `documentacao-uso-html/`, `run-harness-core-local/`, `install/` ✨, `session/` ✨.
+- **Bugs latentes refletidos como contexto (não corrigidos):** T1 (`microdecisoes/`, `adapters/mcp/server.py`), T2 (`session/` + `comandos-customizados/`, `server.py`), T3 (`format-on-edit/`, `main.py`), T4 (`format-on-edit/`, config inerte).

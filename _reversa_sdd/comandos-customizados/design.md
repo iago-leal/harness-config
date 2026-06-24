@@ -1,61 +1,63 @@
-# Comandos Customizados, Design Técnico
+# Comandos Customizados (Commands) — Design Técnico
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [commands/](file:///Users/iagoleal/dev/harness/harness-config/commands/)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 004)
+> Foca no COMO a unit é construída, a partir do código legado lido. Escala: 🟢 / 🟡 / 🔴
 
 ## Interface
 
-Os comandos customizados são definidos na forma de especificações escritas em Markdown ingeridas nativamente pela CLI do Claude Code através do arquivo global `settings.json`.
-
 | Símbolo | Assinatura | Retorno | Observação |
-| :--- | :--- | :--- | :--- |
-| `/clarificar` | `commands/clarificar.md` | `void` (Interface interativa) | Guiado via chat de prompts. |
-| `/encerrar-sessao` | `commands/encerrar-sessao.md` | `void` (Gravação física e commits) | Roda comandos locais do shell do host. |
-| `/handoff` | `commands/handoff.md` | `void` (Gravação física em BASTAO.md) | Sincroniza estado de tarefas. |
-| `/resume` | `commands/resume.md` | `void` (Leitura física do BASTAO.md) | Recupera tarefas de memória compartilhada. |
-
----
+|---------|-----------|---------|------------|
+| `CommandService.execute_command` | `(command, args, repo_path, session_filepath)` | `str` | Normaliza e despacha; comando desconhecido → string de erro. |
+| `CommandService.load_session` | `(session_filepath)` | `SessionState \| None` | Ausente → `None`; malformado → `MalformedSessionStateError`. |
+| `CommandService.save_session` | `(state, session_filepath)` | — | `serializer.render` + gravação atômica. |
 
 ## Fluxo Principal
 
-### 💬 1. Fluxo do `/clarificar` (PCCP)
-1. Extrai a queixa bruta do usuário.
-2. Inspeciona a base local buscando fatos (F) em arquivos e commits.
-3. Propõe inferências técnicas (I) e lista as lacunas de conhecimento conceitual (H).
-4. Limita a iteração a 2 rodadas. Se o usuário digitar `/travar`, encerra o levantamento e inicia o plano.
-5. Se estourar rodadas, adota a hipótese (H) mais simples e segura e força a continuidade do ciclo.
+1. **Normalização:** `command.strip().lower().lstrip("/")`. 🟢
+2. **`encerrar-sessao`:** carrega sessão; ausente/inativa → erro. Lê HEAD (`GitPort`), `session.close_session(commit)`, salva atomicamente. 🟢
+3. **`resume`:**
+   - Sem sessão → cria `SessionState` com HEAD atual e feature `args[0]` (ou `"default_feature"`), salva, retorna "Nova sessão". 🟢
+   - Com sessão → compara `session.commit_hash` com HEAD; se divergir, monta `⚠️ ALERTA` (RN-07); `start_session` reativa **preservando a narrativa** (RN-N3); salva; retorna `<warning><corpo da narrativa>\n<footer>`. O corpo vem de `serializer.render_narrative`. 🟢
+4. **`clarificar`:** texto fixo (limite de 2 rodadas). 🟢
+5. **`handoff`:** monta bloco Markdown com feature ativa + HEAD. 🟢
+6. **Desconhecido:** `"Comando desconhecido: <command>"`. 🟢
 
-### 🚪 2. Fluxo do `/encerrar-sessao`
-1. Localiza a raiz do Git e valida integridade.
-2. Identifica arquivos alterados e solicita ao desenvolvedor confirmação para realizar commits pequenos.
-3. Registra dados do HEAD (hash, branch) em `ESTADO-DA-SESSAO.md`.
-4. Roda `gerar-index-decisoes.sh` para recalcular backlinks e compilar `microdecisoes.md`.
-5. Valida e reconcilia ganchos do Git.
-6. Atualiza arquivos em vaults de Notas pessoais (se configurados).
-7. Pergunta interativamente ao desenvolvedor humano se deseja fazer push dos commits locais.
+## Fluxos Alternativos
 
-### 🤝 3. Fluxo de Handoff e Resume
-* **`handoff.md`:** Executa o script complementar de arquivamento de bastões velhos, cria o payload consolidado de Objetivo, Estado Atual (Fatos/Inferências) e Tarefas Pendentes, e grava sob `~/.agent-memory/BASTAO.md` realizando o commit físico na memória.
-* **`resume.md`:** Lê `~/.agent-memory/BASTAO.md` do repositório local, valida integridade de commits do histórico de handoff, resume o status da atividade para o usuário no chat e retoma a próxima tarefa pendente.
-
----
+- **Estado ausente em `resume`:** sessão nova normal (não erro). 🟢
+- **Estado malformado:** `load_session` levanta `MalformedSessionStateError` (RN-N4). 🟢
+- **`encerrar-sessao` sem sessão ativa:** erro explícito. 🟢
+- **Divergência de âncora:** alerta antecede a narrativa; reativa mesmo assim. 🟢
 
 ## Dependências
-* `git` — Controle de versão, ancoragem e commits locais.
-* `bin/gerar-index-decisoes.sh` — Compilação e backlinks de decisões de design.
-* Repositório físico comum local de memória compartilhada (`~/.agent-memory/`).
 
----
+- `GitPort` — HEAD para criação/encerramento e validação da âncora.
+- `FileSystemPort` — leitura/gravação atômica do estado.
+- `core/session/serializer` — `render` (persistência) e `render_narrative` (reinjeção).
+- `core/session/errors.MalformedSessionStateError`.
+- `core/domain/models.SessionState` / `SessionNarrative`.
+- (Na borda) `core/session/sinks.get_sink` — escolhido por `main.py` conforme `active_harness` (RN-N5).
 
 ## Decisões de Design Identificadas
 
 | Decisão | Evidência no código | Confiança |
-| :--- | :--- | :---: |
-| Normalização da terminologia de ADR para microdecisão | `commands/encerrar-sessao.md` (commit `83895b0`) | 🟢 |
-| Estrutura de prompt interativa do Claude Code baseada em Markdown descritivo | `commands/clarificar.md` | 🟢 |
+|---------|---------------------|-----------|
+| Serviço agnóstico a IDE/harness; sink escolhido na borda | `service.py` (texto puro) + `main.py` | 🟢 |
+| Âncora Git como detector de divergência na retomada | `service.py` (`resume`) | 🟢 |
+| Narrativa preservada na reativação (não reinventada) | `service.py` (`start_session`) | 🟢 |
+| Ausente ≠ malformado em `load_session` | `service.py` + `session/errors.py` | 🟢 |
 
----
+## Estado Interno
+
+O estado de domínio é externalizado em `.harness/estado-da-sessao.md` (gerido pela unit `session`). O `CommandService` não guarda estado em memória entre chamadas; cada comando carrega/grava o arquivo.
 
 ## Observabilidade
-* O andamento e o status de cada passo do encerramento de sessão e do handoff são relatados de forma interativa no terminal para controle e acompanhamento visual do usuário humano.
+
+- Alerta `⚠️` textual em divergência de âncora.
+- `MalformedSessionStateError` como sinal barulhento de corrupção.
+- A reinjeção real (stdout/arquivo) acontece na borda, pelo sink.
+
+## Riscos e Lacunas
+
+- 🟡 **T2 (bug latente):** via MCP, `session_command` usa `ESTADO-DA-SESSAO.md` na raiz — estado paralelo, divergente da CLI. Documentado, não corrigido.
+- 🟡 `clarificar` e `handoff` produzem texto; a ação efetiva (commits, push) descrita no Markdown legado não é mais executada pelo serviço (escopo reduzido).

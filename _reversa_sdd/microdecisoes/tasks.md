@@ -1,39 +1,57 @@
-# Microdecisões, Tarefas de Implementação
+# Microdecisões (Decisions) — Tarefas de Implementação
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [decisoes/](file:///Users/iagoleal/dev/harness/harness-config/decisoes/) e [gerar-index-decisoes.sh](file:///Users/iagoleal/dev/harness/harness-config/bin/gerar-index-decisoes.sh)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 005)
+> Sequência executável para reimplementar a unit a partir do legado, com rastreabilidade ao código original.
+
+> ⚠️ Reescrita: a unit agora é o `DecisionService` Python (`harness-core`), não o script shell legado `bin/gerar-index-decisoes.sh` (purgado). Fichas em `.harness/decisoes/`, índice em `.harness/microdecisoes.md`, caminhos lidos de `[decisions]` no `harness.toml`.
 
 ## Pré-requisitos
-* [ ] Permissões de escrita e alteração do arquivo `microdecisoes.md` na raiz do projeto.
-* [ ] Parser awk/sed mapeado e disponível no host.
 
----
+- [ ] `Decision` e `Relationship` definidos em `core/domain/models.py`.
+- [ ] `DecisionsSection` em `core/domain/config.py` e `load_config` funcional.
+- [ ] `FileSystemPort` disponível (leitura das fichas + gravação atômica).
+- [ ] `PyYAML` disponível.
 
 ## Tarefas
 
-- [ ] **T-01: Algoritmo de Varredura e Parser de Metadados**
-  * Origem no legado: `bin/gerar-index-decisoes.sh` (bloco de loop inicial)
-  * Critério de pronto: Localizar arquivos de decisões sequenciais em `decisoes/` e realizar parse robusto extraindo ID, título, gancho e relações, emitindo erro em caso de relações malformadas.
-  * Confiança: 🟢 CONFIRMADO
-- [ ] **T-02: Implementação da Inversão de Grafo (Backlinks)**
-  * Origem no legado: `bin/gerar-index-decisoes.sh` (processamento awk)
-  * Critério de pronto: Computar corretamente as relações inversas e injetá-las na ficha correspondente da decisão de destino sob a formatação hierárquica.
-  * Confiança: 🟢 CONFIRMADO
-- [ ] **T-03: Geração do Markdown Consolidado**
-  * Origem no legado: `bin/gerar-index-decisoes.sh` (bloco de escrita final)
-  * Critério de pronto: Escrever a tabela navegável e os blocos de grafo a partir do cabeçalho canônico `decisoes/_cabecalho.md`.
-  * Confiança: 🟢 CONFIRMADO
-- [ ] **T-04: Implementação da Flag de Validação Passiva (`--check`)**
-  * Origem no legado: `bin/gerar-index-decisoes.sh:40`
-  * Critério de pronto: Executar em modo comparativo sem reescrever arquivos, finalizando com status `1` se houver divergências.
-  * Confiança: 🟢 CONFIRMADO
+- [ ] T-01, Implementar `load_decisions(directory)`
+  - Origem no legado: `core/decisions/service.py`
+  - Critério de pronto: lista ordenada de `MD-*.md`; parse de front-matter (`id`, `gancho`, `estado`, `relacoes`); diretório ausente → `[]`; front-matter/YAML inválido → `ValueError`.
+  - Confiança: 🟢
 
----
+- [ ] T-02, Implementar `validate_integrity(decisions)`
+  - Origem no legado: `core/decisions/service.py`, `core/domain/models.py` (`Decision.validate_integrity`)
+  - Critério de pronto: agrega validação por ficha (H1 + 4 seções `D/PORQUÊ/DESCARTADO/ESTADO`), auto-relação e aresta órfã; grafo válido → `[]`.
+  - Confiança: 🟢
+
+- [ ] T-03, Implementar `compile_index(decisions, output, header)`
+  - Origem no legado: `core/decisions/service.py`
+  - Critério de pronto: deriva backlinks por verbos inversos, ordena por ID de origem, monta `↳ <saídas> · <entradas>`, concatena cabeçalho e grava atomicamente.
+  - Confiança: 🟢
+
+- [ ] T-04, Validar `Relationship` (verbos e alvo)
+  - Origem no legado: `core/domain/models.py`
+  - Critério de pronto: `rel_type` ∈ conjunto de seis verbos (lower); `target_id` regex `^MD-\d{4}$`.
+  - Confiança: 🟢
+
+- [ ] T-05, Derivar caminhos de `[decisions]` no driver
+  - Origem no legado: `src/main.py` (subcomando `decisions`)
+  - Critério de pronto: `decisoes_dir`/`output_file`/`header_file` vêm de `load_config().decisions`; nenhum literal de caminho no serviço (W001).
+  - Confiança: 🟢
 
 ## Tarefas de Teste
 
-- [ ] **TT-01: Validação de Inversão de Relações**
-  * Critério de pronto: Criar duas microdecisões mock com relações de refina/depende e atestar que a compilação do índice exibe as referências reversas na ordem esperada.
-- [ ] **TT-02: Teste de Interpolação de Metadados Inválidos**
-  * Critério de pronto: Inserir relação malformada com 3 tokens em um arquivo e verificar se o compilador aborta exibindo o erro em `stderr`.
+- [ ] TT-01, Inversão de relações: duas fichas com `refina`/`depende-de` produzem os backlinks reversos esperados no índice.
+- [ ] TT-02, Caso de erro: relação malformada → `ValueError`; aresta órfã → erro em `validate_integrity`.
+- [ ] TT-03, Config: alterar `[decisions].dir` muda o diretório lido (sem literal chumbado).
+  - Cobertura existente: `tests/` (serviço de decisões).
+
+## Ordem Sugerida
+
+1. T-04 (validação de relação) e T-01 (carga) primeiro.
+2. T-02 (integridade) antes de T-03 (compilação), que consome o grafo validado.
+3. T-05 (config) fecha a integração com o driver.
+
+## Lacunas Pendentes (🔴)
+
+- Nenhuma 🔴. Ressalva 🟡: **T1** — via MCP, `load_config` quebra por import ausente; a tool de decisões MCP não processa. Bug latente documentado, não corrigido aqui.

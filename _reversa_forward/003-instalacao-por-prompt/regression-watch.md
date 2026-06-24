@@ -15,7 +15,13 @@ Nenhuma regra 🟢 do legado foi modificada (ver `legacy-impact.md#4-regras-modi
 
 ## 2. Histórico de re-extrações
 
-*Vazio. Será preenchido quando `/reversa` rodar novamente sobre o projeto.*
+### Re-extração 2026-06-23 21:58
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | Prompt derivado por introspecção via `InstallPromptService` + `core/install/template.md` (placeholder `{{COMMANDS}}` preenchido do argparse); não é Markdown estático mantido à mão. |
+| W002 | 🟢 verde | `template.md:23` — "aplique SEMPRE no `.claude/settings.json` do **projeto**. Nunca edite a configuração global em `~/.claude`". |
+| W003 | 🟡 amarelo | Presença satisfeita — o prompt ainda sinaliza a pendência do `SessionStart`/`MD-0001` (`template.md:42`). PORÉM a premissa da regra ("enquanto a feature 004 não fechar") EXPIROU: a 004 foi codada e o `SessionStart` reinjeta o estado (observado no boot desta sessão). A nota virou obsoleta — afirma uma dívida já paga. Recomendação: atualizar `template.md` e arquivar/atualizar este W003. Aguarda julgamento humano. |
 
 ## 3. Arquivadas
 

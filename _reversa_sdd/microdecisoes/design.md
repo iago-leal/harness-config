@@ -1,54 +1,63 @@
-# Microdecisões, Design Técnico
+# Microdecisões (Decisions) — Design Técnico
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [decisoes/](file:///Users/iagoleal/dev/harness/harness-config/decisoes/) e [gerar-index-decisoes.sh](file:///Users/iagoleal/dev/harness/harness-config/bin/gerar-index-decisoes.sh)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 005)
+> Foca no COMO a unit é construída, a partir do código legado lido. Escala: 🟢 / 🟡 / 🔴
 
 ## Interface
 
-O compilador de índices opera via CLI e aceita flags de validação passiva.
-
 | Símbolo | Assinatura | Retorno | Observação |
-| :--- | :--- | :--- | :--- |
-| `gerar-index-decisoes.sh` | `./bin/gerar-index-decisoes.sh [--check]` | `void` (exit status) | Retorna status `0` se ok; `1` se houver erros de parse ou defasagem (em modo check). |
+|---------|-----------|---------|------------|
+| `DecisionService.load_decisions` | `(directory: str)` | `List[Decision]` | Lista ordenada de `MD-*.md`; diretório ausente → `[]`; front-matter ausente/inválido → `ValueError`. |
+| `DecisionService.validate_integrity` | `(decisions: List[Decision])` | `List[str]` | Lista de erros; vazia = grafo válido. |
+| `DecisionService.compile_index` | `(decisions, output, header)` | — | Deriva backlinks e grava o índice atomicamente. |
 
----
+Driver CLI (`main.py`, subcomando `decisions`): `config = load_config(fs)` → `decisoes_dir = config.decisions.dir`, `output_file = config.decisions.index_file`, `header_file = config.decisions.header_file`. Sem literais.
 
 ## Fluxo Principal
-1. **Varredura Física:** Localiza e lista todos os arquivos Markdown no formato `decisoes/MD-*.md` ordenando de forma sequencial pelo ID.
-2. **Leitura e Extração de Metadados:**
-   * Faz o parse das linhas de metadados extraindo chaves de gatilho (`gancho`) e relacionamentos declarados (`relacoes`).
-   * Valida se a declaração de cada relação de design possui exatamente 2 tokens (ex: `refina MD-0002`). Se violar, aborta o processamento emitindo erro em stderr.
-3. **Mapeamento de Backlinks (Inversão de Grafo):**
-   * Armazena as arestas originais direcionadas.
-   * Executa a rotação lógica do grafo:
-     * `depende-de` $\rightarrow$ `dependência-de`
-     * `substitui` $\rightarrow$ `substituído-por`
-     * `refina` $\rightarrow$ `refinado-por`
-     * `relaciona` $\rightarrow$ `relacionado-com`
-4. **Construção do Markdown Consolidado (`microdecisoes.md`):**
-   * Escreve o cabeçalho base extraído de `decisoes/_cabecalho.md`.
-   * Monta a tabela de índices navegáveis listando ID, Título, Gancho e Status.
-   * Adiciona para cada decisão a árvore hierárquica formatada de dependências diretas e backlinks inversos computados (usando o recuo visual `↳`).
-5. **Gravação ou Validação Passiva:**
-   * **Modo Padrão:** Grava o conteúdo gerado sob o arquivo físico `microdecisoes.md`.
-   * **Modo Check (`--check`):** Compara o conteúdo em buffer temporário contra o arquivo `microdecisoes.md` existente em disco. Retorna status `1` se houver alguma diferença conceitual de conteúdo.
 
----
+1. **load_decisions(directory):** lista `MD-*.md` ordenados; para cada, split por `---` (front-matter YAML, máx. 3 partes). Extrai `id`, `gancho`, `estado` (default `ativo`); parseia `relacoes` (cada string = `<verbo> <MD-XXXX>`, dois tokens). Diretório ausente → lista vazia; front-matter ausente/YAML inválido → `ValueError`. 🟢
+2. **validate_integrity(decisions):** agrega erros — validação individual de cada ficha (`Decision.validate_integrity`: H1 com o ID + 4 seções), auto-relação (`target == self.id`) e aresta órfã (alvo fora do `decision_map`). 🟢
+3. **compile_index(decisions, output, header):**
+   - Tabela de **verbos inversos**: `refina→refinado-por`, `depende-de→requerido-por`, `estende→estendido-por`, `substitui→substituído-por`, `relaciona→relacionado-com`, `bloqueia→bloqueado-por`; verbo fora da tabela → `inverso-de-<verbo>`.
+   - Backlinks ordenados por ID de origem (determinismo).
+   - Título extraído do H1 `# MD-XXXX — <título>` por regex.
+   - Sub-linha `↳ <saídas> · <entradas>` montada por composição.
+   - Cabeçalho opcional concatenado no topo. Gravação **atômica** via `write_file_atomic`. 🟢
+
+## Fluxos Alternativos
+
+- **Diretório de decisões ausente:** `load_decisions` retorna `[]` (não erro). 🟢
+- **Relação malformada** (≠ dois tokens, verbo fora do conjunto, alvo fora do padrão): `ValueError` no parse (`Relationship`). 🟢
+- **Grafo inconsistente:** `validate_integrity` devolve a lista de erros; o driver decide (o índice não deve ser compilado a partir de grafo inválido). 🟡 INFERIDO (política do driver).
+- **Verbo de relação sem inverso conhecido:** backlink genérico `inverso-de-<verbo>`. 🟢
 
 ## Dependências
-* Interpretadores GNU Coreutils (`sed`, `awk`, `grep`) para parsing de arquivos texto e blocos Markdown.
 
----
+- `core/domain/models.Decision` / `Relationship` — entidades e validação.
+- `core/domain/config.load_config` — origem dos caminhos (no driver).
+- `FileSystemPort` — leitura das fichas e gravação atômica do índice.
+- `PyYAML` — parse do front-matter.
 
 ## Decisões de Design Identificadas
 
 | Decisão | Evidência no código | Confiança |
-| :--- | :--- | :---: |
-| Uso da flag `--check` para desacoplar a validação da escrita do índice | `gerar-index-decisoes.sh:40` | 🟢 |
-| Inversão de grafo de backlinks utilizando hashing associativo em shell scripts (awk) | `gerar-index-decisoes.sh:65` | 🟡 |
+|---------|---------------------|-----------|
+| Fichas particionadas + índice derivado (vs banco de decisões) | `core/decisions/service.py`, `.harness/decisoes/` | 🟢 (ADR 0001) |
+| Caminhos por configuração (`[decisions]`), sem literais | `service.py` (parâmetros) + `config.py` (`DecisionsSection`) | 🟢 (ADR 0012 / MD-0004) |
+| Backlinks por tabela de verbos inversos, ordenados por ID | `compile_index` | 🟢 |
+| Gravação atômica do índice | `write_file_atomic` (`adapters/fs/local.py`) | 🟢 |
 
----
+## Estado Interno
+
+Sem estado em memória entre execuções. O "estado" é o conjunto de fichas em `.harness/decisoes/` e o índice derivado `.harness/microdecisoes.md` — ambos versionados no Git. O `decision_map` (id → Decision) é construído por execução durante a validação.
 
 ## Observabilidade
-* Se houver erros de formato de metadados, o script emite a linha defeituosa e o arquivo de origem em `stderr` para ação imediata do desenvolvedor.
+
+- `ValueError` barulhento em front-matter/relação inválidos.
+- `validate_integrity` devolve mensagens de erro acionáveis (auto-relação, aresta órfã, seção ausente).
+- O cabeçalho do índice (`_cabecalho.md`) declara explicitamente "Não edite à mão".
+
+## Riscos e Lacunas
+
+- 🟡 **T1 (bug latente):** via MCP (`server.py:60`), `load_config` é chamado sem import → `NameError`; a tool `process_decisions` nunca processa decisões. O caminho configurável só é exercido pela CLI. Documentado, **não corrigido**.
+- 🟡 Diferença sutil: o MCP deriva o `header_file` de `os.path.join(dir, "_cabecalho.md")`, ignorando um eventual override de `header_file` no `harness.toml` (a CLI respeita o override). Inconsistência menor, não bug.

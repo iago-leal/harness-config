@@ -1,9 +1,11 @@
 # ADR 0001: Particionamento de Microdecisões de Design
 
-* **Status:** Aceito
+* **Status:** Aceito (parcialmente superado pelo ADR 0012 quanto à localização e ao compilador)
 * **Data:** 2026-06-21
 * **Contexto Técnico:** Módulo `decisoes`
 * **Escala de Confiança:** 🟢 CONFIRMADO
+
+> ⚠️ **Atualização (2026-06-24, feature 005):** o princípio de uma ficha por decisão **permanece**, mas dois detalhes deste ADR estão desatualizados. (1) O diretório canônico passou de `decisoes/` (raiz) para `.harness/decisoes/`. (2) A consolidação **não** usa mais um shell `bin/gerar-index-decisoes.sh`: o índice é compilado pelo `DecisionService` (`./harness decisions`, hook `Stop`) e os caminhos vêm de `[decisions]` no `harness.toml`. Ver **ADR 0012**.
 
 ## Contexto e Problema
 

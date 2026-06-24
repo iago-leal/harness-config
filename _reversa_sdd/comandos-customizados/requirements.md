@@ -1,53 +1,85 @@
-# Comandos Customizados, Requisitos (Requirements)
+# Comandos Customizados (Commands) — Requisitos (Requirements)
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [commands/](file:///Users/iagoleal/dev/harness/harness-config/commands/)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 004)
+> Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
+> Rastreabilidade ao Legado: [`harness-core/src/core/commands/service.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/commands/service.py); consome `core/session/*`. Driver: `src/main.py` (subcomando `cmd`, hook `SessionStart`).
+
+> ⚠️ **Reescrita vs versão anterior:** os comandos **deixaram de ser** arquivos Markdown em `harness-config/commands/` (purgados, commit `5624f78`) e passaram a ser o `CommandService` Python em `harness-core`. O estado de sessão saiu de `ESTADO-DA-SESSAO.md` (raiz) para `.harness/estado-da-sessao.md` (feature 004). Não há mais `~/.agent-memory/BASTAO.md` nem ponte de memória; `handoff`/`resume` operam sobre o estado local.
 
 ## Visão Geral
-Define e estende as capacidades e instruções de ciclo de vida da interface de linha de comando dos agentes de IA (Claude Code / Gemini CLI) por meio de slash commands customizados (comandos de barra) mapeados em arquivos Markdown, padronizando tarefas de clarificação de escopo, fechamento de sessão e handoff semântico de tarefas.
+
+Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessao`, `handoff`, `clarificar`. Carrega/grava o estado de sessão em `.harness/estado-da-sessao.md`, valida a âncora Git na retomada e reinjeta a narrativa preservada. O serviço não conhece o harness — a seleção do *sink* fica na borda (`main.py`).
 
 ## Responsabilidades
-* Guiar o agente na condução do processo de clarificação de demandas complexas (protocolo PCCP). 🟢
-* Automatizar a consolidação do progresso e o fechamento íntegro de sessões locais de desenvolvimento. 🟢
-* Fornecer o mecanismo de passagem (handoff) e retomada (resume) do bastão de tarefas entre diferentes agentes de IA. 🟢
+
+- Normalizar e despachar o comando (`strip().lower().lstrip("/")`). 🟢
+- `resume`: criar/reativar a sessão preservando a narrativa; alertar se HEAD ≠ âncora. 🟢
+- `encerrar-sessao`: gravar o commit-âncora e desativar a sessão. 🟢
+- `handoff` / `clarificar`: produzir blocos de texto (handoff com feature+HEAD; clarificar com texto fixo de limite de rodadas). 🟢
+- Distinguir estado **ausente** de **malformado** (falha barulhenta). 🟢
 
 ## Regras de Negócio
-* **Teto de Rodadas de Clarificação:** O processo de clarificação de escopo de demandas complexas (PCCP) é limitado estritamente a 2 interações para mitigar paralisia conceitual. 🟢 [clarificar.md:39](file:///Users/iagoleal/dev/harness/harness-config/commands/clarificar.md#L39)
-* **Precedência de Travamento:** A geração do plano técnico e codificação de uma demanda complexa exige o travamento explícito dos requisitos pelo usuário humano (`/travar`) ou a hipótese de lacuna mínima em caso de esgotamento de rodadas. 🟢 [clarificar.md:42](file:///Users/iagoleal/dev/harness/harness-config/commands/clarificar.md#L42)
-* **Isolamento de Diretório no Fechamento:** O comando de encerramento de sessão deve restringir commits e atualizações apenas dentro da árvore física da raiz do repositório ativo. 🟢 [encerrar-sessao.md:11](file:///Users/iagoleal/dev/harness/harness-config/commands/encerrar-sessao.md#L11)
-* **Âncora de Integridade Git:** Toda finalização de sessão deve carregar e gravar o hash SHA-1 do HEAD ativo do Git no `ESTADO-DA-SESSAO.md` para servir como validação contra divergências conceituais na inicialização subsequente. 🟢 [encerrar-sessao.md:22](file:///Users/iagoleal/dev/harness/harness-config/commands/encerrar-sessao.md#L22) (inferido a partir do commit `2266801`)
+
+- **RN-07 — Âncora Git de integridade:** em `resume`, se HEAD ≠ `commit_hash` do estado, monta `⚠️ ALERTA` que antecede a narrativa; reativa mesmo assim. 🟢
+- **RN-N3 — Narrativa preservada:** `start_session` reativa preservando a narrativa escrita pelo agente; a CLI reinjeta o corpo dela, nunca o inventa. 🟢
+- **RN-N4 — Ausente ≠ malformado:** arquivo ausente → `None` (sessão nova); malformado → `MalformedSessionStateError`. 🟢
+- **RN-N5 — Core não conhece o harness:** o serviço produz texto puro; a seleção do mecanismo de entrega por `active_harness` vive na borda (`get_sink` + `main.py`). 🟢
+- **Isolamento no fechamento:** `encerrar-sessao` exige sessão ativa (senão erro), lê HEAD, `close_session(commit)` e salva atomicamente. 🟢
 
 ## Requisitos Funcionais
 
 | ID | Requisito | Prioridade | Critério de Aceite |
-| :--- | :--- | :---: | :--- |
-| **RF-01** | Comando `/clarificar`. | Must | Processar demandas sob o protocolo PCCP mapeando Fatos (F), Inferências (I) e Hipóteses/Lacunas (H). |
-| **RF-02** | Comando `/encerrar-sessao`. | Must | Automatizar commits incrementais, rodar o indexador de microdecisões, propagar ganchos locais e registrar o estado do repositório. |
-| **RF-03** | Comandos `/handoff` e `/resume`. | Must | Gravar/ler dados do arquivo físico `BASTAO.md` e executar scripts auxiliares de commits locais na pasta de memória comum. |
+|----|-----------|-----------|-------------------|
+| RF-01 | Comando `resume`. | Must | Sem sessão → cria com HEAD e feature `args[0]` (ou `default_feature`); com sessão → reativa, reinjeta narrativa, alerta se âncora divergir. |
+| RF-02 | Comando `encerrar-sessao`. | Must | Exige sessão ativa; grava commit-âncora via `close_session`; salva atomicamente. |
+| RF-03 | Comando `handoff`. | Should | Monta bloco Markdown com feature ativa + HEAD. |
+| RF-04 | Comando `clarificar`. | Should | Retorna texto fixo (limite de 2 rodadas de diálogo). |
+| RF-05 | Comando desconhecido. | Must | Retorna `"Comando desconhecido: <command>"`. |
 
 ## Requisitos Não Funcionais
 
 | Tipo | Requisito inferido | Evidência no código | Confiança |
-| :--- | :--- | :--- | :---: |
-| Portabilidade | Uso de caminhos portáveis de ambiente baseados em `~/` e variáveis de ambiente Unix. | `encerrar-sessao.md:099d9a0` | 🟢 |
+|------|--------------------|---------------------|-----------|
+| Robustez | Estado corrompido falha barulhento (distingue de ausente). | `core/commands/service.py` (`load_session`) | 🟢 |
+| Baixo acoplamento | Serviço agnóstico a harness; sink na borda. | `core/commands/service.py`, `main.py` | 🟢 |
+| Atomicidade | Estado salvo via serializer + gravação atômica. | `core/commands/service.py` | 🟢 |
 
 ## Critérios de Aceitação
 
 ```gherkin
-Dado que a IA identificou lacunas (H) ao analisar uma nova demanda complexa
-Quando o comando /clarificar for acionado
-Então ele deve classificar as dúvidas em blocos e aguardar as respostas do desenvolvedor, aceitando o comando /travar.
+Dado que não existe estado de sessão
+Quando `./harness cmd resume 005-decisoes-em-harness`
+Então uma nova sessão é criada com o HEAD atual e a feature informada, e retorna "Nova sessão".
 
-Dado que o agente concluiu suas tarefas de desenvolvimento na sessão ativa
-Quando o comando /encerrar-sessao for executado
-Então ele deve realizar commits das alterações locais, reindexar as microdecisões e registrar o commit HEAD no arquivo ESTADO-DA-SESSAO.md.
+Dado uma sessão existente e HEAD diferente da âncora gravada
+Quando `./harness cmd resume`
+Então a resposta antecede um ⚠️ ALERTA de divergência de âncora à narrativa reinjetada.
+
+Dado uma sessão ativa
+Quando `./harness cmd encerrar-sessao`
+Então o commit HEAD é gravado como âncora e a sessão fica inativa.
+
+Dado um arquivo de estado malformado
+Quando load_session é chamado
+Então um MalformedSessionStateError é levantado (não tratado como sessão nova).
 ```
 
 ## Prioridade (MoSCoW)
 
 | Requisito | MoSCoW | Justificativa |
-| :--- | :---: | :--- |
-| Fechamento e consolidação de sessão | Must | Garante integridade histórica dos dados e evita perda de contexto. |
-| Protocolo PCCP com teto de rodadas | Must | Impede consumo excessivo de tokens e loop de diálogo inútil. |
-| Handoff sem rede | Should | Importante para sincronia cross-agent de forma robusta e descentralizada. |
+|-----------|--------|---------------|
+| `resume` com âncora e narrativa (RF-01) | Must | Coração da retomada do ciclo forward. |
+| `encerrar-sessao` (RF-02) | Must | Fecha a sessão e grava a âncora; sem ele a retomada não tem base. |
+| `handoff` / `clarificar` (RF-03/04) | Should | Apoios ao fluxo; texto derivado/fixo. |
+| Comando desconhecido (RF-05) | Must | Falha previsível e legível. |
+
+## Rastreabilidade de Código
+
+| Arquivo | Função / Classe | Cobertura |
+|---------|-----------------|-----------|
+| `core/commands/service.py` | `CommandService.execute_command`, `load_session`, `save_session` | 🟢 |
+| `core/session/serializer.py` | `render`, `render_narrative` (consumidos) | 🟢 |
+| `core/domain/models.py` | `SessionState`, `SessionNarrative` | 🟢 |
+| `src/main.py` | Subcomando `cmd`, caminho `.harness/estado-da-sessao.md`, resolução de sink | 🟢 |
+
+> 🟡 **Conhecida (T2):** via MCP (`server.py:92`), `session_command` opera sobre `ESTADO-DA-SESSAO.md` (raiz), divergente da CLI. Estado CLI×MCP não converge. Documentado, não corrigido.

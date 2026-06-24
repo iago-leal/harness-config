@@ -1,9 +1,11 @@
-# ADR 0004: Âncora de Commit de Sessão (ESTADO-DA-SESSAO.md)
+# ADR 0004: Âncora de Commit de Sessão
 
-* **Status:** Aceito
+* **Status:** Aceito (localização e formato superados pelo ADR 0010)
 * **Data:** 2026-06-21
-* **Contexto Técnico:** Módulo `commands` (`encerrar-sessao.md`)
+* **Contexto Técnico:** Módulo `commands` (`encerrar-sessao`)
 * **Escala de Confiança:** 🟢 CONFIRMADO
+
+> ⚠️ **Atualização (2026-06-24, feature 004):** a ideia da âncora de commit **permanece** (HEAD gravado no fechamento, validado na retomada). Mas o artefato deixou de ser `ESTADO-DA-SESSAO.md` na raiz / `.claude/`: hoje o estado vive em `.harness/estado-da-sessao.md`, com formato front-matter YAML + corpo narrativo (`SessionNarrative`) e round-trip pelo serializer. Ver **ADR 0010**. A "ramificação Git ativa" descrita abaixo **não** é persistida pelo modelo atual (`SessionState` guarda `commit_hash`, não o branch).
 
 ## Contexto e Problema
 

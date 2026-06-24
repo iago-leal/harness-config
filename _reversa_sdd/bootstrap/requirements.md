@@ -1,56 +1,65 @@
-# Bootstrap, Requisitos (Requirements)
+# Bootstrap (Ganchos Git Locais) — Requisitos (Requirements)
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [bootstrap.sh](file:///Users/iagoleal/dev/harness/harness-config/bin/bootstrap.sh)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração)
+> Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
+> Rastreabilidade ao Legado: [`harness-core/src/core/bootstrap/service.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/bootstrap/service.py). Driver: `src/main.py` (subcomando `bootstrap`).
+
+> ⚠️ **Reescrita vs versão anterior:** a implementação **deixou de ser** o script `harness-config/bin/bootstrap.sh` (purgado, commit `5624f78`) e passou a ser o `BootstrapService` Python em `harness-core`. Não há mais `verify-prerequisites.sh`, ponte de memória Gemini, nem `core.hooksPath`; o serviço apenas grava dois scripts Bash em `.git/hooks/`.
 
 ## Visão Geral
-Inicializa e configura o ambiente de desenvolvimento local (`harness-config`) garantindo que todos os ganchos (hooks) do Git estejam instalados, dependências estejam resolvidas e o ambiente esteja consistente para operações seguras de desenvolvimento por humanos e agentes de IA.
+
+Instala ganchos Git locais de forma idempotente: grava `pre-commit` (→ `format`) e `post-merge` (→ `decisions`) em `.git/hooks/`, reescrevendo a cada execução. Cada gancho só age se o interpretador Python da venv existir; senão `exit 0` (não bloqueia).
 
 ## Responsabilidades
-* Instalar ganchos do Git locais (`pre-commit`, `post-merge`) na pasta do repositório `.git/hooks/`. 🟢
-* Validar a instalação e configuração de dependências necessárias no host de desenvolvimento. 🟢
-* Sincronizar o repositório local com comandos e scripts customizados. 🟢
+
+- Criar `.git/hooks/` (se ausente) e gravar os scripts `pre-commit` e `post-merge`. 🟢
+- Tornar os scripts idempotentes (reescritos a cada execução). 🟢
+- Garantir que os ganchos não bloqueiem caso o interpretador esteja ausente. 🟢
+- Retornar a lista de caminhos instalados. 🟢
 
 ## Regras de Negócio
-* **Sincronização Unificada de Hooks:** O processo de bootstrap deve configurar e sincronizar ganchos do git respeitando a diretiva `core.hooksPath` do Git local. 🟢 [bootstrap.sh:96](file:///Users/iagoleal/dev/harness/harness-config/bin/bootstrap.sh#L96)
-* **Prevenção de Commits com Índice Defasado:** Impede a conclusão de commits manuais ou automatizados caso o compilador de microdecisões identifique alguma divergência física ou lógica de referências. 🟢 [bootstrap.sh:53](file:///Users/iagoleal/dev/harness/harness-config/bin/bootstrap.sh#L53)
+
+- **RN-N15 — Bootstrap idempotente e não-bloqueante:** `install_hooks` grava `pre-commit` (→ `format`) e `post-merge` (→ `decisions`) reescrevendo a cada execução; cada script só roda se o interpretador (`$PYTHON_CLI`) existir, senão `exit 0`. 🟢
+- **Mecanismo distinto dos hooks de ciclo de vida:** estes ganchos Git (pre-commit/post-merge) coexistem com — e são separados de — os hooks de agente (`SessionStart`/`PostToolUse`/`Stop`) configurados nos `settings.json`. 🟡
 
 ## Requisitos Funcionais
 
 | ID | Requisito | Prioridade | Critério de Aceite |
-| :--- | :--- | :---: | :--- |
-| **RF-01** | Instalação de ganchos do Git. | Must | Ganchos `pre-commit` e `post-merge` devem estar presentes em `.git/hooks/` e executáveis (`+x`). |
-| **RF-02** | Verificação de dependências locais do host. | Should | Rodar script de pré-requisitos (`verify-prerequisites.sh`) e emitir alertas caso ferramentas cruciais estejam ausentes. |
+|----|-----------|-----------|-------------------|
+| RF-01 | Instalar `pre-commit` e `post-merge`. | Must | Após `./harness bootstrap`, os dois scripts existem em `.git/hooks/` e invocam a CLI (`format`/`decisions`). |
+| RF-02 | Idempotência. | Must | Reexecutar o bootstrap regrava os scripts sem erro nem duplicação. |
+| RF-03 | Não-bloqueio sob interpretador ausente. | Must | Se o interpretador não existir, o gancho faz `exit 0` sem abortar o commit/merge. |
 
 ## Requisitos Não Funcionais
 
 | Tipo | Requisito inferido | Evidência no código | Confiança |
-| :--- | :--- | :--- | :---: |
-| Portabilidade | Portabilidade cross-machine entre macOS e Linux bash v3.2+. | `bootstrap.sh:1` | 🟢 |
+|------|--------------------|---------------------|-----------|
+| Robustez | Não bloqueia operações Git se o ambiente estiver incompleto. | `core/bootstrap/service.py` (`exit 0` condicional) | 🟢 |
+| Reprodutibilidade | Scripts reescritos deterministicamente a cada execução. | `core/bootstrap/service.py` | 🟢 |
 
 ## Critérios de Aceitação
 
 ```gherkin
-Dado um repositório git recém-clonado sem hooks locais instalados
-Quando o desenvolvedor executar o script de bootstrap
-Então os scripts pre-commit e post-merge devem ser vinculados à pasta .git/hooks/ e marcados como executáveis.
+Dado um repositório sem ganchos instalados
+Quando executo `./harness bootstrap`
+Então `.git/hooks/pre-commit` e `.git/hooks/post-merge` são criados e invocam a CLI (format/decisions).
 
-Dado um ambiente sem as dependências mínimas requeridas instaladas
-Quando o script de bootstrap for executado
-Então um alerta deve ser impresso em stdout detalhando quais ferramentas precisam ser configuradas manualmente.
+Dado que a venv do harness-core não existe
+Quando um commit dispara o pre-commit instalado
+Então o gancho faz exit 0 sem bloquear o commit.
 ```
 
 ## Prioridade (MoSCoW)
 
 | Requisito | MoSCoW | Justificativa |
-| :--- | :---: | :--- |
-| Instalação de ganchos do Git | Must | Garante a execução automática das rotinas de proteção de commit e sincronização. |
-| Verificação de dependências | Should | Importante para evitar falhas silenciosas de formatação/sync posteriores. |
+|-----------|--------|---------------|
+| Instalação dos ganchos | Must | Razão de existir da unit. |
+| Idempotência | Must | Permite reexecução segura no setup. |
+| Não-bloqueio | Must | Salvaguarda: ambiente incompleto não trava o Git. |
 
 ## Rastreabilidade de Código
 
 | Arquivo | Função / Classe | Cobertura |
-| :--- | :--- | :---: |
-| `bin/bootstrap.sh` | Lógica principal de bootstrapping | 🟢 |
-| `bin/sync-check.sh` | Chamado indiretamente ou sincronizado | 🟢 |
+|---------|-----------------|-----------|
+| `core/bootstrap/service.py` | `BootstrapService.install_hooks`, `_pre_commit_script`, `_post_merge_script` | 🟢 |
+| `src/main.py` | Subcomando `bootstrap` | 🟢 |

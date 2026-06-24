@@ -1,43 +1,60 @@
-# Format-on-Edit, Tarefas de Implementação
+# Format-on-Edit (Formatting) — Tarefas de Implementação
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [format-on-edit.sh](file:///Users/iagoleal/dev/harness/harness-config/hooks/format-on-edit.sh)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração)
+> Sequência executável para reimplementar a unit a partir do legado, com rastreabilidade ao código original.
+
+> ⚠️ Reescrita: a unit agora é o `FormattingService` Python (`harness-core`), não o script shell legado `hooks/format-on-edit.sh` (purgado). Sem `shfmt`, sem log, sem `systemMessage`.
 
 ## Pré-requisitos
-* [ ] Permissões de escrita no caminho de logs `~/.claude/hooks/`.
-* [ ] Binários dos formatadores instalados (local ou global).
 
----
+- [ ] `ProcessPort` / `HostFormatterAdapter` disponíveis.
+- [ ] `FileSystemPort` disponível.
+- [ ] Formatadores de host instalados (`ruff`/`prettier`/`rustfmt`) — opcional (degrada a no-op).
 
 ## Tarefas
 
-- [ ] **T-01: Parse de Evento e Validação de Caminho**
-  * Origem no legado: `hooks/format-on-edit.sh:75-87`
-  * Critério de pronto: Extrair com sucesso o caminho absoluto do arquivo a partir de `.tool_input.file_path` ou `.tool_response.filePath` usando `jq`.
-  * Confiança: 🟢 CONFIRMADO
-- [ ] **T-02: Filtro de Denylist e NON_ROOT_DIRS**
-  * Origem no legado: `hooks/format-on-edit.sh:88-94` e `hooks/format-on-edit.sh:69-73`
-  * Critério de pronto: Abortar imediatamente sem alterar arquivos se pertencer à denylist ou se bater em restrições de diretórios não-raiz.
-  * Confiança: 🟢 CONFIRMADO
-- [ ] **T-03: Algoritmo de Busca Recursiva de Raiz de Projeto**
-  * Origem no legado: `hooks/format-on-edit.sh:96-112`
-  * Critério de pronto: Subir recursivamente diretórios e retornar a raiz se encontrar um arquivo contido em `PROJECT_MARKERS`, ou abortar se não encontrar.
-  * Confiança: 🟢 CONFIRMADO
-- [ ] **T-04: Lógica de Resolução e Despacho de Formatadores**
-  * Origem no legado: `hooks/format-on-edit.sh:114-162`
-  * Critério de pronto: Resolver executáveis na prioridade local > global, rodar o formatador associado de forma silenciosa direcionando logs para `format-on-edit.log`.
-  * Confiança: 🟢 CONFIRMADO
-- [ ] **T-05: Validação Diferencial de Hashes (shasum)**
-  * Origem no legado: `hooks/format-on-edit.sh:164-173`
-  * Critério de pronto: Comparar hashes pré e pós-formatação, emitindo a notificação JSON em stdout apenas em caso de divergência.
-  * Confiança: 🟢 CONFIRMADO
+- [ ] T-01, Blindagem de diretórios pessoais (RN-04)
+  - Origem no legado: `core/formatting/service.py`
+  - Critério de pronto: caminho `~`, `~/Notas`, `~/.claude` aborta com retorno 0.
+  - Confiança: 🟢
 
----
+- [ ] T-02, Descoberta de raiz + opt-out (RN-N7/RN-06)
+  - Origem no legado: `core/formatting/service.py`
+  - Critério de pronto: sobe a árvore, aborta em `.no-autoformat`, marca raiz em `.git`/`harness.toml`, fallback `os.getcwd()`.
+  - Confiança: 🟢
+
+- [ ] T-03, Seleção do formatador por extensão (RN-N7)
+  - Origem no legado: `core/formatting/service.py`
+  - Critério de pronto: `.py`→ruff, `.js/.ts/.json/.css/.md`→prettier, `.rs`→rustfmt, demais → no-op.
+  - Confiança: 🟢
+
+- [ ] T-04, Precedência de executável local (RN-05)
+  - Origem no legado: `core/formatting/service.py`
+  - Critério de pronto: prioriza `.venv/bin/ruff`/`venv/bin/ruff`/`node_modules/.bin/prettier`; senão delega ao PATH.
+  - Confiança: 🟢
+
+- [ ] T-05, Não-bloqueio absoluto (RN-03)
+  - Origem no legado: `core/formatting/service.py`
+  - Critério de pronto: `try/except Exception` em todo o corpo; `format_file` sempre retorna 0.
+  - Confiança: 🟢
+
+- [ ] T-06, Adaptador de execução de formatador
+  - Origem no legado: `adapters/process/formatter.py`
+  - Critério de pronto: mapeia formatador→args; `FileNotFoundError`→`(127,...)`.
+  - Confiança: 🟢
 
 ## Tarefas de Teste
 
-- [ ] **TT-01: Teste de Formatação de Código Prettier**
-  * Critério de pronto: Modificar propositalmente o espaçamento de um arquivo JSON do projeto e verificar se o hook o padroniza e gera o JSON de notificação.
-- [ ] **TT-02: Teste de Resiliência contra Erros do Formatador**
-  * Critério de pronto: Introduzir um erro de sintaxe física num arquivo temporário do projeto que quebre o formatador, e certificar que o script encerra retornando status `0` sem bloquear a escrita.
+- [ ] TT-01, Happy path: arquivo `.py` em projeto com `harness.toml` dispara ruff e retorna 0.
+- [ ] TT-02, Blindagem: arquivo em `~/Notas` não é formatado.
+- [ ] TT-03, Resiliência: exceção/formatador ausente → retorna 0 sem bloquear.
+
+## Ordem Sugerida
+
+1. T-06 (adaptador) e T-01 (blindagem) primeiro.
+2. T-02/T-03/T-04 (descoberta, seleção, precedência) compõem o corpo.
+3. T-05 (não-bloqueio) envolve tudo.
+
+## Lacunas Pendentes (🔴)
+
+- Nenhuma 🔴. Ressalvas 🟡: **T3** (autoformat por hook via stdin quebra por `json` sem import) e **T4** (`[formatting]` inerte). Bugs latentes documentados, não corrigidos aqui.

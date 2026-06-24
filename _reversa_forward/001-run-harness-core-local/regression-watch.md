@@ -15,6 +15,16 @@ Estes itens devem ser monitorados nas próximas rodadas da extração reversa pa
 
 ## 2. Histórico de re-extrações
 
+### Re-extração 2026-06-23 21:58
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `./harness` existe na raiz e é executável (`-x`). |
+| W002 | 🟢 verde | `harness-core/.venv` presente; `toml` importável (0.10.2). |
+| W003 | 🟢 verde | `.reversa/settings.json.snippet` presente e não-vazio. |
+
+> **Nota de arquivamento:** com esta rodada, W001/W002/W003 acumulam **3 vereditos verdes consecutivos** (13:38 · 16:15 · 21:58), atingindo o limiar `setup.json#watch.archive-after = 3`. São candidatos a mover para `## 3. Arquivadas`. O Reversa não altera a tabela principal automaticamente (regra absoluta); a ação fica a critério do mantenedor.
+
 ### Re-extração 2026-06-23 13:38
 
 | ID | Veredito | Observação |

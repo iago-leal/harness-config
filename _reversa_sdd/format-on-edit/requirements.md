@@ -1,53 +1,81 @@
-# Format-on-Edit, Requisitos (Requirements)
+# Format-on-Edit (Formatting) — Requisitos (Requirements)
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [format-on-edit.sh](file:///Users/iagoleal/dev/harness/harness-config/hooks/format-on-edit.sh)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração)
+> Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
+> Rastreabilidade ao Legado: [`harness-core/src/core/formatting/service.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/formatting/service.py); adaptador `adapters/process/formatter.py`. Driver: `src/main.py` (subcomando `format`, hook `PostToolUse`).
+
+> ⚠️ **Reescrita vs versão anterior:** a implementação **deixou de ser** o script `harness-config/hooks/format-on-edit.sh` (purgado, commit `5624f78`) e passou a ser o `FormattingService` Python em `harness-core`. O serviço atual **não** trata `shfmt`, nem grava `~/.claude/hooks/format-on-edit.log`, nem emite `systemMessage` — diferenças do legado.
 
 ## Visão Geral
-Intercepte e formate de forma automatizada e transparente os arquivos de código editados pelo agente de IA no final de cada operação de escrita/gravação de ferramentas, assegurando que o repositório permaneça padronizado de acordo com as regras de cada projeto, sem causar interrupções operacionais.
+
+Formata um arquivo após edição do agente, por linguagem, sempre de modo **não-bloqueante** (retorna sempre 0). Blinda diretórios pessoais, respeita opt-out por projeto, descobre a raiz por manifesto e prioriza executáveis locais.
 
 ## Responsabilidades
-* Identificar se o arquivo alterado pertence a um projeto de software válido. 🟢
-* Selecionar e disparar o formatador adequado de acordo com a extensão do arquivo modificado (ruff, prettier, rustfmt, shfmt). 🟢
-* Notificar o Claude Code caso o arquivo tenha sofrido alterações de conteúdo pós-formatação. 🟢
+
+- Selecionar e disparar o formatador adequado por extensão (`ruff`/`prettier`/`rustfmt`). 🟢
+- Blindar diretórios pessoais (`~`, `~/Notas`, `~/.claude`). 🟢
+- Respeitar o opt-out `.no-autoformat` na pasta do arquivo ou em qualquer diretório superior. 🟢
+- Descobrir a raiz do projeto por manifesto (`.git`/`harness.toml`) e priorizar binários locais. 🟢
+- Nunca abortar a operação de escrita do agente (sempre retorna 0). 🟢
 
 ## Regras de Negócio
-* **Não-Bloqueio Absoluto:** O script de formatação deve sempre encerrar com código de retorno `0`, garantindo que eventuais problemas de formatação ou linting nunca resultem em travamento ou cancelamento da escrita do agente. 🟢 [format-on-edit.sh:14](file:///Users/iagoleal/dev/harness/harness-config/hooks/format-on-edit.sh#L14)
-* **Blindagem de Diretórios Pessoais:** Arquivos que residam sob diretórios listados em `DENY_PREFIXES` (ex: Notas Obsidian, diretórios de configuração do Claude) ou no próprio `$HOME` (sem subpastas) nunca devem ser formatados. 🟢 [format-on-edit.sh:38](file:///Users/iagoleal/dev/harness/harness-config/hooks/format-on-edit.sh#L38)
-* **Precedência Local:** O script deve resolver os executáveis de formatação priorizando pastas internas do projeto (ex: `.venv/bin/ruff`, `node_modules/.bin/prettier`) antes de cair para instalações globais da máquina. 🟢 [format-on-edit.sh:119](file:///Users/iagoleal/dev/harness/harness-config/hooks/format-on-edit.sh#L119)
-* **Cancelamento Local (Opt-out):** O comportamento de formatação automatizada é desabilitado instantaneamente para um projeto se houver o arquivo vazio `.no-autoformat` na raiz do mesmo. 🟢 [format-on-edit.sh:111](file:///Users/iagoleal/dev/harness/harness-config/hooks/format-on-edit.sh#L111)
+
+- **RN-03 — Não-bloqueio absoluto:** `format_file` **sempre** retorna `0`, com `try/except Exception` envolvendo todo o corpo. 🟢
+- **RN-04 — Proteção de diretórios críticos:** aborta sem alterar se o caminho absoluto for `~`, começar por `~/Notas` ou por `~/.claude`. Blindagens chumbadas. 🟢
+- **RN-05 — Precedência de executáveis locais:** prioriza `<root>/.venv/bin/ruff`, `venv/bin/ruff`, `<root>/node_modules/.bin/prettier` antes do PATH. 🟢
+- **RN-06 — Opt-out do projeto:** presença de `.no-autoformat` na pasta do arquivo ou em diretório superior cancela a formatação. Nome chumbado. 🟢
+- **RN-N7 — Descoberta da raiz por manifesto:** raiz = primeiro diretório (subindo a árvore) com `.git` **ou** `harness.toml`; fallback `os.getcwd()`. Seleção por extensão: `.py`→ruff; `.js/.ts/.json/.css/.md`→prettier; `.rs`→rustfmt; demais → no-op. 🟢
 
 ## Requisitos Funcionais
 
 | ID | Requisito | Prioridade | Critério de Aceite |
-| :--- | :--- | :---: | :--- |
-| **RF-01** | Detecção automática de projeto. | Must | Validar se o arquivo alterado reside sob um diretório que contenha um manifesto de linguagem conhecido. |
-| **RF-02** | Formatação por extensão de arquivo. | Must | Disparar prettier para JSON/JS/TS/Markdown, ruff para Python, rustfmt para Rust e shfmt para Shell scripts. |
-| **RF-03** | Notificação de alteração. | Should | Emitir JSON `systemMessage` caso o shasum do arquivo seja modificado pós-formatação. |
+|----|-----------|-----------|-------------------|
+| RF-01 | Formatação por extensão. | Must | `.py`→ruff, `.js/.ts/.json/.css/.md`→prettier, `.rs`→rustfmt; extensão não suportada → no-op. |
+| RF-02 | Não-bloqueio absoluto. | Must | `format_file` retorna `0` mesmo sob exceção ou falha do formatador. |
+| RF-03 | Blindagem de diretórios pessoais. | Must | Arquivo em `~`, `~/Notas` ou `~/.claude` não é formatado. |
+| RF-04 | Opt-out por `.no-autoformat`. | Must | Presença do arquivo na pasta ou acima cancela a formatação. |
+| RF-05 | Precedência de binário local. | Should | Se houver binário local do formatador, ele é usado antes do PATH. |
 
 ## Requisitos Não Funcionais
 
 | Tipo | Requisito inferido | Evidência no código | Confiança |
-| :--- | :--- | :--- | :---: |
-| Estabilidade | Caminhos de executáveis resolvidos com PATH estável, evitando dependências de variáveis locais. | `format-on-edit.sh:34` | 🟢 |
+|------|--------------------|---------------------|-----------|
+| Robustez | Falha do formatador nunca trava a escrita do agente. | `core/formatting/service.py` (`try/except` + `return 0`) | 🟢 |
+| Segurança de dados | Diretórios pessoais protegidos por blindagem. | `core/formatting/service.py` | 🟢 |
+| Portabilidade | Resolução de executáveis com fallback ao PATH. | `core/formatting/service.py`, `adapters/process/formatter.py` | 🟢 |
 
 ## Critérios de Aceitação
 
 ```gherkin
-Dado que um arquivo .py foi gravado em um subdiretório de projeto contendo pyproject.toml
-Quando o hook de edição for acionado
-Então o format-on-edit deve acionar ruff format e ruff check --fix.
+Dado que um arquivo .py foi gravado num projeto com harness.toml
+Quando o hook PostToolUse aciona `./harness format`
+Então o serviço dispara ruff sobre o arquivo (via ProcessPort) e retorna 0.
 
-Dado que um arquivo de texto foi alterado no diretório ~/Notas
-Quando o hook de edição interceptar a gravação
-Então ele deve abortar a execução de imediato sem alterar o arquivo e sem emitir erro em stdout.
+Dado que um arquivo foi alterado em ~/Notas
+Quando format_file é chamado
+Então o serviço aborta sem formatar e retorna 0.
+
+Dado que existe .no-autoformat na raiz do projeto
+Quando format_file é chamado para um arquivo desse projeto
+Então a formatação é cancelada e o serviço retorna 0.
 ```
 
 ## Prioridade (MoSCoW)
 
 | Requisito | MoSCoW | Justificativa |
-| :--- | :---: | :--- |
-| Não-bloqueio operacional | Must | Regra crítica de infraestrutura; evitar pane de escrita na IDE. |
-| Blindagem de diretórios | Must | Evita perda acidental de dados pessoais e de documentação Obsidian. |
-| Resolução local de binários | Should | Mantém compatibilidade com as versões de estilo adotadas no projeto do usuário. |
+|-----------|--------|---------------|
+| Não-bloqueio absoluto (RN-03) | Must | Salvaguarda crítica; impede pane de escrita. |
+| Blindagem de diretórios (RN-04) | Must | Protege dados pessoais. |
+| Opt-out por projeto (RN-06) | Must | Consentimento explícito do projeto. |
+| Precedência local de binários (RN-05) | Should | Mantém o estilo do projeto; degrada ao PATH. |
+
+## Rastreabilidade de Código
+
+| Arquivo | Função / Classe | Cobertura |
+|---------|-----------------|-----------|
+| `core/formatting/service.py` | `FormattingService.format_file` | 🟢 |
+| `adapters/process/formatter.py` | `HostFormatterAdapter.execute_formatter` | 🟢 |
+| `src/main.py` | Subcomando `format` (🟡 T3: `json` sem import no caminho stdin) | 🟡 |
+
+> 🟡 **Conhecida (T4):** `[formatting]` do `harness.toml` (`exclude_paths`, `opt_out_file`) **não** alimenta o serviço — blindagens e opt-out estão chumbados no código. Mudar o `harness.toml` não muda o comportamento. Documentado como contexto, não corrigido.
+> 🟡 **Conhecida (T3):** `main.py:63` usa `json.loads` sem `import json`; no caminho do hook (`PostToolUse`, caminho via stdin) isso levanta `NameError` capturado pelo `except`, e o autoformat por hook não ocorre. Documentado, não corrigido.

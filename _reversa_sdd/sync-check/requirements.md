@@ -1,53 +1,73 @@
-# Sync-Check, Requisitos (Requirements)
+# Sync-Check (Sync) — Requisitos (Requirements)
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [sync-check.sh](file:///Users/iagoleal/dev/harness/harness-config/bin/sync-check.sh)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração)
+> Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
+> Rastreabilidade ao Legado: [`harness-core/src/core/sync/service.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/sync/service.py); cache `core/domain/cache.py`. Exposto **apenas via MCP** (`adapters/mcp/server.py`, tool `check_repository_sync`).
+
+> ⚠️ **Reescrita vs versão anterior:** a implementação **deixou de ser** o script `harness-config/bin/sync-check.sh` (purgado, commit `5624f78`) e passou a ser o `SyncService` Python em `harness-core`. **Não há subcomando `sync` na CLI** — a capacidade só é acessível pelo servidor MCP. O cache saiu de `~/.claude/.sync-check/` para `.harness/sync_cache.json` (chumbado no MCP). Não há mais verificação de trabalho local (ahead/dirty), apenas a comparação HEAD local × remoto.
 
 ## Visão Geral
-Verifica e sinaliza se os repositórios locais do ambiente de desenvolvimento estão atrasados em relação ao remote (origem) ou se possuem trabalho local não publicado (direção push), funcionando de forma read-only e não obstrutiva durante a inicialização de sessões de agentes.
+
+Decide se o repositório local está em sincronia com o remoto, de modo **resiliente a falhas**: qualquer erro de rede/git resulta em `True` (não trava o boot). Usa cache local com TTL para evitar `ls-remote` redundante.
 
 ## Responsabilidades
-* Consultar de forma rápida (com cache local) a existência de novos commits no remote origin. 🟢
-* Detectar commits locais não sincronizados (ahead) ou working tree sujo. 🟢
-* Notificar o agente de desenvolvimento no formato JSON exigido para injeção de contexto adicional. 🟢
+
+- Comparar o HEAD local com o commit remoto de `origin main`. 🟢
+- Guardar o resultado em cache JSON por `cache_ttl_hours` (default 24). 🟢
+- Degradar para `True` em qualquer falha de rede/git (não bloqueia). 🟢
 
 ## Regras de Negócio
-* **Cache TTL (Janela de Throttle):** A consulta à rede via `git ls-remote` é limitada a uma execução a cada 24 horas por repositório, gravando os dados brutos no cache local. 🟢 [sync-check.sh:20](file:///Users/iagoleal/dev/harness/harness-config/bin/sync-check.sh#L20)
-* **Read-only estrito:** O script não baixa nem altera objetos no repositório local. Nunca executa `git fetch` ou `git pull` de forma silenciosa. 🟢 [sync-check.sh:5](file:///Users/iagoleal/dev/harness/harness-config/bin/sync-check.sh#L5)
-* **Não-Bloqueante (Defensivo):** Erros em repositórios específicos ou falta de conexão à internet não podem interromper a execução do script; o status code de saída deve ser sempre `0`. 🟢 [sync-check.sh:14](file:///Users/iagoleal/dev/harness/harness-config/bin/sync-check.sh#L14)
+
+- **RN-01 — Janela TTL de sincronia:** dentro do TTL, retorna `True` sem chamar a rede; mesmo divergindo o `commit_hash` cacheado do HEAD, retorna `True` dentro do TTL (política de evitar excesso de rede). 🟢
+- **RN-02 — Resiliência offline:** qualquer erro de rede/git → `True` (imprime aviso e prossegue), nunca travando a inicialização. 🟢
 
 ## Requisitos Funcionais
 
 | ID | Requisito | Prioridade | Critério de Aceite |
-| :--- | :--- | :---: | :--- |
-| **RF-01** | Checagem de repositórios desatualizados. | Must | Identificar se há commits mais recentes no remote origin comparando o hash local. |
-| **RF-02** | Checagem de trabalho local pendente. | Must | Identificar se há commits locais à frente do remote (ahead) ou arquivos modificados sem commit. |
-| **RF-03** | Controle de throttle de rede. | Must | Usar cache local em disco com expiração de 24h para pular chamadas a rede em sessões subsequentes. |
+|----|-----------|-----------|-------------------|
+| RF-01 | Verificar sincronia local × remoto. | Must | `check_sync(repo_path)` retorna `True` se `local_commit == remote_commit`, senão `False`. |
+| RF-02 | Cache com TTL. | Must | Dentro do TTL, retorna sem chamar a rede; fora, consulta `git ls-remote origin main` e atualiza o cache. |
+| RF-03 | Resiliência a falhas. | Must | Erro de parse de cache → checagem de rede; erro de rede/git → `True`. |
 
 ## Requisitos Não Funcionais
 
 | Tipo | Requisito inferido | Evidência no código | Confiança |
-| :--- | :--- | :--- | :---: |
-| Performance | Limite de tempo de execução (Timeout) de 8 segundos por chamada ls-remote. | `sync-check.sh:22` | 🟢 |
-| Resiliência | Funcionamento tolerante a offline (se a rede falhar, assume no-op e termina com 0). | `sync-check.sh:66` | 🟢 |
+|------|--------------------|---------------------|-----------|
+| Performance | Evita `ls-remote` redundante dentro do TTL (default 24h). | `core/sync/service.py` | 🟢 |
+| Resiliência | Tolerante a offline: assume `True` em falha. | `core/sync/service.py` | 🟢 |
+| Atomicidade | Cache atualizado via `write_file_atomic`. | `core/sync/service.py` + `adapters/fs/local.py` | 🟢 |
 
 ## Critérios de Aceitação
 
 ```gherkin
-Dado que o cache local do repositório foi atualizado há 10 minutos
-Quando o sync-check for inicializado
-Então ele deve carregar as informações do cache sem executar git ls-remote.
+Dado que o cache local foi atualizado há menos de 24h
+Quando check_sync é chamado
+Então retorna True sem executar git ls-remote.
 
 Dado que o host está offline e o cache expirou
-Quando o sync-check tentar acessar o remoto
-Então ele deve falhar silenciosamente no acesso à rede e retornar status de saída 0 sem exibir erros em stdout.
+Quando check_sync tenta consultar o remoto
+Então degrada para True (imprime aviso) sem levantar exceção.
+
+Dado HEAD local diferente do commit remoto e cache expirado
+Quando check_sync consulta a rede
+Então retorna False.
 ```
 
 ## Prioridade (MoSCoW)
 
 | Requisito | MoSCoW | Justificativa |
-| :--- | :---: | :--- |
-| Checagem de repositório defasado | Must | Evita divergências graves de código causadas por desenvolvimento sob branches desatualizados. |
-| Controle de cache TTL | Must | Impede travamento do shell e gargalo de boot do agente. |
-| Checagem de trabalho local pendente | Should | Importante para lembrar o desenvolvedor de fazer push do seu progresso. |
+|-----------|--------|---------------|
+| Comparação local × remoto (RF-01) | Must | Razão de existir da unit. |
+| Cache TTL (RN-01) | Must | Evita gargalo de rede no boot do agente. |
+| Resiliência offline (RN-02) | Must | Salvaguarda: nunca trava a inicialização. |
+
+## Rastreabilidade de Código
+
+| Arquivo | Função / Classe | Cobertura |
+|---------|-----------------|-----------|
+| `core/sync/service.py` | `SyncService.check_sync` | 🟢 |
+| `core/domain/cache.py` | `SyncCache` | 🟢 |
+| `adapters/git/subprocess.py` | `get_head_commit`, `get_remote_commit` | 🟢 |
+| `adapters/mcp/server.py` | Tool `check_repository_sync` (cache `.harness/sync_cache.json`, TTL 24, chumbados) | 🟢 |
+
+> 🟡 **Nota:** não há subcomando `sync` na CLI; a capacidade é exposta **apenas** via MCP.

@@ -9,6 +9,8 @@
   "output_folder": "_reversa_sdd",
   "forward_folder": "_reversa_forward",
   "phase": "concluido",
+  "reextraction_started_at": "2026-06-24T00:02:09Z",
+  "reextraction_completed_at": "2026-06-24T01:00:07Z",
   "completed": [
     "reconhecimento",
     "escavacao",
@@ -19,7 +21,7 @@
   "pending": [],
   "checkpoints": {
     "scout": {
-      "completed_at": "2026-06-23T13:29:05Z",
+      "completed_at": "2026-06-24T00:08:09Z",
       "files": [
         "_reversa_sdd/inventory.md",
         "_reversa_sdd/dependencies.md",
@@ -27,25 +29,26 @@
       ]
     },
     "archaeologist": {
-      "completed_at": "2026-06-23T13:30:58Z",
+      "completed_at": "2026-06-24T00:16:44Z",
       "modules_analyzed": [
         "harness-core"
       ],
       "modules_pending": []
     },
     "detective": {
-      "completed_at": "2026-06-23T13:31:28Z",
+      "completed_at": "2026-06-24T00:23:19Z",
       "files": [
         "_reversa_sdd/domain.md",
         "_reversa_sdd/state-machines.md",
         "_reversa_sdd/permissions.md",
-        "_reversa_sdd/adrs/0006-arquitetura-hexagonal-core-python.md",
-        "_reversa_sdd/adrs/0007-wrapper-conveniencia-raiz.md",
-        "_reversa_sdd/adrs/0008-documentacao-standalone-introspeccao-cli.md"
+        "_reversa_sdd/adrs/0009-abandono-claude-config-centralizacao-harness.md",
+        "_reversa_sdd/adrs/0010-estado-sessao-unificado-harness.md",
+        "_reversa_sdd/adrs/0011-reinjecao-multi-harness-strategy-sink.md",
+        "_reversa_sdd/adrs/0012-caminhos-decisao-por-configuracao.md"
       ]
     },
     "architect": {
-      "completed_at": "2026-06-23T13:32:18Z",
+      "completed_at": "2026-06-24T00:28:30Z",
       "files": [
         "_reversa_sdd/architecture.md",
         "_reversa_sdd/c4-context.md",
@@ -56,16 +59,20 @@
       ]
     },
     "writer": {
-      "completed_at": "2026-06-23T13:37:15Z",
+      "completed_at": "2026-06-24T00:42:42Z",
       "files": [
-        "_reversa_sdd/documentacao-uso-html/requirements.md",
-        "_reversa_sdd/documentacao-uso-html/design.md",
-        "_reversa_sdd/documentacao-uso-html/tasks.md",
+        "_reversa_sdd/install/{requirements,design,tasks}.md",
+        "_reversa_sdd/session/{requirements,design,tasks}.md",
+        "_reversa_sdd/microdecisoes/{requirements,design,tasks}.md",
+        "_reversa_sdd/bootstrap/{requirements,design,tasks}.md",
+        "_reversa_sdd/format-on-edit/{requirements,design,tasks,contracts}.md",
+        "_reversa_sdd/sync-check/{requirements,design,tasks,contracts}.md",
+        "_reversa_sdd/comandos-customizados/{requirements,design,tasks}.md",
         "_reversa_sdd/traceability/code-spec-matrix.md"
       ]
     },
     "reviewer": {
-      "completed_at": "2026-06-23T13:37:45Z",
+      "completed_at": "2026-06-24T00:51:31Z",
       "files": [
         "_reversa_sdd/confidence-report.md",
         "_reversa_sdd/gaps.md",

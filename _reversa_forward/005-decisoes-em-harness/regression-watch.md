@@ -19,7 +19,14 @@
 
 ## Histórico de re-extrações
 
-_(vazio — será preenchido pelo agente reverso quando `/reversa` rodar de novo)_
+### Re-extração 2026-06-23 21:58
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | Decisões em `.harness/decisoes/` (MD-0001..MD-0004 + `_cabecalho.md`) e índice em `.harness/microdecisoes.md`; raiz sem `decisoes/` nem `microdecisoes.md`. Confirmado em `_reversa_sdd/domain.md` (RN-N12). |
+| W002 | 🟢 verde | Nenhum literal `"decisoes"`/`"microdecisoes.md"` chumbado em `main.py` nem em `adapters/mcp/server.py`; os drivers derivam de `load_config().decisions`. |
+| W003 | 🔴 vermelho | Regra estrita 🟢 — `config.py` `load_config` permanece funcional (imports `toml`/`FileSystemPort` presentes). PORÉM o sinal de violação "ao rodar o tool MCP" disparou: `adapters/mcp/server.py:60` chama `load_config(fs)` sem importar `load_config` (imports nas linhas 1–11) → `NameError` mascarado pelo `except` (linha 82). Ferramenta MCP de decisões inoperante (bug T1, provavelmente introduzido pela própria 005; os testes não exercitam o driver MCP real). Abrir ticket. |
+| W004 | 🟢 verde | `./harness decisions` validou o grafo com zero erros (exit 0) e regenerou `.harness/microdecisoes.md` idêntico (idempotente; sem diff git). IDs e backlinks preservados. |
 
 ## Arquivadas
 

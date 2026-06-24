@@ -1,58 +1,53 @@
-# Sync-Check, Design Técnico
+# Sync-Check (Sync) — Design Técnico
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [sync-check.sh](file:///Users/iagoleal/dev/harness/harness-config/bin/sync-check.sh)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração)
+> Foca no COMO a unit é construída, a partir do código legado lido. Escala: 🟢 / 🟡 / 🔴
 
 ## Interface
 
-O script aceita passagem de caminhos como argumentos ou lê a configuração JSON no STDIN.
-
 | Símbolo | Assinatura | Retorno | Observação |
-| :--- | :--- | :--- | :--- |
-| `sync-check.sh` | `./bin/sync-check.sh [repo1] [repo2] ...` | `JSON` no stdout (ou nada se ok) | Saída vazia indica que tudo está sincronizado. |
-
----
+|---------|-----------|---------|------------|
+| `SyncService.check_sync` | `(repo_path: str)` | `bool` | `True` = em sincronia (ou degradação por falha/TTL); `False` = divergente. |
+| `SyncCache` | `(last_checked_time: datetime, commit_hash: constr(SHA1))` | — | Modelo Pydantic do cache JSON. |
 
 ## Fluxo Principal
-1. **Definição de Parâmetros e Cache:**
-   * Mapeia caminhos de infraestrutura fixa (`~/.claude`, `~/.agent-memory`).
-   * Configura local do cache de estado em `~/.claude/.sync-check/`.
-2. **Leitura de Entrada:**
-   * Se houver argumentos (`$# > 0`), checa apenas os caminhos informados (modo teste).
-   * Caso contrário, lê payload JSON no stdin, extrai `.cwd` (diretório de trabalho atual) e adiciona os caminhos de infraestrutura à lista.
-3. **Verificação de Sincronia Remota (`check_repo`):**
-   * Obtém a branch HEAD atual do repositório local.
-   * Se existir arquivo de cache válido dentro do TTL (24 horas), usa o hash remoto cacheado.
-   * Se o cache estiver expirado ou ausente, faz consulta remota com timeout (`git ls-remote origin refs/heads/[branch]`) e atualiza o arquivo de cache local.
-   * Se o hash remoto não existir localmente (`git cat-file -e`), marca o repositório como atrasado.
-4. **Verificação de Trabalho Local (`check_local`):**
-   * Mede alterações não commitadas (`git status --porcelain`) e commits locais à frente do remote (`git rev-list --count`).
-5. **Formatação de Alertas:**
-   * Consolida pendências e emite o payload JSON SessionStart na saída padrão (stdout).
 
----
+1. **Cache (RN-01):** se `cache_filepath` existe, lê JSON, parseia `last_checked_time` (ISO, naive→UTC). Dentro do TTL (`cache_ttl_hours`, default 24): retorna `True` — se o `commit_hash` do cache bate com o HEAD, por consistência, mas **mesmo divergindo retorna `True`** dentro do TTL. Falha no parse → cai para checagem de rede. 🟢
+2. **Rede:** `git rev-parse HEAD` (local) e `git ls-remote origin main` (remoto), via `GitPort`. 🟢
+3. **Atualiza cache** atomicamente via `SyncCache(...).model_dump_json()` + `write_file_atomic`. 🟢
+4. Retorna `local_commit == remote_commit`. 🟢
+
+## Fluxos Alternativos
+
+- **Cache válido (dentro do TTL):** retorna `True` sem rede. 🟢
+- **Parse de cache falho:** ignora cache, vai à rede. 🟢
+- **Erro de rede/git (RN-02):** captura, imprime aviso e retorna `True`. 🟢
 
 ## Dependências
-* Interpretador `jq` — Usado para parse do stdin e formatação da saída do hook.
-* Ferramenta `git` — Usada para consulta de metadados e hashes locais/remotos.
 
----
+- `GitPort` / `SubprocessGitAdapter` — HEAD local e commit remoto.
+- `FileSystemPort` — leitura/gravação atômica do cache.
+- `core/domain/cache.SyncCache` — estrutura validada do cache.
 
 ## Decisões de Design Identificadas
 
 | Decisão | Evidência no código | Confiança |
-| :--- | :--- | :---: |
-| Gravação de cache contendo `[timestamp] [commit_hash]` separados por espaço | `sync-check.sh:67` | 🟢 |
-| Busca portátil de timeout utilizando `timeout` do GNU ou `gtimeout` do macOS | `sync-check.sh:29` | 🟢 |
-
----
+|---------|---------------------|-----------|
+| Degradar para `True` em falha (não-bloqueio) | `service.py` (`try/except` → `True`) | 🟢 |
+| Dentro do TTL retorna `True` mesmo divergindo (evita rede) | `service.py` | 🟢 |
+| Cache validado por Pydantic (regex SHA1) e gravado atomicamente | `cache.py` + `write_file_atomic` | 🟢 |
+| Exposição exclusiva via MCP (sem subcomando CLI) | ausência em `main.py`, presença em `server.py` | 🟢 |
 
 ## Estado Interno
-* **Caches Locais:** Armazenados em arquivos individuais nomeados com o caminho higienizado do repositório, contendo a data da última consulta e o hash do remote.
 
----
+O estado persistente é o arquivo de cache JSON (`.harness/sync_cache.json` no MCP), com `last_checked_time` e `commit_hash`. Sem estado em memória entre chamadas.
 
 ## Observabilidade
-* O script emite JSON estruturado se houver pendências de sincronização.
-* Erros do git ls-remote são silenciados redirecionando `2>/dev/null` e tratados de forma segura.
+
+- Avisos impressos em falha de rede/git (degradação para `True`).
+- Sem logging estruturado dedicado.
+
+## Riscos e Lacunas
+
+- 🟡 O caminho do cache e o TTL são **chumbados na tool MCP** (`.harness/sync_cache.json`, 24), embora `[sync]` exista no domínio — config declarada parcialmente sem efeito na borda.
+- 🟡 Sem verificação de trabalho local (ahead/dirty) — comportamento presente no legado, ausente no core atual.

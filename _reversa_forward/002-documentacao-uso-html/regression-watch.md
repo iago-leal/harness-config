@@ -10,7 +10,15 @@
 
 ## 2. Histórico de re-extrações
 
-*Nenhuma re-extração executada após esta feature.*
+### Re-extração 2026-06-23 21:58
+
+Sem watch items de regressão na tabela principal (a feature não modificou regras legadas) — nada a verificar. Re-extração executada e artefatos centrais regenerados e coerentes. As regras novas observadas continuam válidas:
+
+| Regra | Veredito | Observação |
+|-------|----------|------------|
+| RN-08 (build recria `harness-docs.html`) | 🟢 verde | Preservada nas specs e no `code-analysis.md`. |
+| RN-09 (HTML standalone, sem dependências de internet) | 🟢 verde | Confirmada. |
+| RN-10 (introspecção dinâmica do argparse) | 🟢 verde | Elevada de 🟡 para 🟢 pelo Detective nesta re-extração — introspecção confirmada em dois consumidores (`doc-gen` e `install-prompt`). |
 
 ## 3. Observações
 

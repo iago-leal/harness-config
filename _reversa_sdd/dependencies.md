@@ -1,64 +1,57 @@
 # Dependências do Projeto — harness
 
-> Gerado pelo Scout em 2026-06-23 (Re-extração após Feature 002)
+> Gerado pelo Scout em 2026-06-24 (Re-extração após as features 003, 004 e 005)
 
-Mapeamento de dependências internas, externas, plugins, pacotes e ferramentas de sistema utilizadas pelo framework `harness`.
+Mapeamento de dependências do código da aplicação (`harness-core/` + wrapper), de configuração e de ferramentas de sistema.
 
----
-
-## 🔗 Repositórios e Dependências de Configuração (Duras)
-
-Estes repositórios são configurados e importados no `CLAUDE.md`:
-
-| Dependência | Repositório Canônico | Caminho Local | Papel no Projeto |
-|---|---|---|---|
-| **agent-memory** | `https://github.com/iago-leal/agent-memory.git` | `~/.agent-memory` | Contém regras globais, memórias compartilhadas (`ALICERCE.md`, `BASTAO.md`) e utilitários de hooks. |
-| **skills** | `https://github.com/iago-leal/skills.git` | `~/dev/github_repos/skills` | Repositório canônico contendo todas as skills disponíveis para ativação. |
-
----
-
-## 🧩 Plugins Habilitados (`claude-config/settings.json`)
-
-Plugins carregados pelo Claude Desktop definidos em `settings.json` → `enabledPlugins`:
-
-* **`skill-creator@claude-plugins-official`**
-  - **Origem:** Marketplace oficial `anthropics/claude-plugins-official`
-  - **Papel:** Criação e manutenção de skills.
-* **`swift-lsp@claude-plugins-official`**
-  - **Origem:** Marketplace oficial `anthropics/claude-plugins-official`
-  - **Papel:** Suporte para Language Server Protocol (LSP) em Swift.
-
----
-
-## ⚡ Skills Ativas (`claude-config/skills.active`)
-
-Skills especificadas no manifesto que são montadas como symlinks em `~/.claude/skills/` apontando para o repositório de skills local:
-
-1. **`datestamp`**: Permite gerenciar/inserir timestamps formatados.
-2. **`obsidian`**: Integração com notas Obsidian.
-3. **`recicla`**: Gestão/limpeza de recursos.
-4. **`skill-spec`**: Auxílio na especificação de regras e skills.
+> ⚠️ **Mudança vs extração anterior:** a fonte legada `claude-config/settings.json` (com `enabledPlugins`) e o manifesto `claude-config/skills.active` **não existem mais** — foram purgados junto com o resto de `claude-config/`. As seções de plugins do Claude Desktop e de skills ativas descritas na extração anterior foram **removidas** deste documento por não corresponderem ao estado atual do repositório.
 
 ---
 
 ## 🐍 Dependências do Core Python (`harness-core/requirements.txt`)
 
-Bibliotecas instaladas no ambiente virtual (`harness-core/.venv`) para execução do núcleo Python:
+Manifesto com versões **mínimas** (`>=`); versões abaixo são as **efetivamente instaladas** na venv (`harness-core/.venv`, Python 3.14.6).
 
-* **`toml` (0.10.2)**: Parser e gerador de arquivos de configuração TOML.
-* **`mcp` (1.28.0)**: Biblioteca oficial para integração com o Model Context Protocol.
-* **`pytest` (9.1.1)**: Framework de execução de testes automatizados.
-* **`pydantic` (2.13.4)**: Validador de dados estruturados e configuração do núcleo.
-* **`pyyaml` (6.0.3)**: Manipulador de arquivos YAML.
+| Pacote | Pin no manifesto | Instalado | Papel |
+|---|---|---|---|
+| **mcp** | `>=0.1.0` | `1.28.0` | SDK do Model Context Protocol; provê o `FastMCP` que sustenta `adapters/mcp/server.py`. |
+| **pydantic** | `>=2.0.0` | `2.13.4` | Modelos de domínio e configuração tipada (`Decision`, `SessionState`, `HarnessConfig`). |
+| **pytest** | `>=7.0.0` | `9.1.1` | Framework dos 14 arquivos de teste. |
+| **toml** | `>=0.10.2` | `0.10.2` | Parser do `harness.toml` (carga de `HarnessConfig`). |
+| **PyYAML** | `>=6.0` | `6.0.3` | Serialização round-trip do front-matter do estado de sessão (`session/serializer.py`). |
+
+**Transitivas relevantes** (puxadas por `mcp`/FastMCP): `httpx 0.28.1`, `starlette 1.3.1`, `uvicorn 0.49.0`.
+
+> 🔴 **Lacuna de reprodutibilidade:** não há lock file (`requirements.lock`, `poetry.lock`, etc.) commitado; os pins são apenas pisos `>=`. Build determinístico não está garantido — candidato a ticket (Princípio nº 5.3 do mantenedor).
 
 ---
 
 ## ⚙️ Dependências de Sistema e Ferramentas CLI
 
-Ferramentas externas invocadas por ganchos, wrapper e scripts de automação:
+Ferramentas externas invocadas pelo wrapper, pelos ganchos e pelos adaptadores:
 
-* **`bash` (>= 3.2)**: Interpretador de shell principal (necessário para o wrapper `harness` e scripts do legado).
-* **`python3` (>= 3.8)**: Utilizado para executar o núcleo do sistema (`harness-core/src/main.py`).
-* **`git`**: Sistema de controle de versão (utilizado para ganchos Git locais, verificação de sincronia e controle de sessões).
-* **`jq`**: Processador de JSON leve (utilizado no legado).
-* **`afplay`** (macOS, opcional): Utilizado em ganchos de notificação para reproduzir alertas sonoros.
+* **`bash` (>= 3.2)** 🟢 — Interpretador do wrapper `./harness`.
+* **`python3` (>= 3.8; ambiente em 3.14.6)** 🟢 — Executa o core via venv local.
+* **`git`** 🟢 — Invocado por `adapters/git/subprocess.py` (bootstrap de ganchos, verificação de sincronia) e usado pelo `CommandService` de sessão.
+* **`ruff` (0.15.17)** 🟡 — Linter/formatter Python presente via `.ruff_cache/`; provável guardrail de qualidade, não declarado no `requirements.txt`.
+
+> Sem `Dockerfile`, `docker-compose.yml` nem pipeline de CI/CD detectado.
+
+---
+
+## 🧩 Framework Reversa (tooling instalado)
+
+Não é dependência de runtime do produto, mas vive no repositório:
+
+* **Reversa** — Framework de engenharia reversa instalado em duas árvores-espelho (`.claude/skills/` e `.agents/skills/`), com ~30 agentes/skills (scout, archaeologist, architect, etc.). Ativado por `CLAUDE.md` / `GEMINI.md` / `AGENTS.md`.
+
+---
+
+## 🔗 Dependências internas (acoplamento do core)
+
+Direção das setas = "depende de". A regra de negócio (`core/`) depende apenas dos `ports/` (interfaces), nunca dos adaptadores concretos — inversão de dependência preservada.
+
+* `main.py` / `adapters/mcp/server.py` → serviços de `core/*` → `core/ports/*` ← implementados por `adapters/*`.
+* `core/decisions`, `core/commands`, `core/documentation` → `core/domain/config.load_config` (caminhos de decisão e harness ativo).
+* `core/commands` → `core/session/{serializer,sinks,errors}` (estado de sessão e reinjeção).
+* `core/session/sinks` → seleção por `active_harness` (Claude/Gemini = hook; Antigravity = arquivo).

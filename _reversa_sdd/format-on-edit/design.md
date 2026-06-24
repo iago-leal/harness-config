@@ -1,60 +1,54 @@
-# Format-on-Edit, Design Técnico
+# Format-on-Edit (Formatting) — Design Técnico
 
-> Gerado pelo Redator em 2026-06-23
-> Nível de Documentação: **Completo**
-> Rastreabilidade ao Legado: [format-on-edit.sh](file:///Users/iagoleal/dev/harness/harness-config/hooks/format-on-edit.sh)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração)
+> Foca no COMO a unit é construída, a partir do código legado lido. Escala: 🟢 / 🟡 / 🔴
 
 ## Interface
 
-O script de formatação é disparado no pós-uso de ferramentas do Claude Code consumindo payload via STDIN.
-
 | Símbolo | Assinatura | Retorno | Observação |
-| :--- | :--- | :--- | :--- |
-| `format-on-edit.sh` | `./hooks/format-on-edit.sh` | `JSON` no stdout (ou nada) | Retorna status exit `0` de forma irrestrita. |
-
----
+|---------|-----------|---------|------------|
+| `FormattingService.format_file` | `(file_path: str)` | `int` | **Sempre `0`**. `try/except Exception` em todo o corpo. |
+| `HostFormatterAdapter.execute_formatter` | `(formatter, file_path, executable?)` | `(exit, stdout, stderr)` | `ruff format`, `prettier --write`, `rustfmt <file>`. `FileNotFoundError`→`(127,...)`. |
 
 ## Fluxo Principal
-1. **Configuração Unix & PATH:** Configura o ambiente e injeta `$HOME/.local/bin`, `/opt/homebrew/bin` e caminhos estáveis no `PATH` local.
-2. **Extração de Arquivo:**
-   * Lê STDIN e extrai `.tool_input.file_path` ou `.tool_response.filePath` usando `jq`.
-   * Resolve o caminho absoluto correspondente.
-3. **Verificação de Denylist (`DENY_PREFIXES`):**
-   * Compara o caminho absoluto do arquivo com prefixos blindados (Notas Obsidian, diretórios de runtime do Claude). Aborta com exit `0` se houver match.
-4. **Resolução de Raiz (`find_project_root`):**
-   * Sobe recursivamente os níveis de diretórios.
-   * Valida se a pasta corrente está contida no array `NON_ROOT_DIRS` (impedindo que `$HOME` seja raiz).
-   * Se contiver um arquivo listado em `PROJECT_MARKERS`, assume o diretório como a raiz do projeto de software.
-5. **Verificação de Opt-out:**
-   * Aborta se o arquivo `.no-autoformat` estiver presente na raiz detectada.
-6. **Despacho por Extensão:**
-   * Calcula o hash SHA-1 do arquivo físico antes de alterar.
-   * Resolve o formatador preferindo caminho relativo à raiz (ex: `node_modules/.bin/prettier`) antes de recorrer a busca global.
-   * Case de Extensões:
-     * `.py`, `.pyi`: Executa `ruff format` + `ruff check --fix --quiet`.
-     * `.js`, `.ts`, `.json`, `.css`, `.html`, `.vue`, `.md`, `.yaml`, etc: Executa `prettier --write --log-level warn`.
-     * `.rs`: Executa `rustfmt`.
-     * `.sh`, `.bash` (ou arquivos sem extensão com shebang compatível): Executa `shfmt -w`.
-7. **Cálculo Diferencial e Alerta:**
-   * Compara o hash pós-execução. Se modificado, imprime no stdout o payload JSON `systemMessage`.
 
----
+1. **Blindagem de diretórios pessoais (RN-04):** se `abs_path == ~`, ou começa por `~/Notas` ou `~/.claude`, retorna 0 sem formatar. 🟢
+2. **Descoberta da raiz + opt-out (RN-06/RN-N7):** sobe a árvore a partir do arquivo; em cada nível, se existir `.no-autoformat`, aborta (retorna 0); marca como raiz o nível que contiver `.git` **ou** `harness.toml`. Fallback `os.getcwd()`. Para quando `parent == current` (raiz do FS). 🟢
+3. **Seleção por extensão:** `.py`→`ruff`; `.js/.ts/.json/.css/.md`→`prettier`; `.rs`→`rustfmt`; não suportada → retorna 0. 🟢
+4. **Precedência de executável local (RN-05):** para `ruff` procura `<root>/.venv/bin/ruff` e `venv/bin/ruff`; para `prettier`, `<root>/node_modules/.bin/prettier`. Se achar, passa o caminho; senão deixa o adaptador resolver no PATH. 🟢
+5. **Execução** via `ProcessPort.execute_formatter(...)`, **ignorando o código de retorno** (não-bloqueio). 🟢
+
+## Fluxos Alternativos
+
+- **Qualquer exceção no corpo:** capturada pelo `try/except`; retorna 0 (RN-03). 🟢
+- **Formatador ausente no host:** `HostFormatterAdapter` devolve `(127, ...)`; o serviço ignora. 🟢
+- **Extensão não suportada:** no-op (retorna 0). 🟢
 
 ## Dependências
-* `jq` — Utilitário de formatação e parse de payloads.
-* Formatadores externos instalados local ou globalmente (`ruff`, `prettier`, `rustfmt`, `shfmt`).
 
----
+- `ProcessPort` / `HostFormatterAdapter` — execução do formatador em subprocesso.
+- `FileSystemPort` — verificação de existência (`.no-autoformat`, manifestos, binários locais).
+- Formatadores de host: `ruff`, `prettier`, `rustfmt`.
 
 ## Decisões de Design Identificadas
 
 | Decisão | Evidência no código | Confiança |
-| :--- | :--- | :---: |
-| Retorno incondicional status `0` ao fim do fluxo | `format-on-edit.sh:173` | 🟢 |
-| Dedução de script shell para arquivos sem extensão analisando shebang | `format-on-edit.sh:151` | 🟢 |
+|---------|---------------------|-----------|
+| Retorno incondicional `0` (não-bloqueio) | `service.py` (`try/except` + `return 0`) | 🟢 |
+| Raiz por manifesto (`.git`/`harness.toml`), não por marcadores de linguagem | `service.py` (subida da árvore) | 🟢 |
+| Precedência local > PATH para binários | `service.py` (caminhos `.venv`/`node_modules`) | 🟢 |
+| Blindagens e opt-out chumbados (não lê `[formatting]`) | `service.py` (literais) — dívida T4 | 🟡 |
 
----
+## Estado Interno
+
+Sem estado em memória. O efeito é o arquivo formatado no disco (via subprocesso). Não há log persistente (diferente do legado, que escrevia `format-on-edit.log`).
 
 ## Observabilidade
-* O script escreve o log de todas as operações formatadas ou abortadas no arquivo local `~/.claude/hooks/format-on-edit.log`.
-* As saídas de erros de compiladores são direcionadas a este arquivo de log de execução, preservando o stdout limpo apenas para o JSON de saída.
+
+- O serviço **não** emite `systemMessage` nem grava log (comportamento do legado removido).
+- O não-bloqueio é silencioso por design; falhas degradam para no-op.
+
+## Riscos e Lacunas
+
+- 🟡 **T3:** no caminho do hook (`PostToolUse` via stdin), `main.py:63` usa `json.loads` sem `import json` → `NameError` capturado, autoformat por hook não ocorre. Documentado, não corrigido.
+- 🟡 **T4:** `[formatting]` do `harness.toml` não alimenta o serviço; blindagens/opt-out chumbados.
