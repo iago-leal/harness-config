@@ -1,12 +1,15 @@
 import os
+import fnmatch
 from typing import Optional
 from src.core.ports.fs import FileSystemPort
 from src.core.ports.process import ProcessPort
+from src.core.domain.config import HarnessConfig
 
 class FormattingService:
-    def __init__(self, fs: FileSystemPort, process: ProcessPort):
+    def __init__(self, fs: FileSystemPort, process: ProcessPort, config: Optional[HarnessConfig] = None):
         self.fs = fs
         self.process = process
+        self.config = config or HarnessConfig()
 
     def format_file(self, file_path: str) -> int:
         """
@@ -31,9 +34,11 @@ class FormattingService:
             project_root = None
             current = os.path.dirname(abs_path)
             
+            opt_out_filename = self.config.formatting.opt_out_file or ".no-autoformat"
+            
             while True:
                 # Checa opt-out neste nível
-                opt_out_file = os.path.join(current, ".no-autoformat")
+                opt_out_file = os.path.join(current, opt_out_filename)
                 if self.fs.exists(opt_out_file):
                     return 0 # Opt-out ativo, cancela formatação com sucesso
                 
@@ -48,6 +53,21 @@ class FormattingService:
 
             if not project_root:
                 project_root = os.getcwd()
+
+            # 2.5. Verificar Exclusão Dinâmica por caminhos e glob patterns
+            rel_path = os.path.relpath(abs_path, project_root)
+            for pattern in self.config.formatting.exclude_paths:
+                pattern = pattern.strip()
+                if not pattern:
+                    continue
+                # Se o padrão contiver curingas, usamos fnmatch
+                if any(c in pattern for c in ("*", "?", "[", "]")):
+                    if fnmatch.fnmatch(rel_path, pattern) or fnmatch.fnmatch(os.path.basename(abs_path), pattern):
+                        return 0
+                else:
+                    # Checagem de prefixo (diretório) ou correspondência exata
+                    if rel_path.startswith(pattern) or rel_path == pattern:
+                        return 0
 
             # 3. Determinar formatador por extensão
             _, ext = os.path.splitext(abs_path)

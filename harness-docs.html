@@ -903,6 +903,31 @@ cd ..</code></pre>
       "name": "install-prompt",
       "help": "Imprime o prompt de instalação colável no agente",
       "arguments": []
+    },
+    {
+      "name": "init",
+      "help": "Inicializa um projeto de destino com o Harness Core de forma física e isolada",
+      "arguments": [
+        {
+          "flags": [],
+          "help": "Caminho do repositório de destino",
+          "required": true,
+          "default": null
+        },
+        {
+          "flags": [
+            "--harness"
+          ],
+          "help": "Harness ativo no destino (padrão: claude)",
+          "required": false,
+          "default": "claude"
+        }
+      ]
+    },
+    {
+      "name": "upgrade",
+      "help": "Atualiza a instalação do Harness Core no projeto a partir do upstream configurado",
+      "arguments": []
     }
   ],
   "rules": [
@@ -978,8 +1003,8 @@ cd ..</code></pre>
     "output_folder": "_reversa_sdd",
     "forward_folder": "_reversa_forward",
     "phase": "concluido",
-    "reextraction_started_at": "2026-06-24T00:02:09Z",
-    "reextraction_completed_at": "2026-06-24T01:00:07Z",
+    "reextraction_started_at": "2026-06-24T11:35:46-03:00",
+    "reextraction_completed_at": "2026-06-24T14:45:00-03:00",
     "completed": [
       "reconhecimento",
       "escavacao",
@@ -990,7 +1015,7 @@ cd ..</code></pre>
     "pending": [],
     "checkpoints": {
       "scout": {
-        "completed_at": "2026-06-24T00:08:09Z",
+        "completed_at": "2026-06-24T14:15:00Z",
         "files": [
           "_reversa_sdd/inventory.md",
           "_reversa_sdd/dependencies.md",
@@ -998,14 +1023,14 @@ cd ..</code></pre>
         ]
       },
       "archaeologist": {
-        "completed_at": "2026-06-24T00:16:44Z",
+        "completed_at": "2026-06-24T14:16:00Z",
         "modules_analyzed": [
           "harness-core"
         ],
         "modules_pending": []
       },
       "detective": {
-        "completed_at": "2026-06-24T00:23:19Z",
+        "completed_at": "2026-06-24T14:17:00Z",
         "files": [
           "_reversa_sdd/domain.md",
           "_reversa_sdd/state-machines.md",
@@ -1013,11 +1038,14 @@ cd ..</code></pre>
           "_reversa_sdd/adrs/0009-abandono-claude-config-centralizacao-harness.md",
           "_reversa_sdd/adrs/0010-estado-sessao-unificado-harness.md",
           "_reversa_sdd/adrs/0011-reinjecao-multi-harness-strategy-sink.md",
-          "_reversa_sdd/adrs/0012-caminhos-decisao-por-configuracao.md"
+          "_reversa_sdd/adrs/0012-caminhos-decisao-por-configuracao.md",
+          "_reversa_sdd/adrs/0013-harness-core-modulo-per-projeto-footprint.md",
+          "_reversa_sdd/adrs/0014-bootstrap-e-evolucao-do-tooling.md",
+          "_reversa_sdd/adrs/0015-reprodutibilidade-e-configuracoes-dinamicas-de-formatacao.md"
         ]
       },
       "architect": {
-        "completed_at": "2026-06-24T00:28:30Z",
+        "completed_at": "2026-06-24T14:17:30Z",
         "files": [
           "_reversa_sdd/architecture.md",
           "_reversa_sdd/c4-context.md",
@@ -1028,7 +1056,7 @@ cd ..</code></pre>
         ]
       },
       "writer": {
-        "completed_at": "2026-06-24T00:42:42Z",
+        "completed_at": "2026-06-24T14:18:00Z",
         "files": [
           "_reversa_sdd/install/{requirements,design,tasks}.md",
           "_reversa_sdd/session/{requirements,design,tasks}.md",
@@ -1041,7 +1069,7 @@ cd ..</code></pre>
         ]
       },
       "reviewer": {
-        "completed_at": "2026-06-24T00:51:31Z",
+        "completed_at": "2026-06-24T11:12:34-03:00",
         "files": [
           "_reversa_sdd/confidence-report.md",
           "_reversa_sdd/gaps.md",
@@ -1054,7 +1082,85 @@ cd ..</code></pre>
       "documentacao-uso-html/design.md",
       "documentacao-uso-html/tasks.md",
       "traceability/code-spec-matrix.md"
-    ]
+    ],
+    "last_reextraction": {
+      "type": "cirurgica",
+      "scope": "feature-008-reprodutibilidade-e-config",
+      "anchor_commit": "1b23498",
+      "started_at": "2026-06-24T11:35:46-03:00",
+      "completed_at": "2026-06-24T14:45:00-03:00",
+      "method": "workflow re-extração pós-feature 008",
+      "artifacts_reconciled": 15,
+      "new_adr": "0015-reprodutibilidade-e-configuracoes-dinamicas-de-formatacao",
+      "reconciled_with": [
+        "1b23498 (feature 007)",
+        "feature 008 uncommitted"
+      ],
+      "regression_check": {
+        "features": 8,
+        "watch_items": 24,
+        "green": 23,
+        "yellow": 1,
+        "red": 0,
+        "yellow_detail": "003/W003 - template.md ainda sinaliza pendencia do SessionStart ja paga pela 004 (defasagem documental, mantido por decisao do mantenedor)"
+      }
+    },
+    "engines": [
+      "claude-code",
+      "codex",
+      "gemini-cli",
+      "antigravity"
+    ],
+    "agents": [
+      "reversa",
+      "reversa-scout",
+      "reversa-archaeologist",
+      "reversa-detective",
+      "reversa-architect",
+      "reversa-writer",
+      "reversa-reviewer",
+      "reversa-visor",
+      "reversa-data-master",
+      "reversa-design-system",
+      "reversa-agents-help",
+      "reversa-reconstructor",
+      "reversa-migrate",
+      "reversa-paradigm-advisor",
+      "reversa-curator",
+      "reversa-strategist",
+      "reversa-designer",
+      "reversa-screen-translator",
+      "reversa-inspector",
+      "reversa-forward",
+      "reversa-requirements",
+      "reversa-clarify",
+      "reversa-plan",
+      "reversa-to-do",
+      "reversa-audit",
+      "reversa-quality",
+      "reversa-coding",
+      "reversa-principles",
+      "reversa-resume",
+      "reversa-new",
+      "reversa-ideator",
+      "reversa-researcher",
+      "reversa-drafter",
+      "reversa-spec-sdd",
+      "reversa-pricing-profile",
+      "reversa-pricing-size",
+      "reversa-pricing-estimate",
+      "reversa-docs",
+      "reversa-docs-mapper",
+      "reversa-docs-analyst",
+      "reversa-docs-storyteller",
+      "reversa-docs-publisher",
+      "reversa-arquitetura-3d",
+      "reversa-selo-generativo",
+      "reversa-highcharts-visualizer",
+      "reversa-especialista-d3",
+      "reversa-image-prompt-json"
+    ],
+    "created_files": []
   }
 };
 

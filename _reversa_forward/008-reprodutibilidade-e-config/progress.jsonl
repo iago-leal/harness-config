@@ -1,0 +1,10 @@
+{"ts":"2026-06-24T11:36:29-03:00","action":"T001","status":"done","files":["harness-core/requirements.in"]}
+{"ts":"2026-06-24T11:36:51-03:00","action":"T002","status":"done","files":["harness-core/requirements.txt"]}
+{"ts":"2026-06-24T11:37:16-03:00","action":"T003","status":"done","files":["harness-core/tests/test_formatting.py"]}
+{"ts":"2026-06-24T11:37:35-03:00","action":"T004","status":"done","files":["harness-core/src/core/formatting/service.py"]}
+{"ts":"2026-06-24T11:37:35-03:00","action":"T005","status":"done","files":["harness-core/src/core/formatting/service.py"]}
+{"ts":"2026-06-24T11:37:35-03:00","action":"T006","status":"done","files":["harness-core/src/core/formatting/service.py"]}
+{"ts":"2026-06-24T11:38:09-03:00","action":"T007","status":"done","files":["harness-core/src/main.py","harness-core/src/adapters/mcp/server.py"]}
+{"ts":"2026-06-24T11:38:25-03:00","action":"T008","status":"done","files":[".github/workflows/ci.yml"]}
+{"ts":"2026-06-24T11:38:41-03:00","action":"T009","status":"done","files":["harness-core/"]}
+{"ts":"2026-06-24T11:38:55-03:00","action":"T010","status":"done","files":["harness-docs.html"]}

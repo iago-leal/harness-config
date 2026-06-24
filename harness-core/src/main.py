@@ -158,7 +158,8 @@ def main():
         sys.exit(0)
 
     elif args.command == "format":
-        service = FormattingService(fs, process)
+        config = load_config(fs)
+        service = FormattingService(fs, process, config)
         file_path = resolve_format_target(args.file_path)
         if not file_path:
             sys.exit(0)

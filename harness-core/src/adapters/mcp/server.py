@@ -25,7 +25,8 @@ process = HostFormatterAdapter()
     description="Formata automaticamente um arquivo suportado (Python, JS/TS/JSON, Rust)",
 )
 def format_file(file_path: str) -> str:
-    service = FormattingService(fs, process)
+    config = load_config(fs)
+    service = FormattingService(fs, process, config)
     # format_file retorna sempre 0 (sucesso/não bloqueia)
     service.format_file(file_path)
     return f"Formatação processada para: {file_path}"
