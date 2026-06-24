@@ -15,6 +15,16 @@ Estes itens devem ser monitorados nas próximas rodadas da extração reversa pa
 
 ## 2. Histórico de re-extrações
 
+### Re-extração 2026-06-24 10:06
+
+| ID   | Veredito | Observação                                                                                                                                                      |
+| ---- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Wrapper `./harness` presente na raiz e executável. Inalterado pela feature 006.                                                                                 |
+| W002 | 🟢 verde | `harness-core/.venv` presente; `toml` continua dependência (usado por `config.py:1` / `load_config`). A 006 removeu `import toml` só de `main.py`, não do venv. |
+| W003 | 🟢 verde | `.reversa/settings.json.snippet` presente e válido.                                                                                                             |
+
+> **Nota de arquivamento:** W001/W002/W003 acumulam ≥3 vereditos verdes consecutivos (limiar `archive-after = 3`). Candidatos a arquivamento — o Reversa não move a tabela principal (regra absoluta); ação a critério do mantenedor.
+
 ### Re-extração 2026-06-24 08:10
 
 | ID   | Veredito | Observação                                                                                                                |

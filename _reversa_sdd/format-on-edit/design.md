@@ -5,9 +5,9 @@
 
 ## Interface
 
-| Símbolo | Assinatura | Retorno | Observação |
-|---------|-----------|---------|------------|
-| `FormattingService.format_file` | `(file_path: str)` | `int` | **Sempre `0`**. `try/except Exception` em todo o corpo. |
+| Símbolo                                  | Assinatura                            | Retorno                  | Observação                                                                            |
+| ---------------------------------------- | ------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------- |
+| `FormattingService.format_file`          | `(file_path: str)`                    | `int`                    | **Sempre `0`**. `try/except Exception` em todo o corpo.                               |
 | `HostFormatterAdapter.execute_formatter` | `(formatter, file_path, executable?)` | `(exit, stdout, stderr)` | `ruff format`, `prettier --write`, `rustfmt <file>`. `FileNotFoundError`→`(127,...)`. |
 
 ## Fluxo Principal
@@ -32,12 +32,12 @@
 
 ## Decisões de Design Identificadas
 
-| Decisão | Evidência no código | Confiança |
-|---------|---------------------|-----------|
-| Retorno incondicional `0` (não-bloqueio) | `service.py` (`try/except` + `return 0`) | 🟢 |
-| Raiz por manifesto (`.git`/`harness.toml`), não por marcadores de linguagem | `service.py` (subida da árvore) | 🟢 |
-| Precedência local > PATH para binários | `service.py` (caminhos `.venv`/`node_modules`) | 🟢 |
-| Blindagens e opt-out chumbados (não lê `[formatting]`) | `service.py` (literais) — dívida T4 | 🟡 |
+| Decisão                                                                     | Evidência no código                            | Confiança |
+| --------------------------------------------------------------------------- | ---------------------------------------------- | --------- |
+| Retorno incondicional `0` (não-bloqueio)                                    | `service.py` (`try/except` + `return 0`)       | 🟢        |
+| Raiz por manifesto (`.git`/`harness.toml`), não por marcadores de linguagem | `service.py` (subida da árvore)                | 🟢        |
+| Precedência local > PATH para binários                                      | `service.py` (caminhos `.venv`/`node_modules`) | 🟢        |
+| Blindagens e opt-out chumbados (não lê `[formatting]`)                      | `service.py` (literais) — dívida T4            | 🟡        |
 
 ## Estado Interno
 
@@ -50,5 +50,5 @@ Sem estado em memória. O efeito é o arquivo formatado no disco (via subprocess
 
 ## Riscos e Lacunas
 
-- 🟡 **T3:** no caminho do hook (`PostToolUse` via stdin), `main.py:63` usa `json.loads` sem `import json` → `NameError` capturado, autoformat por hook não ocorre. Documentado, não corrigido.
+- 🟢 **T3 (resolvido):** o caminho do hook (`PostToolUse` via stdin) fazia `json.loads` sem `import json` → `NameError` capturado, e o autoformat por hook não ocorria; corrigido no commit `cf73980` (`import json` em `main.py:5`). O autoformat por hook voltou a operar.
 - 🟡 **T4:** `[formatting]` do `harness.toml` não alimenta o serviço; blindagens/opt-out chumbados.

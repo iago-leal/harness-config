@@ -58,4 +58,4 @@
 
 ## Lacunas Pendentes (🔴)
 
-- Nenhuma 🔴. Ressalva 🟡: **T2** — caminho divergente CLI×MCP do estado de sessão. Bug latente documentado, não corrigido aqui.
+- Nenhuma 🔴. 🟢 **T2 resolvido (feature 006):** o caminho divergente CLI×MCP do estado de sessão foi fechado — ambos os drivers leem `session_file` de `config.session.state_file`. Não há mais ressalva pendente nesta unit.

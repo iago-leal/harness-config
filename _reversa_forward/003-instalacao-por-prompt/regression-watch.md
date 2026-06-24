@@ -15,6 +15,14 @@ Nenhuma regra 🟢 do legado foi modificada (ver `legacy-impact.md#4-regras-modi
 
 ## 2. Histórico de re-extrações
 
+### Re-extração 2026-06-24 10:06
+
+| ID   | Veredito   | Observação                                                                                                                                                                                                                      |
+| ---- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde   | Introspecção via `InstallPromptService` (`{{COMMANDS}}` derivado do argparse) preservada. Inalterada pela 006.                                                                                                                  |
+| W002 | 🟢 verde   | `template.md:23` aponta o `.claude/settings.json` do projeto e proíbe `~/.claude`. Reforçado pelo footprint global zero da 006 (MD-0005 / ADR 0013).                                                                            |
+| W003 | 🟡 amarelo | `template.md:42` ainda sinaliza a pendência do `SessionStart` "a ser fechada na feature 004" — dívida já paga (a 004 reinjeta o estado). Defasagem documental persiste, fora do escopo da 006. Aguarda atualização do template. |
+
 ### Re-extração 2026-06-24 08:10
 
 | ID   | Veredito   | Observação                                                                                                                                                                                        |

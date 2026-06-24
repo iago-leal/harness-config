@@ -20,6 +20,15 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-24 10:06
+
+| ID   | Veredito | Observação                                                                                                                                                                                                                 |
+| ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Alerta de divergência de âncora preservado em `core/commands/service.py`. Inalterado.                                                                                                                                      |
+| W002 | 🟢 verde | Estado em `.harness/estado-da-sessao.md`; a 006 parametrizou o caminho via `SessionSection` (default = mesmo caminho), lido por CLI e MCP. Não reaparece `ESTADO-DA-SESSAO.md` raiz; máquina `INACTIVE↔ACTIVE` preservada. |
+| W003 | 🟢 verde | `_reversa_sdd/domain.md` mantém `.harness/estado-da-sessao.md` como local canônico.                                                                                                                                        |
+| W004 | 🟢 verde | `cmd resume` emite só o JSON `hookSpecificOutput.additionalContext` via sink; T3 corrigido (`cf73980`). Sem texto solto no stdout.                                                                                         |
+
 ### Re-extração 2026-06-24 08:10
 
 | ID   | Veredito | Observação                                                                                                                                                                         |

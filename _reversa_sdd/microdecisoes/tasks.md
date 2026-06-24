@@ -54,4 +54,4 @@
 
 ## Lacunas Pendentes (🔴)
 
-- Nenhuma 🔴. Ressalva 🟡: **T1** — via MCP, `load_config` quebra por import ausente; a tool de decisões MCP não processa. Bug latente documentado, não corrigido aqui.
+- Nenhuma 🔴. **T1** — via MCP, `load_config` quebrava por import ausente e a tool de decisões MCP não processava — **resolvido** no commit `cf73980` (import presente em `server.py:12`).

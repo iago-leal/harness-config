@@ -19,6 +19,15 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-24 10:06
+
+| ID   | Veredito | Observação                                                                                                                                                                             |
+| ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Decisões em `.harness/decisoes/` (MD-0001..MD-0005 + `_cabecalho.md`) e índice `.harness/microdecisoes.md`; raiz limpa.                                                                |
+| W002 | 🟢 verde | CLI (`main.py`) e MCP (`server.py:12`) leem `load_config().decisions`; nenhum literal `"decisoes"`/`"microdecisoes.md"` chumbado.                                                      |
+| W003 | 🟢 verde | `config.py` `load_config` funcional: `import toml` (l.1) e `FileSystemPort` (l.5) presentes. A 006 removeu `toml` só de `main.py`, não de `config.py`.                                 |
+| W004 | 🟢 verde | `./harness decisions` valida o grafo com zero erros e é idempotente. A 006 acrescentou MD-0005 (refina MD-0004) ao índice — mudança pretendida; backlinks consistentes, grafo íntegro. |
+
 ### Re-extração 2026-06-24 08:10
 
 | ID   | Veredito | Observação                                                                                                                                                                                                                                                                                                          |

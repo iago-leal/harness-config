@@ -3,7 +3,7 @@
 > Regenerado pelo Revisor em 2026-06-24 (Re-extração após as features 003, 004 e 005)
 > Responda cada pergunta (preencha o campo **Resposta**) e me avise quando terminar — basta digitar `reversa`.
 
-A re-extração tem confiança alta (≈85%) e cobertura completa do código de produto. As perguntas abaixo **não** decorrem de trechos de código indecifráveis — o código foi lido por inteiro —, mas de **decisões que só o mantenedor pode tomar**: rumo das dívidas, correção dos bugs latentes e o destino dos artefatos desatualizados. São 5 perguntas.
+A re-extração tem confiança alta (≈85%) e cobertura completa do código de produto. As perguntas abaixo **não** decorrem de trechos de código indecifráveis — o código foi lido por inteiro —, mas de **decisões que só o mantenedor pode tomar**: rumo das dívidas, correção dos bugs latentes e o destino dos artefatos desatualizados. São 5 perguntas; **três já foram resolvidas** (Q3 e Q4 pelas correções em `cf73980` + feature 006; Q5 pela decisão de remoção). Restam abertas Q1 (reprodutibilidade) e Q2 (rumo de T4).
 
 ---
 
@@ -29,25 +29,25 @@ A re-extração tem confiança alta (≈85%) e cobertura completa do código de 
 
 ---
 
-## Pergunta 3
+## Pergunta 3 — ✅ RESOLVIDA (feature 006)
 
-**Contexto:** T5 — `main.py` mantém **duas** vias de configuração: a função legada `load_harness_config` (dict com defaults, sem `[decisions]`, usada pelo subcomando `cmd` para ler `active_harness`) e a tipada `load_config` (usada por `decisions` e `install-prompt`).
+**Contexto:** T5 — `main.py` mantinha **duas** vias de configuração: a função legada `load_harness_config` (dict com defaults, sem `[decisions]`, usada pelo subcomando `cmd` para ler `active_harness`) e a tipada `load_config` (usada por `decisions` e `install-prompt`).
 **Spec afetada:** [`_reversa_sdd/run-harness-core-local/design.md`], `code-analysis.md` (nota residual / T5)
 **Pergunta:** Confirma que a intenção é **consolidar** tudo em `load_config` (tipada) e remover `load_harness_config`? Ou há razão para o `cmd` ler a config pelo caminho legado?
 **Impacto:** Determina se T5 é dívida a sanar (downgrade de coesão a registrar) ou um arranjo intencional. Afeta a recomendação de refactor no relatório.
 
-**Resposta:** <!-- preencha aqui -->
+**Resposta:** **Consolidar — feito.** A feature 006 (`e894c59`) **removeu** `load_harness_config` e o `import toml` de `main.py`. Via ÚNICA de configuração: tudo por `load_config(fs)` tipada; o subcomando `cmd` passou a ler `config.harness.active_harness`. T5 fechado, sem "duas vias de config". 🟢
 
 ---
 
-## Pergunta 4
+## Pergunta 4 — ✅ RESOLVIDA (cf73980 + feature 006)
 
-**Contexto:** T1 e T2 — o driver MCP (`adapters/mcp/server.py`) tem dois bugs latentes confirmados: `process_decisions` chama `load_config` sem import (`NameError`, l.60) e `session_command` aponta para `ESTADO-DA-SESSAO.md` na raiz (l.92), divergente da CLI (`.harness/estado-da-sessao.md`). O ADR 0012 já registra que a seção `[session]` análoga à `[decisions]` **não** foi adotada na feature 005, deixando T2 como pendência consciente.
+**Contexto:** T1 e T2 — o driver MCP (`adapters/mcp/server.py`) tinha dois bugs latentes confirmados: `process_decisions` chamava `load_config` sem import (`NameError`) e `session_command` apontava para `ESTADO-DA-SESSAO.md` na raiz, divergente da CLI (`.harness/estado-da-sessao.md`). O ADR 0012 registrava que a seção `[session]` análoga à `[decisions]` não fora adotada na feature 005, deixando T2 como pendência consciente.
 **Spec afetada:** [`_reversa_sdd/microdecisoes/`], [`_reversa_sdd/session/`], [`_reversa_sdd/comandos-customizados/`], `adrs/0012`
 **Pergunta:** O servidor MCP é um caminho de uso ativo (você invoca as tools `process_decisions`/`session_command` via MCP) ou está dormente enquanto o fluxo real é a CLI por hooks? Corrigir T1/T2 (import + caminho de sessão, idealmente via nova seção `[session]`) entra na próxima feature?
 **Impacto:** Se o MCP está dormente, T1/T2 são dívida de baixa urgência e a spec deve marcá-los como "tool MCP não exercida". Se é caminho ativo, são bugs de alta prioridade que produzem estado de sessão órfão e índice de decisões nunca gerado via MCP.
 
-**Resposta:** <!-- preencha aqui -->
+**Resposta:** **Corrigidos.** T1 foi resolvido no commit `cf73980`: `server.py:12` importa `from src.core.domain.config import load_config`; `process_decisions` não levanta mais `NameError`. T2 foi resolvido por configuração na feature 006 (`e894c59`): `core/domain/config.py` ganhou `SessionSection (state_file = ".harness/estado-da-sessao.md")` e o `harness.toml` ganhou a seção `[session]`. CLI (`main.py:169`) e MCP (`server.py:94`) leem agora `config.session.state_file` — nenhum literal de caminho chumbado, divergência CLI×MCP eliminada (revertendo a premissa do ADR 0012). 🟢
 
 ---
 

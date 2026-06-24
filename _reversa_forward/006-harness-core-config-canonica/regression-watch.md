@@ -20,6 +20,15 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-24 10:06
+
+| ID   | Veredito | Observação                                                                                                                                                                                                                                                                 |
+| ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Caminho de sessão lido de `config.session.state_file` (`main.py:169`, `server.py:94`); nenhum literal chumbado nos drivers.                                                                                                                                                |
+| W002 | 🟢 verde | `load_harness_config` e `import toml` removidos de `main.py`; via única tipada `load_config`; `cmd` lê `config.harness.active_harness`.                                                                                                                                    |
+| W003 | 🟢 verde | Contrato em `tests/test_footprint.py` + `tests/helpers.py` (`RecordingFileSystem`): falha barulhento ao escrever em `~/.claude`, `~/.agent-memory` ou fora do repo; BR-MIGRAR-007 preservada. Ressalva 🟡: cobre só os serviços exercitados (teste, não guard de runtime). |
+| W004 | 🟢 verde | `MD-0005` ativo (reverte a premissa global do MD-0004); nenhum mecanismo de substituição global (symlink/env/XDG/cópia de `~/.claude`) reintroduzido. ADR 0013 registra.                                                                                                   |
+
 <!-- Preenchido pelo agente reverso quando `/reversa` rodar de novo. -->
 
 ## Arquivadas

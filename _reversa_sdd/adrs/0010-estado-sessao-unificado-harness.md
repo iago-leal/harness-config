@@ -1,15 +1,15 @@
 # ADR 0010: Estado de sessão unificado em `.harness/estado-da-sessao.md` com narrativa de retomada
 
-* **Status:** Aceito
-* **Data:** 2026-06-23 (decidido) / feature 004 (implementado)
-* **Contexto Técnico:** Módulos `core/session` e `core/commands` — commit `e1a2f75`
-* **Escala de Confiança:** 🟢 CONFIRMADO
-* **Decisões relacionadas:** MD-0002 (refina MD-0001)
-* **Supera (parcialmente):** ADR 0004 (localização e formato da âncora)
+- **Status:** Aceito
+- **Data:** 2026-06-23 (decidido) / feature 004 (implementado)
+- **Contexto Técnico:** Módulos `core/session` e `core/commands` — commit `e1a2f75`
+- **Escala de Confiança:** 🟢 CONFIRMADO
+- **Decisões relacionadas:** MD-0002 (refina MD-0001)
+- **Supera (parcialmente):** ADR 0004 (localização e formato da âncora)
 
 ## Contexto e Problema
 
-O corte dos hooks para a CLI (ADR 0009 / MD-0001) deixou uma regressão aceita: o `SessionStart` via `cmd resume` não reinjetava mais o estado da última sessão no contexto — função que o antigo `carregar-estado-sessao.sh` cumpria emitindo `hookSpecificOutput.additionalContext`. Pior, conviviam **duas** fontes de verdade do estado: um `.claude/ESTADO-DA-SESSAO.md` com narrativa rica (versionado) e um `ESTADO-DA-SESSAO.md` pobre na raiz (gerado pela CLI), gerando *drift*. O estado de sessão é conceito da CLI multi-harness, não do Claude.
+O corte dos hooks para a CLI (ADR 0009 / MD-0001) deixou uma regressão aceita: o `SessionStart` via `cmd resume` não reinjetava mais o estado da última sessão no contexto — função que o antigo `carregar-estado-sessao.sh` cumpria emitindo `hookSpecificOutput.additionalContext`. Pior, conviviam **duas** fontes de verdade do estado: um `.claude/ESTADO-DA-SESSAO.md` com narrativa rica (versionado) e um `ESTADO-DA-SESSAO.md` pobre na raiz (gerado pela CLI), gerando _drift_. O estado de sessão é conceito da CLI multi-harness, não do Claude.
 
 ## Decisão
 
@@ -23,17 +23,17 @@ Unificar o estado num único artefato canônico e versionado, `.harness/estado-d
 
 ## Alternativas Consideradas
 
-* **Dois arquivos por concern (JSON de máquina + MD de narrativa):** descartada — reinstitui as duas fontes de verdade que geraram o *drift* (MD-0002).
-* **Persistir nada e derivar tudo (git HEAD + `active-requirements.json`):** descartada — perde o commit-âncora do fechamento (necessário ao alerta de divergência) e acopla o core de sessão ao schema do Reversa.
-* **Local na raiz `estado-da-sessao.md`:** preterida — agnóstico, mas polui a raiz e não agrupa futuros artefatos de sessão; `.harness/` os agrupa.
-* **Manter em `.claude/ESTADO-DA-SESSAO.md`:** rejeitada pelo mantenedor — acopla ao harness Claude.
+- **Dois arquivos por concern (JSON de máquina + MD de narrativa):** descartada — reinstitui as duas fontes de verdade que geraram o _drift_ (MD-0002).
+- **Persistir nada e derivar tudo (git HEAD + `active-requirements.json`):** descartada — perde o commit-âncora do fechamento (necessário ao alerta de divergência) e acopla o core de sessão ao schema do Reversa.
+- **Local na raiz `estado-da-sessao.md`:** preterida — agnóstico, mas polui a raiz e não agrupa futuros artefatos de sessão; `.harness/` os agrupa.
+- **Manter em `.claude/ESTADO-DA-SESSAO.md`:** rejeitada pelo mantenedor — acopla ao harness Claude.
 
 ## Consequências
 
-* **Positivas:**
-  * Uma só fonte de verdade, com um só parser — fim do *drift* entre formatos.
-  * Memória de retomada estruturada e versionada, reinjetada no boot.
-  * Invariante de round-trip dá lastro de teste (propriedade `parse∘render`).
-* **Negativas:**
-  * O round-trip precisa cobrir coerções (datas ISO, naive→UTC) sob pena de quebrar a invariante.
-  * 🟡 **Dívida latente (T2):** o driver MCP (`server.py`) ainda aponta para `ESTADO-DA-SESSAO.md` na raiz — não migrado junto, diverge da CLI. Bug documentado, não corrigido.
+- **Positivas:**
+  - Uma só fonte de verdade, com um só parser — fim do _drift_ entre formatos.
+  - Memória de retomada estruturada e versionada, reinjetada no boot.
+  - Invariante de round-trip dá lastro de teste (propriedade `parse∘render`).
+- **Negativas:**
+  - O round-trip precisa cobrir coerções (datas ISO, naive→UTC) sob pena de quebrar a invariante.
+  - 🟢 **T2 (resolvido):** o driver MCP (`server.py`) apontava para `ESTADO-DA-SESSAO.md` na raiz, divergente da CLI. Corrigido no commit `cf73980` (`.harness/estado-da-sessao.md`) e unificado pela feature 006: CLI e MCP leem `config.session.state_file` (`SessionSection` / `[session]`), ver ADR 0013.

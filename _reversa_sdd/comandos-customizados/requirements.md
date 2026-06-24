@@ -8,7 +8,7 @@
 
 ## Visão Geral
 
-Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessao`, `handoff`, `clarificar`. Carrega/grava o estado de sessão em `.harness/estado-da-sessao.md`, valida a âncora Git na retomada e reinjeta a narrativa preservada. O serviço não conhece o harness — a seleção do *sink* fica na borda (`main.py`).
+Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessao`, `handoff`, `clarificar`. Carrega/grava o estado de sessão em `.harness/estado-da-sessao.md`, valida a âncora Git na retomada e reinjeta a narrativa preservada. O serviço não conhece o harness — a seleção do _sink_ fica na borda (`main.py`).
 
 ## Responsabilidades
 
@@ -28,21 +28,21 @@ Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessa
 
 ## Requisitos Funcionais
 
-| ID | Requisito | Prioridade | Critério de Aceite |
-|----|-----------|-----------|-------------------|
-| RF-01 | Comando `resume`. | Must | Sem sessão → cria com HEAD e feature `args[0]` (ou `default_feature`); com sessão → reativa, reinjeta narrativa, alerta se âncora divergir. |
-| RF-02 | Comando `encerrar-sessao`. | Must | Exige sessão ativa; grava commit-âncora via `close_session`; salva atomicamente. |
-| RF-03 | Comando `handoff`. | Should | Monta bloco Markdown com feature ativa + HEAD. |
-| RF-04 | Comando `clarificar`. | Should | Retorna texto fixo (limite de 2 rodadas de diálogo). |
-| RF-05 | Comando desconhecido. | Must | Retorna `"Comando desconhecido: <command>"`. |
+| ID    | Requisito                  | Prioridade | Critério de Aceite                                                                                                                          |
+| ----- | -------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| RF-01 | Comando `resume`.          | Must       | Sem sessão → cria com HEAD e feature `args[0]` (ou `default_feature`); com sessão → reativa, reinjeta narrativa, alerta se âncora divergir. |
+| RF-02 | Comando `encerrar-sessao`. | Must       | Exige sessão ativa; grava commit-âncora via `close_session`; salva atomicamente.                                                            |
+| RF-03 | Comando `handoff`.         | Should     | Monta bloco Markdown com feature ativa + HEAD.                                                                                              |
+| RF-04 | Comando `clarificar`.      | Should     | Retorna texto fixo (limite de 2 rodadas de diálogo).                                                                                        |
+| RF-05 | Comando desconhecido.      | Must       | Retorna `"Comando desconhecido: <command>"`.                                                                                                |
 
 ## Requisitos Não Funcionais
 
-| Tipo | Requisito inferido | Evidência no código | Confiança |
-|------|--------------------|---------------------|-----------|
-| Robustez | Estado corrompido falha barulhento (distingue de ausente). | `core/commands/service.py` (`load_session`) | 🟢 |
-| Baixo acoplamento | Serviço agnóstico a harness; sink na borda. | `core/commands/service.py`, `main.py` | 🟢 |
-| Atomicidade | Estado salvo via serializer + gravação atômica. | `core/commands/service.py` | 🟢 |
+| Tipo              | Requisito inferido                                         | Evidência no código                         | Confiança |
+| ----------------- | ---------------------------------------------------------- | ------------------------------------------- | --------- |
+| Robustez          | Estado corrompido falha barulhento (distingue de ausente). | `core/commands/service.py` (`load_session`) | 🟢        |
+| Baixo acoplamento | Serviço agnóstico a harness; sink na borda.                | `core/commands/service.py`, `main.py`       | 🟢        |
+| Atomicidade       | Estado salvo via serializer + gravação atômica.            | `core/commands/service.py`                  | 🟢        |
 
 ## Critérios de Aceitação
 
@@ -66,20 +66,20 @@ Então um MalformedSessionStateError é levantado (não tratado como sessão nov
 
 ## Prioridade (MoSCoW)
 
-| Requisito | MoSCoW | Justificativa |
-|-----------|--------|---------------|
-| `resume` com âncora e narrativa (RF-01) | Must | Coração da retomada do ciclo forward. |
-| `encerrar-sessao` (RF-02) | Must | Fecha a sessão e grava a âncora; sem ele a retomada não tem base. |
-| `handoff` / `clarificar` (RF-03/04) | Should | Apoios ao fluxo; texto derivado/fixo. |
-| Comando desconhecido (RF-05) | Must | Falha previsível e legível. |
+| Requisito                               | MoSCoW | Justificativa                                                     |
+| --------------------------------------- | ------ | ----------------------------------------------------------------- |
+| `resume` com âncora e narrativa (RF-01) | Must   | Coração da retomada do ciclo forward.                             |
+| `encerrar-sessao` (RF-02)               | Must   | Fecha a sessão e grava a âncora; sem ele a retomada não tem base. |
+| `handoff` / `clarificar` (RF-03/04)     | Should | Apoios ao fluxo; texto derivado/fixo.                             |
+| Comando desconhecido (RF-05)            | Must   | Falha previsível e legível.                                       |
 
 ## Rastreabilidade de Código
 
-| Arquivo | Função / Classe | Cobertura |
-|---------|-----------------|-----------|
-| `core/commands/service.py` | `CommandService.execute_command`, `load_session`, `save_session` | 🟢 |
-| `core/session/serializer.py` | `render`, `render_narrative` (consumidos) | 🟢 |
-| `core/domain/models.py` | `SessionState`, `SessionNarrative` | 🟢 |
-| `src/main.py` | Subcomando `cmd`, caminho `.harness/estado-da-sessao.md`, resolução de sink | 🟢 |
+| Arquivo                      | Função / Classe                                                                                                                     | Cobertura |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `core/commands/service.py`   | `CommandService.execute_command`, `load_session`, `save_session`                                                                    | 🟢        |
+| `core/session/serializer.py` | `render`, `render_narrative` (consumidos)                                                                                           | 🟢        |
+| `core/domain/models.py`      | `SessionState`, `SessionNarrative`                                                                                                  | 🟢        |
+| `src/main.py`                | Subcomando `cmd`, caminho de sessão lido de `config.session.state_file` (default `.harness/estado-da-sessao.md`), resolução de sink | 🟢        |
 
-> 🟡 **Conhecida (T2):** via MCP (`server.py:92`), `session_command` opera sobre `ESTADO-DA-SESSAO.md` (raiz), divergente da CLI. Estado CLI×MCP não converge. Documentado, não corrigido.
+> 🟢 **T2 — RESOLVIDO (feature 006):** via MCP (`server.py:94`), `session_command` lê o caminho de sessão de `config.session.state_file`, o mesmo `.harness/estado-da-sessao.md` que a CLI usa. Não há mais literal `ESTADO-DA-SESSAO.md` na raiz nem divergência CLI×MCP; o estado converge.

@@ -46,9 +46,9 @@
   - Critério de pronto: `_FAMILY_BY_HARNESS` → claude/gemini=hook, antigravity=file; desconhecido → `ValueError`.
   - Confiança: 🟢
 
-- [ ] T-08, Integrar no driver CLI
-  - Origem no legado: `src/main.py:192`
-  - Critério de pronto: usa caminho `.harness/estado-da-sessao.md` e resolve o sink por `active_harness`.
+- [ ] T-08, Integrar nos drivers (CLI e MCP)
+  - Origem no legado: `src/main.py:169`, `src/adapters/mcp/server.py:94`
+  - Critério de pronto: o caminho do estado vem de `config.session.state_file` (`SessionSection`, default `.harness/estado-da-sessao.md`) — lido igualmente pela CLI e pelo MCP, sem literal chumbado; resolve o sink por `active_harness`. ✨f006
   - Confiança: 🟢
 
 ## Tarefas de Teste
@@ -67,4 +67,4 @@
 
 ## Lacunas Pendentes (🔴)
 
-- Nenhuma 🔴. Ressalva 🟡: **T2** — caminho divergente CLI×MCP do estado de sessão (bug latente documentado, não corrigido aqui).
+- Nenhuma 🔴. **T2 RESOLVIDO** (feature 006): o caminho do estado de sessão passou a vir de `config.session.state_file` (`SessionSection`), lido igualmente por CLI e MCP. A divergência CLI×MCP, antes documentada como bug latente, foi eliminada por configuração. 🟢

@@ -28,7 +28,7 @@ graph TB
             CacheFile["sync_cache.json<br/>[JSON]<br/>Timestamp + commit_hash do último check."]
         end
 
-        Config["harness.toml<br/>[TOML]<br/>[harness] active_harness · [formatting] · [sync] · [decisions] (f005)."]
+        Config["harness.toml<br/>[TOML]<br/>[harness] active_harness · [formatting] · [sync] · [decisions] (f005) · [session] state_file (f006)."]
         DocHTML["harness-docs.html<br/>[HTML/CSS/JS estático autossuficiente]<br/>Superfície da CLI + regras de domínio + checkpoints."]
         AgyFile[".agents/rules/estado-sessao.md<br/>[Markdown projetado]<br/>Sink de arquivo p/ Antigravity (f004)."]
     end
@@ -51,9 +51,9 @@ graph TB
 
     %% Drivers -> serviços / config
     CoreCLI -->|load_config| Config
-    MCPServer -->|load_config T1| Config
-    CoreCLI -->|Lê/grava estado| SessionFile
-    MCPServer -.->|T2: aponta p/ ESTADO-DA-SESSAO.md raiz| SessionFile
+    MCPServer -->|load_config tipada| Config
+    CoreCLI -->|Lê/grava estado via config.session.state_file| SessionFile
+    MCPServer -->|Lê/grava estado via config.session.state_file| SessionFile
     CoreCLI -->|Compila índice| IndexFile
     CoreCLI -->|Lê fichas| DecisionsDir
     MCPServer -->|Lê fichas| DecisionsDir
@@ -73,18 +73,18 @@ graph TB
 
 ## 🛠️ Descrição dos Containers
 
-| Container | Tecnologia | Papel |
-|---|---|---|
-| **Wrapper (`./harness`)** | Bash | Resolve `harness-core/.venv/bin/python3` e encaminha argumentos; falha barulhenta sem venv. 🟢 |
-| **Venv (`.venv`)** | Python 3.14 venv | Runtime + dependências isoladas (`mcp`, `pydantic`, `pytest`, `toml`, `PyYAML`). 🟢 |
-| **CLI (`main.py`)** | Python / argparse | Driver de entrada primário. 7 subcomandos: `bootstrap`, `format`, `decisions`, `cmd`, `doc-gen`, `doc-serve`, `install-prompt` ✨f003. 🟢 |
-| **Servidor MCP (`server.py`)** | FastMCP (JSON-RPC stdio) | Driver de entrada secundário; 4 tools. Contém T1 e T2. 🟢 |
-| **`.harness/estado-da-sessao.md`** | Markdown (front-matter + corpo) | Estado de sessão unificado + narrativa de retomada ✨f004. 🟢 |
-| **`.harness/decisoes/` + `_cabecalho.md`** | Markdown front-matter | Fichas do grafo de microdecisões ✨f005. 🟢 |
-| **`.harness/microdecisoes.md`** | Markdown derivado | Índice com backlinks, gerado pelo hook `Stop`. 🟢 |
-| **`.harness/sync_cache.json`** | JSON | Cache TTL da verificação de sincronia (chumbado no MCP). 🟢 |
-| **`harness.toml`** | TOML | Configuração; seção `[decisions]` desacopla os caminhos ✨f005. 🟢 |
-| **`harness-docs.html`** | HTML/CSS/JS estático | Documentação standalone offline, gerada por introspecção. 🟢 |
-| **`.agents/rules/estado-sessao.md`** | Markdown projetado | Sink de arquivo para Antigravity ✨f004. 🟡 |
+| Container                                  | Tecnologia                      | Papel                                                                                                                                           |
+| ------------------------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Wrapper (`./harness`)**                  | Bash                            | Resolve `harness-core/.venv/bin/python3` e encaminha argumentos; falha barulhenta sem venv. 🟢                                                  |
+| **Venv (`.venv`)**                         | Python 3.14 venv                | Runtime + dependências isoladas (`mcp`, `pydantic`, `pytest`, `toml`, `PyYAML`). 🟢                                                             |
+| **CLI (`main.py`)**                        | Python / argparse               | Driver de entrada primário. 7 subcomandos: `bootstrap`, `format`, `decisions`, `cmd`, `doc-gen`, `doc-serve`, `install-prompt` ✨f003. 🟢       |
+| **Servidor MCP (`server.py`)**             | FastMCP (JSON-RPC stdio)        | Driver de entrada secundário; 4 tools. T1 (cf73980) e T2 (f006) resolvidos. 🟢                                                                  |
+| **`.harness/estado-da-sessao.md`**         | Markdown (front-matter + corpo) | Estado de sessão unificado + narrativa de retomada ✨f004. 🟢                                                                                   |
+| **`.harness/decisoes/` + `_cabecalho.md`** | Markdown front-matter           | Fichas do grafo de microdecisões ✨f005. 🟢                                                                                                     |
+| **`.harness/microdecisoes.md`**            | Markdown derivado               | Índice com backlinks, gerado pelo hook `Stop`. 🟢                                                                                               |
+| **`.harness/sync_cache.json`**             | JSON                            | Cache TTL da verificação de sincronia (chumbado no MCP). 🟢                                                                                     |
+| **`harness.toml`**                         | TOML                            | Configuração; `[decisions]` desacopla os caminhos ✨f005; `[session].state_file` parametriza o caminho do estado, lido por CLI e MCP ✨f006. 🟢 |
+| **`harness-docs.html`**                    | HTML/CSS/JS estático            | Documentação standalone offline, gerada por introspecção. 🟢                                                                                    |
+| **`.agents/rules/estado-sessao.md`**       | Markdown projetado              | Sink de arquivo para Antigravity ✨f004. 🟡                                                                                                     |
 
-> **Sem banco de dados / sem container de fila ou cache distribuído.** 🟢 Toda a persistência é em arquivos locais versionados (Markdown/JSON/TOML). O servidor MCP **não** mantém estado próprio: opera sobre os mesmos arquivos da CLI (exceto pelo desvio T2, que aponta para `ESTADO-DA-SESSAO.md` na raiz).
+> **Sem banco de dados / sem container de fila ou cache distribuído.** 🟢 Toda a persistência é em arquivos locais versionados (Markdown/JSON/TOML). O servidor MCP **não** mantém estado próprio: opera sobre os mesmos arquivos da CLI. O desvio T2 (MCP apontando para `ESTADO-DA-SESSAO.md` na raiz) foi **corrigido** na feature 006 — CLI e MCP leem o mesmo caminho de `config.session.state_file`, sem máquina de estado paralela.

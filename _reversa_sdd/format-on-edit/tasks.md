@@ -57,4 +57,4 @@
 
 ## Lacunas Pendentes (🔴)
 
-- Nenhuma 🔴. Ressalvas 🟡: **T3** (autoformat por hook via stdin quebra por `json` sem import) e **T4** (`[formatting]` inerte). Bugs latentes documentados, não corrigidos aqui.
+- Nenhuma 🔴. **T3** (autoformat por hook via stdin quebrava por `json` sem import) **resolvido** no commit `cf73980`. Resta a ressalva 🟡 **T4** (`[formatting]` inerte — blindagens/opt-out chumbados), ainda aberta.

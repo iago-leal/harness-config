@@ -15,9 +15,9 @@ O `harness-core` adota **Arquitetura Hexagonal (Portas e Adaptadores)** — cate
 
 Hexágono em três anéis:
 
-* **Núcleo de domínio (`src/core/`):** regras de negócio puras, uma pasta por capacidade. Depende apenas de `core/ports/` (`ABC`), nunca de adaptadores concretos.
-* **Portas (`src/core/ports/`):** contratos abstratos `FileSystemPort`, `GitPort`, `ProcessPort` — fronteira de inversão de dependência.
-* **Adaptadores (`src/adapters/`):** implementações físicas (`fs/local.py`, `git/subprocess.py`, `process/formatter.py`) e os **dois drivers de entrada** — a CLI (`src/main.py`) e o servidor MCP (`src/adapters/mcp/server.py`).
+- **Núcleo de domínio (`src/core/`):** regras de negócio puras, uma pasta por capacidade. Depende apenas de `core/ports/` (`ABC`), nunca de adaptadores concretos.
+- **Portas (`src/core/ports/`):** contratos abstratos `FileSystemPort`, `GitPort`, `ProcessPort` — fronteira de inversão de dependência.
+- **Adaptadores (`src/adapters/`):** implementações físicas (`fs/local.py`, `git/subprocess.py`, `process/formatter.py`) e os **dois drivers de entrada** — a CLI (`src/main.py`) e o servidor MCP (`src/adapters/mcp/server.py`).
 
 **Inversão de dependência preservada:** os serviços recebem as portas por injeção no construtor; quem as instancia (`main.py`, `server.py`, testes) escolhe a implementação concreta. 🟢
 
@@ -58,8 +58,8 @@ graph TD
 
 ## 📊 3. Modelo de Dados e Rastreabilidade
 
-* **Sem banco de dados relacional.** 🟢 Não há DDL, migrations, ORM nem `database_hints` (confirmado em `surface.json`). A "persistência" é toda em **arquivos versionados** (Markdown com front-matter, JSON e TOML). O modelo das estruturas de configuração, estado e decisão está em [erd-complete.md](file:///Users/iagoleal/dev/harness/_reversa_sdd/erd-complete.md).
-* A matriz que liga componentes a regras de negócio, features e requisitos está em [spec-impact-matrix.md](file:///Users/iagoleal/dev/harness/_reversa_sdd/traceability/spec-impact-matrix.md).
+- **Sem banco de dados relacional.** 🟢 Não há DDL, migrations, ORM nem `database_hints` (confirmado em `surface.json`). A "persistência" é toda em **arquivos versionados** (Markdown com front-matter, JSON e TOML). O modelo das estruturas de configuração, estado e decisão está em [erd-complete.md](file:///Users/iagoleal/dev/harness/_reversa_sdd/erd-complete.md).
+- A matriz que liga componentes a regras de negócio, features e requisitos está em [spec-impact-matrix.md](file:///Users/iagoleal/dev/harness/_reversa_sdd/traceability/spec-impact-matrix.md).
 
 ---
 
@@ -67,31 +67,33 @@ graph TD
 
 O núcleo não consome APIs REST/GraphQL nem produz webhooks. Suas únicas conexões externas são locais: 🟢
 
-* **Servidor MCP (FastMCP "Harness"):** driver de entrada via Model Context Protocol (JSON-RPC sobre `stdin`/`stdout`), expondo **4 tools** ao agente: `format_file`, `check_repository_sync`, `process_decisions`, `session_command`.
-* **Subprocessos `git`:** `git rev-parse HEAD` (local) e `git ls-remote origin main` (remoto), via `SubprocessGitAdapter` — usados em `sync`, `bootstrap` e `commands`.
-* **Formatadores de terceiros do host:** `ruff format`, `prettier --write`, `rustfmt`, disparados em subprocesso por `HostFormatterAdapter`, sempre não-bloqueantes.
-* **Servidor HTTP local:** `doc-serve` expõe `harness-docs.html` em `http://localhost:8000` via `http.server` nativo.
-* **Ganchos de ciclo de vida do agente:** `SessionStart`/`PostToolUse`/`Stop` (Claude) e `SessionStart` (Gemini), configurados em `.claude/settings.json` e `.gemini/settings.json`, invocam o wrapper `./harness`.
+- **Servidor MCP (FastMCP "Harness"):** driver de entrada via Model Context Protocol (JSON-RPC sobre `stdin`/`stdout`), expondo **4 tools** ao agente: `format_file`, `check_repository_sync`, `process_decisions`, `session_command`.
+- **Subprocessos `git`:** `git rev-parse HEAD` (local) e `git ls-remote origin main` (remoto), via `SubprocessGitAdapter` — usados em `sync`, `bootstrap` e `commands`.
+- **Formatadores de terceiros do host:** `ruff format`, `prettier --write`, `rustfmt`, disparados em subprocesso por `HostFormatterAdapter`, sempre não-bloqueantes.
+- **Servidor HTTP local:** `doc-serve` expõe `harness-docs.html` em `http://localhost:8000` via `http.server` nativo.
+- **Ganchos de ciclo de vida do agente:** `SessionStart`/`PostToolUse`/`Stop` (Claude) e `SessionStart` (Gemini), configurados em `.claude/settings.json` e `.gemini/settings.json`, invocam o wrapper `./harness`.
 
 ---
 
 ## ⚠️ 5. Dívidas Técnicas e Bugs Latentes
 
-Catalogados pelo Archaeologist/Detective (contexto, **não corrigidos** nesta extração):
+Catalogados pelo Archaeologist/Detective. Os achados T1, T2, T3 e T5 foram **corrigidos** (commits `cf73980` e feature 006, ver coluna Estado); ficam aqui como memória histórica, não como dívida aberta:
 
-| ID | Local | Sintoma | Sev. | Conf. |
-|---|---|---|---|---|
-| **T1** | `adapters/mcp/server.py:60` | `load_config` usado sem import → `NameError`; a tool MCP `process_decisions` nunca processa decisões (erro capturado e devolvido como string). | Alta | 🟢 |
-| **T2** | `adapters/mcp/server.py:92` | `session_command` aponta para `ESTADO-DA-SESSAO.md` (raiz), divergente da CLI (`.harness/estado-da-sessao.md`); estado de sessão CLI×MCP não convergem. | Alta | 🟢 |
-| **T3** | `main.py:63` | `json.loads` sem `import json` → `NameError` no `format` via stdin (hook `PostToolUse`); mascarado por `except`, autoformat por hook não ocorre. | Alta | 🟢 |
-| **T4** | `formatting/service.py` | `[formatting]` do `harness.toml` não alimenta o serviço; blindagens e opt-out chumbados. | Média | 🟡 |
-| **T5** | `main.py` 21–41/213 | `load_harness_config` (dict legado) coexiste com `load_config` (tipada) — duas vias de configuração. | Baixa | 🟡 |
-| **T6** | repositório | Sem lock file; pins apenas `>=` — build não determinístico. | Média | 🟡 |
+| ID     | Local                    | Sintoma                                                                                                                   | Sev.  | Conf. | Estado                                                                                                                                                                                               |
+| ------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ----- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **T1** | `adapters/mcp/server.py` | `load_config` era usado sem import → `NameError`; a tool MCP `process_decisions` nunca processava decisões.               | Alta  | 🟢    | **RESOLVIDO** em `cf73980`: `server.py` agora importa `from src.core.domain.config import load_config` (linha 12); a tool não levanta mais `NameError`.                                              |
+| **T2** | `adapters/mcp/server.py` | `session_command` apontava para `ESTADO-DA-SESSAO.md` (raiz), divergente da CLI; estado de sessão CLI×MCP não convergiam. | Alta  | 🟢    | **RESOLVIDO** na feature 006 por configuração: o caminho vem de `config.session.state_file` (`SessionSection`); CLI (`main.py:169`) e MCP (`server.py:94`) leem o mesmo valor. Sem literal chumbado. |
+| **T3** | `main.py`                | `json.loads` sem `import json` → `NameError` no `format` via stdin (hook `PostToolUse`); autoformat por hook não ocorria. | Alta  | 🟢    | **RESOLVIDO** em `cf73980`: `main.py` importa `json` (linha 5); `resolve_format_target` → `json.loads` funciona; o autoformat por hook opera.                                                        |
+| **T4** | `formatting/service.py`  | `[formatting]` do `harness.toml` não alimenta o serviço; blindagens e opt-out chumbados.                                  | Média | 🟡    | Aberto.                                                                                                                                                                                              |
+| **T5** | `main.py`                | `load_harness_config` (dict legado) coexistia com `load_config` (tipada) — duas vias de configuração.                     | Baixa | 🟢    | **RESOLVIDO** na feature 006: `load_harness_config` e `import toml` foram removidos de `main.py`. Via única tipada via `load_config(fs)`; o subcomando `cmd` lê `config.harness.active_harness`.     |
+| **T6** | repositório              | Sem lock file; pins apenas `>=` — build não determinístico.                                                               | Média | 🟡    | Aberto.                                                                                                                                                                                              |
 
-> Os bugs T1–T3 não impedem o uso primário pela CLI (sessão, decisões e instalação funcionam por ela), mas degradam silenciosamente os caminhos MCP (T1/T2) e o autoformat por hook (T3).
+> Os achados T1, T2, T3 e T5 estão corrigidos no HEAD (T1/T3 em `cf73980`; T2 e T5 na feature 006). Permanecem abertos apenas T4 (config de formatting não consumida) e T6 (sem lock file).
 
 ---
 
 ## 🧭 6. ADRs Pertinentes (decisões que sustentam o estilo)
 
-`0006` (hexágono no core), `0007` (wrapper de conveniência), `0008` (doc por introspecção), `0009` (abandono de `claude-config/`, centralização em `.harness/`), `0010` (estado de sessão unificado), `0011` (reinjeção/instalação multi-harness por Strategy), `0012` (caminhos de decisão por configuração). Ligados às microdecisões MD-0001..MD-0004.
+`0006` (hexágono no core), `0007` (wrapper de conveniência), `0008` (doc por introspecção), `0009` (abandono de `claude-config/`, centralização em `.harness/`), `0010` (estado de sessão unificado), `0011` (reinjeção/instalação multi-harness por Strategy), `0012` (caminhos de decisão por configuração). Ligados às microdecisões MD-0001..MD-0005.
+
+**Posicionamento do harness-core (MD-0005, feature 006, refina MD-0004):** o `harness-core` é um **módulo per-projeto autocontido, de footprint global zero** — instalá-lo ou executá-lo escreve apenas dentro do repositório, **nunca** em `~/.claude` ou `~/.agent-memory`, e **não** substitui `~/.claude`. MD-0005 reverte a premissa de "config canônica global" do MD-0004 (a aposentadoria do sync cross-harness permanece válida; revista é só a canonicidade global). Há dois níveis de memória nomeados sem competição: global (`~/.agent-memory`, repo próprio) e per-projeto (`<repo>/.harness/`). O contrato de footprint é fixado por teste (`tests/test_footprint.py` + `tests/helpers.py` com `RecordingFileSystem`): falha barulhenta se o harness escrever fora do repositório; a zona protegida BR-MIGRAR-007 fica fixada por teste. 🟡 (cobertura do contrato: cobre só os serviços efetivamente exercitados — é teste, não guard de runtime). Descartado: substituir `~/.claude` por symlink/env/XDG/cópia (estado global invisível, não-versionado, em tensão com BR-MIGRAR-007). RF-04 (ensinar os scripts globais `~/.agent-memory/bin/*` a reconhecer `.harness/`) fica diferido como mudança futura no repo `agent-memory`. Travado pelo mantenedor em 24/06/2026.

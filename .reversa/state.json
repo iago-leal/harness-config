@@ -30,9 +30,7 @@
     },
     "archaeologist": {
       "completed_at": "2026-06-24T00:16:44Z",
-      "modules_analyzed": [
-        "harness-core"
-      ],
+      "modules_analyzed": ["harness-core"],
       "modules_pending": []
     },
     "detective": {
@@ -85,5 +83,24 @@
     "documentacao-uso-html/design.md",
     "documentacao-uso-html/tasks.md",
     "traceability/code-spec-matrix.md"
-  ]
+  ],
+  "last_reextraction": {
+    "type": "cirurgica",
+    "scope": "feature-006-harness-core-config-canonica",
+    "anchor_commit": "e894c59",
+    "started_at": "2026-06-24T12:50:00Z",
+    "completed_at": "2026-06-24T13:08:30Z",
+    "method": "workflow 5 grupos paralelos + correcoes residuais (units fora do particionamento)",
+    "artifacts_reconciled": 24,
+    "new_adr": "0013-harness-core-modulo-per-projeto-footprint",
+    "reconciled_with": ["e894c59 (feature 006)", "cf73980 (fix T1/T2/T3)"],
+    "regression_check": {
+      "features": 6,
+      "watch_items": 18,
+      "green": 17,
+      "yellow": 1,
+      "red": 0,
+      "yellow_detail": "003/W003 - template.md ainda sinaliza pendencia do SessionStart ja paga pela 004 (defasagem documental, fora do escopo da 006)"
+    }
+  }
 }

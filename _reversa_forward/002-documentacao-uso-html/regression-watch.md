@@ -10,6 +10,10 @@
 
 ## 2. Histórico de re-extrações
 
+### Re-extração 2026-06-24 10:06
+
+Sem watch items de regressão (tabela principal vazia por design). A feature 006 não tocou esta unit. Nada a verificar; as regras novas RN-08/RN-09/RN-10 seguem válidas.
+
 ### Re-extração 2026-06-24 08:10
 
 Sem watch items de regressão — tabela principal vazia por design. A feature não modificou código legado que necessite monitoramento de regressão. As regras novas (RN-08, RN-09, RN-10) continuam válidas conforme histórico anterior.

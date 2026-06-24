@@ -27,21 +27,21 @@ Gerencia o grafo de microdecisões arquiteturais — fichas `MD-NNNN.md` com fro
 
 ## Requisitos Funcionais
 
-| ID | Requisito | Prioridade | Critério de Aceite |
-|----|-----------|-----------|-------------------|
-| RF-01 | Carregar fichas e parsear relações. | Must | `load_decisions(dir)` retorna lista ordenada de `Decision`; relação malformada → `ValueError`. |
-| RF-02 | Validar integridade do grafo. | Must | `validate_integrity` detecta auto-relação, aresta órfã e ficha sem seção obrigatória; grafo válido → lista vazia. |
-| RF-03 | Compilar o índice com backlinks. | Must | `compile_index` grava `.harness/microdecisoes.md` com sub-linhas `↳ <saídas> · <entradas>`, deterministicamente. |
-| RF-04 | Caminhos por configuração. | Must | `./harness decisions` lê `dir`/`index_file`/`header_file` de `load_config().decisions`; nenhum literal de caminho no serviço. |
+| ID    | Requisito                           | Prioridade | Critério de Aceite                                                                                                            |
+| ----- | ----------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| RF-01 | Carregar fichas e parsear relações. | Must       | `load_decisions(dir)` retorna lista ordenada de `Decision`; relação malformada → `ValueError`.                                |
+| RF-02 | Validar integridade do grafo.       | Must       | `validate_integrity` detecta auto-relação, aresta órfã e ficha sem seção obrigatória; grafo válido → lista vazia.             |
+| RF-03 | Compilar o índice com backlinks.    | Must       | `compile_index` grava `.harness/microdecisoes.md` com sub-linhas `↳ <saídas> · <entradas>`, deterministicamente.              |
+| RF-04 | Caminhos por configuração.          | Must       | `./harness decisions` lê `dir`/`index_file`/`header_file` de `load_config().decisions`; nenhum literal de caminho no serviço. |
 
 ## Requisitos Não Funcionais
 
-| Tipo | Requisito inferido | Evidência no código | Confiança |
-|------|--------------------|---------------------|-----------|
-| Determinismo | Backlinks ordenados por ID de origem; índice reprodutível. | `core/decisions/service.py` (`compile_index`) | 🟢 |
-| Robustez | Front-matter inválido falha barulhento (`ValueError`). | `core/decisions/service.py` (`load_decisions`) | 🟢 |
-| Atomicidade | Gravação do índice via `write_file_atomic`. | `core/decisions/service.py` + `adapters/fs/local.py` | 🟢 |
-| Manutenibilidade | Caminhos desacoplados (config), sem literais. | `core/decisions/service.py`, `core/domain/config.py` | 🟢 |
+| Tipo             | Requisito inferido                                         | Evidência no código                                  | Confiança |
+| ---------------- | ---------------------------------------------------------- | ---------------------------------------------------- | --------- |
+| Determinismo     | Backlinks ordenados por ID de origem; índice reprodutível. | `core/decisions/service.py` (`compile_index`)        | 🟢        |
+| Robustez         | Front-matter inválido falha barulhento (`ValueError`).     | `core/decisions/service.py` (`load_decisions`)       | 🟢        |
+| Atomicidade      | Gravação do índice via `write_file_atomic`.                | `core/decisions/service.py` + `adapters/fs/local.py` | 🟢        |
+| Manutenibilidade | Caminhos desacoplados (config), sem literais.              | `core/decisions/service.py`, `core/domain/config.py` | 🟢        |
 
 ## Critérios de Aceitação
 
@@ -65,20 +65,20 @@ Então um ValueError barulhento é levantado.
 
 ## Prioridade (MoSCoW)
 
-| Requisito | MoSCoW | Justificativa |
-|-----------|--------|---------------|
-| Compilação do índice com backlinks (RN-N12) | Must | Entrega central; o índice é o artefato consumido. |
-| Integridade do grafo (RN-N13) | Must | Sem ela, o índice consolida um grafo inconsistente. |
-| Caminhos por config (RN-N11) | Must | Efeito da feature 005; watch item W001. |
-| Front-matter obrigatório (RN-N14) | Must | Pré-condição do parse; falha barulhenta. |
+| Requisito                                   | MoSCoW | Justificativa                                       |
+| ------------------------------------------- | ------ | --------------------------------------------------- |
+| Compilação do índice com backlinks (RN-N12) | Must   | Entrega central; o índice é o artefato consumido.   |
+| Integridade do grafo (RN-N13)               | Must   | Sem ela, o índice consolida um grafo inconsistente. |
+| Caminhos por config (RN-N11)                | Must   | Efeito da feature 005; watch item W001.             |
+| Front-matter obrigatório (RN-N14)           | Must   | Pré-condição do parse; falha barulhenta.            |
 
 ## Rastreabilidade de Código
 
-| Arquivo | Função / Classe | Cobertura |
-|---------|-----------------|-----------|
-| `core/decisions/service.py` | `DecisionService.load_decisions`, `validate_integrity`, `compile_index` | 🟢 |
-| `core/domain/models.py` | `Decision`, `Relationship` | 🟢 |
-| `core/domain/config.py` | `DecisionsSection`, `load_config` | 🟢 |
-| `src/main.py` | Subcomando `decisions` (deriva caminhos de `load_config`) | 🟢 |
-| `adapters/mcp/server.py` | Tool `process_decisions` (🟡 T1: `load_config` sem import) | 🟡 |
-| `tests/` | Cobertura de teste do serviço de decisões | 🟢 |
+| Arquivo                     | Função / Classe                                                               | Cobertura |
+| --------------------------- | ----------------------------------------------------------------------------- | --------- |
+| `core/decisions/service.py` | `DecisionService.load_decisions`, `validate_integrity`, `compile_index`       | 🟢        |
+| `core/domain/models.py`     | `Decision`, `Relationship`                                                    | 🟢        |
+| `core/domain/config.py`     | `DecisionsSection`, `load_config`                                             | 🟢        |
+| `src/main.py`               | Subcomando `decisions` (deriva caminhos de `load_config`)                     | 🟢        |
+| `adapters/mcp/server.py`    | Tool `process_decisions` (T1 resolvido em `cf73980`: `load_config` importado) | 🟢        |
+| `tests/`                    | Cobertura de teste do serviço de decisões                                     | 🟢        |

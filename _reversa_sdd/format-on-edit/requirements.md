@@ -28,21 +28,21 @@ Formata um arquivo após edição do agente, por linguagem, sempre de modo **nã
 
 ## Requisitos Funcionais
 
-| ID | Requisito | Prioridade | Critério de Aceite |
-|----|-----------|-----------|-------------------|
-| RF-01 | Formatação por extensão. | Must | `.py`→ruff, `.js/.ts/.json/.css/.md`→prettier, `.rs`→rustfmt; extensão não suportada → no-op. |
-| RF-02 | Não-bloqueio absoluto. | Must | `format_file` retorna `0` mesmo sob exceção ou falha do formatador. |
-| RF-03 | Blindagem de diretórios pessoais. | Must | Arquivo em `~`, `~/Notas` ou `~/.claude` não é formatado. |
-| RF-04 | Opt-out por `.no-autoformat`. | Must | Presença do arquivo na pasta ou acima cancela a formatação. |
-| RF-05 | Precedência de binário local. | Should | Se houver binário local do formatador, ele é usado antes do PATH. |
+| ID    | Requisito                         | Prioridade | Critério de Aceite                                                                            |
+| ----- | --------------------------------- | ---------- | --------------------------------------------------------------------------------------------- |
+| RF-01 | Formatação por extensão.          | Must       | `.py`→ruff, `.js/.ts/.json/.css/.md`→prettier, `.rs`→rustfmt; extensão não suportada → no-op. |
+| RF-02 | Não-bloqueio absoluto.            | Must       | `format_file` retorna `0` mesmo sob exceção ou falha do formatador.                           |
+| RF-03 | Blindagem de diretórios pessoais. | Must       | Arquivo em `~`, `~/Notas` ou `~/.claude` não é formatado.                                     |
+| RF-04 | Opt-out por `.no-autoformat`.     | Must       | Presença do arquivo na pasta ou acima cancela a formatação.                                   |
+| RF-05 | Precedência de binário local.     | Should     | Se houver binário local do formatador, ele é usado antes do PATH.                             |
 
 ## Requisitos Não Funcionais
 
-| Tipo | Requisito inferido | Evidência no código | Confiança |
-|------|--------------------|---------------------|-----------|
-| Robustez | Falha do formatador nunca trava a escrita do agente. | `core/formatting/service.py` (`try/except` + `return 0`) | 🟢 |
-| Segurança de dados | Diretórios pessoais protegidos por blindagem. | `core/formatting/service.py` | 🟢 |
-| Portabilidade | Resolução de executáveis com fallback ao PATH. | `core/formatting/service.py`, `adapters/process/formatter.py` | 🟢 |
+| Tipo               | Requisito inferido                                   | Evidência no código                                           | Confiança |
+| ------------------ | ---------------------------------------------------- | ------------------------------------------------------------- | --------- |
+| Robustez           | Falha do formatador nunca trava a escrita do agente. | `core/formatting/service.py` (`try/except` + `return 0`)      | 🟢        |
+| Segurança de dados | Diretórios pessoais protegidos por blindagem.        | `core/formatting/service.py`                                  | 🟢        |
+| Portabilidade      | Resolução de executáveis com fallback ao PATH.       | `core/formatting/service.py`, `adapters/process/formatter.py` | 🟢        |
 
 ## Critérios de Aceitação
 
@@ -62,20 +62,20 @@ Então a formatação é cancelada e o serviço retorna 0.
 
 ## Prioridade (MoSCoW)
 
-| Requisito | MoSCoW | Justificativa |
-|-----------|--------|---------------|
-| Não-bloqueio absoluto (RN-03) | Must | Salvaguarda crítica; impede pane de escrita. |
-| Blindagem de diretórios (RN-04) | Must | Protege dados pessoais. |
-| Opt-out por projeto (RN-06) | Must | Consentimento explícito do projeto. |
+| Requisito                             | MoSCoW | Justificativa                                |
+| ------------------------------------- | ------ | -------------------------------------------- |
+| Não-bloqueio absoluto (RN-03)         | Must   | Salvaguarda crítica; impede pane de escrita. |
+| Blindagem de diretórios (RN-04)       | Must   | Protege dados pessoais.                      |
+| Opt-out por projeto (RN-06)           | Must   | Consentimento explícito do projeto.          |
 | Precedência local de binários (RN-05) | Should | Mantém o estilo do projeto; degrada ao PATH. |
 
 ## Rastreabilidade de Código
 
-| Arquivo | Função / Classe | Cobertura |
-|---------|-----------------|-----------|
-| `core/formatting/service.py` | `FormattingService.format_file` | 🟢 |
-| `adapters/process/formatter.py` | `HostFormatterAdapter.execute_formatter` | 🟢 |
-| `src/main.py` | Subcomando `format` (🟡 T3: `json` sem import no caminho stdin) | 🟡 |
+| Arquivo                         | Função / Classe                                                         | Cobertura |
+| ------------------------------- | ----------------------------------------------------------------------- | --------- |
+| `core/formatting/service.py`    | `FormattingService.format_file`                                         | 🟢        |
+| `adapters/process/formatter.py` | `HostFormatterAdapter.execute_formatter`                                | 🟢        |
+| `src/main.py`                   | Subcomando `format` (T3 resolvido em `cf73980`: `import json` presente) | 🟢        |
 
 > 🟡 **Conhecida (T4):** `[formatting]` do `harness.toml` (`exclude_paths`, `opt_out_file`) **não** alimenta o serviço — blindagens e opt-out estão chumbados no código. Mudar o `harness.toml` não muda o comportamento. Documentado como contexto, não corrigido.
-> 🟡 **Conhecida (T3):** `main.py:63` usa `json.loads` sem `import json`; no caminho do hook (`PostToolUse`, caminho via stdin) isso levanta `NameError` capturado pelo `except`, e o autoformat por hook não ocorre. Documentado, não corrigido.
+> 🟢 **Resolvida (T3):** `main.py` importa `json` (linha 5) desde o commit `cf73980`; no caminho do hook (`PostToolUse`, via stdin) o `json.loads` opera sem `NameError` e o autoformat por hook volta a ocorrer. Era latente; hoje corrigido.

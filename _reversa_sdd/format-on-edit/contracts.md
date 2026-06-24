@@ -3,7 +3,7 @@
 > Regenerado pelo Writer em 2026-06-24 (Re-extração)
 > Interface de dados consumida/produzida pela unit no estado ATUAL (core Python). Escala: 🟢 / 🟡 / 🔴
 
-> ⚠️ **Reescrita vs versão anterior:** no estado atual a formatação roda pela CLI Python (`./harness format`). O hook `PostToolUse` do Claude entrega o caminho do arquivo via stdin (JSON). **Importante (T3):** o parsing do stdin em `main.py:63` usa `json.loads` sem `import json`, então o caminho via stdin levanta `NameError` (capturado, no-op). Por argumento posicional (`./harness format <arquivo>`), funciona.
+> ⚠️ **Reescrita vs versão anterior:** no estado atual a formatação roda pela CLI Python (`./harness format`). O hook `PostToolUse` do Claude entrega o caminho do arquivo via stdin (JSON). **T3 (resolvido):** o parsing do stdin em `main.py` usa `json.loads`; o `import json` ausente que levantava `NameError` foi corrigido no commit `cf73980` (`main.py:5`). Ambos os caminhos — via stdin e por argumento posicional (`./harness format <arquivo>`) — funcionam.
 
 ---
 
@@ -37,9 +37,9 @@ Payload JSON entregue pelo Claude Code no evento `PostToolUse` (matchers `Write|
 
 `FormattingService.format_file` retorna **sempre `0`** (não-bloqueio, RN-03). Não há payload JSON de saída (`systemMessage`) nem log — comportamento do legado removido. O efeito observável é o arquivo formatado no disco, quando o formatador roda.
 
-| Código de retorno | Significado |
-|---|---|
-| `0` | Sempre. Formatado, no-op por blindagem/opt-out/extensão, ou exceção capturada. |
+| Código de retorno | Significado                                                                    |
+| ----------------- | ------------------------------------------------------------------------------ |
+| `0`               | Sempre. Formatado, no-op por blindagem/opt-out/extensão, ou exceção capturada. |
 
 ---
 
@@ -47,10 +47,10 @@ Payload JSON entregue pelo Claude Code no evento `PostToolUse` (matchers `Write|
 
 `ProcessPort.execute_formatter(formatter, file_path, executable?) -> (exit_code, stdout, stderr)`. O serviço **ignora** o `exit_code` (não-bloqueio). Mapeamento em `HostFormatterAdapter`:
 
-| Formatador | Comando |
-|---|---|
-| `ruff` | `ruff format <file>` |
+| Formatador | Comando                   |
+| ---------- | ------------------------- |
+| `ruff`     | `ruff format <file>`      |
 | `prettier` | `prettier --write <file>` |
-| `rustfmt` | `rustfmt <file>` |
+| `rustfmt`  | `rustfmt <file>`          |
 
 Formatador ausente no host → `(127, "", <erro>)`, ignorado pelo serviço.

@@ -5,24 +5,24 @@
 
 ## Interface
 
-| Símbolo | Assinatura | Retorno | Observação |
-|---------|-----------|---------|------------|
-| `serializer.parse` | `(text: str)` | `SessionState` | Sem `---` → `MalformedSessionStateError`; YAML inválido/não-dict → erro; campo obrigatório ausente → erro. |
-| `serializer.render` | `(state: SessionState)` | `str` | Monta meta (`commit/feature/start_time/status`) via `yaml.safe_dump(sort_keys=False)` + corpo. |
-| `serializer.render_narrative` | `(narrative: SessionNarrative)` | `str` | 4 seções fixas `_SECTIONS`. Reusado na reinjeção. |
-| `serializer._coerce_datetime` | `(value)` | `datetime` | Aceita `datetime` ou ISO (`Z`→`+00:00`); naive → UTC. |
-| `HookContextSink.deliver` | `(text: str)` | — | Imprime `{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": <texto>}}`; trunca em `MAX_CHARS=10000`. |
-| `FileProjectionSink.deliver` | `(text: str)` | — | Grava o estado em `.agents/rules/estado-sessao.md` (cria o diretório-pai). |
-| `get_sink` | `(active_harness: str, fs)` | `SessionSink` | `_FAMILY_BY_HARNESS`: claude/gemini→hook; antigravity→file; desconhecido → `ValueError`. |
+| Símbolo                       | Assinatura                      | Retorno        | Observação                                                                                                                      |
+| ----------------------------- | ------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `serializer.parse`            | `(text: str)`                   | `SessionState` | Sem `---` → `MalformedSessionStateError`; YAML inválido/não-dict → erro; campo obrigatório ausente → erro.                      |
+| `serializer.render`           | `(state: SessionState)`         | `str`          | Monta meta (`commit/feature/start_time/status`) via `yaml.safe_dump(sort_keys=False)` + corpo.                                  |
+| `serializer.render_narrative` | `(narrative: SessionNarrative)` | `str`          | 4 seções fixas `_SECTIONS`. Reusado na reinjeção.                                                                               |
+| `serializer._coerce_datetime` | `(value)`                       | `datetime`     | Aceita `datetime` ou ISO (`Z`→`+00:00`); naive → UTC.                                                                           |
+| `HookContextSink.deliver`     | `(text: str)`                   | —              | Imprime `{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": <texto>}}`; trunca em `MAX_CHARS=10000`. |
+| `FileProjectionSink.deliver`  | `(text: str)`                   | —              | Grava o estado em `.agents/rules/estado-sessao.md` (cria o diretório-pai).                                                      |
+| `get_sink`                    | `(active_harness: str, fs)`     | `SessionSink`  | `_FAMILY_BY_HARNESS`: claude/gemini→hook; antigravity→file; desconhecido → `ValueError`.                                        |
 
 **Mapa front-matter ↔ modelo** (`_REQUIRED_META = (commit, feature, start_time, status)`):
 
-| Chave YAML | Campo `SessionState` | Validação |
-|---|---|---|
-| `commit` | `commit_hash` | regex SHA1 `^[a-f0-9]{40}$` |
-| `feature` | `active_feature` | — |
-| `start_time` | `start_time` | ISO, naive→UTC |
-| `status` | `is_active` | `=="active"` (case-insensitive) → True |
+| Chave YAML   | Campo `SessionState` | Validação                              |
+| ------------ | -------------------- | -------------------------------------- |
+| `commit`     | `commit_hash`        | regex SHA1 `^[a-f0-9]{40}$`            |
+| `feature`    | `active_feature`     | —                                      |
+| `start_time` | `start_time`         | ISO, naive→UTC                         |
+| `status`     | `is_active`          | `=="active"` (case-insensitive) → True |
 
 **Mapa seção ↔ narrativa** (`_SECTIONS`): "O que foi feito"→`feito`, "Próximos passos"→`proximos_passos`, "Pendências / bloqueios"→`pendencias`, "Ponteiros"→`ponteiros`.
 
@@ -50,13 +50,13 @@
 
 ## Decisões de Design Identificadas
 
-| Decisão | Evidência no código | Confiança |
-|---------|---------------------|-----------|
-| Formato front-matter YAML + corpo Markdown (header-máquina + narrativa legível) | `serializer.py` (`_FRONTMATTER_RE`, `_SECTIONS`) | 🟢 |
-| Invariante de round-trip como contrato testável | `serializer.py` + `test_session.py` | 🟢 |
-| Sink como Strategy escolhida na borda (core agnóstico a harness) | `sinks.py` (`get_sink`, `_FAMILY_BY_HARNESS`) | 🟢 |
-| Duas famílias de entrega (hook vs arquivo) por limitação de cada agente | `sinks.py` (`HookContextSink` × `FileProjectionSink`) | 🟢 |
-| Teto de 10000 chars no envelope do Claude | `sinks.py` (`MAX_CHARS`) | 🟢 |
+| Decisão                                                                         | Evidência no código                                   | Confiança |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------- | --------- |
+| Formato front-matter YAML + corpo Markdown (header-máquina + narrativa legível) | `serializer.py` (`_FRONTMATTER_RE`, `_SECTIONS`)      | 🟢        |
+| Invariante de round-trip como contrato testável                                 | `serializer.py` + `test_session.py`                   | 🟢        |
+| Sink como Strategy escolhida na borda (core agnóstico a harness)                | `sinks.py` (`get_sink`, `_FAMILY_BY_HARNESS`)         | 🟢        |
+| Duas famílias de entrega (hook vs arquivo) por limitação de cada agente         | `sinks.py` (`HookContextSink` × `FileProjectionSink`) | 🟢        |
+| Teto de 10000 chars no envelope do Claude                                       | `sinks.py` (`MAX_CHARS`)                              | 🟢        |
 
 ## Estado Interno
 
@@ -70,5 +70,5 @@ O estado de domínio (`SessionState`) é externalizado em `.harness/estado-da-se
 
 ## Riscos e Lacunas
 
-- 🟡 **T2 (bug latente):** o driver MCP (`server.py:92`) usa `ESTADO-DA-SESSAO.md` na raiz, divergente da CLI (`.harness/estado-da-sessao.md`) — máquina de estado paralela. Documentado, **não corrigido**.
-- 🟡 O `FileProjectionSink` grava em caminho fixo `.agents/rules/estado-sessao.md`; não há configuração `[session]` no domínio.
+- 🟢 **T2 (RESOLVIDO via configuração, feature 006):** o caminho do estado deixou de ser chumbado nos drivers. CLI (`main.py:169`) e MCP (`server.py:94`) leem `config.session.state_file` (`SessionSection`, default `.harness/estado-da-sessao.md`). O literal `ESTADO-DA-SESSAO.md` na raiz foi removido do MCP; a máquina de estado paralela CLI×MCP não existe mais. Registro histórico: a divergência existia até a feature 006, que a fechou por configuração.
+- 🟡 O `FileProjectionSink` grava em caminho fixo `.agents/rules/estado-sessao.md` (não parametrizado). O caminho do estado canônico, porém, passou a vir de `[session].state_file` no `harness.toml` (`SessionSection` no domínio) ✨f006.

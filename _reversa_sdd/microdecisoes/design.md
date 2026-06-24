@@ -5,11 +5,11 @@
 
 ## Interface
 
-| Símbolo | Assinatura | Retorno | Observação |
-|---------|-----------|---------|------------|
-| `DecisionService.load_decisions` | `(directory: str)` | `List[Decision]` | Lista ordenada de `MD-*.md`; diretório ausente → `[]`; front-matter ausente/inválido → `ValueError`. |
-| `DecisionService.validate_integrity` | `(decisions: List[Decision])` | `List[str]` | Lista de erros; vazia = grafo válido. |
-| `DecisionService.compile_index` | `(decisions, output, header)` | — | Deriva backlinks e grava o índice atomicamente. |
+| Símbolo                              | Assinatura                    | Retorno          | Observação                                                                                           |
+| ------------------------------------ | ----------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
+| `DecisionService.load_decisions`     | `(directory: str)`            | `List[Decision]` | Lista ordenada de `MD-*.md`; diretório ausente → `[]`; front-matter ausente/inválido → `ValueError`. |
+| `DecisionService.validate_integrity` | `(decisions: List[Decision])` | `List[str]`      | Lista de erros; vazia = grafo válido.                                                                |
+| `DecisionService.compile_index`      | `(decisions, output, header)` | —                | Deriva backlinks e grava o índice atomicamente.                                                      |
 
 Driver CLI (`main.py`, subcomando `decisions`): `config = load_config(fs)` → `decisoes_dir = config.decisions.dir`, `output_file = config.decisions.index_file`, `header_file = config.decisions.header_file`. Sem literais.
 
@@ -40,12 +40,12 @@ Driver CLI (`main.py`, subcomando `decisions`): `config = load_config(fs)` → `
 
 ## Decisões de Design Identificadas
 
-| Decisão | Evidência no código | Confiança |
-|---------|---------------------|-----------|
-| Fichas particionadas + índice derivado (vs banco de decisões) | `core/decisions/service.py`, `.harness/decisoes/` | 🟢 (ADR 0001) |
-| Caminhos por configuração (`[decisions]`), sem literais | `service.py` (parâmetros) + `config.py` (`DecisionsSection`) | 🟢 (ADR 0012 / MD-0004) |
-| Backlinks por tabela de verbos inversos, ordenados por ID | `compile_index` | 🟢 |
-| Gravação atômica do índice | `write_file_atomic` (`adapters/fs/local.py`) | 🟢 |
+| Decisão                                                       | Evidência no código                                          | Confiança               |
+| ------------------------------------------------------------- | ------------------------------------------------------------ | ----------------------- |
+| Fichas particionadas + índice derivado (vs banco de decisões) | `core/decisions/service.py`, `.harness/decisoes/`            | 🟢 (ADR 0001)           |
+| Caminhos por configuração (`[decisions]`), sem literais       | `service.py` (parâmetros) + `config.py` (`DecisionsSection`) | 🟢 (ADR 0012 / MD-0004) |
+| Backlinks por tabela de verbos inversos, ordenados por ID     | `compile_index`                                              | 🟢                      |
+| Gravação atômica do índice                                    | `write_file_atomic` (`adapters/fs/local.py`)                 | 🟢                      |
 
 ## Estado Interno
 
@@ -59,5 +59,5 @@ Sem estado em memória entre execuções. O "estado" é o conjunto de fichas em 
 
 ## Riscos e Lacunas
 
-- 🟡 **T1 (bug latente):** via MCP (`server.py:60`), `load_config` é chamado sem import → `NameError`; a tool `process_decisions` nunca processa decisões. O caminho configurável só é exercido pela CLI. Documentado, **não corrigido**.
+- 🟢 **T1 (resolvido):** via MCP (`server.py:60`), `load_config` era chamado sem import → `NameError`, e a tool `process_decisions` nunca processava decisões. Corrigido no commit `cf73980` (`from src.core.domain.config import load_config` em `server.py:12`); o caminho configurável passou a ser exercido também pelo MCP.
 - 🟡 Diferença sutil: o MCP deriva o `header_file` de `os.path.join(dir, "_cabecalho.md")`, ignorando um eventual override de `header_file` no `harness.toml` (a CLI respeita o override). Inconsistência menor, não bug.

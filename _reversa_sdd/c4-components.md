@@ -11,13 +11,13 @@ Componentes internos de `src/core/` e `src/adapters/` sob arquitetura hexagonal.
 graph TB
     subgraph drivers [Drivers de entrada]
         CLI["main.py<br/>[CLI argparse v2.0.0]<br/>7 subcomandos · resolve sink · serve HTTP"]
-        MCP["adapters/mcp/server.py<br/>[FastMCP]<br/>4 tools · T1/T2"]
+        MCP["adapters/mcp/server.py<br/>[FastMCP]<br/>4 tools · T1/T2 resolvidos (cf73980/f006)"]
     end
 
     subgraph core [Núcleo da Aplicação src/core/]
         subgraph domain [Domínio src/core/domain/]
             Models["models.py<br/>Decision · Relationship<br/>SessionState · SessionNarrative"]
-            Cfg["config.py<br/>HarnessConfig · DecisionsSection<br/>load_config()"]
+            Cfg["config.py<br/>HarnessConfig · DecisionsSection · SessionSection ✨f006<br/>load_config()"]
             Cache["cache.py<br/>SyncCache"]
         end
 
@@ -51,7 +51,7 @@ graph TB
     CLI --> BootServ & FormatServ & DecServ & CmdServ & DocServ & InstServ
     CLI --> Cfg
     MCP --> FormatServ & SyncServ & DecServ & CmdServ
-    MCP -.->|T1: load_config sem import| Cfg
+    MCP -->|load_config tipada (T1 resolvido cf73980)| Cfg
 
     %% Composição interna do domínio
     CmdServ --> SessSer
@@ -85,30 +85,34 @@ graph TB
 ## 🛠️ Descrição dos Componentes
 
 ### Portas (fronteira de inversão de dependência) 🟢
-* **`FileSystemPort`** — `read_file, write_file, write_file_atomic, exists, list_dir, makedirs, remove`.
-* **`GitPort`** — `get_head_commit, get_remote_commit`.
-* **`ProcessPort`** — `execute_formatter -> (exit, stdout, stderr)`.
+
+- **`FileSystemPort`** — `read_file, write_file, write_file_atomic, exists, list_dir, makedirs, remove`.
+- **`GitPort`** — `get_head_commit, get_remote_commit`.
+- **`ProcessPort`** — `execute_formatter -> (exit, stdout, stderr)`.
 
 ### Serviços de capacidade 🟢
-* **BootstrapService** — grava `pre-commit`(→`format`) e `post-merge`(→`decisions`) idempotentemente; cada script roda só se o interpretador existir.
-* **FormattingService** — `format_file` **sempre retorna 0**; blindagem de `~`/`~/Notas`/`~/.claude`, opt-out por `.no-autoformat`, precedência de binário local, raiz por manifesto (`.git`/`harness.toml`). ⚠️ não consome `[formatting]` (T4).
-* **SyncService** — `check_sync` com cache TTL; resiliente (erro → `True`). Exposto **só via MCP** (não há subcomando `sync`).
-* **DecisionService** — `load_decisions`, `validate_integrity` (auto-relação e aresta órfã), `compile_index` (backlinks por verbos inversos). Caminhos vêm por parâmetro ✨f005.
-* **CommandService** — slash commands agnósticos à IDE; âncora Git no `resume`; distingue ausente (`None`) de malformado (`MalformedSessionStateError`). Não conhece harness (RN-N5).
-* **DocumentationService** — introspecção do argparse + regex sobre `domain.md` + `state.json` → injeta JSON no `template.html`.
-* **InstallPromptService ✨f003** — `render(active_harness, parser)` por composição (4 placeholders no `template.md`); resolve perfil fail-fast.
-* **session/serializer ✨f004** — round-trip `parse(render(x)) == x`; 4 seções fixas mapeiam `SessionNarrative`.
-* **session/sinks ✨f004** — `get_sink` por `active_harness`: `HookContextSink` (Claude/Gemini, `additionalContext`, trunca em 10000) ou `FileProjectionSink` (Antigravity). Família por `_FAMILY_BY_HARNESS`; desconhecido → `ValueError`.
-* **install/harness_profiles ✨f003** — Strategy (`ABC`) `ClaudeProfile`/`GeminiProfile`/`AntigravityProfile` com `hooks_block()` + `apply_instructions()`.
+
+- **BootstrapService** — grava `pre-commit`(→`format`) e `post-merge`(→`decisions`) idempotentemente; cada script roda só se o interpretador existir.
+- **FormattingService** — `format_file` **sempre retorna 0**; blindagem de `~`/`~/Notas`/`~/.claude`, opt-out por `.no-autoformat`, precedência de binário local, raiz por manifesto (`.git`/`harness.toml`). ⚠️ não consome `[formatting]` (T4).
+- **SyncService** — `check_sync` com cache TTL; resiliente (erro → `True`). Exposto **só via MCP** (não há subcomando `sync`).
+- **DecisionService** — `load_decisions`, `validate_integrity` (auto-relação e aresta órfã), `compile_index` (backlinks por verbos inversos). Caminhos vêm por parâmetro ✨f005.
+- **CommandService** — slash commands agnósticos à IDE; âncora Git no `resume`; distingue ausente (`None`) de malformado (`MalformedSessionStateError`). Não conhece harness (RN-N5).
+- **DocumentationService** — introspecção do argparse + regex sobre `domain.md` + `state.json` → injeta JSON no `template.html`.
+- **InstallPromptService ✨f003** — `render(active_harness, parser)` por composição (4 placeholders no `template.md`); resolve perfil fail-fast.
+- **session/serializer ✨f004** — round-trip `parse(render(x)) == x`; 4 seções fixas mapeiam `SessionNarrative`.
+- **session/sinks ✨f004** — `get_sink` por `active_harness`: `HookContextSink` (Claude/Gemini, `additionalContext`, trunca em 10000) ou `FileProjectionSink` (Antigravity). Família por `_FAMILY_BY_HARNESS`; desconhecido → `ValueError`.
+- **install/harness_profiles ✨f003** — Strategy (`ABC`) `ClaudeProfile`/`GeminiProfile`/`AntigravityProfile` com `hooks_block()` + `apply_instructions()`.
 
 ### Domínio 🟢
-* **models.py** — `Decision`, `Relationship`, `SessionState`, `SessionNarrative` (Pydantic v2, com validadores de regex/enum).
-* **config.py** — `HarnessConfig` (`[harness]/[formatting]/[sync]/[decisions]`) e `load_config(fs)`. ✨ `[decisions]` é a chave da feature 005.
-* **cache.py** — `SyncCache`.
+
+- **models.py** — `Decision`, `Relationship`, `SessionState`, `SessionNarrative` (Pydantic v2, com validadores de regex/enum).
+- **config.py** — `HarnessConfig` (`[harness]/[formatting]/[sync]/[decisions]/[session]`) e `load_config(fs)`. ✨ `[decisions]` é a chave da feature 005; ✨ `SessionSection` (`[session].state_file`, default `.harness/estado-da-sessao.md`) é a chave da feature 006, fonte única do caminho de sessão lida por CLI e MCP.
+- **cache.py** — `SyncCache`.
 
 ### Adaptadores 🟢
-* **LocalFileSystemAdapter** — I/O UTF-8; escrita atômica `.tmp` + `os.replace`.
-* **SubprocessGitAdapter** — `git rev-parse HEAD`, `git ls-remote origin main`; erro → `RuntimeError`.
-* **HostFormatterAdapter** — mapeia formatador→args; binário ausente → `(127, …)`.
 
-> ⚠️ **Bugs latentes nos drivers (não corrigidos):** **T1** — `server.py` chama `load_config` sem import (NameError, tool de decisões via MCP quebra). **T2** — `server.py` aponta a sessão para `ESTADO-DA-SESSAO.md` (raiz), divergindo da CLI. **T3** — `main.py` usa `json.loads` sem `import json` (autoformat por hook silenciosamente não ocorre).
+- **LocalFileSystemAdapter** — I/O UTF-8; escrita atômica `.tmp` + `os.replace`.
+- **SubprocessGitAdapter** — `git rev-parse HEAD`, `git ls-remote origin main`; erro → `RuntimeError`.
+- **HostFormatterAdapter** — mapeia formatador→args; binário ausente → `(127, …)`.
+
+> ✅ **Bugs de driver corrigidos (memória histórica):** **T1** — `server.py` chamava `load_config` sem import (NameError na tool de decisões via MCP); **RESOLVIDO** em `cf73980` (import na linha 12). **T2** — `server.py` apontava a sessão para `ESTADO-DA-SESSAO.md` (raiz), divergindo da CLI; **RESOLVIDO** na feature 006: o caminho agora vem de `config.session.state_file` (`SessionSection`), lido igualmente por CLI (`main.py:169`) e MCP (`server.py:94`). **T3** — `main.py` usava `json.loads` sem `import json` (autoformat por hook silenciosamente não ocorria); **RESOLVIDO** em `cf73980` (import na linha 5).

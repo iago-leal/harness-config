@@ -19,7 +19,7 @@ Sintetiza a avaliação de confiança da **re-extração** do ecossistema `harne
 **Confiança geral do projeto:** **84.8%** 🟢
 _(Cálculo: (251 + 56 × 0.5) / 329 = 84.8%)_
 
-> A confiança é **alta**, sustentada por código-fonte real e por verificação dirigida dos três bugs latentes diretamente no `harness-core/`. A queda frente ao relatório anterior (97%) é honesta, não regressão: a re-extração expôs lacunas legítimas (reprodutibilidade, dívidas T4–T6) que a extração da feature 002 havia mascarado com 🟢 de excesso de confiança. As contagens 🟢/🟡/🔴 são estimativas agregadas das marcações presentes nos artefatos.
+> A confiança é **alta**, sustentada por código-fonte real e por verificação dirigida diretamente no `harness-core/`. Os três bugs latentes T1/T2/T3, abertos na re-extração de 24/06, foram desde então **RESOLVIDOS** (T1/T3 no commit `cf73980`; T2 por configuração na feature 006, commit `e894c59`) 🟢; a feature 006 fechou ainda T5 e a divergência CLI×MCP de caminho de sessão. A queda frente ao relatório original da feature 002 (97%) permanece honesta, não regressão: a re-extração expôs lacunas legítimas (reprodutibilidade, dívida T4) que aquela extração havia mascarado com 🟢 de excesso de confiança. As contagens 🟢/🟡/🔴 são estimativas agregadas das marcações presentes nos artefatos.
 
 ---
 
@@ -43,31 +43,31 @@ _(Cálculo: (251 + 56 × 0.5) / 329 = 84.8%)_
 
 ### Artefatos de interpretação e arquitetura
 
-| Artefato                                     | Veredito | Observação                                                                                                     |
-| :------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------- |
-| `code-analysis.md`                           | 🟢 forte | Verificação dirigida (V1/V2/V3 + achado adicional) bate com o código real. T1/T2/T3 confirmados linha a linha. |
-| `domain.md`                                  | 🟢 forte | RN-01..RN-10 + RN-N1..RN-N15 ancoradas em código; bugs T1–T6 na tabela de dívidas.                             |
-| `state-machines.md`                          | 🟢 forte | Corrigiu os estados fictícios (`em-revisao`/`rejeitado` removidos); só `ativo`/`descartado`.                   |
-| `permissions.md`                             | 🟡 médio | Matriz é convenção inferida (sem RBAC no código) — corretamente marcada 🟡; gatilhos de hook 🟢.               |
-| `data-dictionary.md`                         | 🟢 forte | Modelos Pydantic v2 fiéis; T4 ([formatting] inerte) documentado.                                               |
-| `architecture.md`, `c4-*`, `erd-complete.md` | 🟢 forte | Regenerados 2026-06-24; refletem `.harness/`, claude-config purgado, T1/T2/T3.                                 |
-| `traceability/spec-impact-matrix.md`         | 🟢 forte | Componentes ✨ marcados; bugs mapeados por componente.                                                         |
-| `traceability/code-spec-matrix.md`           | 🟢 forte | Legado purgado sinalizado; units `install/`+`session/` novas.                                                  |
-| `inventory.md`, `dependencies.md`            | 🟢 forte | Superfície atual correta; lacuna de lock file 🔴 honesta.                                                      |
+| Artefato                                     | Veredito | Observação                                                                                                                                                                     |
+| :------------------------------------------- | :------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `code-analysis.md`                           | 🟢 forte | Verificação dirigida (V1/V2/V3 + achado adicional) bate com o histórico. T1/T2/T3 foram **RESOLVIDOS** (`cf73980` + feature 006); a divergência CLI×MCP de V2 caiu por config. |
+| `domain.md`                                  | 🟢 forte | RN-01..RN-10 + RN-N1..RN-N15 ancoradas em código; T1/T2/T3/T5 já corrigidos; T4 segue como dívida na tabela.                                                                   |
+| `state-machines.md`                          | 🟢 forte | Corrigiu os estados fictícios (`em-revisao`/`rejeitado` removidos); só `ativo`/`descartado`.                                                                                   |
+| `permissions.md`                             | 🟡 médio | Matriz é convenção inferida (sem RBAC no código) — corretamente marcada 🟡; gatilhos de hook 🟢.                                                                               |
+| `data-dictionary.md`                         | 🟢 forte | Modelos Pydantic v2 fiéis; T4 ([formatting] inerte) documentado.                                                                                                               |
+| `architecture.md`, `c4-*`, `erd-complete.md` | 🟢 forte | Regenerados 2026-06-24; refletem `.harness/`, claude-config purgado; T1/T2/T3 desde então corrigidos (`cf73980` + feature 006).                                                |
+| `traceability/spec-impact-matrix.md`         | 🟢 forte | Componentes ✨ marcados; bugs mapeados por componente.                                                                                                                         |
+| `traceability/code-spec-matrix.md`           | 🟢 forte | Legado purgado sinalizado; units `install/`+`session/` novas.                                                                                                                  |
+| `inventory.md`, `dependencies.md`            | 🟢 forte | Superfície atual correta; lacuna de lock file 🔴 honesta.                                                                                                                      |
 
 ---
 
-## Verificação independente dos bugs latentes (no código real)
+## Verificação independente dos bugs latentes (resolvidos após a re-extração) 🟢
 
-Reexecutei a verificação dos três bugs latentes diretamente no fonte — **todos confirmados**, e os artefatos os documentam de forma consistente (nenhum afirma que o caminho quebrado funciona):
+Na re-extração de 24/06 verifiquei os três bugs latentes diretamente no fonte e os confirmei. **Todos foram corrigidos desde então** (T1/T3 no commit `cf73980`; T2 por configuração na feature 006, `e894c59`), e os artefatos foram atualizados de forma consistente:
 
-| Bug    | Evidência no código                                                                                                                                               | Documentado consistentemente em                                                                                        |
-| :----- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------- |
-| **T1** | `server.py:60` usa `load_config(fs)`; imports vão só até a linha 11 — não há `from src.core.domain.config import load_config`.                                    | code-analysis (V1), domain (T1), spec-impact, code-spec, `microdecisoes/`, inventory                                   |
-| **T2** | `server.py:92` = `"ESTADO-DA-SESSAO.md"` × `main.py:192` = `".harness/estado-da-sessao.md"`. `harness.toml` não tem seção `[session]` (sem config para resolver). | code-analysis (V2), domain (RN-N1), state-machines, c4-containers, erd, `session/`, `comandos-customizados/`, ADR 0012 |
-| **T3** | `main.py:63` usa `json.loads`; imports (1–18) trazem `os, sys, argparse, toml` — **não** `json`.                                                                  | code-analysis (achado adicional), domain (T3), c4-components, `format-on-edit/`                                        |
+| Bug    | Achado original (re-extração 24/06)                                                                                                               | Resolução 🟢                                                                                                                                                                                                                        |
+| :----- | :------------------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **T1** | `process_decisions`/`session_command` em `server.py` chamavam `load_config` sem o import (`NameError`).                                           | Resolvido em `cf73980`: `server.py:12` importa `from src.core.domain.config import load_config`. A tool MCP `process_decisions` não levanta mais `NameError`.                                                                       |
+| **T2** | `server.py` apontava `"ESTADO-DA-SESSAO.md"` na raiz × CLI em `.harness/estado-da-sessao.md` (divergência); `harness.toml` sem seção `[session]`. | Resolvido por configuração na feature 006 (`e894c59`): nova `SessionSection` + seção `[session]`; CLI (`main.py:169`) e MCP (`server.py:94`) leem `config.session.state_file`. Sem literal chumbado; divergência CLI×MCP eliminada. |
+| **T3** | `main.py` usava `json.loads` sem importar `json` — autoformat por hook quebrava.                                                                  | Resolvido em `cf73980`: `main.py:5` importa `json`. `resolve_format_target` → `json.loads` opera; o autoformat via hook `PostToolUse` funciona.                                                                                     |
 
-> Coerência da escala de bugs: T1/T2/T3 são 🟢 (confirmados, são bugs reais); a **mitigação** "só a CLI funciona" é o que aparece como 🟡 (ressalva) nas regras de domínio. Não há contradição — a regra é confirmada, o caminho MCP é a ressalva.
+> Histórico de confiança: na re-extração, T1/T2/T3 eram 🟢 (bugs reais confirmados) e a mitigação "só a CLI funciona" aparecia como 🟡 (ressalva) nas regras de domínio. Com a correção (`cf73980` + feature 006), o caminho MCP deixa de ser ressalva: decisões e sessão via MCP operam pela via tipada e por `config.session.state_file`.
 
 ---
 
@@ -81,9 +81,9 @@ Itens que permaneceram sem confirmação possível só pelo código (ver `questi
 
 ### Dívidas conscientes (não bugs, mas pendências de design)
 
-- **T4** — `[formatting]` do `harness.toml` declarado mas não consumido (blindagens chumbadas). Manter chumbado ou ligar à config? → `questions.md#2`.
-- **T5** — `load_harness_config` (dict legado) coexiste com `load_config` (tipada) em `main.py`. Consolidar? → `questions.md#3`.
-- **T2 (decisão de design)** — ADR 0012 deixou explícito que a seção `[session]` análoga à `[decisions]` **não** foi adotada na f005; o caminho do estado de sessão segue chumbado e divergente CLI×MCP. Corrigir o import/caminho do MCP é a próxima ação? → `questions.md#4`.
+- **T4** — `[formatting]` do `harness.toml` declarado mas não consumido (blindagens chumbadas). Manter chumbado ou ligar à config? → `questions.md#2`. _Única dívida desta lista ainda aberta._
+- ✅ **T5 — RESOLVIDO (feature 006):** `load_harness_config` (dict legado) e `import toml` foram **removidos** de `main.py`. Via ÚNICA de configuração: tudo por `load_config(fs)` tipada; o subcomando `cmd` lê `config.harness.active_harness`. Não há mais "duas vias de config". 🟢
+- ✅ **T2 — RESOLVIDO (feature 006):** a seção `[session]` (com `state_file`) foi adotada, revertendo a pendência do ADR 0012. O caminho do estado de sessão deixa de ser chumbado e divergente: CLI e MCP leem `config.session.state_file`. 🟢
 
 ### Artefatos não regenerados nesta re-extração (inconsistência cruzada)
 
@@ -93,22 +93,24 @@ Itens que permaneceram sem confirmação possível só pelo código (ver `questi
 
 ## Recomendações
 
-- [ ] **Drivers MCP/CLI (T1, T2, T3):** três bugs latentes de severidade alta concentrados em `server.py` e `main.py`. A CLI é o caminho confiável; MCP de decisões e sessão estão degradados, e o autoformat por hook não ocorre. Priorizar correção (fora do escopo desta extração — apenas documentado).
+- [x] **Drivers MCP/CLI (T1, T2, T3):** ~~três bugs latentes de severidade alta em `server.py` e `main.py`~~ — **RESOLVIDOS** (T1/T3 em `cf73980`; T2 por config na feature 006). MCP de decisões e sessão e o autoformat por hook voltaram a operar.
 - [ ] **Regenerar `user-stories/` e `flowcharts/`:** alinhar ao estado atual (Python + `.harness/`) ou marcá-los explicitamente como históricos. Hoje contradizem os demais artefatos.
 - [ ] **Reprodutibilidade (T6):** adotar lock file e CI mínimo (lint + testes) — Princípio nº 5.3 do mantenedor.
-- [ ] **Coesão de configuração (T4, T5):** decidir se `[formatting]` passa a alimentar o serviço e se as duas vias de config (`load_config` × `load_harness_config`) se unificam.
+- [ ] **Coesão de configuração (T4):** decidir se `[formatting]` passa a alimentar o serviço. (T5 já resolvido na feature 006: via única `load_config`; `load_harness_config` removida.)
 - [ ] **`inventory.md` (cosmético):** corrigir a descrição de `core/ports/` de "interfaces (Protocols)" para `ABC` — o código usa `from abc import ABC, abstractmethod` (consistente com code-analysis e modules.json).
 
 ---
 
 ## Histórico de Reclassificações
 
-| De  |     Para     | Afirmação                                             | Evidência / Justificativa                                                                                          |
-| :-: | :----------: | :---------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
-| 🟢  | 🟢 (mantida) | T1/T2/T3 são bugs reais                               | Verificação independente no fonte (`server.py:60/92`, `main.py:63`) confirma o já documentado.                     |
-| 🟢  |      🟡      | `inventory.md`: `core/ports/` como "Protocols"        | Contradição com o código (`ABC`/`@abstractmethod`) e com code-analysis/modules.json. Inconsistência terminológica. |
-| 🟢  |      🔴      | "100% de cobertura, sem lacunas" (relatório anterior) | Obsoleto: citava o legado purgado e ignorava lock file / CI ausentes e as dívidas T4–T6.                           |
-| n/a |      🔴      | `user-stories/` + `flowcharts/` desatualizados        | Não regenerados; descrevem o legado purgado — inconsistência cruzada nova.                                         |
+|   De    |      Para       | Afirmação                                             | Evidência / Justificativa                                                                                                                             |
+| :-----: | :-------------: | :---------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
+|   🟢    |  🟢 (mantida)   | T1/T2/T3 eram bugs reais na re-extração               | Verificação independente no fonte confirmou os três achados.                                                                                          |
+|   🟢    | 🟢 (resolvidos) | T1/T2/T3 corrigidos                                   | T1/T3 em `cf73980` (imports `load_config` e `json`); T2 por config na feature 006 (`SessionSection` + `[session]`). MCP e autoformat voltam a operar. |
+| 🔴 (T5) | 🟢 (resolvido)  | T5 — "duas vias de config"                            | Feature 006 removeu `load_harness_config` e `import toml` de `main.py`; via única tipada `load_config`.                                               |
+|   🟢    |       🟡        | `inventory.md`: `core/ports/` como "Protocols"        | Contradição com o código (`ABC`/`@abstractmethod`) e com code-analysis/modules.json. Inconsistência terminológica.                                    |
+|   🟢    |       🔴        | "100% de cobertura, sem lacunas" (relatório anterior) | Obsoleto: citava o legado purgado e ignorava lock file / CI ausentes e as dívidas T4–T6.                                                              |
+|   n/a   |       🔴        | `user-stories/` + `flowcharts/` desatualizados        | Não regenerados; descrevem o legado purgado — inconsistência cruzada nova.                                                                            |
 
 ---
 

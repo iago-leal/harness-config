@@ -28,16 +28,16 @@ stateDiagram-v2
 
 ### ⚡ Transições e Condições (Sessão do Agente)
 
-| Origem | Destino | Gatilho / Condição | Confiança |
-| :--- | :--- | :--- | :--- |
-| `AUSENTE` | `ATIVA` | `cmd resume` sem arquivo: cria `SessionState` com HEAD atual e feature `args[0]` (ou `default_feature`), salva, retorna "Nova sessão". | 🟢 CONFIRMADO |
-| `INATIVA`/`ATIVA` | `ATIVA` | `cmd resume` com arquivo: `start_session` reativa **preservando a narrativa** (RN-N3). Se HEAD ≠ `commit_hash` da âncora, antecede `⚠️ ALERTA` de divergência (RN-07) e reinjeta a narrativa pelo *sink* do harness. | 🟢 CONFIRMADO |
-| `ATIVA` | `INATIVA` | `cmd encerrar-sessao`: exige sessão ativa (senão erro), lê HEAD, `close_session(commit)` grava o commit-âncora, salva atomicamente. | 🟢 CONFIRMADO |
-| `AUSENTE`/`INATIVA` | `MALFORMADA` | Arquivo presente mas inválido (sem `---`, YAML inválido, campo obrigatório ausente, commit não-SHA1) → `MalformedSessionStateError`. Distinto de "ausente" (RN-N4: falha barulhenta). | 🟢 CONFIRMADO |
+| Origem              | Destino      | Gatilho / Condição                                                                                                                                                                                                   | Confiança     |
+| :------------------ | :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `AUSENTE`           | `ATIVA`      | `cmd resume` sem arquivo: cria `SessionState` com HEAD atual e feature `args[0]` (ou `default_feature`), salva, retorna "Nova sessão".                                                                               | 🟢 CONFIRMADO |
+| `INATIVA`/`ATIVA`   | `ATIVA`      | `cmd resume` com arquivo: `start_session` reativa **preservando a narrativa** (RN-N3). Se HEAD ≠ `commit_hash` da âncora, antecede `⚠️ ALERTA` de divergência (RN-07) e reinjeta a narrativa pelo _sink_ do harness. | 🟢 CONFIRMADO |
+| `ATIVA`             | `INATIVA`    | `cmd encerrar-sessao`: exige sessão ativa (senão erro), lê HEAD, `close_session(commit)` grava o commit-âncora, salva atomicamente.                                                                                  | 🟢 CONFIRMADO |
+| `AUSENTE`/`INATIVA` | `MALFORMADA` | Arquivo presente mas inválido (sem `---`, YAML inválido, campo obrigatório ausente, commit não-SHA1) → `MalformedSessionStateError`. Distinto de "ausente" (RN-N4: falha barulhenta).                                | 🟢 CONFIRMADO |
 
-> **Reinjeção no boot (RN-N6):** ao reativar, o estado é entregue ao contexto pelo *sink* do `active_harness` — `HookContextSink` (Claude/Gemini, via `hookSpecificOutput.additionalContext`, truncado em 10000 chars) ou `FileProjectionSink` (Antigravity, projetado em `.agents/rules/estado-sessao.md`). Ver MD-0003.
+> **Reinjeção no boot (RN-N6):** ao reativar, o estado é entregue ao contexto pelo _sink_ do `active_harness` — `HookContextSink` (Claude/Gemini, via `hookSpecificOutput.additionalContext`, truncado em 10000 chars) ou `FileProjectionSink` (Antigravity, projetado em `.agents/rules/estado-sessao.md`). Ver MD-0003.
 >
-> 🟡 **Ressalva (T2):** via MCP, `session_command` opera sobre `ESTADO-DA-SESSAO.md` na raiz — uma máquina de estado paralela e divergente da CLI. Bug latente, não corrigido.
+> 🟢 **Ressalva (T2) RESOLVIDA (feature 006, via configuração):** à época desta extração, via MCP, `session_command` operava sobre `ESTADO-DA-SESSAO.md` na raiz — uma máquina de estado paralela e divergente da CLI. A feature 006 unificou o caminho por configuração: `HarnessConfig` ganhou `SessionSection` (`state_file = .harness/estado-da-sessao.md`) e tanto a CLI (`main.py:169`) quanto o MCP (`server.py:94`) leem `config.session.state_file`. CLI e MCP operam agora sobre a **mesma** máquina de estado. Registro histórico preservado; bug fechado. Ver MD-0005, ADR 0013.
 
 ---
 
@@ -54,11 +54,11 @@ stateDiagram-v2
 
 ### ⚡ Transições e Condições (Microdecisão)
 
-| Origem | Destino | Gatilho / Condição | Confiança |
-| :--- | :--- | :--- | :--- |
-| `(criação)` | `ATIVO` | Nova ficha sem `estado` no front-matter assume `ativo` (default do modelo). | 🟢 CONFIRMADO |
-| `ATIVO` | `DESCARTADO` | Edição manual do campo `estado` para `descartado` na ficha. Não há gatilho automático no código. | 🟢 CONFIRMADO |
-| `DESCARTADO` | `ATIVO` | Edição manual de volta para `ativo`. | 🟡 INFERIDO (simetria do campo; sem caminho de código dedicado) |
+| Origem       | Destino      | Gatilho / Condição                                                                               | Confiança                                                       |
+| :----------- | :----------- | :----------------------------------------------------------------------------------------------- | :-------------------------------------------------------------- |
+| `(criação)`  | `ATIVO`      | Nova ficha sem `estado` no front-matter assume `ativo` (default do modelo).                      | 🟢 CONFIRMADO                                                   |
+| `ATIVO`      | `DESCARTADO` | Edição manual do campo `estado` para `descartado` na ficha. Não há gatilho automático no código. | 🟢 CONFIRMADO                                                   |
+| `DESCARTADO` | `ATIVO`      | Edição manual de volta para `ativo`.                                                             | 🟡 INFERIDO (simetria do campo; sem caminho de código dedicado) |
 
 > 🟡 **Nota sobre substituição:** a relação `substitui MD-XXXX` registra a aresta no grafo (e gera o backlink `substituído-por` no índice), mas **não** altera automaticamente o `estado` da decisão substituída para `descartado` — a depreciação efetiva continua sendo uma edição manual do front-matter. A extração anterior inferia uma transição `ATIVO→REJEITADO` disparada pela relação; o código não a implementa.
 >

@@ -5,11 +5,11 @@
 
 ## Interface
 
-| Símbolo | Assinatura | Retorno | Observação |
-|---------|-----------|---------|------------|
-| `CommandService.execute_command` | `(command, args, repo_path, session_filepath)` | `str` | Normaliza e despacha; comando desconhecido → string de erro. |
-| `CommandService.load_session` | `(session_filepath)` | `SessionState \| None` | Ausente → `None`; malformado → `MalformedSessionStateError`. |
-| `CommandService.save_session` | `(state, session_filepath)` | — | `serializer.render` + gravação atômica. |
+| Símbolo                          | Assinatura                                     | Retorno                | Observação                                                   |
+| -------------------------------- | ---------------------------------------------- | ---------------------- | ------------------------------------------------------------ |
+| `CommandService.execute_command` | `(command, args, repo_path, session_filepath)` | `str`                  | Normaliza e despacha; comando desconhecido → string de erro. |
+| `CommandService.load_session`    | `(session_filepath)`                           | `SessionState \| None` | Ausente → `None`; malformado → `MalformedSessionStateError`. |
+| `CommandService.save_session`    | `(state, session_filepath)`                    | —                      | `serializer.render` + gravação atômica.                      |
 
 ## Fluxo Principal
 
@@ -40,12 +40,12 @@
 
 ## Decisões de Design Identificadas
 
-| Decisão | Evidência no código | Confiança |
-|---------|---------------------|-----------|
-| Serviço agnóstico a IDE/harness; sink escolhido na borda | `service.py` (texto puro) + `main.py` | 🟢 |
-| Âncora Git como detector de divergência na retomada | `service.py` (`resume`) | 🟢 |
-| Narrativa preservada na reativação (não reinventada) | `service.py` (`start_session`) | 🟢 |
-| Ausente ≠ malformado em `load_session` | `service.py` + `session/errors.py` | 🟢 |
+| Decisão                                                  | Evidência no código                   | Confiança |
+| -------------------------------------------------------- | ------------------------------------- | --------- |
+| Serviço agnóstico a IDE/harness; sink escolhido na borda | `service.py` (texto puro) + `main.py` | 🟢        |
+| Âncora Git como detector de divergência na retomada      | `service.py` (`resume`)               | 🟢        |
+| Narrativa preservada na reativação (não reinventada)     | `service.py` (`start_session`)        | 🟢        |
+| Ausente ≠ malformado em `load_session`                   | `service.py` + `session/errors.py`    | 🟢        |
 
 ## Estado Interno
 
@@ -59,5 +59,5 @@ O estado de domínio é externalizado em `.harness/estado-da-sessao.md` (gerido 
 
 ## Riscos e Lacunas
 
-- 🟡 **T2 (bug latente):** via MCP, `session_command` usa `ESTADO-DA-SESSAO.md` na raiz — estado paralelo, divergente da CLI. Documentado, não corrigido.
+- 🟢 **T2 (resolvido na feature 006):** via MCP, `session_command` lê o caminho de sessão de `config.session.state_file` — o mesmo `.harness/estado-da-sessao.md` da CLI. Não há mais estado paralelo na raiz nem divergência CLI×MCP.
 - 🟡 `clarificar` e `handoff` produzem texto; a ação efetiva (commits, push) descrita no Markdown legado não é mais executada pelo serviço (escopo reduzido).
