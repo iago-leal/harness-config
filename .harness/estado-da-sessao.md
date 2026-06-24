@@ -25,6 +25,7 @@ status: active
 - **Três commits empurrados** para `origin/main` (`69a8e6c`, `94cc6ab`, `93c2263`), após re-autenticar o `gh` por device flow. **CI verde pela primeira vez** desde a ativação: `test (3.12)` e `test (3.13)` passando (run `28126576102`).
 - **Deprecação Node 20 resolvida (MD-0009)** — actions do `ci.yml` pinadas em versão exata: `checkout@v7.0.0`, `setup-uv@v8.2.0`, `setup-python@v6.3.0` (usam Node 24). Pin exato por reprodutibilidade (5.3) e porque `setup-uv` não tem major tag movível.
 - **Token `gh` agora com `workflow`** — escopos `gist, read:org, repo, workflow` (reconcedido por device flow); pushes que tocam `.github/workflows/` deixaram de ser rejeitados.
+- **Cache do `setup-uv` sem colisão** — `cache-suffix: ${{ matrix.python-version }}` adicionado ao `ci.yml`: os jobs paralelos da matrix (3.12/3.13) deixaram de disputar a mesma chave de cache (annotation "Unable to reserve cache"). Complemento de MD-0009; `cache-suffix` confirmado como input válido de `setup-uv@v8.2.0`.
 
 ## Pendências / bloqueios
 

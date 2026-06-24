@@ -20,6 +20,9 @@ jobs:
       uses: astral-sh/setup-uv@v8.2.0
       with:
         enable-cache: true
+        # Chave de cache por versão de Python: evita colisão entre os jobs
+        # paralelos da matrix (3.12 e 3.13) ao reservar/salvar o mesmo cache.
+        cache-suffix: ${{ matrix.python-version }}
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6.3.0
