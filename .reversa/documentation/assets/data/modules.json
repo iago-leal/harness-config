@@ -1,0 +1,79 @@
+[
+  {
+    "name": "bootstrap",
+    "folder": "harness-core/src/core",
+    "loc": 58,
+    "complexity": 3,
+    "type": "code"
+  },
+  {
+    "name": "formatting",
+    "folder": "harness-core/src/core",
+    "loc": 94,
+    "complexity": 6,
+    "type": "code"
+  },
+  {
+    "name": "sync",
+    "folder": "harness-core/src/core",
+    "loc": 70,
+    "complexity": 6,
+    "type": "code"
+  },
+  {
+    "name": "decisions",
+    "folder": "harness-core/src/core",
+    "loc": 148,
+    "complexity": 12,
+    "type": "code"
+  },
+  {
+    "name": "commands",
+    "folder": "harness-core/src/core",
+    "loc": 93,
+    "complexity": 12,
+    "type": "code"
+  },
+  {
+    "name": "documentation",
+    "folder": "harness-core/src/core",
+    "loc": 114,
+    "complexity": 6,
+    "type": "code"
+  },
+  {
+    "name": "install",
+    "folder": "harness-core/src/core",
+    "loc": 143,
+    "complexity": 6,
+    "type": "code"
+  },
+  {
+    "name": "session",
+    "folder": "harness-core/src/core",
+    "loc": 193,
+    "complexity": 12,
+    "type": "code"
+  },
+  {
+    "name": "domain",
+    "folder": "harness-core/src/core",
+    "loc": 189,
+    "complexity": 6,
+    "type": "code"
+  },
+  {
+    "name": "ports",
+    "folder": "harness-core/src/core",
+    "loc": 60,
+    "complexity": 3,
+    "type": "code"
+  },
+  {
+    "name": "adapters",
+    "folder": "harness-core/src",
+    "loc": 220,
+    "complexity": 12,
+    "type": "code"
+  }
+]

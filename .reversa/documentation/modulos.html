@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grafo de Módulos | harness</title>
+  <meta name="reversa-category" content="diagram">
+  <meta name="reversa-producer-agent" content="reversa-docs-mapper">
+  <meta name="reversa-template" content="modulos">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="assets/vendor/d3.v7.min.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/nav.js"></script>
+  <style>
+    .node circle {
+      stroke: var(--border-color);
+      stroke-width: 2px;
+      cursor: pointer;
+      transition: stroke 0.2s, stroke-width 0.2s;
+    }
+    .node:hover circle {
+      stroke: #fff;
+      stroke-width: 3px;
+    }
+    .node text {
+      font-size: 0.8rem;
+      font-weight: 500;
+      fill: #fff;
+      pointer-events: none;
+      text-anchor: middle;
+      dy: 22px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    }
+    .link {
+      fill: none;
+      stroke: var(--border-color);
+      stroke-opacity: 0.6;
+      stroke-width: 1.5px;
+      marker-end: url(#arrow);
+      transition: stroke 0.2s, stroke-opacity 0.2s;
+    }
+    .link.active {
+      stroke: var(--primary-color);
+      stroke-opacity: 1;
+      stroke-width: 2.5px;
+    }
+    #tooltip {
+      position: absolute;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+  </style>
+</head>
+<body data-page-id="modulos">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item active aria-current="page"" href="modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Mapa de Módulos (2D D3)</h1>
+        <p>Grafo direcionado de acoplamento e dependências do harness-core.</p>
+      </div>
+      <div class="meta-info">
+        Módulos: <code id="total-nodes">0</code><br>
+        Arestas: <code id="total-edges">0</code>
+      </div>
+    </header>
+
+    <div class="visualization-container">
+      <div id="loader">Carregando grafo...</div>
+      <div id="tooltip"></div>
+      <svg id="d3-canvas"></svg>
+
+      <!-- Controles de Parâmetros -->
+      <div class="control-sidebar">
+        <h3>Configuração D3</h3>
+        <div class="control-group">
+          <label for="search-module">Destacar Módulo</label>
+          <input type="text" id="search-module" placeholder="Nome do módulo..." style="width: 100%; padding: 0.35rem; background: var(--bg-color); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; font-size: 0.8rem;">
+        </div>
+        <div class="control-group">
+          <label for="force-repulsion">Repulsão de Nós</label>
+          <input type="range" id="force-repulsion" min="100" max="1000" step="50" value="400">
+        </div>
+        <div class="control-group">
+          <label for="link-distance">Distância Mínima</label>
+          <input type="range" id="link-distance" min="30" max="200" step="10" value="100">
+        </div>
+        <button class="btn" id="reset-sim">Reset Simulação</button>
+      </div>
+    </div>
+
+    <!-- Informações do Grafo -->
+    <div class="dashboard-grid">
+      <div class="dashboard-card" style="grid-column: span 2;">
+        <h3>Acoplamento e Estrutura</h3>
+        <p style="font-size: 0.95rem; margin-bottom: 0.75rem;">
+          O grafo exibe como cada componente do core se conecta. Nós maiores ou mais escuros representam dependências estruturais ou maior complexidade. A direção da seta aponta para o submódulo importado.
+        </p>
+        <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.85rem;">
+          <strong>Legenda:</strong>
+          <span>🔵 Low Complexity</span>
+          <span>🟡 Medium Complexity</span>
+          <span>🔴 High Complexity</span>
+          <span style="color: #ef4444; font-weight: bold; display: none;" id="cycle-warning">⚠️ Ciclos detectados</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Carregar dados de window.RV_DATA
+      const modulesData = (window.RV_DATA && window.RV_DATA.modules) || [];
+      const depsData = (window.RV_DATA && window.RV_DATA.deps) || { nodes: [], edges: [], cycles: [] };
+
+      document.getElementById("total-nodes").textContent = depsData.nodes.length;
+      document.getElementById("total-edges").textContent = depsData.edges.length;
+
+      if (!depsData.nodes || depsData.nodes.length === 0) {
+        document.getElementById("loader").textContent = "Nenhum nó encontrado para visualização.";
+        return;
+      }
+
+      if (depsData.cycles && depsData.cycles.length > 0) {
+        document.getElementById("cycle-warning").style.display = "inline";
+      }
+
+      // Configuração base D3
+      const svg = d3.select("#d3-canvas");
+      const container = document.getElementById("d3-canvas").parentElement;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      
+      // Configurar viewBox e responsive
+      svg.attr("viewBox", `0 0 ${width} ${height}`)
+         .attr("width", "100%")
+         .attr("height", "100%");
+
+      // Grupo para zoom
+      const g = svg.append("g");
+
+      // Zoom behavior
+      const zoom = d3.zoom()
+        .scaleExtent([0.3, 4])
+        .on("zoom", (event) => {
+          g.attr("transform", event.transform);
+        });
+      svg.call(zoom);
+
+      // Seta marcador para as ligações (edges)
+      svg.append("defs").append("marker")
+        .attr("id", "arrow")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 22) // deslocado para não ficar debaixo do círculo do nó
+        .attr("refY", 0)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M0,-5L10,0L0,5")
+        .attr("fill", "#23314f");
+
+      // Criar mapa de complexidade a partir do modulesData
+      const complexityMap = {};
+      const locMap = {};
+      modulesData.forEach(m => {
+        complexityMap[m.name] = m.complexity;
+        locMap[m.name] = m.loc;
+      });
+
+      // Simulação de forças
+      let repulsionForce = -400;
+      let linkDist = 100;
+
+      const simulation = d3.forceSimulation(depsData.nodes)
+        .force("link", d3.forceLink(depsData.edges).id(d => d.id).distance(linkDist))
+        .force("charge", d3.forceManyBody().strength(repulsionForce))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collision", d3.forceCollide().radius(25));
+
+      // Criar ligações (links)
+      const link = g.append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(depsData.edges)
+        .enter().append("line")
+        .attr("class", "link");
+
+      // Criar nós (nodes)
+      const node = g.append("g")
+        .attr("class", "nodes")
+        .selectAll(".node")
+        .data(depsData.nodes)
+        .enter().append("g")
+        .attr("class", "node")
+        .call(d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
+
+      // Cores
+      const colors = {
+        low: '#3b82f6',
+        medium: '#f59e0b',
+        high: '#ef4444'
+      };
+
+      // Adicionar círculo ao nó
+      node.append("circle")
+        .attr("r", d => {
+          const loc = locMap[d.id] || 50;
+          return Math.max(8, Math.min(18, loc / 25)); // tamanho baseado no LOC
+        })
+        .attr("fill", d => {
+          const comp = complexityMap[d.id] || 5;
+          if (comp >= 8) return colors.high;
+          if (comp >= 5) return colors.medium;
+          return colors.low;
+        });
+
+      // Adicionar texto (label)
+      node.append("text")
+        .text(d => d.id);
+
+      // Tooltip e hover
+      const tooltip = document.getElementById("tooltip");
+
+      node.on("mouseover", function(event, d) {
+        const comp = complexityMap[d.id] || 5;
+        const loc = locMap[d.id] || 0;
+        
+        // Destacar links conectados
+        link.classed("active", l => l.source.id === d.id || l.target.id === d.id);
+
+        tooltip.style.opacity = 1;
+        tooltip.innerHTML = `
+          <strong>Módulo:</strong> ${d.id}<br>
+          <strong>LOC:</strong> ${loc} linhas<br>
+          <strong>Complexidade:</strong> ${comp}
+        `;
+      });
+
+      node.on("mousemove", function(event) {
+        const containerRect = container.getBoundingClientRect();
+        tooltip.style.left = (event.clientX + 15) + "px";
+        tooltip.style.top = (event.clientY - 15) + "px";
+      });
+
+      node.on("mouseout", function() {
+        link.classed("active", false);
+        tooltip.style.opacity = 0;
+      });
+
+      // Update posições no tick
+      simulation.on("tick", () => {
+        link
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+
+        node
+          .attr("transform", d => `translate(${d.x}, ${d.y})`);
+      });
+
+      // Esconder Loader
+      document.getElementById("loader").style.opacity = 0;
+      setTimeout(() => {
+        document.getElementById("loader").style.display = "none";
+      }, 300);
+
+      // Drag functions
+      function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+
+      function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+
+      // Controles sidebar
+      const repulsionInput = document.getElementById("force-repulsion");
+      repulsionInput.addEventListener("input", (e) => {
+        repulsionForce = -parseFloat(e.target.value);
+        simulation.force("charge").strength(repulsionForce);
+        simulation.alpha(0.3).restart();
+      });
+
+      const distanceInput = document.getElementById("link-distance");
+      distanceInput.addEventListener("input", (e) => {
+        linkDist = parseFloat(e.target.value);
+        simulation.force("link").distance(linkDist);
+        simulation.alpha(0.3).restart();
+      });
+
+      const searchInput = document.getElementById("search-module");
+      searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (query === "") {
+          node.selectAll("circle").style("opacity", 1);
+          node.selectAll("text").style("opacity", 1);
+          link.style("opacity", 0.6);
+        } else {
+          node.selectAll("circle").style("opacity", d => d.id.toLowerCase().includes(query) ? 1 : 0.15);
+          node.selectAll("text").style("opacity", d => d.id.toLowerCase().includes(query) ? 1 : 0.15);
+          link.style("opacity", l => l.source.id.toLowerCase().includes(query) && l.target.id.toLowerCase().includes(query) ? 0.6 : 0.05);
+        }
+      });
+
+      document.getElementById("reset-sim").addEventListener("click", () => {
+        simulation.alpha(1).restart();
+        svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+      });
+    });
+  </script>
+</body>
+</html>

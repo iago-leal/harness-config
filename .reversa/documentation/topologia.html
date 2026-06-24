@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Topologia do Sistema | harness</title>
+  <meta name="reversa-category" content="diagram">
+  <meta name="reversa-producer-agent" content="reversa-docs-mapper">
+  <meta name="reversa-template" content="topologia">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/nav.js"></script>
+  <style>
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 900px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .topology-panel {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1.5rem;
+    }
+    .topology-panel.legacy {
+      border-top: 4px solid var(--danger-color);
+    }
+    .topology-panel.modern {
+      border-top: 4px solid var(--accent-color);
+    }
+    .topology-panel h2 {
+      font-size: 1.3rem;
+      color: #fff;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .file-tree {
+      background-color: rgba(0, 0, 0, 0.2);
+      padding: 1rem;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--text-color);
+      margin-bottom: 1rem;
+    }
+    .file-tree .deleted {
+      color: var(--danger-color);
+      text-decoration: line-through;
+    }
+    .file-tree .added {
+      color: var(--accent-color);
+      font-weight: bold;
+    }
+    .topology-panel p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+<body data-page-id="topologia">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item active aria-current="page"" href="topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Topologia de Arquivos</h1>
+        <p>Evolução da distribuição física e footprint de arquivos do projeto.</p>
+      </div>
+      <div class="meta-info">
+        Paradigma: <code>Autocontido</code><br>
+        Status: <code>Migrado</code>
+      </div>
+    </header>
+
+    <div class="comparison-grid">
+      <!-- Topologia Legada -->
+      <div class="topology-panel legacy">
+        <h2>
+          <span>Topologia Legada (Antes da f005)</span>
+          <span class="badge badge-high" style="font-size: 0.7rem;">Footprint disperso</span>
+        </h2>
+        <p>Configurações e estados ficavam dispersos na raiz do projeto e em pastas duplicadas, complicando o versionamento e isolamento do harness.</p>
+        
+        <div class="file-tree">
+          project_root/<br>
+          ├── <span class="deleted">claude-config/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Purgado (commit 5624f78)</span><br>
+          │ &nbsp;&nbsp;├── settings.json<br>
+          │ &nbsp;&nbsp;└── skills.active<br>
+          ├── <span class="deleted">decisoes/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Movido para .harness/</span><br>
+          │ &nbsp;&nbsp;├── MD-0001.md<br>
+          │ &nbsp;&nbsp;└── MD-0002.md<br>
+          ├── <span class="deleted">ESTADO-DA-SESSAO.md</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Movido para .harness/</span><br>
+          ├── harness-core/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Módulo CLI e MCP</span><br>
+          │ &nbsp;&nbsp;└── src/<br>
+          └── harness &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Wrapper script bash</span>
+        </div>
+
+        <p>• Acoplamento com caminhos literais fixos na raiz.</p>
+        <p>• Risco de conflito com arquivos de outros plugins da IDE.</p>
+      </div>
+
+      <!-- Topologia Moderna -->
+      <div class="topology-panel modern">
+        <h2>
+          <span>Topologia Moderna (Atual)</span>
+          <span class="badge badge-low" style="font-size: 0.7rem;">Autocontida / Limpa</span>
+        </h2>
+        <p>Evolução consolidada pela <strong>Feature 005</strong> e <strong>ADR 0009</strong>. Todo o estado mutável do harness reside dentro da pasta oculta <code>.harness/</code>.</p>
+        
+        <div class="file-tree">
+          project_root/<br>
+          ├── <span class="added">.harness/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Novo diretório centralizado</span><br>
+          │ &nbsp;&nbsp;├── <span class="added">estado-da-sessao.md</span> &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Estado de sessão unificado (f004)</span><br>
+          │ &nbsp;&nbsp;├── <span class="added">microdecisoes.md</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Índice compilado de decisões</span><br>
+          │ &nbsp;&nbsp;└── <span class="added">decisoes/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Pasta de microdecisões (f005)</span><br>
+          │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── MD-0001.md<br>
+          │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── MD-0002.md<br>
+          ├── harness-core/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># CLI Python e MCP</span><br>
+          │ &nbsp;&nbsp;├── src/<br>
+          │ &nbsp;&nbsp;└── <span class="added">harness.toml</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Configuração tipada (f005/f006)</span><br>
+          └── harness &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #64748b;"># Wrapper script bash</span>
+        </div>
+
+        <p>• <strong>Centralização:</strong> Caminhos de decisões resolvidos dinamicamente de <code>harness.toml</code>.</p>
+        <p>• <strong>Footprint Zero:</strong> Sem escritas fora da pasta do projeto (respeitando BR-MIGRAR-007).</p>
+      </div>
+    </div>
+
+    <div class="dashboard-card">
+      <h3>Decisões Arquiteturais Relevantes (ADRs)</h3>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ADR</th>
+            <th>Decisão</th>
+            <th>Impacto na Topologia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>ADR 0009</strong></td>
+            <td>Abandono completo do diretório legado <code>claude-config/</code>.</td>
+            <td>Sumiço de arquivos duplicados da raiz e centralização de segregação na pasta <code>.harness/</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>ADR 0010</strong></td>
+            <td>Criação do estado de sessão unificado e idempotente.</td>
+            <td>Substituição de arquivos temporários e múltiplos na raiz pelo arquivo <code>.harness/estado-da-sessao.md</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>ADR 0012</strong></td>
+            <td>Carregamento de caminhos de decisões via configuração dinâmica.</td>
+            <td>Substituição de caminhos absolutos hardcoded por rotas lidas do <code>harness.toml</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>

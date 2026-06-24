@@ -1,0 +1,40 @@
+{
+  "specs": [
+    {
+      "id": "bootstrap",
+      "label": "bootstrap"
+    },
+    {
+      "id": "comandos-customizados",
+      "label": "comandos-customizados"
+    },
+    {
+      "id": "documentacao-uso-html",
+      "label": "documentacao-uso-html"
+    },
+    {
+      "id": "format-on-edit",
+      "label": "format-on-edit"
+    },
+    {
+      "id": "install",
+      "label": "install"
+    },
+    {
+      "id": "microdecisoes",
+      "label": "microdecisoes"
+    },
+    {
+      "id": "run-harness-core-local",
+      "label": "run-harness-core-local"
+    },
+    {
+      "id": "session",
+      "label": "session"
+    },
+    {
+      "id": "sync-check",
+      "label": "sync-check"
+    }
+  ]
+}

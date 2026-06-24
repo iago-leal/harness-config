@@ -1,0 +1,130 @@
+{
+  "nodes": [
+    {
+      "id": "bootstrap"
+    },
+    {
+      "id": "formatting"
+    },
+    {
+      "id": "sync"
+    },
+    {
+      "id": "decisions"
+    },
+    {
+      "id": "commands"
+    },
+    {
+      "id": "documentation"
+    },
+    {
+      "id": "install"
+    },
+    {
+      "id": "session"
+    },
+    {
+      "id": "domain"
+    },
+    {
+      "id": "ports"
+    },
+    {
+      "id": "adapters"
+    }
+  ],
+  "edges": [
+    {
+      "from": "bootstrap",
+      "to": "ports",
+      "weight": 1
+    },
+    {
+      "from": "formatting",
+      "to": "ports",
+      "weight": 1
+    },
+    {
+      "from": "sync",
+      "to": "ports",
+      "weight": 1
+    },
+    {
+      "from": "sync",
+      "to": "domain",
+      "weight": 1
+    },
+    {
+      "from": "decisions",
+      "to": "ports",
+      "weight": 1
+    },
+    {
+      "from": "decisions",
+      "to": "domain",
+      "weight": 1
+    },
+    {
+      "from": "commands",
+      "to": "ports",
+      "weight": 1
+    },
+    {
+      "from": "commands",
+      "to": "domain",
+      "weight": 1
+    },
+    {
+      "from": "commands",
+      "to": "session",
+      "weight": 1
+    },
+    {
+      "from": "documentation",
+      "to": "ports",
+      "weight": 1
+    },
+    {
+      "from": "install",
+      "to": "ports",
+      "weight": 1
+    },
+    {
+      "from": "session",
+      "to": "ports",
+      "weight": 1
+    },
+    {
+      "from": "session",
+      "to": "domain",
+      "weight": 1
+    },
+    {
+      "from": "domain",
+      "to": "ports",
+      "weight": 1
+    },
+    {
+      "from": "adapters",
+      "to": "ports",
+      "weight": 1
+    },
+    {
+      "from": "adapters",
+      "to": "domain",
+      "weight": 1
+    },
+    {
+      "from": "adapters",
+      "to": "bootstrap",
+      "weight": 1
+    },
+    {
+      "from": "adapters",
+      "to": "commands",
+      "weight": 1
+    }
+  ],
+  "cycles": []
+}

@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Install | harness</title>
+  <meta name="reversa-category" content="feature-spec">
+  <meta name="reversa-producer-agent" content="reversa-docs-storyteller">
+  <meta name="reversa-template" content="feature">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <style>
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-color: var(--border-color);
+      background-color: var(--panel-bg);
+    }
+    .tab-content-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-page-id="feature-install">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="../index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="../arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="../modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="../topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="../metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item active aria-current="page"" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Feature: Install</h1>
+        <p>Especificação funcional, design e tarefas de evolução desta capacidade.</p>
+      </div>
+      <div class="meta-info">
+        Módulo: <code>harness-core</code><br>
+        Slug: <code>install</code>
+      </div>
+    </header>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('requirements')">📋 Requisitos</button>
+      <button class="tab-btn" onclick="switchTab('design')">📐 Design Técnico</button>
+      <button class="tab-btn" onclick="switchTab('tasks')">🛠️ Roadmap &amp; Tarefas</button>
+    </div>
+
+    <!-- Tab Requisitos -->
+    <div class="tab-content-panel active" id="tab-requirements">
+      <div class="dashboard-card">
+        <h1>Install (Prompt de Instalação Colável) — Requisitos (Requirements)</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração; feature 003)</p>
+<p>&gt; Nível de Documentação: <strong>Completo</strong> · Escala: <span class="badge badge-low">Confirmado</span> CONFIRMADO · <span class="badge badge-medium">Inferido</span> INFERIDO · <span class="badge badge-high">Lacuna</span> LACUNA</p>
+<p>&gt; Rastreabilidade ao Legado: <a href="file:///Users/iagoleal/dev/harness/harness-core/src/core/install/"><code>harness-core/src/core/install/</code></a> — <code>service.py</code>, <code>harness_profiles.py</code>, <code>template.md</code>. Driver: <code>src/main.py</code> (subcomando <code>install-prompt</code>).</p>
+
+<h2>Visão Geral</h2>
+
+<p>Esta unit gera, por <strong>composição</strong>, um prompt Markdown que o usuário cola no agente de IA para instalar o harness-core localmente, passo a passo e de forma idempotente. A lista de comandos vem da introspecção do <code>argparse</code> (fonte única com a CLI real) e o bloco de ganchos vem do <strong>perfil</strong> do harness ativo (<code>Claude</code>/<code>Gemini</code>/<code>Antigravity</code>), via padrão Strategy. Nada é mantido à mão em paralelo (feature 003).</p>
+
+<h2>Responsabilidades</h2>
+<ul><li>Renderizar o <code>template.md</code> substituindo quatro placeholders: <code>{{ACTIVE_HARNESS}}</code>, <code>{{APPLY_HOOKS}}</code>, <code>{{HOOKS_BLOCK}}</code>, <code>{{COMMANDS}}</code>. <span class="badge badge-low">Confirmado</span></li>
+<li>Resolver o <strong>perfil de instalação</strong> do harness ativo (estratégia que encapsula o bloco de ganchos e as instruções de aplicação). <span class="badge badge-low">Confirmado</span></li>
+<li>Falhar cedo (fail-fast) quando o harness ativo for inválido, antes de qualquer I/O. <span class="badge badge-low">Confirmado</span></li>
+<li>Reusar a introspecção do <code>argparse</code> (mesmo padrão de <code>DocumentationService</code>) para listar os comandos da CLI. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Regras de Negócio</h2>
+<ul><li><strong>RN-N9 — Geração por composição (fonte única):</strong> o prompt é montado por substituição de 4 placeholders no <code>template.md</code>; a lista de comandos vem da introspecção do <code>argparse</code>. Exposto <strong>apenas pela CLI</strong> (<code>install-prompt</code>), não pelo MCP. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N10 — Resolução de perfil fail-fast:</strong> o perfil do harness é resolvido <strong>antes</strong> de ler o template; harness inválido levanta <code>ValueError</code> barulhento. <code>get_profile</code> resolve via dict <code>_PROFILES</code>. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Bloco de ganchos específico por perfil:</strong> <code>ClaudeProfile</code> emite o JSON <code>hooks</code> real (<code>SessionStart</code>→<code>harness cmd resume</code>; <code>PostToolUse</code> Write|Edit→<code>harness format</code>; <code>Stop</code>→<code>harness decisions</code>, com <code>${CLAUDE_PROJECT_DIR}</code> e timeouts); <code>GeminiProfile</code> orienta a ponte <code>context.*</code> do settings do Gemini; <code>AntigravityProfile</code> emite aviso de mecanismo ainda não confirmado. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Requisitos Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>ID</th>
+<th>Requisito</th>
+<th>Prioridade</th>
+<th>Critério de Aceite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF-01</td>
+<td>Renderizar o prompt de instalação para o harness ativo.</td>
+<td>Must</td>
+<td><code>./harness install-prompt</code> imprime Markdown com os 4 placeholders resolvidos (nenhum <code>{{...}}</code> residual).</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Resolver o perfil por nome de harness.</td>
+<td>Must</td>
+<td><code>claude</code>/<code>gemini</code>/<code>antigravity</code> retornam blocos de ganchos distintos; nome fora do conjunto → <code>ValueError</code>.</td>
+</tr>
+<tr>
+<td>RF-03</td>
+<td>Fail-fast antes de I/O.</td>
+<td>Must</td>
+<td>Com harness inválido, o <code>ValueError</code> ocorre <strong>antes</strong> de ler <code>template.md</code> (nenhuma leitura de arquivo).</td>
+</tr>
+<tr>
+<td>RF-04</td>
+<td>Lista de comandos por introspecção do argparse.</td>
+<td>Should</td>
+<td><code>{{COMMANDS}}</code> lista cada subcomando como <code>- \</code>&lt;name&gt;\<code> — &lt;help&gt;</code>, igual à CLI real.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Requisitos Não Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Requisito inferido</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Manutenibilidade</td>
+<td>Fonte única do prompt (template + perfil + introspecção), sem duplicação manual.</td>
+<td><code>core/install/service.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Extensibilidade</td>
+<td>Novo harness = nova subclasse de <code>HarnessProfile</code> registrada em <code>_PROFILES</code>.</td>
+<td><code>core/install/harness_profiles.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Robustez</td>
+<td>Harness inválido falha de forma explícita (fail-fast), nunca gera prompt incoerente.</td>
+<td><code>core/install/service.py</code> (<code>get_profile</code> antes de ler template)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Critérios de Aceitação</h2>
+
+<pre><code>Dado que o harness ativo é "claude"
+Quando executo `./harness install-prompt`
+Então o prompt contém o bloco JSON de hooks do Claude (SessionStart/PostToolUse/Stop)
+E a lista de comandos da CLI aparece no Passo 5
+E nenhum placeholder {{...}} permanece no texto.
+
+Dado um harness ativo inválido (ex.: "vscode")
+Quando o InstallPromptService.render é chamado
+Então um ValueError é levantado antes de o template.md ser lido.</code></pre>
+
+<h2>Prioridade (MoSCoW)</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Requisito</th>
+<th>MoSCoW</th>
+<th>Justificativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Render por composição (RN-N9)</td>
+<td>Must</td>
+<td>Único caminho de geração do prompt; sem ele a unit não entrega nada.</td>
+</tr>
+<tr>
+<td>Resolução fail-fast de perfil (RN-N10)</td>
+<td>Must</td>
+<td>Garante coerência do prompt e erro barulhento; precede todo I/O.</td>
+</tr>
+<tr>
+<td>Introspecção do argparse para comandos</td>
+<td>Should</td>
+<td>Mantém o prompt sincronizado com a CLI; degradaria para lista manual.</td>
+</tr>
+<tr>
+<td>Bloco de ganchos do Antigravity</td>
+<td>Could</td>
+<td>Mecanismo ainda não confirmado; emite apenas aviso. <span class="badge badge-medium">Inferido</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Rastreabilidade de Código</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Arquivo</th>
+<th>Função / Classe</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core/install/service.py</code></td>
+<td><code>InstallPromptService.render</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/install/harness_profiles.py</code></td>
+<td><code>HarnessProfile</code> (ABC), <code>ClaudeProfile</code>, <code>GeminiProfile</code>, <code>AntigravityProfile</code>, <code>get_profile</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/install/template.md</code></td>
+<td>Template com 4 placeholders</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>src/main.py</code></td>
+<td>Subcomando <code>install-prompt</code> (resolve <code>active_harness</code> via <code>load_config</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>tests/test_install.py</code></td>
+<td>Cobertura de teste</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </div>
+
+    
+    <!-- Tab Design -->
+    <div class="tab-content-panel" id="tab-design">
+      <div class="dashboard-card">
+        <h1>Install (Prompt de Instalação Colável) — Design Técnico</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração; feature 003)</p>
+<p>&gt; Foca no COMO a unit é construída, a partir do código legado lido. Escala: <span class="badge badge-low">Confirmado</span> / <span class="badge badge-medium">Inferido</span> / <span class="badge badge-high">Lacuna</span></p>
+
+<h2>Interface</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Símbolo</th>
+<th>Assinatura</th>
+<th>Retorno</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>InstallPromptService.render</code></td>
+<td><code>(active_harness: str, parser: ArgumentParser)</code></td>
+<td><code>str</code></td>
+<td>Prompt Markdown pronto para colar. Resolve o perfil <strong>antes</strong> de ler o template (fail-fast).</td>
+</tr>
+<tr>
+<td><code>HarnessProfile.hooks_block</code></td>
+<td><code>()</code> (abstrato)</td>
+<td><code>str</code></td>
+<td>Bloco de ganchos específico do harness (corpo do code fence <code>{{HOOKS_BLOCK}}</code>).</td>
+</tr>
+<tr>
+<td><code>HarnessProfile.apply_instructions</code></td>
+<td><code>()</code> (abstrato)</td>
+<td><code>str</code></td>
+<td>Texto que instrui como aplicar os ganchos (<code>{{APPLY_HOOKS}}</code>).</td>
+</tr>
+<tr>
+<td><code>get_profile</code></td>
+<td><code>(name: str)</code></td>
+<td><code>HarnessProfile</code></td>
+<td>Resolve via dict <code>_PROFILES</code>; nome fora do conjunto → <code>ValueError</code>.</td>
+</tr>
+</tbody>
+</table>
+
+<p>Placeholders substituídos no <code>template.md</code>:</p>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Placeholder</th>
+<th>Origem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{{ACTIVE_HARNESS}}</code></td>
+<td><code>active_harness</code> recebido</td>
+</tr>
+<tr>
+<td><code>{{APPLY_HOOKS}}</code></td>
+<td><code>profile.apply_instructions()</code></td>
+</tr>
+<tr>
+<td><code>{{HOOKS_BLOCK}}</code></td>
+<td><code>profile.hooks_block()</code></td>
+</tr>
+<tr>
+<td><code>{{COMMANDS}}</code></td>
+<td>introspecção do <code>argparse</code> → <code>- \</code>&lt;name&gt;\<code> — &lt;help&gt;</code> por subcomando</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Fluxo Principal</h2>
+
+<p>1. <code>render</code> chama <code>get_profile(active_harness)</code> <strong>primeiro</strong> — se inválido, <code>ValueError</code> aqui, antes de qualquer leitura de arquivo (RN-N10). <span class="badge badge-low">Confirmado</span> (<code>service.py</code>)</p>
+<p>2. Lê <code>template.md</code> (do diretório da própria unit) via <code>FileSystemPort</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>3. Extrai a lista de comandos por introspecção do <code>parser</code> (varre <code>_actions</code>, acha o <code>_SubParsersAction</code>, lê <code>help</code>/<code>description</code> de cada subparser) — mesmo padrão de <code>DocumentationService.extract_commands</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>4. Substitui os 4 placeholders e retorna o Markdown final. <span class="badge badge-low">Confirmado</span></p>
+<p>5. O driver <code>main.py</code> (subcomando <code>install-prompt</code>) resolve <code>active_harness</code> via <code>load_config(fs).harness.active_harness</code>, instancia o serviço com <code>FileSystemPort</code> e imprime o resultado em stdout. <span class="badge badge-low">Confirmado</span></p>
+
+<h2>Fluxos Alternativos</h2>
+<ul><li><strong>Harness inválido:</strong> <code>get_profile</code> levanta <code>ValueError</code> com o nome recebido; o <code>render</code> nem chega a ler o template. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Template ausente:</strong> <code>FileSystemPort.read_file</code> propaga o erro de I/O (não há <code>try/except</code> silencioso aqui). <span class="badge badge-medium">Inferido</span> INFERIDO (comportamento padrão da porta).</li></ul>
+
+<h2>Dependências</h2>
+<ul><li><code>FileSystemPort</code> — leitura de <code>template.md</code>. Injetada no construtor.</li>
+<li><code>argparse.ArgumentParser</code> — recebido em <code>render</code>, fonte da lista de comandos (introspecção).</li>
+<li><code>harness_profiles.get_profile</code> — resolução da estratégia por harness.</li>
+<li><code>core/domain/config.load_config</code> — usado pelo <strong>driver</strong> (<code>main.py</code>) para descobrir <code>active_harness</code>, não pelo serviço.</li></ul>
+
+<h2>Decisões de Design Identificadas</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Decisão</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Strategy/OOP para o bloco de ganchos por harness (uma classe por perfil)</td>
+<td><code>harness_profiles.py</code> (<code>ABC</code> + 3 concretas + <code>_PROFILES</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Resolução do perfil antes de I/O (fail-fast)</td>
+<td><code>service.py</code> (ordem de <code>get_profile</code> × <code>read_file</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Reuso do padrão de introspecção do argparse do <code>DocumentationService</code></td>
+<td><code>service.py</code> × <code>documentation/service.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Exposição apenas pela CLI (não há tool MCP de instalação)</td>
+<td><code>main.py</code> (subcomando), ausência em <code>mcp/server.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Estado Interno</h2>
+
+<p>A unit é <strong>sem estado persistente</strong>: produz texto a cada chamada. O único "estado" é o registro estático de perfis <code>_PROFILES</code> em <code>harness_profiles.py</code>.</p>
+
+<h2>Observabilidade</h2>
+
+<p>Sem logging dedicado. O fail-fast (<code>ValueError</code>) é a sinalização barulhenta de erro de configuração; a saída é o próprio prompt em stdout.</p>
+
+<h2>Riscos e Lacunas</h2>
+<ul><li><span class="badge badge-medium">Inferido</span> <code>AntigravityProfile</code> emite um bloco-aviso ("mecanismo ainda não confirmado") — o ganchamento real do Antigravity não está validado no código.</li>
+<li><span class="badge badge-medium">Inferido</span> O <code>template.md</code> traz uma "pendência conhecida" textual sobre o <code>SessionStart</code> (referente à feature 004) — texto histórico do template, não comportamento de código.</li></ul>
+
+      </div>
+    </div>
+        
+    
+    <!-- Tab Tasks -->
+    <div class="tab-content-panel" id="tab-tasks">
+      <div class="dashboard-card">
+        <h1>Install (Prompt de Instalação Colável) — Tarefas de Implementação</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração; feature 003)</p>
+<p>&gt; Sequência executável para reimplementar a unit a partir do legado, com rastreabilidade ao código original.</p>
+
+<h2>Pré-requisitos</h2>
+<ul><li>[ ] <code>FileSystemPort</code> disponível (porta <code>core/ports/fs.py</code>).</li>
+<li>[ ] <code>argparse.ArgumentParser</code> da CLI montado e passável ao serviço.</li>
+<li>[ ] <code>template.md</code> presente no diretório da unit.</li></ul>
+
+<h2>Tarefas</h2>
+<ul><li>[ ] T-01, Definir a hierarquia de perfis (<code>HarnessProfile</code> ABC + 3 concretas)</li>
+<li>Origem no legado: <code>core/install/harness_profiles.py</code></li>
+<li>Critério de pronto: <code>ClaudeProfile</code>/<code>GeminiProfile</code>/<code>AntigravityProfile</code> implementam <code>hooks_block()</code> e <code>apply_instructions()</code>; <code>ClaudeProfile</code> retorna o JSON real de hooks (SessionStart/PostToolUse/Stop com <code>${CLAUDE_PROJECT_DIR}</code> e timeouts).</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-02, Implementar <code>get_profile(name)</code> com fail-fast</li>
+<li>Origem no legado: <code>core/install/harness_profiles.py</code></li>
+<li>Critério de pronto: resolve via dict <code>_PROFILES</code>; nome fora do conjunto levanta <code>ValueError</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-03, Implementar <code>InstallPromptService.render</code></li>
+<li>Origem no legado: <code>core/install/service.py</code></li>
+<li>Critério de pronto: chama <code>get_profile</code> <strong>antes</strong> de ler o template; substitui os 4 placeholders; retorna Markdown sem <code>{{...}}</code> residual.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-04, Reusar introspecção do argparse para <code>{{COMMANDS}}</code></li>
+<li>Origem no legado: <code>core/install/service.py</code> (espelha <code>documentation/service.py:extract_commands</code>)</li>
+<li>Critério de pronto: cada subcomando vira <code>- \</code>&lt;name&gt;\<code> — &lt;help&gt;</code>, refletindo a CLI real.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-05, Expor o subcomando <code>install-prompt</code> na CLI</li>
+<li>Origem no legado: <code>src/main.py</code></li>
+<li>Critério de pronto: <code>./harness install-prompt</code> resolve <code>active_harness</code> por <code>load_config</code> e imprime o prompt em stdout.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-06, Escrever o <code>template.md</code></li>
+<li>Origem no legado: <code>core/install/template.md</code></li>
+<li>Critério de pronto: 5 passos (venv, wrapper, ganchos, índice de decisões, verificação de saúde) com os 4 placeholders.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Tarefas de Teste</h2>
+<ul><li>[ ] TT-01, Happy path: render para <code>claude</code> produz o JSON de hooks e a lista de comandos, sem placeholder residual.</li>
+<li>[ ] TT-02, Caso de erro: harness inválido levanta <code>ValueError</code> antes de ler o template (fail-fast).</li>
+<li>[ ] TT-03, Render para <code>gemini</code> e <code>antigravity</code> produzem blocos de ganchos distintos do Claude.</li>
+<li>Cobertura existente: <code>tests/test_install.py</code>.</li></ul>
+
+<h2>Ordem Sugerida</h2>
+
+<p>1. T-01 e T-02 (perfis + resolução) antes de T-03 (o render depende deles).</p>
+<p>2. T-04 pode ser paralela a T-01/T-02.</p>
+<p>3. T-05 e T-06 fecham a integração CLI + template.</p>
+
+<h2>Lacunas Pendentes (<span class="badge badge-high">Lacuna</span>)</h2>
+<ul><li>Nenhuma <span class="badge badge-high">Lacuna</span>. Ressalva <span class="badge badge-medium">Inferido</span>: o <code>AntigravityProfile</code> descreve mecanismo de ganchos ainda não confirmado.</li></ul>
+
+      </div>
+    </div>
+        
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
+      document.querySelectorAll(".tab-content-panel").forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      // Ativar botão correspondente
+      event.target.classList.add("active");
+      // Ativar painel correspondente
+      document.getElementById("tab-" + tabId).classList.add("active");
+    }
+  </script>
+</body>
+</html>

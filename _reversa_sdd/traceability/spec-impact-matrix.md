@@ -1,7 +1,7 @@
 # Matriz de Impacto de Especificações (Spec Impact Matrix) — harness-core
 
-> Regenerado pelo Architect em 2026-06-24 (Re-extração após as features 003, 004 e 005)
-> Atualização cirúrgica em 2026-06-24 após a feature 006 (commit `e894c59`): `SessionSection`/`[session]`, caminho de sessão por configuração, via única de config (T5 fechado) e contrato de footprint; reflete também a resolução de T1/T3 no commit `cf73980`.
+> Regenerado pelo Architect em 2026-06-24 (Re-extração após a feature 008-reprodutibilidade-e-config)
+> Atualização em 2026-06-24 pós-features 007 e 008: bootstrap evolucionário `init`/`upgrade` (f007), e reprodutibilidade com lock file `uv` e consumo dinâmico/glob de exclusões de formatação (f008, resolvendo T4 e T6).
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO
 
 Correlaciona os componentes lógicos e adaptadores do `harness-core` com as regras de domínio (RN), as features do ciclo forward, os ADRs/microdecisões e os bugs latentes que tocam cada componente. Severidade = impacto de uma mudança nesse componente sobre o sistema.
@@ -13,8 +13,9 @@ Correlaciona os componentes lógicos e adaptadores do `harness-core` com as regr
 | Componente                          | Arquivo                            | Regras de Domínio                     | Feature(s)   | ADR / MD                      | Bugs                              | Severidade |
 | :---------------------------------- | :--------------------------------- | :------------------------------------ | :----------- | :---------------------------- | :-------------------------------- | :--------- |
 | **BootstrapService**                | `core/bootstrap/service.py`        | RN-N15                                | 001          | 0009                          | —                                 | MEDIUM     |
-| **FormattingService**               | `core/formatting/service.py`       | RN-03, RN-04, RN-05, RN-06, RN-N7     | 002          | 0002                          | T3, T4                            | **HIGH**   |
-| **SyncService**                     | `core/sync/service.py`             | RN-01, RN-02                          | — (só MCP)   | 0003                          | —                                 | **HIGH**   |
+| **InitService** ✨                  | `core/bootstrap/init_service.py`   | RN-N19, RN-N20                        | **007**      | 0014                          | —                                 | **HIGH**   |
+| **FormattingService**               | `core/formatting/service.py`       | RN-03, RN-04, RN-05, RN-06, RN-N7, RN-N22, RN-N23, RN-N24 | 002, **008**  | 0002, 0015                    | T3 resolvido, T4 resolvido (f008) | **HIGH**   |
+| **SyncService**                     | `core/sync/service.py`             | RN-01, RN-02, RN-N21                  | 007 (mcp/cli)| 0003, 0014                    | —                                 | **HIGH**   |
 | **DecisionService**                 | `core/decisions/service.py`        | RN-N11, RN-N12, RN-N13, RN-N14        | **005**      | 0001, 0012 / MD-0004, MD-0005 | T1 (resolvido `cf73980`)          | **HIGH**   |
 | **CommandService**                  | `core/commands/service.py`         | RN-07, RN-N1, RN-N3, RN-N4, RN-N5     | **004**, 006 | 0004, 0010 / MD-0002, MD-0005 | T2 (resolvido via config, f006)   | **HIGH**   |
 | **DocumentationService**            | `core/documentation/service.py`    | RN-08, RN-09, RN-10                   | 002          | 0008                          | —                                 | MEDIUM     |
@@ -22,14 +23,14 @@ Correlaciona os componentes lógicos e adaptadores do `harness-core` com as regr
 | **HarnessProfile (Strategy)** ✨    | `core/install/harness_profiles.py` | RN-N10                                | **003**      | 0011 / MD-0003                | —                                 | MEDIUM     |
 | **session/serializer** ✨           | `core/session/serializer.py`       | RN-N1, RN-N2, RN-N4                   | **004**      | 0010 / MD-0002                | —                                 | **HIGH**   |
 | **session/sinks** ✨                | `core/session/sinks.py`            | RN-N5, RN-N6, RN-N8                   | **004**      | 0011 / MD-0003                | —                                 | **HIGH**   |
-| **domain/config (`load_config`)**   | `core/domain/config.py`            | RN-N11                                | **005**, 006 | 0012, 0013 / MD-0004, MD-0005 | T1 resolvido; T5 fechado (f006)   | **HIGH**   |
+| **domain/config (`load_config`)**   | `core/domain/config.py`            | RN-N11, RN-N18                        | **005**, 006, 007, 008 | 0012, 0013, 0014, 0015 | T1 resolvido; T5 fechado (f006); T6 resolvido (f008) | **HIGH**   |
 | **SessionSection (`[session]`)** ✨ | `core/domain/config.py`            | RN-N1 (caminho de sessão por config)  | **006**      | 0013 / MD-0005                | — (fecha T2)                      | **HIGH**   |
 | **domain/models**                   | `core/domain/models.py`            | RN-N13, RN-N14, RN-N1..N4             | 004, 005     | 0001, 0010                    | —                                 | **HIGH**   |
 | **LocalFileSystemAdapter**          | `adapters/fs/local.py`             | (atomicidade transversal)             | —            | 0006                          | —                                 | **HIGH**   |
 | **SubprocessGitAdapter**            | `adapters/git/subprocess.py`       | RN-01, RN-02, RN-07                   | —            | 0006                          | —                                 | MEDIUM     |
-| **HostFormatterAdapter**            | `adapters/process/formatter.py`    | RN-03, RN-05                          | 002          | 0006                          | —                                 | MEDIUM     |
-| **CLI driver (`main.py`)**          | `src/main.py`                      | RN-08, RN-N9, RN-N11; orquestra sinks | 001..006     | 0007, 0013                    | T3 e T5 fechados (cf73980/f006)   | **HIGH**   |
-| **MCP driver (`server.py`)**        | `adapters/mcp/server.py`           | RN-01, RN-N11; expõe 4 tools          | 006          | 0006, 0013                    | T1 e T2 resolvidos (cf73980/f006) | **HIGH**   |
+| **HostFormatterAdapter**            | `adapters/process/formatter.py`    | RN-03, RN-05                          | 002, 008     | 0006, 0015                    | —                                 | MEDIUM     |
+| **CLI driver (`main.py`)**          | `src/main.py`                      | RN-08, RN-N9, RN-N11, RN-N21; orquestra sinks | 001..008     | 0007, 0013, 0014, 0015        | T3, T5 e T6 fechados              | **HIGH**   |
+| **MCP driver (`server.py`)**        | `adapters/mcp/server.py`           | RN-01, RN-N11, RN-N21; expõe 4 tools  | 006, 007, 008| 0006, 0013, 0014, 0015        | T1, T2, T4 resolvidos             | **HIGH**   |
 
 > Componentes ✨ são **novos** nesta re-extração (features 003/004/006). `SyncService` não tem feature forward dedicada — `sync` é exposto **apenas** via MCP (não há subcomando CLI). O MCP driver, antes sem feature própria, passa a ser tocado pela feature 006 (caminho de sessão por configuração).
 
@@ -68,6 +69,21 @@ Correlaciona os componentes lógicos e adaptadores do `harness-core` com as regr
 - **Rastreabilidade:** ADR 0013 / MD-0005 (refina MD-0004; reverte a premissa de "config canônica global", afirma o módulo per-projeto autocontido com footprint global zero; NÃO substitui `~/.claude`). A aposentadoria do sync cross-harness (MD-0004) permanece válida.
 - **Bugs:** fecha T2 (config) e T5 (via única); herda a resolução de T1/T3 do commit `cf73980`. **Sem bug latente.** Confiança 🟡 só quanto à cobertura do contrato de footprint (cobre os serviços exercitados; é teste, não guard de runtime).
 
+### Feature 007 — Bootstrap e Evolução do Tooling (init/upgrade) 🟢
+
+- **Componentes:** `InitService` (cópia física idempotente, setup de venv, ganchos Git), CLI `main.py` (comandos `init` e `upgrade`), `domain/config` (campos `upstream_path` e `version` em `HarnessSection`), `SyncService` (comparação passiva local de versão local vs upstream).
+- **Regras:** RN-N18 (configuração de upstream e versão), RN-N19 (inicialização do alvo), RN-N20 (upgrade não destrutivo), RN-N21 (checagem passiva local no boot).
+- **Driver:** CLI (comandos `init`/`upgrade`, checagem passiva) **e** MCP (checagem passiva no boot).
+- **Rastreabilidade:** ADR 0014. **Sem bug latente.**
+
+### Feature 008 — Reprodutibilidade e Configurações Dinâmicas de Formatação 🟢
+
+- **Componentes:** `FormattingService` (leitura ativa de `formatting.exclude_paths` e `formatting.opt_out_file` do `HarnessConfig`), venv do core com `requirements.txt` compilado deterministicamente via `uv pip compile` de `requirements.in`, CI/CD workflow em `.github/workflows/ci.yml`.
+- **Regras:** RN-N22 (exclusão dinâmica de formatação), RN-N23 (glob patterns via `fnmatch`), RN-N24 (opt-out dinâmico), RN-N25 (lock file e pinning).
+- **Driver:** CLI **e** MCP (ambos executam a formatação pelo `FormattingService` parametrizado).
+- **Rastreabilidade:** ADR 0015.
+- **Bugs:** RESOLVIDO T4 (configurações de formatting inativas) e T6 (ausência de lock file).
+
 ---
 
 ## 🛠️ 3. Detalhamento de Impacto Crítico
@@ -75,7 +91,7 @@ Correlaciona os componentes lógicos e adaptadores do `harness-core` com as regr
 1. **`session/serializer` + `session/sinks` (HIGH):** o coração da feature 004. Quebra no serializer corrompe a memória de retomada entre boots; quebra no sink impede a reinjeção de contexto. A invariante de round-trip (RN-N2) é a salvaguarda — qualquer mudança exige `test_session.py` e `test_session_sinks.py` verdes.
 2. **`DecisionService` + `domain/config` (HIGH):** sustentam o grafo de decisões e o desacoplamento de caminhos (feature 005). Mudança aqui afeta a integridade do índice derivado e o watch item W001. **T1 foi resolvido** no commit `cf73980` (import de `load_config` no MCP); o caminho configurável é hoje exercido tanto pela CLI quanto pelo MCP.
 3. **`CommandService` (HIGH):** corrupção do `.harness/estado-da-sessao.md` invalida a retomada do ciclo forward; a âncora Git (RN-07) é o detector de divergência. **T2 foi resolvido** na feature 006 — CLI e MCP convergem para `config.session.state_file`, sem estado paralelo.
-4. **`FormattingService` (HIGH):** uma exceção não-blindada travaria a gravação de arquivos do agente (viola RN-03). **T3 foi resolvido** no commit `cf73980` (import de `json` em `main.py`): o autoformat por hook `PostToolUse` (caminho real do Claude) volta a operar. Permanece **T4** — `[formatting]` declarado mas não consumido (config inerte).
+4. **`FormattingService` (HIGH):** uma exceção não-blindada travaria a gravação de arquivos do agente (viola RN-03). **T3 foi resolvido** no commit `cf73980` (import de `json` em `main.py`). **T4 foi resolvido** na feature 008 — o serviço consome ativamente as opções do `harness.toml` e suporta exclusão dinâmica por padrões glob via `fnmatch`.
 5. **MCP driver `server.py` (HIGH):** antes concentrava T1 e T2, **ambos hoje resolvidos** (`cf73980` e feature 006). As duas tools de decisões e de sessão derivam os caminhos de `load_config`; CLI e MCP são caminhos equivalentes.
 
-> Situação dos bugs nesta atualização: **T1 e T3 resolvidos** (commit `cf73980`); **T2 e T5 fechados** (feature 006). Permanece **T4** (config de formatação inerte), documentado como contexto. T6 segue documentado conforme a extração anterior.
+> Situação dos bugs nesta atualização: **Todos os achados históricos (T1 ao T6) estão totalmente resolvidos** no HEAD (T1/T3 no fix de drivers; T2/T5 na feature 006; T4/T6 na feature 008). Nenhuma dívida técnica está em aberto atualmente.

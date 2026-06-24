@@ -1,9 +1,9 @@
 # Format-on-Edit (Formatting) — Contratos e Payloads (Contracts)
 
-> Regenerado pelo Writer em 2026-06-24 (Re-extração)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração pós-feature 008-reprodutibilidade-e-config)
 > Interface de dados consumida/produzida pela unit no estado ATUAL (core Python). Escala: 🟢 / 🟡 / 🔴
 
-> ⚠️ **Reescrita vs versão anterior:** no estado atual a formatação roda pela CLI Python (`./harness format`). O hook `PostToolUse` do Claude entrega o caminho do arquivo via stdin (JSON). **T3 (resolvido):** o parsing do stdin em `main.py` usa `json.loads`; o `import json` ausente que levantava `NameError` foi corrigido no commit `cf73980` (`main.py:5`). Ambos os caminhos — via stdin e por argumento posicional (`./harness format <arquivo>`) — funcionam.
+> ⚠️ **Reescrita vs versão anterior:** no estado atual a formatação roda pela CLI Python (`./harness format`). O hook `PostToolUse` do Claude entrega o caminho do arquivo via stdin (JSON). **T3 (resolvido):** o parsing do stdin em `main.py` usa `json.loads` com `import json` presente (corrigido no commit `cf73980`). Ambos os caminhos — via stdin e por argumento posicional (`./harness format <arquivo>`) — funcionam sem falha.
 
 ---
 
@@ -17,7 +17,7 @@
 
 O serviço `FormattingService.format_file(file_path)` recebe o caminho e formata.
 
-### 1.2 Por stdin (hook `PostToolUse`) 🟡
+### 1.2 Por stdin (hook `PostToolUse`) 🟢
 
 Payload JSON entregue pelo Claude Code no evento `PostToolUse` (matchers `Write|Edit`):
 
@@ -29,7 +29,7 @@ Payload JSON entregue pelo Claude Code no evento `PostToolUse` (matchers `Write|
 }
 ```
 
-`main.py` tentaria extrair `tool_input.file_path` via `json.loads`. 🟡 **T3:** falha por `import json` ausente; o `except` retorna `None` e a formatação não ocorre.
+O `main.py` extrai o `tool_input.file_path` via `json.loads`. A anterior falha T3 foi corrigida no commit `cf73980` ao adicionar o `import json`. O autoformat opera corretamente.
 
 ---
 

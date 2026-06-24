@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sync Check | harness</title>
+  <meta name="reversa-category" content="feature-spec">
+  <meta name="reversa-producer-agent" content="reversa-docs-storyteller">
+  <meta name="reversa-template" content="feature">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <style>
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-color: var(--border-color);
+      background-color: var(--panel-bg);
+    }
+    .tab-content-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-page-id="feature-sync-check">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="../index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="../arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="../modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="../topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="../metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item active aria-current="page"" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Feature: Sync Check</h1>
+        <p>Especificação funcional, design e tarefas de evolução desta capacidade.</p>
+      </div>
+      <div class="meta-info">
+        Módulo: <code>harness-core</code><br>
+        Slug: <code>sync-check</code>
+      </div>
+    </header>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('requirements')">📋 Requisitos</button>
+      <button class="tab-btn" onclick="switchTab('design')">📐 Design Técnico</button>
+      <button class="tab-btn" onclick="switchTab('tasks')">🛠️ Roadmap &amp; Tarefas</button>
+    </div>
+
+    <!-- Tab Requisitos -->
+    <div class="tab-content-panel active" id="tab-requirements">
+      <div class="dashboard-card">
+        <h1>Sync-Check (Sync) — Requisitos (Requirements)</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração)</p>
+<p>&gt; Nível de Documentação: <strong>Completo</strong> · Escala: <span class="badge badge-low">Confirmado</span> CONFIRMADO · <span class="badge badge-medium">Inferido</span> INFERIDO · <span class="badge badge-high">Lacuna</span> LACUNA</p>
+<p>&gt; Rastreabilidade ao Legado: <a href="file:///Users/iagoleal/dev/harness/harness-core/src/core/sync/service.py"><code>harness-core/src/core/sync/service.py</code></a>; cache <code>core/domain/cache.py</code>. Exposto <strong>apenas via MCP</strong> (<code>adapters/mcp/server.py</code>, tool <code>check_repository_sync</code>).</p>
+
+<p>&gt; ⚠️ <strong>Reescrita vs versão anterior:</strong> a implementação <strong>deixou de ser</strong> o script <code>harness-config/bin/sync-check.sh</code> (purgado, commit <code>5624f78</code>) e passou a ser o <code>SyncService</code> Python em <code>harness-core</code>. <strong>Não há subcomando <code>sync</code> na CLI</strong> — a capacidade só é acessível pelo servidor MCP. O cache saiu de <code>~/.claude/.sync-check/</code> para <code>.harness/sync_cache.json</code> (chumbado no MCP). Não há mais verificação de trabalho local (ahead/dirty), apenas a comparação HEAD local × remoto.</p>
+
+<h2>Visão Geral</h2>
+
+<p>Decide se o repositório local está em sincronia com o remoto, de modo <strong>resiliente a falhas</strong>: qualquer erro de rede/git resulta em <code>True</code> (não trava o boot). Usa cache local com TTL para evitar <code>ls-remote</code> redundante.</p>
+
+<h2>Responsabilidades</h2>
+<ul><li>Comparar o HEAD local com o commit remoto de <code>origin main</code>. <span class="badge badge-low">Confirmado</span></li>
+<li>Guardar o resultado em cache JSON por <code>cache_ttl_hours</code> (default 24). <span class="badge badge-low">Confirmado</span></li>
+<li>Degradar para <code>True</code> em qualquer falha de rede/git (não bloqueia). <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Regras de Negócio</h2>
+<ul><li><strong>RN-01 — Janela TTL de sincronia:</strong> dentro do TTL, retorna <code>True</code> sem chamar a rede; mesmo divergindo o <code>commit_hash</code> cacheado do HEAD, retorna <code>True</code> dentro do TTL (política de evitar excesso de rede). <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-02 — Resiliência offline:</strong> qualquer erro de rede/git → <code>True</code> (imprime aviso e prossegue), nunca travando a inicialização. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Requisitos Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>ID</th>
+<th>Requisito</th>
+<th>Prioridade</th>
+<th>Critério de Aceite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF-01</td>
+<td>Verificar sincronia local × remoto.</td>
+<td>Must</td>
+<td><code>check_sync(repo_path)</code> retorna <code>True</code> se <code>local_commit == remote_commit</code>, senão <code>False</code>.</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Cache com TTL.</td>
+<td>Must</td>
+<td>Dentro do TTL, retorna sem chamar a rede; fora, consulta <code>git ls-remote origin main</code> e atualiza o cache.</td>
+</tr>
+<tr>
+<td>RF-03</td>
+<td>Resiliência a falhas.</td>
+<td>Must</td>
+<td>Erro de parse de cache → checagem de rede; erro de rede/git → <code>True</code>.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Requisitos Não Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Requisito inferido</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Performance</td>
+<td>Evita <code>ls-remote</code> redundante dentro do TTL (default 24h).</td>
+<td><code>core/sync/service.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Resiliência</td>
+<td>Tolerante a offline: assume <code>True</code> em falha.</td>
+<td><code>core/sync/service.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Atomicidade</td>
+<td>Cache atualizado via <code>write_file_atomic</code>.</td>
+<td><code>core/sync/service.py</code> + <code>adapters/fs/local.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Critérios de Aceitação</h2>
+
+<pre><code>Dado que o cache local foi atualizado há menos de 24h
+Quando check_sync é chamado
+Então retorna True sem executar git ls-remote.
+
+Dado que o host está offline e o cache expirou
+Quando check_sync tenta consultar o remoto
+Então degrada para True (imprime aviso) sem levantar exceção.
+
+Dado HEAD local diferente do commit remoto e cache expirado
+Quando check_sync consulta a rede
+Então retorna False.</code></pre>
+
+<h2>Prioridade (MoSCoW)</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Requisito</th>
+<th>MoSCoW</th>
+<th>Justificativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Comparação local × remoto (RF-01)</td>
+<td>Must</td>
+<td>Razão de existir da unit.</td>
+</tr>
+<tr>
+<td>Cache TTL (RN-01)</td>
+<td>Must</td>
+<td>Evita gargalo de rede no boot do agente.</td>
+</tr>
+<tr>
+<td>Resiliência offline (RN-02)</td>
+<td>Must</td>
+<td>Salvaguarda: nunca trava a inicialização.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Rastreabilidade de Código</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Arquivo</th>
+<th>Função / Classe</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core/sync/service.py</code></td>
+<td><code>SyncService.check_sync</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/domain/cache.py</code></td>
+<td><code>SyncCache</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>adapters/git/subprocess.py</code></td>
+<td><code>get_head_commit</code>, <code>get_remote_commit</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>adapters/mcp/server.py</code></td>
+<td>Tool <code>check_repository_sync</code> (cache <code>.harness/sync_cache.json</code>, TTL 24, chumbados)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<p>&gt; <span class="badge badge-medium">Inferido</span> <strong>Nota:</strong> não há subcomando <code>sync</code> na CLI; a capacidade é exposta <strong>apenas</strong> via MCP.</p>
+
+      </div>
+    </div>
+
+    
+    <!-- Tab Design -->
+    <div class="tab-content-panel" id="tab-design">
+      <div class="dashboard-card">
+        <h1>Sync-Check (Sync) — Design Técnico</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração)</p>
+<p>&gt; Foca no COMO a unit é construída, a partir do código legado lido. Escala: <span class="badge badge-low">Confirmado</span> / <span class="badge badge-medium">Inferido</span> / <span class="badge badge-high">Lacuna</span></p>
+
+<h2>Interface</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Símbolo</th>
+<th>Assinatura</th>
+<th>Retorno</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SyncService.check_sync</code></td>
+<td><code>(repo_path: str)</code></td>
+<td><code>bool</code></td>
+<td><code>True</code> = em sincronia (ou degradação por falha/TTL); <code>False</code> = divergente.</td>
+</tr>
+<tr>
+<td><code>SyncCache</code></td>
+<td><code>(last_checked_time: datetime, commit_hash: constr(SHA1))</code></td>
+<td>—</td>
+<td>Modelo Pydantic do cache JSON.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Fluxo Principal</h2>
+
+<p>1. <strong>Cache (RN-01):</strong> se <code>cache_filepath</code> existe, lê JSON, parseia <code>last_checked_time</code> (ISO, naive→UTC). Dentro do TTL (<code>cache_ttl_hours</code>, default 24): retorna <code>True</code> — se o <code>commit_hash</code> do cache bate com o HEAD, por consistência, mas <strong>mesmo divergindo retorna <code>True</code></strong> dentro do TTL. Falha no parse → cai para checagem de rede. <span class="badge badge-low">Confirmado</span></p>
+<p>2. <strong>Rede:</strong> <code>git rev-parse HEAD</code> (local) e <code>git ls-remote origin main</code> (remoto), via <code>GitPort</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>3. <strong>Atualiza cache</strong> atomicamente via <code>SyncCache(...).model_dump_json()</code> + <code>write_file_atomic</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>4. Retorna <code>local_commit == remote_commit</code>. <span class="badge badge-low">Confirmado</span></p>
+
+<h2>Fluxos Alternativos</h2>
+<ul><li><strong>Cache válido (dentro do TTL):</strong> retorna <code>True</code> sem rede. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Parse de cache falho:</strong> ignora cache, vai à rede. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Erro de rede/git (RN-02):</strong> captura, imprime aviso e retorna <code>True</code>. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Dependências</h2>
+<ul><li><code>GitPort</code> / <code>SubprocessGitAdapter</code> — HEAD local e commit remoto.</li>
+<li><code>FileSystemPort</code> — leitura/gravação atômica do cache.</li>
+<li><code>core/domain/cache.SyncCache</code> — estrutura validada do cache.</li></ul>
+
+<h2>Decisões de Design Identificadas</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Decisão</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Degradar para <code>True</code> em falha (não-bloqueio)</td>
+<td><code>service.py</code> (<code>try/except</code> → <code>True</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Dentro do TTL retorna <code>True</code> mesmo divergindo (evita rede)</td>
+<td><code>service.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Cache validado por Pydantic (regex SHA1) e gravado atomicamente</td>
+<td><code>cache.py</code> + <code>write_file_atomic</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Exposição exclusiva via MCP (sem subcomando CLI)</td>
+<td>ausência em <code>main.py</code>, presença em <code>server.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Estado Interno</h2>
+
+<p>O estado persistente é o arquivo de cache JSON (<code>.harness/sync_cache.json</code> no MCP), com <code>last_checked_time</code> e <code>commit_hash</code>. Sem estado em memória entre chamadas.</p>
+
+<h2>Observabilidade</h2>
+<ul><li>Avisos impressos em falha de rede/git (degradação para <code>True</code>).</li>
+<li>Sem logging estruturado dedicado.</li></ul>
+
+<h2>Riscos e Lacunas</h2>
+<ul><li><span class="badge badge-medium">Inferido</span> O caminho do cache e o TTL são <strong>chumbados na tool MCP</strong> (<code>.harness/sync_cache.json</code>, 24), embora <code>[sync]</code> exista no domínio — config declarada parcialmente sem efeito na borda.</li>
+<li><span class="badge badge-medium">Inferido</span> Sem verificação de trabalho local (ahead/dirty) — comportamento presente no legado, ausente no core atual.</li></ul>
+
+      </div>
+    </div>
+        
+    
+    <!-- Tab Tasks -->
+    <div class="tab-content-panel" id="tab-tasks">
+      <div class="dashboard-card">
+        <h1>Sync-Check (Sync) — Tarefas de Implementação</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração)</p>
+<p>&gt; Sequência executável para reimplementar a unit a partir do legado, com rastreabilidade ao código original.</p>
+
+<p>&gt; ⚠️ Reescrita: a unit agora é o <code>SyncService</code> Python (<code>harness-core</code>), exposto <strong>apenas via MCP</strong> (<code>check_repository_sync</code>), não o script shell legado <code>bin/sync-check.sh</code> (purgado). Sem checagem de trabalho local (ahead/dirty).</p>
+
+<h2>Pré-requisitos</h2>
+<ul><li>[ ] <code>GitPort</code> / <code>SubprocessGitAdapter</code> disponíveis.</li>
+<li>[ ] <code>FileSystemPort</code> disponível.</li>
+<li>[ ] <code>SyncCache</code> definido em <code>core/domain/cache.py</code>.</li></ul>
+
+<h2>Tarefas</h2>
+<ul><li>[ ] T-01, Implementar leitura/validação do cache com TTL (RN-01)</li>
+<li>Origem no legado: <code>core/sync/service.py</code></li>
+<li>Critério de pronto: dentro do TTL retorna <code>True</code> sem rede; parse de <code>last_checked_time</code> (ISO, naive→UTC); parse falho → vai à rede.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-02, Consultar HEAD local e commit remoto</li>
+<li>Origem no legado: <code>core/sync/service.py</code>, <code>adapters/git/subprocess.py</code></li>
+<li>Critério de pronto: <code>get_head_commit</code> e <code>get_remote_commit(origin main)</code>; compara igualdade.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-03, Atualizar cache atomicamente</li>
+<li>Origem no legado: <code>core/sync/service.py</code></li>
+<li>Critério de pronto: grava <code>SyncCache.model_dump_json()</code> via <code>write_file_atomic</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-04, Resiliência a falhas (RN-02)</li>
+<li>Origem no legado: <code>core/sync/service.py</code></li>
+<li>Critério de pronto: qualquer erro de rede/git → retorna <code>True</code> (imprime aviso), sem exceção propagada.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-05, Expor a tool MCP <code>check_repository_sync</code></li>
+<li>Origem no legado: <code>adapters/mcp/server.py</code></li>
+<li>Critério de pronto: instancia o serviço, usa cache <code>.harness/sync_cache.json</code> e TTL 24.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Tarefas de Teste</h2>
+<ul><li>[ ] TT-01, Cache TTL: cache recente → retorna <code>True</code> sem rede; cache expirado → dispara <code>ls-remote</code>.</li>
+<li>[ ] TT-02, Offline: falha de rede → retorna <code>True</code> sem exceção.</li>
+<li>[ ] TT-03, Divergência: HEAD ≠ remoto com cache expirado → retorna <code>False</code>.</li></ul>
+
+<h2>Ordem Sugerida</h2>
+
+<p>1. T-01 (cache) e T-02 (rede) antes de T-03 (gravação) e T-04 (resiliência).</p>
+<p>2. T-05 fecha a exposição MCP.</p>
+
+<h2>Lacunas Pendentes (<span class="badge badge-high">Lacuna</span>)</h2>
+<ul><li>Nenhuma <span class="badge badge-high">Lacuna</span>. Ressalva <span class="badge badge-medium">Inferido</span>: caminho de cache e TTL chumbados na tool MCP (config <code>[sync]</code> parcialmente inerte na borda).</li></ul>
+
+      </div>
+    </div>
+        
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
+      document.querySelectorAll(".tab-content-panel").forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      // Ativar botão correspondente
+      event.target.classList.add("active");
+      // Ativar painel correspondente
+      document.getElementById("tab-" + tabId).classList.add("active");
+    }
+  </script>
+</body>
+</html>

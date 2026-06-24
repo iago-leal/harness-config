@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Format On Edit | harness</title>
+  <meta name="reversa-category" content="feature-spec">
+  <meta name="reversa-producer-agent" content="reversa-docs-storyteller">
+  <meta name="reversa-template" content="feature">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <style>
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-color: var(--border-color);
+      background-color: var(--panel-bg);
+    }
+    .tab-content-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-page-id="feature-format-on-edit">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="../index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="../arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="../modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="../topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="../metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item active aria-current="page"" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Feature: Format On Edit</h1>
+        <p>Especificação funcional, design e tarefas de evolução desta capacidade.</p>
+      </div>
+      <div class="meta-info">
+        Módulo: <code>harness-core</code><br>
+        Slug: <code>format-on-edit</code>
+      </div>
+    </header>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('requirements')">📋 Requisitos</button>
+      <button class="tab-btn" onclick="switchTab('design')">📐 Design Técnico</button>
+      <button class="tab-btn" onclick="switchTab('tasks')">🛠️ Roadmap &amp; Tarefas</button>
+    </div>
+
+    <!-- Tab Requisitos -->
+    <div class="tab-content-panel active" id="tab-requirements">
+      <div class="dashboard-card">
+        <h1>Format-on-Edit (Formatting) — Requisitos (Requirements)</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração)</p>
+<p>&gt; Nível de Documentação: <strong>Completo</strong> · Escala: <span class="badge badge-low">Confirmado</span> CONFIRMADO · <span class="badge badge-medium">Inferido</span> INFERIDO · <span class="badge badge-high">Lacuna</span> LACUNA</p>
+<p>&gt; Rastreabilidade ao Legado: <a href="file:///Users/iagoleal/dev/harness/harness-core/src/core/formatting/service.py"><code>harness-core/src/core/formatting/service.py</code></a>; adaptador <code>adapters/process/formatter.py</code>. Driver: <code>src/main.py</code> (subcomando <code>format</code>, hook <code>PostToolUse</code>).</p>
+
+<p>&gt; ⚠️ <strong>Reescrita vs versão anterior:</strong> a implementação <strong>deixou de ser</strong> o script <code>harness-config/hooks/format-on-edit.sh</code> (purgado, commit <code>5624f78</code>) e passou a ser o <code>FormattingService</code> Python em <code>harness-core</code>. O serviço atual <strong>não</strong> trata <code>shfmt</code>, nem grava <code>~/.claude/hooks/format-on-edit.log</code>, nem emite <code>systemMessage</code> — diferenças do legado.</p>
+
+<h2>Visão Geral</h2>
+
+<p>Formata um arquivo após edição do agente, por linguagem, sempre de modo <strong>não-bloqueante</strong> (retorna sempre 0). Blinda diretórios pessoais, respeita opt-out por projeto, descobre a raiz por manifesto e prioriza executáveis locais.</p>
+
+<h2>Responsabilidades</h2>
+<ul><li>Selecionar e disparar o formatador adequado por extensão (<code>ruff</code>/<code>prettier</code>/<code>rustfmt</code>). <span class="badge badge-low">Confirmado</span></li>
+<li>Blindar diretórios pessoais (<code>~</code>, <code>~/Notas</code>, <code>~/.claude</code>). <span class="badge badge-low">Confirmado</span></li>
+<li>Respeitar o opt-out <code>.no-autoformat</code> na pasta do arquivo ou em qualquer diretório superior. <span class="badge badge-low">Confirmado</span></li>
+<li>Descobrir a raiz do projeto por manifesto (<code>.git</code>/<code>harness.toml</code>) e priorizar binários locais. <span class="badge badge-low">Confirmado</span></li>
+<li>Nunca abortar a operação de escrita do agente (sempre retorna 0). <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Regras de Negócio</h2>
+<ul><li><strong>RN-03 — Não-bloqueio absoluto:</strong> <code>format_file</code> <strong>sempre</strong> retorna <code>0</code>, com <code>try/except Exception</code> envolvendo todo o corpo. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-04 — Proteção de diretórios críticos:</strong> aborta sem alterar se o caminho absoluto for <code>~</code>, começar por <code>~/Notas</code> ou por <code>~/.claude</code>. Blindagens chumbadas. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-05 — Precedência de executáveis locais:</strong> prioriza <code>&lt;root&gt;/.venv/bin/ruff</code>, <code>venv/bin/ruff</code>, <code>&lt;root&gt;/node_modules/.bin/prettier</code> antes do PATH. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-06 — Opt-out do projeto:</strong> presença de <code>.no-autoformat</code> na pasta do arquivo ou em diretório superior cancela a formatação. Nome chumbado. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N7 — Descoberta da raiz por manifesto:</strong> raiz = primeiro diretório (subindo a árvore) com <code>.git</code> <strong>ou</strong> <code>harness.toml</code>; fallback <code>os.getcwd()</code>. Seleção por extensão: <code>.py</code>→ruff; <code>.js/.ts/.json/.css/.md</code>→prettier; <code>.rs</code>→rustfmt; demais → no-op. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Requisitos Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>ID</th>
+<th>Requisito</th>
+<th>Prioridade</th>
+<th>Critério de Aceite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF-01</td>
+<td>Formatação por extensão.</td>
+<td>Must</td>
+<td><code>.py</code>→ruff, <code>.js/.ts/.json/.css/.md</code>→prettier, <code>.rs</code>→rustfmt; extensão não suportada → no-op.</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Não-bloqueio absoluto.</td>
+<td>Must</td>
+<td><code>format_file</code> retorna <code>0</code> mesmo sob exceção ou falha do formatador.</td>
+</tr>
+<tr>
+<td>RF-03</td>
+<td>Blindagem de diretórios pessoais.</td>
+<td>Must</td>
+<td>Arquivo em <code>~</code>, <code>~/Notas</code> ou <code>~/.claude</code> não é formatado.</td>
+</tr>
+<tr>
+<td>RF-04</td>
+<td>Opt-out por <code>.no-autoformat</code>.</td>
+<td>Must</td>
+<td>Presença do arquivo na pasta ou acima cancela a formatação.</td>
+</tr>
+<tr>
+<td>RF-05</td>
+<td>Precedência de binário local.</td>
+<td>Should</td>
+<td>Se houver binário local do formatador, ele é usado antes do PATH.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Requisitos Não Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Requisito inferido</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Robustez</td>
+<td>Falha do formatador nunca trava a escrita do agente.</td>
+<td><code>core/formatting/service.py</code> (<code>try/except</code> + <code>return 0</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Segurança de dados</td>
+<td>Diretórios pessoais protegidos por blindagem.</td>
+<td><code>core/formatting/service.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Portabilidade</td>
+<td>Resolução de executáveis com fallback ao PATH.</td>
+<td><code>core/formatting/service.py</code>, <code>adapters/process/formatter.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Critérios de Aceitação</h2>
+
+<pre><code>Dado que um arquivo .py foi gravado num projeto com harness.toml
+Quando o hook PostToolUse aciona `./harness format`
+Então o serviço dispara ruff sobre o arquivo (via ProcessPort) e retorna 0.
+
+Dado que um arquivo foi alterado em ~/Notas
+Quando format_file é chamado
+Então o serviço aborta sem formatar e retorna 0.
+
+Dado que existe .no-autoformat na raiz do projeto
+Quando format_file é chamado para um arquivo desse projeto
+Então a formatação é cancelada e o serviço retorna 0.</code></pre>
+
+<h2>Prioridade (MoSCoW)</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Requisito</th>
+<th>MoSCoW</th>
+<th>Justificativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Não-bloqueio absoluto (RN-03)</td>
+<td>Must</td>
+<td>Salvaguarda crítica; impede pane de escrita.</td>
+</tr>
+<tr>
+<td>Blindagem de diretórios (RN-04)</td>
+<td>Must</td>
+<td>Protege dados pessoais.</td>
+</tr>
+<tr>
+<td>Opt-out por projeto (RN-06)</td>
+<td>Must</td>
+<td>Consentimento explícito do projeto.</td>
+</tr>
+<tr>
+<td>Precedência local de binários (RN-05)</td>
+<td>Should</td>
+<td>Mantém o estilo do projeto; degrada ao PATH.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Rastreabilidade de Código</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Arquivo</th>
+<th>Função / Classe</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core/formatting/service.py</code></td>
+<td><code>FormattingService.format_file</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>adapters/process/formatter.py</code></td>
+<td><code>HostFormatterAdapter.execute_formatter</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>src/main.py</code></td>
+<td>Subcomando <code>format</code> (T3 resolvido em <code>cf73980</code>: <code>import json</code> presente)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<p>&gt; <span class="badge badge-medium">Inferido</span> <strong>Conhecida (T4):</strong> <code>[formatting]</code> do <code>harness.toml</code> (<code>exclude_paths</code>, <code>opt_out_file</code>) <strong>não</strong> alimenta o serviço — blindagens e opt-out estão chumbados no código. Mudar o <code>harness.toml</code> não muda o comportamento. Documentado como contexto, não corrigido.</p>
+<p>&gt; <span class="badge badge-low">Confirmado</span> <strong>Resolvida (T3):</strong> <code>main.py</code> importa <code>json</code> (linha 5) desde o commit <code>cf73980</code>; no caminho do hook (<code>PostToolUse</code>, via stdin) o <code>json.loads</code> opera sem <code>NameError</code> e o autoformat por hook volta a ocorrer. Era latente; hoje corrigido.</p>
+
+      </div>
+    </div>
+
+    
+    <!-- Tab Design -->
+    <div class="tab-content-panel" id="tab-design">
+      <div class="dashboard-card">
+        <h1>Format-on-Edit (Formatting) — Design Técnico</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração)</p>
+<p>&gt; Foca no COMO a unit é construída, a partir do código legado lido. Escala: <span class="badge badge-low">Confirmado</span> / <span class="badge badge-medium">Inferido</span> / <span class="badge badge-high">Lacuna</span></p>
+
+<h2>Interface</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Símbolo</th>
+<th>Assinatura</th>
+<th>Retorno</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FormattingService.format_file</code></td>
+<td><code>(file_path: str)</code></td>
+<td><code>int</code></td>
+<td><strong>Sempre <code>0</code></strong>. <code>try/except Exception</code> em todo o corpo.</td>
+</tr>
+<tr>
+<td><code>HostFormatterAdapter.execute_formatter</code></td>
+<td><code>(formatter, file_path, executable?)</code></td>
+<td><code>(exit, stdout, stderr)</code></td>
+<td><code>ruff format</code>, <code>prettier --write</code>, <code>rustfmt &lt;file&gt;</code>. <code>FileNotFoundError</code>→<code>(127,...)</code>.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Fluxo Principal</h2>
+
+<p>1. <strong>Blindagem de diretórios pessoais (RN-04):</strong> se <code>abs_path == ~</code>, ou começa por <code>~/Notas</code> ou <code>~/.claude</code>, retorna 0 sem formatar. <span class="badge badge-low">Confirmado</span></p>
+<p>2. <strong>Descoberta da raiz + opt-out (RN-06/RN-N7):</strong> sobe a árvore a partir do arquivo; em cada nível, se existir <code>.no-autoformat</code>, aborta (retorna 0); marca como raiz o nível que contiver <code>.git</code> <strong>ou</strong> <code>harness.toml</code>. Fallback <code>os.getcwd()</code>. Para quando <code>parent == current</code> (raiz do FS). <span class="badge badge-low">Confirmado</span></p>
+<p>3. <strong>Seleção por extensão:</strong> <code>.py</code>→<code>ruff</code>; <code>.js/.ts/.json/.css/.md</code>→<code>prettier</code>; <code>.rs</code>→<code>rustfmt</code>; não suportada → retorna 0. <span class="badge badge-low">Confirmado</span></p>
+<p>4. <strong>Precedência de executável local (RN-05):</strong> para <code>ruff</code> procura <code>&lt;root&gt;/.venv/bin/ruff</code> e <code>venv/bin/ruff</code>; para <code>prettier</code>, <code>&lt;root&gt;/node_modules/.bin/prettier</code>. Se achar, passa o caminho; senão deixa o adaptador resolver no PATH. <span class="badge badge-low">Confirmado</span></p>
+<p>5. <strong>Execução</strong> via <code>ProcessPort.execute_formatter(...)</code>, <strong>ignorando o código de retorno</strong> (não-bloqueio). <span class="badge badge-low">Confirmado</span></p>
+
+<h2>Fluxos Alternativos</h2>
+<ul><li><strong>Qualquer exceção no corpo:</strong> capturada pelo <code>try/except</code>; retorna 0 (RN-03). <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Formatador ausente no host:</strong> <code>HostFormatterAdapter</code> devolve <code>(127, ...)</code>; o serviço ignora. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Extensão não suportada:</strong> no-op (retorna 0). <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Dependências</h2>
+<ul><li><code>ProcessPort</code> / <code>HostFormatterAdapter</code> — execução do formatador em subprocesso.</li>
+<li><code>FileSystemPort</code> — verificação de existência (<code>.no-autoformat</code>, manifestos, binários locais).</li>
+<li>Formatadores de host: <code>ruff</code>, <code>prettier</code>, <code>rustfmt</code>.</li></ul>
+
+<h2>Decisões de Design Identificadas</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Decisão</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Retorno incondicional <code>0</code> (não-bloqueio)</td>
+<td><code>service.py</code> (<code>try/except</code> + <code>return 0</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Raiz por manifesto (<code>.git</code>/<code>harness.toml</code>), não por marcadores de linguagem</td>
+<td><code>service.py</code> (subida da árvore)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Precedência local &gt; PATH para binários</td>
+<td><code>service.py</code> (caminhos <code>.venv</code>/<code>node_modules</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Blindagens e opt-out chumbados (não lê <code>[formatting]</code>)</td>
+<td><code>service.py</code> (literais) — dívida T4</td>
+<td><span class="badge badge-medium">Inferido</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Estado Interno</h2>
+
+<p>Sem estado em memória. O efeito é o arquivo formatado no disco (via subprocesso). Não há log persistente (diferente do legado, que escrevia <code>format-on-edit.log</code>).</p>
+
+<h2>Observabilidade</h2>
+<ul><li>O serviço <strong>não</strong> emite <code>systemMessage</code> nem grava log (comportamento do legado removido).</li>
+<li>O não-bloqueio é silencioso por design; falhas degradam para no-op.</li></ul>
+
+<h2>Riscos e Lacunas</h2>
+<ul><li><span class="badge badge-low">Confirmado</span> <strong>T3 (resolvido):</strong> o caminho do hook (<code>PostToolUse</code> via stdin) fazia <code>json.loads</code> sem <code>import json</code> → <code>NameError</code> capturado, e o autoformat por hook não ocorria; corrigido no commit <code>cf73980</code> (<code>import json</code> em <code>main.py:5</code>). O autoformat por hook voltou a operar.</li>
+<li><span class="badge badge-medium">Inferido</span> <strong>T4:</strong> <code>[formatting]</code> do <code>harness.toml</code> não alimenta o serviço; blindagens/opt-out chumbados.</li></ul>
+
+      </div>
+    </div>
+        
+    
+    <!-- Tab Tasks -->
+    <div class="tab-content-panel" id="tab-tasks">
+      <div class="dashboard-card">
+        <h1>Format-on-Edit (Formatting) — Tarefas de Implementação</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração)</p>
+<p>&gt; Sequência executável para reimplementar a unit a partir do legado, com rastreabilidade ao código original.</p>
+
+<p>&gt; ⚠️ Reescrita: a unit agora é o <code>FormattingService</code> Python (<code>harness-core</code>), não o script shell legado <code>hooks/format-on-edit.sh</code> (purgado). Sem <code>shfmt</code>, sem log, sem <code>systemMessage</code>.</p>
+
+<h2>Pré-requisitos</h2>
+<ul><li>[ ] <code>ProcessPort</code> / <code>HostFormatterAdapter</code> disponíveis.</li>
+<li>[ ] <code>FileSystemPort</code> disponível.</li>
+<li>[ ] Formatadores de host instalados (<code>ruff</code>/<code>prettier</code>/<code>rustfmt</code>) — opcional (degrada a no-op).</li></ul>
+
+<h2>Tarefas</h2>
+<ul><li>[ ] T-01, Blindagem de diretórios pessoais (RN-04)</li>
+<li>Origem no legado: <code>core/formatting/service.py</code></li>
+<li>Critério de pronto: caminho <code>~</code>, <code>~/Notas</code>, <code>~/.claude</code> aborta com retorno 0.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-02, Descoberta de raiz + opt-out (RN-N7/RN-06)</li>
+<li>Origem no legado: <code>core/formatting/service.py</code></li>
+<li>Critério de pronto: sobe a árvore, aborta em <code>.no-autoformat</code>, marca raiz em <code>.git</code>/<code>harness.toml</code>, fallback <code>os.getcwd()</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-03, Seleção do formatador por extensão (RN-N7)</li>
+<li>Origem no legado: <code>core/formatting/service.py</code></li>
+<li>Critério de pronto: <code>.py</code>→ruff, <code>.js/.ts/.json/.css/.md</code>→prettier, <code>.rs</code>→rustfmt, demais → no-op.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-04, Precedência de executável local (RN-05)</li>
+<li>Origem no legado: <code>core/formatting/service.py</code></li>
+<li>Critério de pronto: prioriza <code>.venv/bin/ruff</code>/<code>venv/bin/ruff</code>/<code>node_modules/.bin/prettier</code>; senão delega ao PATH.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-05, Não-bloqueio absoluto (RN-03)</li>
+<li>Origem no legado: <code>core/formatting/service.py</code></li>
+<li>Critério de pronto: <code>try/except Exception</code> em todo o corpo; <code>format_file</code> sempre retorna 0.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-06, Adaptador de execução de formatador</li>
+<li>Origem no legado: <code>adapters/process/formatter.py</code></li>
+<li>Critério de pronto: mapeia formatador→args; <code>FileNotFoundError</code>→<code>(127,...)</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Tarefas de Teste</h2>
+<ul><li>[ ] TT-01, Happy path: arquivo <code>.py</code> em projeto com <code>harness.toml</code> dispara ruff e retorna 0.</li>
+<li>[ ] TT-02, Blindagem: arquivo em <code>~/Notas</code> não é formatado.</li>
+<li>[ ] TT-03, Resiliência: exceção/formatador ausente → retorna 0 sem bloquear.</li></ul>
+
+<h2>Ordem Sugerida</h2>
+
+<p>1. T-06 (adaptador) e T-01 (blindagem) primeiro.</p>
+<p>2. T-02/T-03/T-04 (descoberta, seleção, precedência) compõem o corpo.</p>
+<p>3. T-05 (não-bloqueio) envolve tudo.</p>
+
+<h2>Lacunas Pendentes (<span class="badge badge-high">Lacuna</span>)</h2>
+<ul><li>Nenhuma <span class="badge badge-high">Lacuna</span>. <strong>T3</strong> (autoformat por hook via stdin quebrava por <code>json</code> sem import) <strong>resolvido</strong> no commit <code>cf73980</code>. Resta a ressalva <span class="badge badge-medium">Inferido</span> <strong>T4</strong> (<code>[formatting]</code> inerte — blindagens/opt-out chumbados), ainda aberta.</li></ul>
+
+      </div>
+    </div>
+        
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
+      document.querySelectorAll(".tab-content-panel").forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      // Ativar botão correspondente
+      event.target.classList.add("active");
+      // Ativar painel correspondente
+      document.getElementById("tab-" + tabId).classList.add("active");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-24T10:29:30-03:00",
+  "projectName": "harness",
+  "interview": {
+    "readerProfile": "novo_dev",
+    "depth": "full",
+    "visualStyle": "sober"
+  },
+  "seed": {
+    "hash": "sha256:49f756463ad9dcfb9b6ade54d7d6f15476e7214f46a65b4b0c55d46845b12f70",
+    "source": "project_name",
+    "explicitOverride": null
+  },
+  "knowledgeSources": {
+    "soul": false,
+    "chronicle": false,
+    "topology": true,
+    "sddSpecs": [
+      "bootstrap",
+      "comandos-customizados",
+      "documentacao-uso-html",
+      "format-on-edit",
+      "install",
+      "microdecisoes",
+      "run-harness-core-local",
+      "session",
+      "sync-check"
+    ],
+    "sourceCode": true
+  },
+  "pagesPlanned": [
+    "index.html",
+    "arquitetura.html",
+    "modulos.html",
+    "topologia.html",
+    "metricas.html",
+    "features/bootstrap.html",
+    "features/comandos-customizados.html",
+    "features/documentacao-uso-html.html",
+    "features/format-on-edit.html",
+    "features/install.html",
+    "features/microdecisoes.html",
+    "features/run-harness-core-local.html",
+    "features/session.html",
+    "features/sync-check.html"
+  ],
+  "pagesOmitted": [
+    {
+      "page": "timeline.html",
+      "reason": "Arquivo .reversa/chronicle.md não foi encontrado."
+    },
+    {
+      "page": "glossario.html",
+      "reason": "Arquivo .reversa/soul.md não foi encontrado."
+    },
+    {
+      "page": "deck.html",
+      "reason": "Arquivo .reversa/soul.md não foi encontrado."
+    }
+  ]
+}

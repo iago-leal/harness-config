@@ -1,11 +1,11 @@
 # Visão Geral Arquitetural (Architecture) — harness
 
-> Regenerado pelo Architect em 2026-06-24 (Re-extração após as features 003, 004 e 005)
+> Regenerado pelo Architect em 2026-06-24 (Re-extração após a feature 008-reprodutibilidade-e-config)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
 
-Síntese arquitetural do núcleo `harness-core`, consolidando estilo estrutural, containers, componentes, modelo de dados, integrações de borda, dívidas técnicas e matriz de rastreabilidade. Reflete o estado ATUAL do repositório após o purge do legado `claude-config/` (commit `5624f78`) e a migração de estado e decisões para `.harness/`.
+Síntese arquitetural do núcleo `harness-core`, consolidando estilo estrutural, containers, componentes, modelo de dados, integrações de borda, dívidas técnicas e matriz de rastreabilidade. Reflete o estado ATUAL do repositório após o purge do legado `claude-config/` (commit `5624f78`), a migração de estado e decisões para `.harness/`, o suporte a bootstrapping evolucionário (feature 007) e a reprodutibilidade e configuração dinâmica de formatação (feature 008).
 
-> ⚠️ **Mudança estrutural vs extração anterior (feature 002):** (1) o módulo `claude-config/` **não existe mais** — foi purgado; (2) o estado de sessão saiu de `ESTADO-DA-SESSAO.md` (raiz) para `.harness/estado-da-sessao.md` (feature 004); (3) as microdecisões saíram de `decisoes/` (raiz) para `.harness/decisoes/`, com caminhos lidos de `[decisions]` no `harness.toml` (feature 005); (4) surgiram dois novos serviços de capacidade — `install` (feature 003) e `session` (feature 004).
+> ⚠️ **Mudança estrutural vs extração anterior (feature 007):** (1) o módulo `claude-config/` foi purgado; (2) o estado de sessão está em `.harness/estado-da-sessao.md`; (3) as microdecisões estão em `.harness/decisoes/` com caminhos configuráveis; (4) os ganchos do ciclo de vida ativam o wrapper `./harness`; (5) os comandos de bootstrap `init` e `upgrade` suportam evolução não-destrutiva e checagem de atualizações; (6) as configurações de formatação do `harness.toml` agora são consumidas dinamicamente pelo `FormattingService` com suporte a glob patterns via `fnmatch` (feature 008); (7) dependências trancadas deterministicamente via `requirements.txt` compilado com `uv` (feature 008).
 
 ---
 
@@ -77,18 +77,18 @@ O núcleo não consome APIs REST/GraphQL nem produz webhooks. Suas únicas conex
 
 ## ⚠️ 5. Dívidas Técnicas e Bugs Latentes
 
-Catalogados pelo Archaeologist/Detective. Os achados T1, T2, T3 e T5 foram **corrigidos** (commits `cf73980` e feature 006, ver coluna Estado); ficam aqui como memória histórica, não como dívida aberta:
+Catalogados pelo Archaeologist/Detective. Todos os achados históricos (T1 ao T6) foram **totalmente resolvidos** no HEAD (ver coluna Estado) e encontram-se atualmente zerados no projeto:
 
 | ID     | Local                    | Sintoma                                                                                                                   | Sev.  | Conf. | Estado                                                                                                                                                                                               |
 | ------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ----- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **T1** | `adapters/mcp/server.py` | `load_config` era usado sem import → `NameError`; a tool MCP `process_decisions` nunca processava decisões.               | Alta  | 🟢    | **RESOLVIDO** em `cf73980`: `server.py` agora importa `from src.core.domain.config import load_config` (linha 12); a tool não levanta mais `NameError`.                                              |
 | **T2** | `adapters/mcp/server.py` | `session_command` apontava para `ESTADO-DA-SESSAO.md` (raiz), divergente da CLI; estado de sessão CLI×MCP não convergiam. | Alta  | 🟢    | **RESOLVIDO** na feature 006 por configuração: o caminho vem de `config.session.state_file` (`SessionSection`); CLI (`main.py:169`) e MCP (`server.py:94`) leem o mesmo valor. Sem literal chumbado. |
 | **T3** | `main.py`                | `json.loads` sem `import json` → `NameError` no `format` via stdin (hook `PostToolUse`); autoformat por hook não ocorria. | Alta  | 🟢    | **RESOLVIDO** em `cf73980`: `main.py` importa `json` (linha 5); `resolve_format_target` → `json.loads` funciona; o autoformat por hook opera.                                                        |
-| **T4** | `formatting/service.py`  | `[formatting]` do `harness.toml` não alimenta o serviço; blindagens e opt-out chumbados.                                  | Média | 🟡    | Aberto.                                                                                                                                                                                              |
+| **T4** | `formatting/service.py`  | `[formatting]` do `harness.toml` não alimenta o serviço; blindagens e opt-out chumbados.                                  | Média | 🟢    | **RESOLVIDO** na feature 008: `FormattingService` passa a ler e aplicar `formatting.exclude_paths` (com glob patterns e fnmatch) e `formatting.opt_out_file` de forma dinâmica a partir do `HarnessConfig`. |
 | **T5** | `main.py`                | `load_harness_config` (dict legado) coexistia com `load_config` (tipada) — duas vias de configuração.                     | Baixa | 🟢    | **RESOLVIDO** na feature 006: `load_harness_config` e `import toml` foram removidos de `main.py`. Via única tipada via `load_config(fs)`; o subcomando `cmd` lê `config.harness.active_harness`.     |
-| **T6** | repositório              | Sem lock file; pins apenas `>=` — build não determinístico.                                                               | Média | 🟡    | Aberto.                                                                                                                                                                                              |
+| **T6** | repositório              | Sem lock file; pins apenas `>=` — build não determinístico.                                                               | Média | 🟢    | **RESOLVIDO** na feature 008: Adição do lock file `requirements.txt` compilado via `uv pip compile` de forma determinística a partir de `requirements.in`.                                           |
 
-> Os achados T1, T2, T3 e T5 estão corrigidos no HEAD (T1/T3 em `cf73980`; T2 e T5 na feature 006). Permanecem abertos apenas T4 (config de formatting não consumida) e T6 (sem lock file).
+> Todos os achados históricos (T1 ao T6) estão totalmente resolvidos no HEAD atual (T1/T3 no fix de drivers; T2/T5 na feature 006; T4/T6 na feature 008). Nenhuma dívida técnica está em aberto atualmente.
 
 ---
 

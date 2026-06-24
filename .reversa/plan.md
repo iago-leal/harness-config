@@ -14,7 +14,7 @@
 
 ## Decisão de organização das specs 🗂️
 
-> Entre o Scout e o Arqueólogo, o Reversa pergunta como você quer organizar as specs (por módulo, caso de uso, endpoint, híbrida, por features ou customizada). A escolha fica persistida em `.reversa/config.toml` na seção `[specs]` e não será reagendada em execuções futuras. Para reapresentar o menu, remova manualmente a seção.
+> Entre o Scout e o Arqueólogo, o Reversa pergunta como você quer organizar as specs (por módulo, caso de uso, endpoint, híbrida, por features ou customizada). A escolha fica persistida em `.reversa/config.toml` na seção `[specs]` e não será reagendada em execuções futures. Para reapresentar o menu, remova manualmente a seção.
 
 ## Fase 2: Escavação 🏗️
 

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session | harness</title>
+  <meta name="reversa-category" content="feature-spec">
+  <meta name="reversa-producer-agent" content="reversa-docs-storyteller">
+  <meta name="reversa-template" content="feature">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <style>
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-color: var(--border-color);
+      background-color: var(--panel-bg);
+    }
+    .tab-content-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-page-id="feature-session">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="../index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="../arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="../modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="../topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="../metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item active aria-current="page"" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Feature: Session</h1>
+        <p>Especificação funcional, design e tarefas de evolução desta capacidade.</p>
+      </div>
+      <div class="meta-info">
+        Módulo: <code>harness-core</code><br>
+        Slug: <code>session</code>
+      </div>
+    </header>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('requirements')">📋 Requisitos</button>
+      <button class="tab-btn" onclick="switchTab('design')">📐 Design Técnico</button>
+      <button class="tab-btn" onclick="switchTab('tasks')">🛠️ Roadmap &amp; Tarefas</button>
+    </div>
+
+    <!-- Tab Requisitos -->
+    <div class="tab-content-panel active" id="tab-requirements">
+      <div class="dashboard-card">
+        <h1>Session (Estado de Sessão Unificado) — Requisitos (Requirements)</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração; feature 004)</p>
+<p>&gt; Nível de Documentação: <strong>Completo</strong> · Escala: <span class="badge badge-low">Confirmado</span> CONFIRMADO · <span class="badge badge-medium">Inferido</span> INFERIDO · <span class="badge badge-high">Lacuna</span> LACUNA</p>
+<p>&gt; Rastreabilidade ao Legado: <a href="file:///Users/iagoleal/dev/harness/harness-core/src/core/session/"><code>harness-core/src/core/session/</code></a> — <code>serializer.py</code>, <code>sinks.py</code>, <code>errors.py</code>; modelos em <code>core/domain/models.py</code> (<code>SessionState</code>, <code>SessionNarrative</code>). Consumidor: <code>core/commands/service.py</code>. Drivers: <code>src/main.py:169</code> (CLI) e <code>src/adapters/mcp/server.py:94</code> (MCP), ambos lendo o caminho de <code>config.session.state_file</code> (<code>SessionSection</code> em <code>core/domain/config.py</code>, feature 006).</p>
+
+<h2>Visão Geral</h2>
+
+<p>Esta unit persiste e reinjeta o estado da última sessão do agente entre boots. O artefato canônico é <code>.harness/estado-da-sessao.md</code> — <strong>front-matter YAML</strong> (header-máquina) + <strong>corpo Markdown</strong> (a narrativa). O serializer garante round-trip (<code>parse(render(x)) == x</code>); os _sinks_ entregam o estado ao contexto do agente conforme o <code>active_harness</code>, sem que o core conheça o harness (feature 004).</p>
+
+<h2>Responsabilidades</h2>
+<ul><li>Serializar/desserializar <code>SessionState</code> ↔ Markdown com front-matter, preservando round-trip. <span class="badge badge-low">Confirmado</span></li>
+<li>Renderizar a <code>SessionNarrative</code> em quatro seções fixas, para reinjeção e persistência. <span class="badge badge-low">Confirmado</span></li>
+<li>Distinguir arquivo <strong>ausente</strong> (sessão nova normal) de arquivo <strong>malformado</strong> (falha barulhenta). <span class="badge badge-low">Confirmado</span></li>
+<li>Entregar o estado ao contexto do agente pela estratégia certa de _sink_, escolhida na borda por <code>active_harness</code>. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Regras de Negócio</h2>
+<ul><li><strong>RN-N1 — Fonte canônica única do estado:</strong> o estado vive num único artefato versionado <code>.harness/estado-da-sessao.md</code>. <span class="badge badge-low">Confirmado</span> O caminho deixou de ser chumbado e passou a ser lido de <code>config.session.state_file</code> (<code>SessionSection</code>, default <code>.harness/estado-da-sessao.md</code>), igualmente pela CLI (<code>main.py:169</code>) e pelo MCP (<code>server.py:94</code>) — feature 006. T2 (RESOLVIDO): o driver MCP não usa mais o literal <code>ESTADO-DA-SESSAO.md</code> na raiz; a divergência CLI×MCP foi eliminada por configuração. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N2 — Invariante de round-trip:</strong> <code>parse(render(x)) == x</code>. Corpo = 4 seções fixas mapeando a <code>SessionNarrative</code>. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N3 — Narrativa preservada na retomada:</strong> em <code>resume</code> sob sessão existente, <code>start_session</code> reativa <strong>preservando a narrativa</strong> escrita pelo agente; a CLI reinjeta o corpo, nunca o inventa. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N4 — Ausente ≠ malformado:</strong> ausente → <code>None</code>; malformado (sem <code>---</code>, YAML inválido, campo obrigatório ausente, commit não-SHA1) → <code>MalformedSessionStateError</code>. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N5 — O core não conhece o harness:</strong> o domínio produz texto puro; a seleção do mecanismo de entrega por <code>active_harness</code> vive na borda (<code>get_sink</code> + <code>main.py</code>). <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N6 — Reinjeção multi-harness por família:</strong> _hook_ (Claude/Gemini, <code>hookSpecificOutput.additionalContext</code>) e _arquivo_ (Antigravity, <code>.agents/rules/estado-sessao.md</code>). Harness desconhecido → <code>ValueError</code>. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N8 — Teto de contexto (Claude):</strong> <code>HookContextSink</code> trunca o <code>additionalContext</code> em <code>MAX_CHARS = 10000</code>, anexando aviso. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-07 — Âncora Git:</strong> ao retomar, HEAD ≠ <code>commit_hash</code> gravado → alerta <code>⚠️</code> que antecede a narrativa; reativa mesmo assim. <span class="badge badge-low">Confirmado</span> (regra exercida em <code>core/commands</code>, ver unit <code>comandos-customizados</code>).</li></ul>
+
+<h2>Requisitos Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>ID</th>
+<th>Requisito</th>
+<th>Prioridade</th>
+<th>Critério de Aceite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF-01</td>
+<td>Round-trip do estado.</td>
+<td>Must</td>
+<td><code>parse(render(state)) == state</code> para qualquer <code>SessionState</code> válido.</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Campos obrigatórios no front-matter.</td>
+<td>Must</td>
+<td>Ausência de <code>commit</code>/<code>feature</code>/<code>start_time</code>/<code>status</code> → <code>MalformedSessionStateError</code>.</td>
+</tr>
+<tr>
+<td>RF-03</td>
+<td>Render da narrativa em 4 seções.</td>
+<td>Must</td>
+<td><code>render_narrative</code> emite <code>## O que foi feito</code>, <code>## Próximos passos</code>, <code>## Pendências / bloqueios</code>, <code>## Ponteiros</code>.</td>
+</tr>
+<tr>
+<td>RF-04</td>
+<td>Sink por família de harness.</td>
+<td>Must</td>
+<td><code>claude</code>/<code>gemini</code> → <code>HookContextSink</code>; <code>antigravity</code> → <code>FileProjectionSink</code>; desconhecido → <code>ValueError</code>.</td>
+</tr>
+<tr>
+<td>RF-05</td>
+<td>Truncamento no sink de hook.</td>
+<td>Should</td>
+<td>Contexto acima de 10000 chars é truncado com sufixo de aviso.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Requisitos Não Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Requisito inferido</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Confiabilidade</td>
+<td>Round-trip garante que a memória de retomada não se corrompe entre boots.</td>
+<td><code>session/serializer.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Robustez</td>
+<td>Falha barulhenta em estado corrompido (distingue de ausente).</td>
+<td><code>session/serializer.py</code>, <code>session/errors.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Baixo acoplamento</td>
+<td>Core agnóstico a harness; seleção de sink na borda.</td>
+<td><code>session/sinks.py</code>, <code>main.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Compatibilidade</td>
+<td>Teto de 10000 chars respeita o limite do Claude.</td>
+<td><code>session/sinks.py</code> (<code>MAX_CHARS</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Critérios de Aceitação</h2>
+
+<pre><code>Dado um SessionState válido com narrativa
+Quando aplico render e depois parse
+Então o SessionState resultante é igual ao original (round-trip).
+
+Dado um arquivo .harness/estado-da-sessao.md sem o separador `---`
+Quando o serializer faz parse
+Então um MalformedSessionStateError é levantado (não retorna None).
+
+Dado o active_harness "antigravity"
+Quando o estado é entregue pelo sink
+Então o arquivo .agents/rules/estado-sessao.md é gravado com o texto do estado.
+
+Dado o active_harness "claude" e um contexto acima de 10000 caracteres
+Quando HookContextSink emite o additionalContext
+Então o texto é truncado a 10000 chars com aviso anexado.</code></pre>
+
+<h2>Prioridade (MoSCoW)</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Requisito</th>
+<th>MoSCoW</th>
+<th>Justificativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Round-trip do serializer (RN-N2)</td>
+<td>Must</td>
+<td>Salvaguarda central; sem ela a retomada corrompe.</td>
+</tr>
+<tr>
+<td>Ausente ≠ malformado (RN-N4)</td>
+<td>Must</td>
+<td>Falha barulhenta evita degradação silenciosa do estado.</td>
+</tr>
+<tr>
+<td>Sink por família (RN-N6)</td>
+<td>Must</td>
+<td>Único caminho de reinjeção no boot; varia por harness.</td>
+</tr>
+<tr>
+<td>Truncamento Claude (RN-N8)</td>
+<td>Should</td>
+<td>Importante para o Claude; degrada graciosamente em excesso de contexto.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Rastreabilidade de Código</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Arquivo</th>
+<th>Função / Classe</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core/session/serializer.py</code></td>
+<td><code>parse</code>, <code>render</code>, <code>render_narrative</code>, <code>_coerce_datetime</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/session/sinks.py</code></td>
+<td><code>HookContextSink</code>, <code>FileProjectionSink</code>, <code>get_sink</code>, <code>_FAMILY_BY_HARNESS</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/session/errors.py</code></td>
+<td><code>MalformedSessionStateError</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/domain/models.py</code></td>
+<td><code>SessionState</code>, <code>SessionNarrative</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/domain/config.py</code></td>
+<td><code>SessionSection.state_file</code> (caminho do estado, default <code>.harness/estado-da-sessao.md</code>) ✨f006</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>src/main.py</code></td>
+<td>resolve sink, caminho lido de <code>config.session.state_file</code> (<code>main.py:169</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>src/adapters/mcp/server.py</code></td>
+<td><code>session_command</code> lê o caminho de <code>config.session.state_file</code> (<code>server.py:94</code>) ✨f006</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>tests/test_session.py</code>, <code>tests/test_session_sinks.py</code></td>
+<td>Cobertura de teste</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </div>
+
+    
+    <!-- Tab Design -->
+    <div class="tab-content-panel" id="tab-design">
+      <div class="dashboard-card">
+        <h1>Session (Estado de Sessão Unificado) — Design Técnico</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração; feature 004)</p>
+<p>&gt; Foca no COMO a unit é construída, a partir do código legado lido. Escala: <span class="badge badge-low">Confirmado</span> / <span class="badge badge-medium">Inferido</span> / <span class="badge badge-high">Lacuna</span></p>
+
+<h2>Interface</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Símbolo</th>
+<th>Assinatura</th>
+<th>Retorno</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>serializer.parse</code></td>
+<td><code>(text: str)</code></td>
+<td><code>SessionState</code></td>
+<td>Sem <code>---</code> → <code>MalformedSessionStateError</code>; YAML inválido/não-dict → erro; campo obrigatório ausente → erro.</td>
+</tr>
+<tr>
+<td><code>serializer.render</code></td>
+<td><code>(state: SessionState)</code></td>
+<td><code>str</code></td>
+<td>Monta meta (<code>commit/feature/start_time/status</code>) via <code>yaml.safe_dump(sort_keys=False)</code> + corpo.</td>
+</tr>
+<tr>
+<td><code>serializer.render_narrative</code></td>
+<td><code>(narrative: SessionNarrative)</code></td>
+<td><code>str</code></td>
+<td>4 seções fixas <code>_SECTIONS</code>. Reusado na reinjeção.</td>
+</tr>
+<tr>
+<td><code>serializer._coerce_datetime</code></td>
+<td><code>(value)</code></td>
+<td><code>datetime</code></td>
+<td>Aceita <code>datetime</code> ou ISO (<code>Z</code>→<code>+00:00</code>); naive → UTC.</td>
+</tr>
+<tr>
+<td><code>HookContextSink.deliver</code></td>
+<td><code>(text: str)</code></td>
+<td>—</td>
+<td>Imprime <code>{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": &lt;texto&gt;}}</code>; trunca em <code>MAX_CHARS=10000</code>.</td>
+</tr>
+<tr>
+<td><code>FileProjectionSink.deliver</code></td>
+<td><code>(text: str)</code></td>
+<td>—</td>
+<td>Grava o estado em <code>.agents/rules/estado-sessao.md</code> (cria o diretório-pai).</td>
+</tr>
+<tr>
+<td><code>get_sink</code></td>
+<td><code>(active_harness: str, fs)</code></td>
+<td><code>SessionSink</code></td>
+<td><code>_FAMILY_BY_HARNESS</code>: claude/gemini→hook; antigravity→file; desconhecido → <code>ValueError</code>.</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Mapa front-matter ↔ modelo</strong> (<code>_REQUIRED_META = (commit, feature, start_time, status)</code>):</p>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Chave YAML</th>
+<th>Campo <code>SessionState</code></th>
+<th>Validação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>commit</code></td>
+<td><code>commit_hash</code></td>
+<td>regex SHA1 <code>^[a-f0-9]{40}$</code></td>
+</tr>
+<tr>
+<td><code>feature</code></td>
+<td><code>active_feature</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>start_time</code></td>
+<td><code>start_time</code></td>
+<td>ISO, naive→UTC</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>is_active</code></td>
+<td><code>=="active"</code> (case-insensitive) → True</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Mapa seção ↔ narrativa</strong> (<code>_SECTIONS</code>): "O que foi feito"→<code>feito</code>, "Próximos passos"→<code>proximos_passos</code>, "Pendências / bloqueios"→<code>pendencias</code>, "Ponteiros"→<code>ponteiros</code>.</p>
+
+<h2>Fluxo Principal</h2>
+
+<p>1. <strong>parse(text):</strong> <code>_FRONTMATTER_RE</code> separa meta e corpo. Sem <code>---</code> → <code>MalformedSessionStateError</code>. <code>yaml.safe_load</code> da meta; não-dict → erro. Confere <code>_REQUIRED_META</code>. <code>status</code> define <code>is_active</code>. Constrói <code>SessionState</code>; <code>ValueError</code> do domínio (ex.: commit não-SHA1) é convertido em <code>MalformedSessionStateError</code>. O corpo é parseado nas 4 seções → <code>SessionNarrative</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>2. <strong>render(state):</strong> monta dict de meta na ordem fixa, <code>yaml.safe_dump(sort_keys=False)</code> entre <code>---</code>, anexa <code>render_narrative(state.narrative)</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>3. <strong>render_narrative(narrative):</strong> para cada uma das 4 seções, emite <code>## &lt;título&gt;</code> e as linhas <code>- &lt;item&gt;</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>4. <strong>Reinjeção (na borda):</strong> <code>main.py</code> resolve <code>get_sink(active_harness, fs)</code> e chama <code>deliver(texto)</code>. O <code>HookContextSink</code> serializa o envelope JSON no stdout (truncando em 10000); o <code>FileProjectionSink</code> projeta num arquivo estático relido a cada boot. <span class="badge badge-low">Confirmado</span></p>
+
+<h2>Fluxos Alternativos</h2>
+<ul><li><strong>Arquivo ausente:</strong> o consumidor (<code>core/commands.load_session</code>) trata como <code>None</code> (sessão nova). O serializer só é chamado com conteúdo presente. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Estado corrompido:</strong> qualquer violação no parse → <code>MalformedSessionStateError</code> (RN-N4). <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Contexto longo (Claude):</strong> <code>HookContextSink</code> trunca em <code>MAX_CHARS=10000</code> e anexa sufixo de aviso. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Harness desconhecido:</strong> <code>get_sink</code> levanta <code>ValueError</code> barulhento. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Dependências</h2>
+<ul><li><code>core/domain/models.SessionState</code> / <code>SessionNarrative</code> — estruturas serializadas.</li>
+<li><code>core/session/errors.MalformedSessionStateError</code> — erro de estado corrompido.</li>
+<li><code>PyYAML</code> — <code>safe_load</code>/<code>safe_dump</code> do front-matter.</li>
+<li><code>FileSystemPort</code> — usado pelo <code>FileProjectionSink</code> (gravação + <code>makedirs</code>).</li>
+<li>Consumidor: <code>core/commands/service.py</code> (<code>load_session</code>/<code>save_session</code>, <code>resume</code>/<code>encerrar-sessao</code>).</li></ul>
+
+<h2>Decisões de Design Identificadas</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Decisão</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Formato front-matter YAML + corpo Markdown (header-máquina + narrativa legível)</td>
+<td><code>serializer.py</code> (<code>_FRONTMATTER_RE</code>, <code>_SECTIONS</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Invariante de round-trip como contrato testável</td>
+<td><code>serializer.py</code> + <code>test_session.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Sink como Strategy escolhida na borda (core agnóstico a harness)</td>
+<td><code>sinks.py</code> (<code>get_sink</code>, <code>_FAMILY_BY_HARNESS</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Duas famílias de entrega (hook vs arquivo) por limitação de cada agente</td>
+<td><code>sinks.py</code> (<code>HookContextSink</code> × <code>FileProjectionSink</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Teto de 10000 chars no envelope do Claude</td>
+<td><code>sinks.py</code> (<code>MAX_CHARS</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Estado Interno</h2>
+
+<p>O estado de domínio (<code>SessionState</code>) é externalizado em <code>.harness/estado-da-sessao.md</code>. A unit em si não guarda estado em memória entre chamadas; serializer e sinks são puros sobre suas entradas (o sink de arquivo tem efeito colateral de I/O).</p>
+
+<h2>Observabilidade</h2>
+<ul><li><code>HookContextSink</code> escreve o envelope JSON no stdout (consumido pelo runtime do agente).</li>
+<li><code>MalformedSessionStateError</code> é a sinalização barulhenta de corrupção (RN-N4).</li>
+<li>Sem logging estruturado dedicado.</li></ul>
+
+<h2>Riscos e Lacunas</h2>
+<ul><li><span class="badge badge-low">Confirmado</span> <strong>T2 (RESOLVIDO via configuração, feature 006):</strong> o caminho do estado deixou de ser chumbado nos drivers. CLI (<code>main.py:169</code>) e MCP (<code>server.py:94</code>) leem <code>config.session.state_file</code> (<code>SessionSection</code>, default <code>.harness/estado-da-sessao.md</code>). O literal <code>ESTADO-DA-SESSAO.md</code> na raiz foi removido do MCP; a máquina de estado paralela CLI×MCP não existe mais. Registro histórico: a divergência existia até a feature 006, que a fechou por configuração.</li>
+<li><span class="badge badge-medium">Inferido</span> O <code>FileProjectionSink</code> grava em caminho fixo <code>.agents/rules/estado-sessao.md</code> (não parametrizado). O caminho do estado canônico, porém, passou a vir de <code>[session].state_file</code> no <code>harness.toml</code> (<code>SessionSection</code> no domínio) ✨f006.</li></ul>
+
+      </div>
+    </div>
+        
+    
+    <!-- Tab Tasks -->
+    <div class="tab-content-panel" id="tab-tasks">
+      <div class="dashboard-card">
+        <h1>Session (Estado de Sessão Unificado) — Tarefas de Implementação</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração; feature 004)</p>
+<p>&gt; Sequência executável para reimplementar a unit a partir do legado, com rastreabilidade ao código original.</p>
+
+<h2>Pré-requisitos</h2>
+<ul><li>[ ] <code>SessionState</code> e <code>SessionNarrative</code> definidos em <code>core/domain/models.py</code>.</li>
+<li>[ ] <code>PyYAML</code> disponível.</li>
+<li>[ ] <code>FileSystemPort</code> disponível (para o sink de arquivo).</li></ul>
+
+<h2>Tarefas</h2>
+<ul><li>[ ] T-01, Implementar <code>serializer.parse</code></li>
+<li>Origem no legado: <code>core/session/serializer.py</code></li>
+<li>Critério de pronto: separa front-matter (<code>_FRONTMATTER_RE</code>) do corpo; valida <code>_REQUIRED_META</code>; converte <code>ValueError</code> do domínio em <code>MalformedSessionStateError</code>; ausência de <code>---</code>/YAML inválido → erro.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-02, Implementar <code>serializer.render</code> e <code>render_narrative</code></li>
+<li>Origem no legado: <code>core/session/serializer.py</code></li>
+<li>Critério de pronto: <code>render</code> produz meta YAML (<code>sort_keys=False</code>) + corpo; <code>render_narrative</code> emite as 4 seções fixas; invariante <code>parse(render(x)) == x</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-03, Implementar <code>_coerce_datetime</code></li>
+<li>Origem no legado: <code>core/session/serializer.py</code></li>
+<li>Critério de pronto: aceita <code>datetime</code> ou ISO (<code>Z</code>→<code>+00:00</code>); naive vira UTC.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-04, Implementar <code>MalformedSessionStateError</code></li>
+<li>Origem no legado: <code>core/session/errors.py</code></li>
+<li>Critério de pronto: subclasse de <code>Exception</code> que distingue "corrompido" de "ausente" (RN-N4).</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-05, Implementar <code>HookContextSink</code> (Claude/Gemini)</li>
+<li>Origem no legado: <code>core/session/sinks.py</code></li>
+<li>Critério de pronto: imprime envelope <code>hookSpecificOutput.additionalContext</code> no stdout; trunca em <code>MAX_CHARS=10000</code> com aviso.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-06, Implementar <code>FileProjectionSink</code> (Antigravity)</li>
+<li>Origem no legado: <code>core/session/sinks.py</code></li>
+<li>Critério de pronto: grava o estado em <code>.agents/rules/estado-sessao.md</code>, criando o diretório-pai.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-07, Implementar <code>get_sink</code> (seleção por família)</li>
+<li>Origem no legado: <code>core/session/sinks.py</code></li>
+<li>Critério de pronto: <code>_FAMILY_BY_HARNESS</code> → claude/gemini=hook, antigravity=file; desconhecido → <code>ValueError</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-08, Integrar nos drivers (CLI e MCP)</li>
+<li>Origem no legado: <code>src/main.py:169</code>, <code>src/adapters/mcp/server.py:94</code></li>
+<li>Critério de pronto: o caminho do estado vem de <code>config.session.state_file</code> (<code>SessionSection</code>, default <code>.harness/estado-da-sessao.md</code>) — lido igualmente pela CLI e pelo MCP, sem literal chumbado; resolve o sink por <code>active_harness</code>. ✨f006</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Tarefas de Teste</h2>
+<ul><li>[ ] TT-01, Round-trip: <code>parse(render(state)) == state</code> para estado com narrativa.</li>
+<li>[ ] TT-02, Caso de erro: arquivo sem <code>---</code> / campo obrigatório ausente → <code>MalformedSessionStateError</code>.</li>
+<li>[ ] TT-03, Sink: <code>antigravity</code> grava <code>.agents/rules/estado-sessao.md</code>; <code>claude</code> emite envelope JSON; harness inválido → <code>ValueError</code>.</li>
+<li>[ ] TT-04, Truncamento: contexto &gt; 10000 chars truncado com aviso.</li>
+<li>Cobertura existente: <code>tests/test_session.py</code>, <code>tests/test_session_sinks.py</code>.</li></ul>
+
+<h2>Ordem Sugerida</h2>
+
+<p>1. T-04 (erro) e T-03 (coerção) primeiro — base para o serializer.</p>
+<p>2. T-01/T-02 (serializer) antes dos sinks.</p>
+<p>3. T-05/T-06/T-07 (sinks) e por fim T-08 (integração CLI).</p>
+
+<h2>Lacunas Pendentes (<span class="badge badge-high">Lacuna</span>)</h2>
+<ul><li>Nenhuma <span class="badge badge-high">Lacuna</span>. <strong>T2 RESOLVIDO</strong> (feature 006): o caminho do estado de sessão passou a vir de <code>config.session.state_file</code> (<code>SessionSection</code>), lido igualmente por CLI e MCP. A divergência CLI×MCP, antes documentada como bug latente, foi eliminada por configuração. <span class="badge badge-low">Confirmado</span></li></ul>
+
+      </div>
+    </div>
+        
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
+      document.querySelectorAll(".tab-content-panel").forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      // Ativar botão correspondente
+      event.target.classList.add("active");
+      // Ativar painel correspondente
+      document.getElementById("tab-" + tabId).classList.add("active");
+    }
+  </script>
+</body>
+</html>

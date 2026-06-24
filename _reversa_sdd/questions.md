@@ -1,31 +1,31 @@
 # Perguntas para Validação — harness
 
-> Regenerado pelo Revisor em 2026-06-24 (Re-extração após as features 003, 004 e 005)
+> Regenerado pelo Revisor em 2026-06-24 (Re-extração pós-feature 008-reprodutibilidade-e-config)
 > Responda cada pergunta (preencha o campo **Resposta**) e me avise quando terminar — basta digitar `reversa`.
 
-A re-extração tem confiança alta (≈85%) e cobertura completa do código de produto. As perguntas abaixo **não** decorrem de trechos de código indecifráveis — o código foi lido por inteiro —, mas de **decisões que só o mantenedor pode tomar**: rumo das dívidas, correção dos bugs latentes e o destino dos artefatos desatualizados. São 5 perguntas; **três já foram resolvidas** (Q3 e Q4 pelas correções em `cf73980` + feature 006; Q5 pela decisão de remoção). Restam abertas Q1 (reprodutibilidade) e Q2 (rumo de T4).
+A re-extração tem confiança alta (≈87%) e cobertura completa do código de produto. As perguntas abaixo foram todas resolvidas e fechadas pós-feature 008.
 
 ---
 
-## Pergunta 1
+## Pergunta 1 — ✅ RESOLVIDA (feature 008)
 
 **Contexto:** Reprodutibilidade — `harness-core/requirements.txt` usa pins `>=` (mínimos); não há lock file commitado nem CI/CD (`surface.json.ci_cd = []`).
 **Spec afetada:** [`_reversa_sdd/dependencies.md`], `confidence-report.md` (Lacunas Pendentes), `gaps.md#G-07`
 **Pergunta:** A ausência de lock file e de CI é uma escolha deliberada (projeto pessoal, _single maintainer_) ou uma dívida a sanar? Se a sanar, qual ferramenta de lock prefere (`pip-tools`/`requirements.lock`, `uv`, `poetry`)?
 **Impacto:** Define se a lacuna de reprodutibilidade vira 🟢 (decisão consciente, registrada como tal) ou permanece 🔴 com ticket de manutenção. Princípio nº 5.3 do mantenedor sugere lock file commitado sempre.
 
-**Resposta:** <!-- preencha aqui -->
+**Resposta:** **Sanado na feature 008.** Adotou-se o `uv` como gerenciador de pacotes rápido e reprodutível. O arquivo `requirements.in` mapeia as dependências abstratas e é compilado deterministicamente via `uv pip compile` para o lock file `requirements.txt` utilizado em setups físicos. Um workflow do GitHub Actions em `.github/workflows/ci.yml` foi configurado para testar continuamente o core nas versões 3.12 e 3.13 do Python em múltiplos sistemas. 🟢
 
 ---
 
-## Pergunta 2
+## Pergunta 2 — ✅ RESOLVIDA (feature 008)
 
 **Contexto:** T4 — `harness.toml` declara `[formatting]` (`exclude_paths`, `opt_out_file`), mas `FormattingService.format_file` **ignora** essa config: as blindagens (`~`, `~/Notas`, `~/.claude`) e o nome do opt-out (`.no-autoformat`) estão chumbados no código (`core/formatting/service.py`).
 **Spec afetada:** [`_reversa_sdd/format-on-edit/design.md`], [`_reversa_sdd/data-dictionary.md` §6], `code-analysis.md` (T4)
 **Pergunta:** A intenção é que o `[formatting]` do `harness.toml` **passe a alimentar** o serviço (config viva, Princípio nº 5.1), ou os valores devem permanecer chumbados e a seção do TOML é vestigial (e deve ser removida)?
 **Impacto:** Se a config deve valer, há um bug de coesão a corrigir; se é vestigial, a spec deve declarar `[formatting]` como decorativo e o documento de domínio deixa de sugerir configurabilidade.
 
-**Resposta:** <!-- preencha aqui -->
+**Resposta:** **Sanado na feature 008.** A configuração `[formatting]` do `harness.toml` agora é consumida de forma ativa e dinâmica pelo `FormattingService`. O parâmetro `formatting.exclude_paths` suporta padrões glob de exclusão de formatação resolvidos via `fnmatch` e `formatting.opt_out_file` permite customizar dinamicamente o nome do arquivo que cancela a formatação automática. 🟢
 
 ---
 
@@ -33,7 +33,7 @@ A re-extração tem confiança alta (≈85%) e cobertura completa do código de 
 
 **Contexto:** T5 — `main.py` mantinha **duas** vias de configuração: a função legada `load_harness_config` (dict com defaults, sem `[decisions]`, usada pelo subcomando `cmd` para ler `active_harness`) e a tipada `load_config` (usada por `decisions` e `install-prompt`).
 **Spec afetada:** [`_reversa_sdd/run-harness-core-local/design.md`], `code-analysis.md` (nota residual / T5)
-**Pergunta:** Confirma que a intenção é **consolidar** tudo em `load_config` (tipada) e remover `load_harness_config`? Ou há razão para o `cmd` ler a config pelo caminho legado?
+**Pergunta:** Confirma que a intenção é **consolidar** tudo em `load_config` (tipada) e remover `load_harness_config`? Ou hay razão para o `cmd` ler a config pelo caminho legado?
 **Impacto:** Determina se T5 é dívida a sanar (downgrade de coesão a registrar) ou um arranjo intencional. Afeta a recomendação de refactor no relatório.
 
 **Resposta:** **Consolidar — feito.** A feature 006 (`e894c59`) **removeu** `load_harness_config` e o `import toml` de `main.py`. Via ÚNICA de configuração: tudo por `load_config(fs)` tipada; o subcomando `cmd` passou a ler `config.harness.active_harness`. T5 fechado, sem "duas vias de config". 🟢

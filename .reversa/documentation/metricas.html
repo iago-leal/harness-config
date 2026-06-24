@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Métricas do Projeto | harness</title>
+  <meta name="reversa-category" content="diagram">
+  <meta name="reversa-producer-agent" content="reversa-docs-analyst">
+  <meta name="reversa-template" content="metricas">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="assets/vendor/highcharts.js"></script>
+  <script src="assets/vendor/highcharts-accessibility.js"></script>
+  <script src="assets/vendor/highcharts-exporting.js"></script>
+  <script src="assets/vendor/highcharts-treemap.js"></script>
+  <script src="assets/vendor/highcharts-sankey.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/nav.js"></script>
+  <style>
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 1000px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .chart-container {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      height: 380px;
+    }
+  </style>
+</head>
+<body data-page-id="metricas">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item active aria-current="page"" href="metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Métricas de Código e Complexidade</h1>
+        <p>Visão quantitativa de volume de código, complexidade lógica e acoplamento por submódulos.</p>
+      </div>
+      <div class="meta-info">
+        Total LOC: <code id="metrics-loc">0</code><br>
+        Linguagem: <code>Python</code>
+      </div>
+    </header>
+
+    <div class="charts-grid">
+      <!-- Treemap LOC por Pasta -->
+      <div class="chart-container" id="chart-treemap"></div>
+
+      <!-- Complexidade por Submódulo -->
+      <div class="chart-container" id="chart-complexity"></div>
+
+      <!-- Histograma de Linhas de Código (LOC) -->
+      <div class="chart-container" id="chart-histogram"></div>
+
+      <!-- Sankey de Fluxo de Acoplamento -->
+      <div class="chart-container" id="chart-sankey"></div>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const metrics = (window.RV_DATA && window.RV_DATA.metrics) || {};
+      const modules = (window.RV_DATA && window.RV_DATA.modules) || [];
+
+      // Calcular LOC total
+      const totalLoc = modules.reduce((sum, m) => sum + m.loc, 0);
+      document.getElementById("metrics-loc").textContent = totalLoc;
+
+      if (!metrics || !metrics.top_complexity) {
+        document.querySelectorAll(".chart-container").forEach(el => {
+          el.innerHTML = "<div style='display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);'>Nenhuma métrica disponível.</div>";
+        });
+        return;
+      }
+
+      // Configuração de tema escuro para Highcharts
+      Highcharts.theme = {
+        colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#a855f7', '#ec4899', '#14b8a6'],
+        chart: {
+          backgroundColor: '#151d30',
+          style: {
+            fontFamily: 'system-ui, sans-serif'
+          }
+        },
+        title: {
+          style: {
+            color: '#ffffff',
+            fontSize: '1.05rem',
+            fontWeight: 'bold'
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          borderWidth: 1,
+          borderColor: '#23314f',
+          style: {
+            color: '#cbd5e1'
+          }
+        },
+        xAxis: {
+          gridLineColor: '#23314f',
+          labels: {
+            style: {
+              color: '#64748b'
+            }
+          },
+          lineColor: '#23314f',
+          minorGridLineColor: '#23314f',
+          tickColor: '#23314f',
+          title: {
+            style: {
+              color: '#64748b'
+            }
+          }
+        },
+        yAxis: {
+          gridLineColor: '#23314f',
+          labels: {
+            style: {
+              color: '#64748b'
+            }
+          },
+          lineColor: '#23314f',
+          minorGridLineColor: '#23314f',
+          tickColor: '#23314f',
+          title: {
+            style: {
+              color: '#64748b'
+            }
+          }
+        },
+        legend: {
+          itemStyle: {
+            color: '#cbd5e1'
+          },
+          itemHoverStyle: {
+            color: '#ffffff'
+          },
+          itemHiddenStyle: {
+            color: '#64748b'
+          }
+        },
+        credits: {
+          enabled: false
+        }
+      };
+
+      // Aplicar o tema
+      Highcharts.setOptions(Highcharts.theme);
+
+      // 1. Treemap: Volume por Pasta
+      const treemapData = metrics.treemap_loc_by_folder.map(folder => ({
+        name: folder.folder,
+        value: folder.loc,
+        colorValue: folder.modules
+      }));
+
+      Highcharts.chart('chart-treemap', {
+        colorAxis: {
+          minColor: '#1d4ed8',
+          maxColor: '#1e3a8a'
+        },
+        series: [{
+          type: 'treemap',
+          layoutAlgorithm: 'squarified',
+          clip: false,
+          data: treemapData
+        }],
+        title: {
+          text: 'Volume de Código (LOC) por Pasta'
+        }
+      });
+
+      // 2. Colunas: Complexidade por Submódulo
+      const compData = metrics.top_complexity.map(item => ({
+        name: item.id,
+        y: item.complexity
+      }));
+
+      Highcharts.chart('chart-complexity', {
+        chart: {
+          type: 'column'
+        },
+        title: {
+          text: 'Complexidade de Código por Submódulo'
+        },
+        xAxis: {
+          type: 'category',
+          labels: {
+            rotation: -45,
+            style: {
+              fontSize: '10px'
+            }
+          }
+        },
+        yAxis: {
+          min: 0,
+          title: {
+            text: 'Nível de Complexidade'
+          }
+        },
+        legend: {
+          enabled: false
+        },
+        series: [{
+          name: 'Complexidade',
+          data: compData,
+          dataLabels: {
+            enabled: true,
+            color: '#FFFFFF',
+            align: 'center',
+            format: '{point.y}',
+            y: 10,
+            style: {
+              fontSize: '11px'
+            }
+          }
+        }]
+      });
+
+      // 3. Histograma: Distribuição de LOC por Módulo
+      const histBins = metrics.loc_histogram.bins;
+      const histCategories = [];
+      for (let i = 0; i < histBins.length - 1; i++) {
+        histCategories.push(`${histBins[i]}-${histBins[i+1]} lines`);
+      }
+      histCategories.push(`>${histBins[histBins.length - 1]} lines`);
+
+      Highcharts.chart('chart-histogram', {
+        chart: {
+          type: 'column'
+        },
+        title: {
+          text: 'Distribuição de Tamanho dos Módulos (LOC)'
+        },
+        xAxis: {
+          categories: histCategories,
+          crosshair: true
+        },
+        yAxis: {
+          min: 0,
+          title: {
+            text: 'Quantidade de Módulos'
+          }
+        },
+        legend: {
+          enabled: false
+        },
+        series: [{
+          name: 'Módulos',
+          data: metrics.loc_histogram.counts,
+          color: '#10b981'
+        }]
+      });
+
+      // 4. Sankey: Acoplamento de Dependências
+      const sankeyLinks = metrics.dependency_sankey.links.map(link => [
+        link.source,
+        link.target,
+        link.value
+      ]);
+
+      Highcharts.chart('chart-sankey', {
+        title: {
+          text: 'Fluxo de Acoplamento entre Módulos'
+        },
+        series: [{
+          keys: ['from', 'to', 'weight'],
+          data: sankeyLinks,
+          type: 'sankey',
+          name: 'Dependência'
+        }]
+      });
+    });
+  </script>
+</body>
+</html>

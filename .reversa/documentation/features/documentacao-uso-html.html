@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentacao Uso Html | harness</title>
+  <meta name="reversa-category" content="feature-spec">
+  <meta name="reversa-producer-agent" content="reversa-docs-storyteller">
+  <meta name="reversa-template" content="feature">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <style>
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-color: var(--border-color);
+      background-color: var(--panel-bg);
+    }
+    .tab-content-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-page-id="feature-documentacao-uso-html">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="../index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="../arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="../modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="../topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="../metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item active aria-current="page"" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Feature: Documentacao Uso Html</h1>
+        <p>Especificação funcional, design e tarefas de evolução desta capacidade.</p>
+      </div>
+      <div class="meta-info">
+        Módulo: <code>harness-core</code><br>
+        Slug: <code>documentacao-uso-html</code>
+      </div>
+    </header>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('requirements')">📋 Requisitos</button>
+      <button class="tab-btn" onclick="switchTab('design')">📐 Design Técnico</button>
+      <button class="tab-btn" onclick="switchTab('tasks')">🛠️ Roadmap &amp; Tarefas</button>
+    </div>
+
+    <!-- Tab Requisitos -->
+    <div class="tab-content-panel active" id="tab-requirements">
+      <div class="dashboard-card">
+        <h1>Documentação de Uso Autogerada em HTML</h1>
+
+<p>&gt; Foca no QUE a unit de documentação faz, não no como.</p>
+
+<h2>Visão Geral</h2>
+<p>Esta unit é responsável por coletar metadados dos comandos da CLI, regras de domínio e progresso dos checkpoints do Reversa, compilando tudo em um HTML único autossuficiente e permitindo expor localmente a documentação por um servidor HTTP integrado.</p>
+
+<h2>Responsabilidades</h2>
+<ul><li>Compilar programaticamente as rotas e argumentos dos comandos do <code>harness-core</code> a partir do <code>argparse.ArgumentParser</code>.</li>
+<li>Extrair as regras de negócio em formato Markdown de <code>domain.md</code> e checkpoints de <code>state.json</code>.</li>
+<li>Injetar os metadados consolidados em um template HTML (<code>template.html</code>) e gravar atomicamente o arquivo final (<code>harness-docs.html</code> na raiz).</li>
+<li>Iniciar um servidor HTTP local simples para expor a documentação gerada em rede local.</li></ul>
+
+<h2>Regras de Negócio</h2>
+<ul><li><strong>RN-08: Sincronização Automática da Documentação (Build)</strong> <span class="badge badge-low">Confirmado</span></li>
+<li>A build da documentação cria/atualiza <code>harness-docs.html</code> na raiz do projeto com as definições mais recentes de comandos e checkpoints.</li>
+<li><strong>RN-09: Autossuficiência e Portabilidade do HTML</strong> <span class="badge badge-low">Confirmado</span></li>
+<li>O HTML gerado deve carregar estilos e comportamentos sem dependências de rede externas (offline).</li>
+<li><strong>RN-10: Introspecção Dinâmica dos Comandos</strong> <span class="badge badge-low">Confirmado</span></li>
+<li>O gerador extrai metadados do parser da CLI principal em tempo de execução para garantir consistência.</li></ul>
+
+<h2>Requisitos Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>ID</th>
+<th>Requisito</th>
+<th>Prioridade</th>
+<th>Critério de Aceite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF-01</td>
+<td>Comando de geração de documentação</td>
+<td>Must</td>
+<td>Executar <code>./harness doc-gen</code> gera com sucesso o HTML.</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Comando de servidor de documentação</td>
+<td>Must</td>
+<td>Executar <code>./harness doc-serve</code> abre servidor HTTP local na porta de rede.</td>
+</tr>
+<tr>
+<td>RF-03</td>
+<td>Introspecção do parser do CLI</td>
+<td>Must</td>
+<td>O gerador mapeia os comandos da CLI em tempo de execução do parser de argparse.</td>
+</tr>
+<tr>
+<td>RF-04</td>
+<td>Parsing de regras de negócio em Markdown</td>
+<td>Should</td>
+<td>Extrai regras ativas de <code>domain.md</code> e <code>architecture.md</code>.</td>
+</tr>
+<tr>
+<td>RF-05</td>
+<td>Timeline de progresso do Reversa</td>
+<td>Should</td>
+<td>Carrega a timeline e o percentual de checkpoints concluídos.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Requisitos Não Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Requisito inferido</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Performance</td>
+<td>Tempo de compilação da documentação imediato (&lt;1s)</td>
+<td><code>harness-core/src/core/documentation/service.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Segurança</td>
+<td>Execução offline sem chamadas externas a CDNs</td>
+<td><code>harness-core/src/core/documentation/template.html</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Portabilidade</td>
+<td>Servidor local HTTP nativo em Python (<code>http.server</code>)</td>
+<td><code>harness-core/src/main.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Critérios de Aceitação</h2>
+
+<pre><code>Dado que o desenvolvedor executa o comando "./harness doc-gen"
+Quando o processo termina com sucesso
+Então o arquivo "harness-docs.html" deve ser gerado na raiz do projeto
+
+Dado que o arquivo "harness-docs.html" existe na raiz
+Quando o desenvolvedor roda o comando "./harness doc-serve" na porta 8000
+Então o servidor local inicia em "http://localhost:8000" servindo a documentação offline</code></pre>
+
+<h2>Prioridade (MoSCoW)</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Requisito</th>
+<th>MoSCoW</th>
+<th>Justificativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Compilação e build da documentação HTML</td>
+<td>Must</td>
+<td>Funcionalidade crítica para expor o manual de uso do framework.</td>
+</tr>
+<tr>
+<td>Introspecção programática da CLI</td>
+<td>Must</td>
+<td>Garante consistência livre de erros manuais.</td>
+</tr>
+<tr>
+<td>Servidor HTTP nativo em Python</td>
+<td>Must</td>
+<td>Facilita a exposição visual do manual localmente.</td>
+</tr>
+<tr>
+<td>Parsing e rendering de regras do legado</td>
+<td>Should</td>
+<td>Adiciona contexto semântico importante, mas com fallback textual.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Rastreabilidade de Código</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Arquivo</th>
+<th>Função / Classe</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>harness-core/src/core/documentation/service.py</code></td>
+<td><code>DocumentationService</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>harness-core/src/main.py</code></td>
+<td><code>build_parser</code>, <code>main</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>harness-core/src/core/documentation/template.html</code></td>
+<td>n/a (HTML visual)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>harness-core/tests/test_documentation.py</code></td>
+<td>n/a (Suíte de testes)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </div>
+
+    
+    <!-- Tab Design -->
+    <div class="tab-content-panel" id="tab-design">
+      <div class="dashboard-card">
+        <h1>Documentação de Uso Autogerada em HTML, Design Técnico</h1>
+
+<p>&gt; Foca no COMO a unit de documentação é construída, com base no código lido.</p>
+
+<h2>Interface</h2>
+
+<p>Para a CLI e comandos (expresso pelo wrapper <code>harness</code> e <code>main.py</code>):</p>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Comando</th>
+<th>Parâmetro</th>
+<th>Entrada</th>
+<th>Saída</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>./harness doc-gen</code></td>
+<td>n/a</td>
+<td>n/a</td>
+<td>Escreve <code>harness-docs.html</code> na raiz</td>
+<td>Compila metadados em JSON e injeta no template.</td>
+</tr>
+<tr>
+<td><code>./harness doc-serve</code></td>
+<td><code>--port</code></td>
+<td>Porta (Integer, default: 8000)</td>
+<td>Abre socket local</td>
+<td>Inicia servidor HTTP nativo.</td>
+</tr>
+</tbody>
+</table>
+
+<p>Para classes/funções:</p>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Símbolo</th>
+<th>Assinatura</th>
+<th>Retorno</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DocumentationService.extract_commands</code></td>
+<td><code>(parser: argparse.ArgumentParser)</code></td>
+<td><code>List[Dict[str, Any]]</code></td>
+<td>Extrai comandos, ajuda, flags e valores padrões de subparsers.</td>
+</tr>
+<tr>
+<td><code>DocumentationService.parse_markdown_rules</code></td>
+<td><code>(domain_filepath: str)</code></td>
+<td><code>List[Dict[str, Any]]</code></td>
+<td>Extrai regras de negócio via regex de <code>domain.md</code>.</td>
+</tr>
+<tr>
+<td><code>DocumentationService.load_checkpoints</code></td>
+<td><code>(state_filepath: str)</code></td>
+<td><code>Dict[str, Any]</code></td>
+<td>Carrega JSON de checkpoints e progresso do Reversa.</td>
+</tr>
+<tr>
+<td><code>DocumentationService.generate_html</code></td>
+<td><code>(parser, template_path: str, domain_path: str, state_path: str, output_path: str)</code></td>
+<td><code>None</code></td>
+<td>Combina dados lidos no template HTML e escreve atomicamente.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Fluxo Principal (Geração do HTML)</h2>
+<p>1. <strong>Instanciação</strong>: A CLI em <code>main.py</code> cria o parser do argparse e chama <code>build_parser()</code> para obter a árvore do parser.</p>
+<p>2. <strong>Início do doc-gen</strong>: <code>main.py</code> instancia <code>DocumentationService</code> repassando o adaptador local do sistema de arquivos (<code>LocalFileSystemAdapter</code>).</p>
+<p>3. <strong>Coleta de metadados</strong>:</p>
+<ul><li><code>extract_commands()</code> faz a introspecção recursiva das propriedades <code>_actions</code> do parser de subparsers.</li>
+<li><code>parse_markdown_rules()</code> abre o <code>domain.md</code> e lê strings correspondentes ao padrão <code><strong>RN-XX: ...</strong> <span class="badge badge-low">Confirmado</span>|<span class="badge badge-medium">Inferido</span>|<span class="badge badge-high">Lacuna</span></code> via regex.</li>
+<li><code>load_checkpoints()</code> serializa o <code>.reversa/state.json</code> para dict Python.</li></ul>
+<p>4. <strong>Interpolação</strong>: O arquivo <code>template.html</code> é lido do disco em string, e o bloco de script de dados <code>/* INJECTED_DATA_PLACEHOLDER */</code> é substituído por <code>const HARNESS_DOC_DATA = &lt;JSON&gt;;</code>.</p>
+<p>5. <strong>Persistência</strong>: Grava de forma segura <code>harness-docs.html</code> na raiz do projeto local.</p>
+
+<h2>Fluxos Alternativos</h2>
+<ul><li><strong>Ausência de arquivos do Reversa</strong>: Se <code>state.json</code> ou <code>domain.md</code> estiverem ausentes durante a compilação, o <code>DocumentationService</code> retorna listas/dicionários vazios sem quebrar a execução, permitindo que a CLI termine e gere documentação apenas de comandos.</li>
+<li><strong>Iniciação de doc-serve sem HTML pré-gerado</strong>: Se o desenvolvedor chamar <code>doc-serve</code> e o arquivo <code>harness-docs.html</code> não existir na raiz, o <code>main.py</code> intercepta a chamada, executa o fluxo completo do <code>doc-gen</code> primeiro e depois inicia o servidor local.</li></ul>
+
+<h2>Dependências</h2>
+<ul><li><code>LocalFileSystemAdapter</code> (<code>src/adapters/fs/local.py</code>), usado para leitura de templates/markdowns e gravação do HTML.</li>
+<li><code>argparse</code> (biblioteca padrão Python), para introspecção programática da interface.</li>
+<li><code>http.server</code> e <code>socketserver</code> (biblioteca padrão Python), para rodar o servidor HTTP local sem dependências de rede.</li></ul>
+
+<h2>Decisões de Design Identificadas</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Decisão</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Injeção dinâmica de metadados em variável javascript global</td>
+<td><code>harness-core/src/core/documentation/service.py:100</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Layout CSS standalone (sem CDNs)</td>
+<td><code>harness-core/src/core/documentation/template.html:15</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Reuso de porta socket TCP habilitado (<code>allow_reuse_address</code>)</td>
+<td><code>harness-core/src/main.py:214</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Estado Interno</h2>
+<p>O <code>DocumentationService</code> em si é stateless. O estado final da documentação é persistido fisicamente no arquivo <code>harness-docs.html</code> na raiz do projeto local e exposto de forma síncrona.</p>
+
+<h2>Observabilidade</h2>
+<ul><li>A CLI emite mensagens de sucesso no terminal ao gerar o HTML: <code>Sucesso: Documentação compilada e salva em 'harness-docs.html'.</code></li>
+<li>O console do terminal do <code>doc-serve</code> registra logs de acessos HTTP à documentação, com timestamps e códigos de retorno TCP.</li></ul>
+
+<h2>Riscos e Lacunas</h2>
+<ul><li><span class="badge badge-medium">Inferido</span> Caso o formato da declaração de regras de negócio em <code>domain.md</code> mude drasticamente (ex: abandono do padrão de marcadores em negrito <code><strong>RN-XX: ...</strong></code>), a regex de extração de regras pode não mapear itens, gerando seção de regras vazia no HTML.</li></ul>
+
+      </div>
+    </div>
+        
+    
+    <!-- Tab Tasks -->
+    <div class="tab-content-panel" id="tab-tasks">
+      <div class="dashboard-card">
+        <h1>Documentação de Uso Autogerada em HTML, Tarefas de Implementação</h1>
+
+<p>&gt; Foca em uma sequência de tarefas executáveis para reimplementar a unit a partir do legado.</p>
+
+<h2>Pré-requisitos</h2>
+<ul><li>[ ] Módulo <code>main.py</code> de CLI estruturado com <code>argparse</code>.</li>
+<li>[ ] Pasta virtual <code>harness-core/.venv</code> configurada e dependências instaladas.</li>
+<li>[ ] Metadados do Reversa disponíveis (<code>state.json</code> e <code>domain.md</code>).</li></ul>
+
+<h2>Tarefas</h2>
+<ul><li>[ ] T-01, Criar o esqueleto do serviço de documentação <code>DocumentationService</code></li>
+<li>Origem no legado: <code>harness-core/src/core/documentation/service.py:1</code></li>
+<li>Critério de pronto: O serviço é instanciado recebendo a interface <code>FileSystemPort</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-02, Criar o template HTML com design visual responsivo e JavaScript interativo</li>
+<li>Origem no legado: <code>harness-core/src/core/documentation/template.html:1</code></li>
+<li>Critério de pronto: O arquivo HTML possui o estilo CSS dark mode inline e comportamento JavaScript para abas de comandos e regras.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-03, Implementar introspecção recursiva do <code>argparse.ArgumentParser</code></li>
+<li>Origem no legado: <code>harness-core/src/core/documentation/service.py:11</code></li>
+<li>Critério de pronto: Retorna lista com os comandos CLI e seus argumentos a partir da introspecção dinâmica do parser.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-04, Implementar extração de regras de negócio a partir do <code>domain.md</code></li>
+<li>Origem no legado: <code>harness-core/src/core/documentation/service.py:37</code></li>
+<li>Critério de pronto: Extrai as strings de regras (<code>RN-*</code>), títulos, detalhes e confidência via expressões regulares.</li>
+<li>Confiança: <span class="badge badge-medium">Inferido</span></li>
+<li>[ ] T-05, Implementar a geração atômica do arquivo HTML final</li>
+<li>Origem no legado: <code>harness-core/src/core/documentation/service.py:67</code></li>
+<li>Critério de pronto: Substitui o placeholder de dados em <code>template.html</code> com o JSON unificado e escreve o arquivo <code>harness-docs.html</code> na raiz do projeto de forma atômica.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-06, Integrar os novos comandos <code>doc-gen</code> e <code>doc-serve</code> na CLI <code>main.py</code></li>
+<li>Origem no legado: <code>harness-core/src/main.py:175</code></li>
+<li>Critério de pronto: A CLI expõe os comandos <code>doc-gen</code> e <code>doc-serve</code> para o terminal.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-07, Implementar o servidor HTTP local simples com <code>http.server</code></li>
+<li>Origem no legado: <code>harness-core/src/main.py:200</code></li>
+<li>Critério de pronto: Inicia com sucesso o servidor HTTP local e expõe o HTML gerado na porta padrão 8000.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Tarefas de Teste</h2>
+<ul><li>[ ] TT-01, Teste unitário para introspecção de CLI e comandos do parser (<code>test_documentation.py:test_extract_commands</code>)</li>
+<li>[ ] TT-02, Teste unitário do parser de Markdown de regras (<code>test_documentation.py:test_parse_markdown_rules</code>)</li>
+<li>[ ] TT-03, Teste unitário do compilador e build atômico (<code>test_documentation.py:test_generate_html</code>)</li>
+<li>[ ] TT-04, Teste de integração do parser global da CLI do core (<code>test_documentation.py:test_parser_integration</code>)</li></ul>
+
+<h2>Tarefas de Migração de Dados (se aplicável)</h2>
+<p>n/a (sem persistência de banco de dados).</p>
+
+<h2>Ordem Sugerida</h2>
+<p>1. T-01 e T-02 (esqueleto e template visual) de forma paralela.</p>
+<p>2. T-03, T-04, T-05 (serviço e compilador core).</p>
+<p>3. T-06 e T-07 (integração e servidor local).</p>
+<p>4. Suíte de testes (TT-01 a TT-04) pode ser implementada em paralelo com as lógicas ou logo após a finalização da Fase 3.</p>
+
+<h2>Lacunas Pendentes (<span class="badge badge-high">Lacuna</span>)</h2>
+<p>Nenhuma lacuna pendente de aprovação humana.</p>
+
+      </div>
+    </div>
+        
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
+      document.querySelectorAll(".tab-content-panel").forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      // Ativar botão correspondente
+      event.target.classList.add("active");
+      // Ativar painel correspondente
+      document.getElementById("tab-" + tabId).classList.add("active");
+    }
+  </script>
+</body>
+</html>

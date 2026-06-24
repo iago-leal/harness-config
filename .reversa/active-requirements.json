@@ -1,10 +1,14 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/006-harness-core-config-canonica",
-  "feature-id": "006",
-  "short-name": "harness-core-config-canonica",
-  "started-at": "2026-06-24T11:36:55Z",
-  "current-stage": "requirements",
-  "stages-completed": [],
+  "feature-dir": "_reversa_forward/008-reprodutibilidade-e-config",
+  "feature-id": "008",
+  "short-name": "reprodutibilidade-e-config",
+  "started-at": "2026-06-24T11:30:02-03:00",
+  "current-stage": "coding",
+  "stages-completed": [
+    "requirements",
+    "plan",
+    "to-do"
+  ],
   "paused-features": []
 }

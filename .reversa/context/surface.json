@@ -1,13 +1,14 @@
 {
-  "generated_at": "2026-06-24T00:05:03Z",
+  "generated_at": "2026-06-24T11:35:46-03:00",
   "project_root": "/Users/iagoleal/dev/harness",
   "languages": [
-    { "name": "Python", "extensions": [".py"], "file_count": 52 },
-    { "name": "Markdown", "extensions": [".md"], "file_count": 11 },
+    { "name": "Python", "extensions": [".py"], "file_count": 55 },
+    { "name": "Markdown", "extensions": [".md"], "file_count": 12 },
     { "name": "Shell", "extensions": [".sh"], "file_count": 1 },
     { "name": "HTML", "extensions": [".html"], "file_count": 2 },
     { "name": "TOML", "extensions": [".toml"], "file_count": 1 },
-    { "name": "JSON", "extensions": [".json"], "file_count": 2 }
+    { "name": "JSON", "extensions": [".json"], "file_count": 2 },
+    { "name": "YAML", "extensions": [".yml"], "file_count": 1 }
   ],
   "primary_language": "Python",
   "frameworks": [
@@ -16,7 +17,7 @@
     { "name": "Pydantic", "version": ">=2.0.0", "source": "harness-core/requirements.txt" },
     { "name": "Claude Code hooks", "version": "1.0.0", "source": ".claude/settings.json" }
   ],
-  "package_manager": "pip",
+  "package_manager": "uv",
   "entry_points": [
     { "path": "harness", "type": "wrapper_cli" },
     { "path": "harness-core/src/main.py", "type": "cli_core" },
@@ -24,15 +25,19 @@
   ],
   "config_files": [
     "harness-core/harness.toml",
+    "harness-core/requirements.in",
     "harness-core/requirements.txt",
     ".claude/settings.json",
     ".gemini/settings.json",
-    ".gitignore"
+    ".gitignore",
+    ".github/workflows/ci.yml"
   ],
-  "ci_cd": [],
+  "ci_cd": [
+    ".github/workflows/ci.yml"
+  ],
   "database_hints": [],
   "test_framework": "pytest",
-  "test_file_count": 14,
+  "test_file_count": 15,
   "modules": [
     "harness-core/core/bootstrap",
     "harness-core/core/formatting",
@@ -46,12 +51,13 @@
     "harness-core/core/ports",
     "harness-core/adapters"
   ],
-  "total_files": 84,
+  "total_files": 88,
   "notes": [
     "Re-extração 2026-06-24: módulo legado `claude-config/` foi PURGADO (commit 5624f78); decisões agora vivem em `.harness/decisoes/` e o índice em `.harness/microdecisoes.md` (feature 005).",
     "Os caminhos de decisão deixaram de ser literais chumbados: `main.py` e `server.py` leem `load_config().decisions` (dir/index_file/header_file da seção `[decisions]` do harness.toml).",
     "Contagens de linguagem cobrem o código da aplicação (harness-core + raiz + `.harness/`), excluindo `.venv` e as árvores-espelho de templates do Reversa em `.claude/skills/` e `.agents/skills/`.",
-    "Achado latente (🟡): `server.py` chama `load_config(fs)` sem importá-lo e ainda aponta `session_command` para `ESTADO-DA-SESSAO.md` (raiz), divergente do `main.py`, que usa `.harness/estado-da-sessao.md`."
+    "A feature 007 adicionou suporte a `./harness init <destino>` e `./harness upgrade` para bootstrap local de novos repositórios de destino de forma não destrutiva, incluindo checagem passiva e rápida de atualizações no boot.",
+    "A feature 008 adicionou gerenciamento determinístico de dependências via uv (requirements.in/txt), pipeline de CI no GitHub Actions e ativou dinamicamente a configuração de formatação (opt-out e exclude_paths) no FormattingService."
   ],
   "organization_suggestion": {
     "granularity": "feature",
@@ -68,7 +74,9 @@
       "commands",
       "documentation",
       "install-prompt",
-      "session-state"
+      "session-state",
+      "bootstrap-harness-init",
+      "reprodutibilidade-e-config"
     ]
   }
 }

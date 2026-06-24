@@ -6,4 +6,5 @@ __pycache__/
 
 # Reversa
 .reversa/config.user.toml
+.reversa/documentation/.backup-*/
 tmp/

@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-06-24T13:32:26.177224Z",
+  "lastCheckpoint": "2026-06-24T13:39:55.848510Z",
+  "pipelineDurationMs": 449667,
+  "completedAgents": [
+    "mapper",
+    "analyst",
+    "storyteller",
+    "publisher",
+    "publisher"
+  ],
+  "pendingAgents": [],
+  "pages": {
+    "arquitetura.html": {
+      "status": "created",
+      "agent": "reversa-docs-mapper",
+      "hash": "sha256:c869c42fbeb56ca1b33e1f99f48553e879f6cfe204c4f3eb90ea67c018e0185a"
+    },
+    "modulos.html": {
+      "status": "created",
+      "agent": "reversa-docs-mapper",
+      "hash": "sha256:95eef89213170d1fa0c12853af2a407953bda22e29131ffd0be12350dbf0cb3f"
+    },
+    "topologia.html": {
+      "status": "created",
+      "agent": "reversa-docs-mapper",
+      "hash": "sha256:9ac9cd05bdc1c625a0afeb89bc391dd8c2d62fb130db78301ac483238b40d56a"
+    },
+    "metricas.html": {
+      "status": "created",
+      "agent": "reversa-docs-analyst",
+      "hash": "sha256:31f14f0d4df2aba7725cd94f371462e9b2598f03f7936d2d0837eb1410c01f07"
+    },
+    "features/install.html": {
+      "status": "created",
+      "agent": "reversa-docs-storyteller",
+      "hash": "sha256:1f585803a58da8fca248dc4341e92675a896018447fb7b5aaed08097f590a47b"
+    },
+    "features/bootstrap.html": {
+      "status": "created",
+      "agent": "reversa-docs-storyteller",
+      "hash": "sha256:9bce4bc7826dca2c8737bd239d23f2c02f59d1a184e1178bfb7de9439f554433"
+    },
+    "features/run-harness-core-local.html": {
+      "status": "created",
+      "agent": "reversa-docs-storyteller",
+      "hash": "sha256:6b35e0f5819dbca407922aa58caa097e0ca0cd432e538036e079f8286746f18d"
+    },
+    "features/comandos-customizados.html": {
+      "status": "created",
+      "agent": "reversa-docs-storyteller",
+      "hash": "sha256:d059642d45d58109a5d01c7cfdacba19ffb78eaf3ed2e36715435535ee1b38ba"
+    },
+    "features/documentacao-uso-html.html": {
+      "status": "created",
+      "agent": "reversa-docs-storyteller",
+      "hash": "sha256:b0bbcc830df4a0021626b3c0be77e8481e36bbb630759a9a0f3a45898e4d69c2"
+    },
+    "features/format-on-edit.html": {
+      "status": "created",
+      "agent": "reversa-docs-storyteller",
+      "hash": "sha256:42f51e55160b54b7b71961185e8ce8815c72f7b754ee6682ceb8c4d262113300"
+    },
+    "features/microdecisoes.html": {
+      "status": "created",
+      "agent": "reversa-docs-storyteller",
+      "hash": "sha256:c61d88aca417cdbfefbeb4f4678443a0c8cd613067c172d305e6117cb69e2462"
+    },
+    "features/session.html": {
+      "status": "created",
+      "agent": "reversa-docs-storyteller",
+      "hash": "sha256:f0e4f762e7329e4e779ed8abdf37eac01496a84a5f3cfe5fde4b95868b751cd7"
+    },
+    "features/sync-check.html": {
+      "status": "created",
+      "agent": "reversa-docs-storyteller",
+      "hash": "sha256:175ba1688d4dc6d3c26884d0640a86e55216bf5eb89f2845f41f804f91f2fd28"
+    },
+    "index.html": {
+      "status": "created",
+      "agent": "reversa-docs-publisher",
+      "hash": "sha256:fefbf4157bc1f6f11802f8ea95e8d4322cd813ae52e6a126b17790f634e3e66e"
+    }
+  },
+  "pagesGenerated": [
+    "arquitetura.html",
+    "modulos.html",
+    "topologia.html",
+    "metricas.html",
+    "features/install.html",
+    "features/bootstrap.html",
+    "features/run-harness-core-local.html",
+    "features/comandos-customizados.html",
+    "features/documentacao-uso-html.html",
+    "features/format-on-edit.html",
+    "features/microdecisoes.html",
+    "features/session.html",
+    "features/sync-check.html",
+    "index.html"
+  ],
+  "pagesOmitted": [
+    {
+      "page": "timeline.html",
+      "reason": "chronicle.md not found"
+    },
+    {
+      "page": "glossario.html",
+      "reason": "soul.md not found"
+    },
+    {
+      "page": "deck.html",
+      "reason": "soul.md not found"
+    }
+  ],
+  "auxiliaryHtmls": [],
+  "auxiliaryHtmlsDiscovered": 0,
+  "auxiliaryDiscoveryAborted": false,
+  "cdnFallbackUsed": false,
+  "cdnFallbackDetails": [],
+  "vendorMissing": [],
+  "smokeTestFailed": false,
+  "smokeTestErrors": [],
+  "brokenLinks": []
+}

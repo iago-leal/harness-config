@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-24T13:34:31.810307Z",
+  "treemap_loc_by_folder": [
+    {
+      "folder": "harness-core/src/core",
+      "loc": 1162,
+      "modules": 10
+    },
+    {
+      "folder": "harness-core/src",
+      "loc": 220,
+      "modules": 1
+    }
+  ],
+  "top_complexity": [
+    {
+      "id": "decisions",
+      "complexity": 12,
+      "loc": 148
+    },
+    {
+      "id": "commands",
+      "complexity": 12,
+      "loc": 93
+    },
+    {
+      "id": "session",
+      "complexity": 12,
+      "loc": 193
+    },
+    {
+      "id": "adapters",
+      "complexity": 12,
+      "loc": 220
+    },
+    {
+      "id": "formatting",
+      "complexity": 6,
+      "loc": 94
+    },
+    {
+      "id": "sync",
+      "complexity": 6,
+      "loc": 70
+    },
+    {
+      "id": "documentation",
+      "complexity": 6,
+      "loc": 114
+    },
+    {
+      "id": "install",
+      "complexity": 6,
+      "loc": 143
+    },
+    {
+      "id": "domain",
+      "complexity": 6,
+      "loc": 189
+    },
+    {
+      "id": "bootstrap",
+      "complexity": 3,
+      "loc": 58
+    },
+    {
+      "id": "ports",
+      "complexity": 3,
+      "loc": 60
+    }
+  ],
+  "loc_histogram": {
+    "bins": [
+      0,
+      50,
+      100,
+      200,
+      500,
+      1000
+    ],
+    "counts": [
+      0,
+      5,
+      5,
+      1,
+      0
+    ]
+  },
+  "dependency_sankey": {
+    "nodes": [
+      {
+        "id": "sync"
+      },
+      {
+        "id": "install"
+      },
+      {
+        "id": "session"
+      },
+      {
+        "id": "formatting"
+      },
+      {
+        "id": "documentation"
+      },
+      {
+        "id": "adapters"
+      },
+      {
+        "id": "domain"
+      },
+      {
+        "id": "commands"
+      },
+      {
+        "id": "ports"
+      },
+      {
+        "id": "decisions"
+      },
+      {
+        "id": "bootstrap"
+      }
+    ],
+    "links": [
+      {
+        "source": "bootstrap",
+        "target": "ports",
+        "value": 1
+      },
+      {
+        "source": "formatting",
+        "target": "ports",
+        "value": 1
+      },
+      {
+        "source": "sync",
+        "target": "ports",
+        "value": 1
+      },
+      {
+        "source": "sync",
+        "target": "domain",
+        "value": 1
+      },
+      {
+        "source": "decisions",
+        "target": "ports",
+        "value": 1
+      },
+      {
+        "source": "decisions",
+        "target": "domain",
+        "value": 1
+      },
+      {
+        "source": "commands",
+        "target": "ports",
+        "value": 1
+      },
+      {
+        "source": "commands",
+        "target": "domain",
+        "value": 1
+      },
+      {
+        "source": "commands",
+        "target": "session",
+        "value": 1
+      },
+      {
+        "source": "documentation",
+        "target": "ports",
+        "value": 1
+      },
+      {
+        "source": "install",
+        "target": "ports",
+        "value": 1
+      },
+      {
+        "source": "session",
+        "target": "ports",
+        "value": 1
+      },
+      {
+        "source": "session",
+        "target": "domain",
+        "value": 1
+      },
+      {
+        "source": "domain",
+        "target": "ports",
+        "value": 1
+      },
+      {
+        "source": "adapters",
+        "target": "ports",
+        "value": 1
+      },
+      {
+        "source": "adapters",
+        "target": "domain",
+        "value": 1
+      },
+      {
+        "source": "adapters",
+        "target": "bootstrap",
+        "value": 1
+      },
+      {
+        "source": "adapters",
+        "target": "commands",
+        "value": 1
+      }
+    ]
+  },
+  "language_distribution": [
+    {
+      "language": "Python",
+      "modules": 11,
+      "loc": 1382
+    }
+  ]
+}

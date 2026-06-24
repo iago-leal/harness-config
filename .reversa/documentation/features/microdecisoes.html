@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microdecisoes | harness</title>
+  <meta name="reversa-category" content="feature-spec">
+  <meta name="reversa-producer-agent" content="reversa-docs-storyteller">
+  <meta name="reversa-template" content="feature">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <style>
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-color: var(--border-color);
+      background-color: var(--panel-bg);
+    }
+    .tab-content-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-page-id="feature-microdecisoes">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="../index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="../arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="../modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="../topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="../metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item active aria-current="page"" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Feature: Microdecisoes</h1>
+        <p>Especificação funcional, design e tarefas de evolução desta capacidade.</p>
+      </div>
+      <div class="meta-info">
+        Módulo: <code>harness-core</code><br>
+        Slug: <code>microdecisoes</code>
+      </div>
+    </header>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('requirements')">📋 Requisitos</button>
+      <button class="tab-btn" onclick="switchTab('design')">📐 Design Técnico</button>
+      <button class="tab-btn" onclick="switchTab('tasks')">🛠️ Roadmap &amp; Tarefas</button>
+    </div>
+
+    <!-- Tab Requisitos -->
+    <div class="tab-content-panel active" id="tab-requirements">
+      <div class="dashboard-card">
+        <h1>Microdecisões (Decisions) — Requisitos (Requirements)</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 005)</p>
+<p>&gt; Nível de Documentação: <strong>Completo</strong> · Escala: <span class="badge badge-low">Confirmado</span> CONFIRMADO · <span class="badge badge-medium">Inferido</span> INFERIDO · <span class="badge badge-high">Lacuna</span> LACUNA</p>
+<p>&gt; Rastreabilidade ao Legado: <a href="file:///Users/iagoleal/dev/harness/harness-core/src/core/decisions/service.py"><code>harness-core/src/core/decisions/service.py</code></a>; fichas em <a href="file:///Users/iagoleal/dev/harness/.harness/decisoes/"><code>.harness/decisoes/</code></a>; índice <a href="file:///Users/iagoleal/dev/harness/.harness/microdecisoes.md"><code>.harness/microdecisoes.md</code></a>. Drivers: <code>src/main.py</code> (subcomando <code>decisions</code>, hook <code>Stop</code>) e <code>adapters/mcp/server.py</code> (<code>process_decisions</code>).</p>
+
+<p>&gt; ⚠️ <strong>Reescrita vs versão anterior:</strong> a implementação <strong>deixou de ser</strong> o script shell <code>bin/gerar-index-decisoes.sh</code> em <code>harness-config/</code> (purgado, commit <code>5624f78</code>) e passou a ser o <code>DecisionService</code> Python em <code>harness-core</code>. As fichas migraram de <code>decisoes/</code> (raiz) para <code>.harness/decisoes/</code> e o índice de <code>microdecisoes.md</code> (raiz) para <code>.harness/microdecisoes.md</code> (feature 005). Os caminhos não são mais chumbados: vêm de <code>[decisions]</code> no <code>harness.toml</code>.</p>
+
+<h2>Visão Geral</h2>
+
+<p>Gerencia o grafo de microdecisões arquiteturais — fichas <code>MD-NNNN.md</code> com front-matter YAML e relações tipadas — e DERIVA delas o índice <code>.harness/microdecisoes.md</code> com backlinks (verbos inversos). Valida a integridade do grafo antes de compilar. Os caminhos são lidos de configuração, não chumbados (feature 005).</p>
+
+<h2>Responsabilidades</h2>
+<ul><li>Carregar as fichas <code>MD-*.md</code> de um diretório, parseando front-matter (<code>id</code>, <code>gancho</code>, <code>estado</code>, <code>relacoes</code>). <span class="badge badge-low">Confirmado</span></li>
+<li>Validar a integridade do grafo (fichas individuais + auto-relação + aresta órfã). <span class="badge badge-low">Confirmado</span></li>
+<li>Compilar o índice consolidado com backlinks derivados por verbos inversos, de forma determinística. <span class="badge badge-low">Confirmado</span></li>
+<li>Receber todos os caminhos por parâmetro — não chumbar <code>decisoes/</code> nem <code>microdecisoes.md</code>. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Regras de Negócio</h2>
+<ul><li><strong>RN-N11 — Caminhos desacoplados via config:</strong> <code>dir</code>, <code>index_file</code>, <code>header_file</code> vêm de <code>[decisions]</code> no <code>harness.toml</code>; o <code>DecisionService</code> recebe tudo por parâmetro. Default: <code>.harness/decisoes</code>, <code>.harness/microdecisoes.md</code>, <code>.harness/decisoes/_cabecalho.md</code>. (watch item <strong>W001</strong>) <span class="badge badge-low">Confirmado</span> — <span class="badge badge-medium">Inferido</span> Ressalva (T1): via MCP a chamada <code>load_config</code> quebra por import ausente; o caminho configurável só é exercido pela CLI.</li>
+<li><strong>RN-N12 — Índice derivado, não editado à mão:</strong> <code>.harness/microdecisoes.md</code> é DERIVADO pelo <code>./harness decisions</code>; o cabeçalho declara "Não edite à mão". Backlinks ordenados por ID de origem (determinismo). <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N13 — Integridade do grafo:</strong> <code>validate_integrity</code> agrega erros — validação de cada ficha, <strong>auto-relação</strong> (<code>target == self.id</code>) e <strong>aresta órfã</strong> (alvo fora do grafo). Lista vazia = grafo válido. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N14 — Front-matter obrigatório:</strong> cada <code>MD-*.md</code> exige front-matter YAML; diretório ausente → lista vazia; front-matter ausente/YAML inválido → <code>ValueError</code>. Cada relação é <code>"&lt;verbo&gt; MD-XXXX"</code> (dois tokens), verbo num conjunto fechado de seis, alvo <code>^MD-\d{4}$</code>. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Integridade de conteúdo da ficha:</strong> H1 <code># MD-XXXX</code> + as 4 seções obrigatórias <code>D / PORQUÊ / DESCARTADO / ESTADO</code> (regex case-insensitive). <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Requisitos Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>ID</th>
+<th>Requisito</th>
+<th>Prioridade</th>
+<th>Critério de Aceite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF-01</td>
+<td>Carregar fichas e parsear relações.</td>
+<td>Must</td>
+<td><code>load_decisions(dir)</code> retorna lista ordenada de <code>Decision</code>; relação malformada → <code>ValueError</code>.</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Validar integridade do grafo.</td>
+<td>Must</td>
+<td><code>validate_integrity</code> detecta auto-relação, aresta órfã e ficha sem seção obrigatória; grafo válido → lista vazia.</td>
+</tr>
+<tr>
+<td>RF-03</td>
+<td>Compilar o índice com backlinks.</td>
+<td>Must</td>
+<td><code>compile_index</code> grava <code>.harness/microdecisoes.md</code> com sub-linhas <code>↳ &lt;saídas&gt; · &lt;entradas&gt;</code>, deterministicamente.</td>
+</tr>
+<tr>
+<td>RF-04</td>
+<td>Caminhos por configuração.</td>
+<td>Must</td>
+<td><code>./harness decisions</code> lê <code>dir</code>/<code>index_file</code>/<code>header_file</code> de <code>load_config().decisions</code>; nenhum literal de caminho no serviço.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Requisitos Não Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Requisito inferido</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Determinismo</td>
+<td>Backlinks ordenados por ID de origem; índice reprodutível.</td>
+<td><code>core/decisions/service.py</code> (<code>compile_index</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Robustez</td>
+<td>Front-matter inválido falha barulhento (<code>ValueError</code>).</td>
+<td><code>core/decisions/service.py</code> (<code>load_decisions</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Atomicidade</td>
+<td>Gravação do índice via <code>write_file_atomic</code>.</td>
+<td><code>core/decisions/service.py</code> + <code>adapters/fs/local.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Manutenibilidade</td>
+<td>Caminhos desacoplados (config), sem literais.</td>
+<td><code>core/decisions/service.py</code>, <code>core/domain/config.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Critérios de Aceitação</h2>
+
+<pre><code>Dado que MD-0002 declara "refina MD-0001"
+Quando executo `./harness decisions`
+Então o índice .harness/microdecisoes.md mostra em MD-0001 o backlink "↳ refinado-por MD-0002".
+
+Dado uma ficha cuja relação aponta para um MD inexistente
+Quando validate_integrity roda
+Então o erro de aresta órfã é incluído na lista de erros (índice não é compilado limpo).
+
+Dado um harness.toml com [decisions].dir customizado
+Quando `./harness decisions` roda
+Então o serviço lê as fichas do diretório configurado, sem caminho chumbado.
+
+Dado uma ficha MD-*.md sem front-matter YAML
+Quando load_decisions roda
+Então um ValueError barulhento é levantado.</code></pre>
+
+<h2>Prioridade (MoSCoW)</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Requisito</th>
+<th>MoSCoW</th>
+<th>Justificativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Compilação do índice com backlinks (RN-N12)</td>
+<td>Must</td>
+<td>Entrega central; o índice é o artefato consumido.</td>
+</tr>
+<tr>
+<td>Integridade do grafo (RN-N13)</td>
+<td>Must</td>
+<td>Sem ela, o índice consolida um grafo inconsistente.</td>
+</tr>
+<tr>
+<td>Caminhos por config (RN-N11)</td>
+<td>Must</td>
+<td>Efeito da feature 005; watch item W001.</td>
+</tr>
+<tr>
+<td>Front-matter obrigatório (RN-N14)</td>
+<td>Must</td>
+<td>Pré-condição do parse; falha barulhenta.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Rastreabilidade de Código</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Arquivo</th>
+<th>Função / Classe</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core/decisions/service.py</code></td>
+<td><code>DecisionService.load_decisions</code>, <code>validate_integrity</code>, <code>compile_index</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/domain/models.py</code></td>
+<td><code>Decision</code>, <code>Relationship</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/domain/config.py</code></td>
+<td><code>DecisionsSection</code>, <code>load_config</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>src/main.py</code></td>
+<td>Subcomando <code>decisions</code> (deriva caminhos de <code>load_config</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>adapters/mcp/server.py</code></td>
+<td>Tool <code>process_decisions</code> (T1 resolvido em <code>cf73980</code>: <code>load_config</code> importado)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>tests/</code></td>
+<td>Cobertura de teste do serviço de decisões</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </div>
+
+    
+    <!-- Tab Design -->
+    <div class="tab-content-panel" id="tab-design">
+      <div class="dashboard-card">
+        <h1>Microdecisões (Decisions) — Design Técnico</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 005)</p>
+<p>&gt; Foca no COMO a unit é construída, a partir do código legado lido. Escala: <span class="badge badge-low">Confirmado</span> / <span class="badge badge-medium">Inferido</span> / <span class="badge badge-high">Lacuna</span></p>
+
+<h2>Interface</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Símbolo</th>
+<th>Assinatura</th>
+<th>Retorno</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DecisionService.load_decisions</code></td>
+<td><code>(directory: str)</code></td>
+<td><code>List[Decision]</code></td>
+<td>Lista ordenada de <code>MD-*.md</code>; diretório ausente → <code>[]</code>; front-matter ausente/inválido → <code>ValueError</code>.</td>
+</tr>
+<tr>
+<td><code>DecisionService.validate_integrity</code></td>
+<td><code>(decisions: List[Decision])</code></td>
+<td><code>List[str]</code></td>
+<td>Lista de erros; vazia = grafo válido.</td>
+</tr>
+<tr>
+<td><code>DecisionService.compile_index</code></td>
+<td><code>(decisions, output, header)</code></td>
+<td>—</td>
+<td>Deriva backlinks e grava o índice atomicamente.</td>
+</tr>
+</tbody>
+</table>
+
+<p>Driver CLI (<code>main.py</code>, subcomando <code>decisions</code>): <code>config = load_config(fs)</code> → <code>decisoes_dir = config.decisions.dir</code>, <code>output_file = config.decisions.index_file</code>, <code>header_file = config.decisions.header_file</code>. Sem literais.</p>
+
+<h2>Fluxo Principal</h2>
+
+<p>1. <strong>load_decisions(directory):</strong> lista <code>MD-*.md</code> ordenados; para cada, split por <code>---</code> (front-matter YAML, máx. 3 partes). Extrai <code>id</code>, <code>gancho</code>, <code>estado</code> (default <code>ativo</code>); parseia <code>relacoes</code> (cada string = <code>&lt;verbo&gt; &lt;MD-XXXX&gt;</code>, dois tokens). Diretório ausente → lista vazia; front-matter ausente/YAML inválido → <code>ValueError</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>2. <strong>validate_integrity(decisions):</strong> agrega erros — validação individual de cada ficha (<code>Decision.validate_integrity</code>: H1 com o ID + 4 seções), auto-relação (<code>target == self.id</code>) e aresta órfã (alvo fora do <code>decision_map</code>). <span class="badge badge-low">Confirmado</span></p>
+<p>3. <strong>compile_index(decisions, output, header):</strong></p>
+<ul><li>Tabela de <strong>verbos inversos</strong>: <code>refina→refinado-por</code>, <code>depende-de→requerido-por</code>, <code>estende→estendido-por</code>, <code>substitui→substituído-por</code>, <code>relaciona→relacionado-com</code>, <code>bloqueia→bloqueado-por</code>; verbo fora da tabela → <code>inverso-de-&lt;verbo&gt;</code>.</li>
+<li>Backlinks ordenados por ID de origem (determinismo).</li>
+<li>Título extraído do H1 <code># MD-XXXX — &lt;título&gt;</code> por regex.</li>
+<li>Sub-linha <code>↳ &lt;saídas&gt; · &lt;entradas&gt;</code> montada por composição.</li>
+<li>Cabeçalho opcional concatenado no topo. Gravação <strong>atômica</strong> via <code>write_file_atomic</code>. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Fluxos Alternativos</h2>
+<ul><li><strong>Diretório de decisões ausente:</strong> <code>load_decisions</code> retorna <code>[]</code> (não erro). <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Relação malformada</strong> (≠ dois tokens, verbo fora do conjunto, alvo fora do padrão): <code>ValueError</code> no parse (<code>Relationship</code>). <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Grafo inconsistente:</strong> <code>validate_integrity</code> devolve a lista de erros; o driver decide (o índice não deve ser compilado a partir de grafo inválido). <span class="badge badge-medium">Inferido</span> INFERIDO (política do driver).</li>
+<li><strong>Verbo de relação sem inverso conhecido:</strong> backlink genérico <code>inverso-de-&lt;verbo&gt;</code>. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Dependências</h2>
+<ul><li><code>core/domain/models.Decision</code> / <code>Relationship</code> — entidades e validação.</li>
+<li><code>core/domain/config.load_config</code> — origem dos caminhos (no driver).</li>
+<li><code>FileSystemPort</code> — leitura das fichas e gravação atômica do índice.</li>
+<li><code>PyYAML</code> — parse do front-matter.</li></ul>
+
+<h2>Decisões de Design Identificadas</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Decisão</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fichas particionadas + índice derivado (vs banco de decisões)</td>
+<td><code>core/decisions/service.py</code>, <code>.harness/decisoes/</code></td>
+<td><span class="badge badge-low">Confirmado</span> (ADR 0001)</td>
+</tr>
+<tr>
+<td>Caminhos por configuração (<code>[decisions]</code>), sem literais</td>
+<td><code>service.py</code> (parâmetros) + <code>config.py</code> (<code>DecisionsSection</code>)</td>
+<td><span class="badge badge-low">Confirmado</span> (ADR 0012 / MD-0004)</td>
+</tr>
+<tr>
+<td>Backlinks por tabela de verbos inversos, ordenados por ID</td>
+<td><code>compile_index</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Gravação atômica do índice</td>
+<td><code>write_file_atomic</code> (<code>adapters/fs/local.py</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Estado Interno</h2>
+
+<p>Sem estado em memória entre execuções. O "estado" é o conjunto de fichas em <code>.harness/decisoes/</code> e o índice derivado <code>.harness/microdecisoes.md</code> — ambos versionados no Git. O <code>decision_map</code> (id → Decision) é construído por execução durante a validação.</p>
+
+<h2>Observabilidade</h2>
+<ul><li><code>ValueError</code> barulhento em front-matter/relação inválidos.</li>
+<li><code>validate_integrity</code> devolve mensagens de erro acionáveis (auto-relação, aresta órfã, seção ausente).</li>
+<li>O cabeçalho do índice (<code>_cabecalho.md</code>) declara explicitamente "Não edite à mão".</li></ul>
+
+<h2>Riscos e Lacunas</h2>
+<ul><li><span class="badge badge-low">Confirmado</span> <strong>T1 (resolvido):</strong> via MCP (<code>server.py:60</code>), <code>load_config</code> era chamado sem import → <code>NameError</code>, e a tool <code>process_decisions</code> nunca processava decisões. Corrigido no commit <code>cf73980</code> (<code>from src.core.domain.config import load_config</code> em <code>server.py:12</code>); o caminho configurável passou a ser exercido também pelo MCP.</li>
+<li><span class="badge badge-medium">Inferido</span> Diferença sutil: o MCP deriva o <code>header_file</code> de <code>os.path.join(dir, "_cabecalho.md")</code>, ignorando um eventual override de <code>header_file</code> no <code>harness.toml</code> (a CLI respeita o override). Inconsistência menor, não bug.</li></ul>
+
+      </div>
+    </div>
+        
+    
+    <!-- Tab Tasks -->
+    <div class="tab-content-panel" id="tab-tasks">
+      <div class="dashboard-card">
+        <h1>Microdecisões (Decisions) — Tarefas de Implementação</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 005)</p>
+<p>&gt; Sequência executável para reimplementar a unit a partir do legado, com rastreabilidade ao código original.</p>
+
+<p>&gt; ⚠️ Reescrita: a unit agora é o <code>DecisionService</code> Python (<code>harness-core</code>), não o script shell legado <code>bin/gerar-index-decisoes.sh</code> (purgado). Fichas em <code>.harness/decisoes/</code>, índice em <code>.harness/microdecisoes.md</code>, caminhos lidos de <code>[decisions]</code> no <code>harness.toml</code>.</p>
+
+<h2>Pré-requisitos</h2>
+<ul><li>[ ] <code>Decision</code> e <code>Relationship</code> definidos em <code>core/domain/models.py</code>.</li>
+<li>[ ] <code>DecisionsSection</code> em <code>core/domain/config.py</code> e <code>load_config</code> funcional.</li>
+<li>[ ] <code>FileSystemPort</code> disponível (leitura das fichas + gravação atômica).</li>
+<li>[ ] <code>PyYAML</code> disponível.</li></ul>
+
+<h2>Tarefas</h2>
+<ul><li>[ ] T-01, Implementar <code>load_decisions(directory)</code></li>
+<li>Origem no legado: <code>core/decisions/service.py</code></li>
+<li>Critério de pronto: lista ordenada de <code>MD-*.md</code>; parse de front-matter (<code>id</code>, <code>gancho</code>, <code>estado</code>, <code>relacoes</code>); diretório ausente → <code>[]</code>; front-matter/YAML inválido → <code>ValueError</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-02, Implementar <code>validate_integrity(decisions)</code></li>
+<li>Origem no legado: <code>core/decisions/service.py</code>, <code>core/domain/models.py</code> (<code>Decision.validate_integrity</code>)</li>
+<li>Critério de pronto: agrega validação por ficha (H1 + 4 seções <code>D/PORQUÊ/DESCARTADO/ESTADO</code>), auto-relação e aresta órfã; grafo válido → <code>[]</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-03, Implementar <code>compile_index(decisions, output, header)</code></li>
+<li>Origem no legado: <code>core/decisions/service.py</code></li>
+<li>Critério de pronto: deriva backlinks por verbos inversos, ordena por ID de origem, monta <code>↳ &lt;saídas&gt; · &lt;entradas&gt;</code>, concatena cabeçalho e grava atomicamente.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-04, Validar <code>Relationship</code> (verbos e alvo)</li>
+<li>Origem no legado: <code>core/domain/models.py</code></li>
+<li>Critério de pronto: <code>rel_type</code> ∈ conjunto de seis verbos (lower); <code>target_id</code> regex <code>^MD-\d{4}$</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-05, Derivar caminhos de <code>[decisions]</code> no driver</li>
+<li>Origem no legado: <code>src/main.py</code> (subcomando <code>decisions</code>)</li>
+<li>Critério de pronto: <code>decisoes_dir</code>/<code>output_file</code>/<code>header_file</code> vêm de <code>load_config().decisions</code>; nenhum literal de caminho no serviço (W001).</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Tarefas de Teste</h2>
+<ul><li>[ ] TT-01, Inversão de relações: duas fichas com <code>refina</code>/<code>depende-de</code> produzem os backlinks reversos esperados no índice.</li>
+<li>[ ] TT-02, Caso de erro: relação malformada → <code>ValueError</code>; aresta órfã → erro em <code>validate_integrity</code>.</li>
+<li>[ ] TT-03, Config: alterar <code>[decisions].dir</code> muda o diretório lido (sem literal chumbado).</li>
+<li>Cobertura existente: <code>tests/</code> (serviço de decisões).</li></ul>
+
+<h2>Ordem Sugerida</h2>
+
+<p>1. T-04 (validação de relação) e T-01 (carga) primeiro.</p>
+<p>2. T-02 (integridade) antes de T-03 (compilação), que consome o grafo validado.</p>
+<p>3. T-05 (config) fecha a integração com o driver.</p>
+
+<h2>Lacunas Pendentes (<span class="badge badge-high">Lacuna</span>)</h2>
+<ul><li>Nenhuma <span class="badge badge-high">Lacuna</span>. <strong>T1</strong> — via MCP, <code>load_config</code> quebrava por import ausente e a tool de decisões MCP não processava — <strong>resolvido</strong> no commit <code>cf73980</code> (import presente em <code>server.py:12</code>).</li></ul>
+
+      </div>
+    </div>
+        
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
+      document.querySelectorAll(".tab-content-panel").forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      // Ativar botão correspondente
+      event.target.classList.add("active");
+      // Ativar painel correspondente
+      document.getElementById("tab-" + tabId).classList.add("active");
+    }
+  </script>
+</body>
+</html>

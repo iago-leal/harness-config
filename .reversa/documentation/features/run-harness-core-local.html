@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run Harness Core Local | harness</title>
+  <meta name="reversa-category" content="feature-spec">
+  <meta name="reversa-producer-agent" content="reversa-docs-storyteller">
+  <meta name="reversa-template" content="feature">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <style>
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-color: var(--border-color);
+      background-color: var(--panel-bg);
+    }
+    .tab-content-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-page-id="feature-run-harness-core-local">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="../index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="../arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="../modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="../topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="../metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item active aria-current="page"" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Feature: Run Harness Core Local</h1>
+        <p>Especificação funcional, design e tarefas de evolução desta capacidade.</p>
+      </div>
+      <div class="meta-info">
+        Módulo: <code>harness-core</code><br>
+        Slug: <code>run-harness-core-local</code>
+      </div>
+    </header>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('requirements')">📋 Requisitos</button>
+      <button class="tab-btn" onclick="switchTab('design')">📐 Design Técnico</button>
+      <button class="tab-btn" onclick="switchTab('tasks')">🛠️ Roadmap &amp; Tarefas</button>
+    </div>
+
+    <!-- Tab Requisitos -->
+    <div class="tab-content-panel active" id="tab-requirements">
+      <div class="dashboard-card">
+        <h1>Requirements: Execução Local do Harness Core</h1>
+
+<p>&gt; Identificador: <code>run-harness-core-local</code></p>
+<p>&gt; Data: <code>2026-06-23</code></p>
+<p>&gt; Pasta da extração reversa: <code>_reversa_sdd/</code></p>
+<p>&gt; Confidência: <span class="badge badge-low">Confirmado</span> CONFIRMADO, <span class="badge badge-medium">Inferido</span> INFERIDO, <span class="badge badge-high">Lacuna</span> LACUNA / DÚVIDA</p>
+
+<h2>1. Resumo executivo</h2>
+
+<p>Esta unit estabelece a especificação do script wrapper de conveniência Bash (<code>harness</code>) localizado na raiz do projeto e o snippet de ganchos do agente local. Ela garante a execução isolada do núcleo Python (<code>harness-core</code>) sob o ambiente virtual dedicado e portátil, eliminando o acoplamento a interpretadores Python ou dependências instaladas globalmente no host local.</p>
+
+<h2>2. Contexto a partir do legado</h2>
+
+<p>A especificação baseia-se nos seguintes artefatos de engenharia reversa do núcleo:</p>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Fonte</th>
+<th>Trecho relevante</th>
+<th>Confidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_reversa_sdd/inventory.md#wrapper-de-conveniencia-raiz-do-projeto</code></td>
+<td>Criação de um ponto de entrada simplificado na raiz para o core.</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>_reversa_sdd/adrs/0007-wrapper-conveniencia-raiz.md</code></td>
+<td>Decisão de arquitetura por script wrapper para facilidade sintática e isolamento de dependências.</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>3. Personas e cenários de uso</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Persona</th>
+<th>Objetivo</th>
+<th>Cenário-chave</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Desenvolvedor Único</td>
+<td>Chamar a CLI do núcleo local a partir de qualquer sub-shell sem digitar caminhos longos da venv.</td>
+<td>O desenvolvedor executa <code>./harness decisions</code> na raiz para indexar as microdecisões.</td>
+</tr>
+<tr>
+<td>Agente de IA</td>
+<td>Integrar com ganchos do editor usando caminhos relativos ao projeto local.</td>
+<td>O agente invoca o linter local chamando o wrapper durante o evento <code>PostToolUse</code>.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>4. Regras de negócio novas ou alteradas</h2>
+
+<p>1. <strong>RN-01: Redirecionamento com Venv Isolada</strong> <span class="badge badge-low">Confirmado</span></p>
+<ul><li>Tipo: nova</li>
+<li>Descrição: O script wrapper <code>./harness</code> deve direcionar a execução de parâmetros para <code>harness-core/src/main.py</code> utilizando o interpretador embutido em <code>harness-core/.venv/bin/python3</code>.</li></ul>
+<p>2. <strong>RN-02: Fail-fast em Venv Ausente</strong> <span class="badge badge-low">Confirmado</span></p>
+<ul><li>Tipo: nova</li>
+<li>Descrição: Se a pasta do ambiente virtual <code>harness-core/.venv</code> estiver ausente, o script de conveniência deve abortar a execução com código <code>1</code>, exibindo instruções didáticas ao usuário de como inicializar a venv e instalar as dependências.</li></ul>
+
+<h2>5. Requisitos Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>ID</th>
+<th>Requisito</th>
+<th>Prioridade</th>
+<th>Critério de aceite</th>
+<th>Confidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF-01</td>
+<td>Encaminhamento de chamadas da CLI</td>
+<td>Must</td>
+<td>Chamar <code>./harness &lt;comando&gt;</code> executa a CLI correspondente com sucesso.</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Suporte de múltiplos argumentos</td>
+<td>Must</td>
+<td>Argumentos extras e flags são repassados ao core (<code>"$@"</code>).</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>6. Requisitos Não Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Requisito</th>
+<th>Evidência ou justificativa</th>
+<th>Confidência</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Portabilidade</td>
+<td>Compatibilidade com Bash POSIX em macOS e Linux.</td>
+<td>O wrapper utiliza rotinas portáveis de resolução de caminhos (<code>BASH_SOURCE</code>).</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Robustez</td>
+<td>Emissão de diagnósticos em <code>stderr</code>.</td>
+<td>Mensagens de venv ausente são enviadas para o canal de erro padrão.</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>7. Critérios de Aceitação</h2>
+
+<pre><code>Cenário: Execução do wrapper com venv existente
+  Dado que a venv existe em harness-core/.venv
+  Quando o usuário executa o comando `./harness cmd clarificar`
+  Então o wrapper localiza o interpretador e exibe o texto de esclarecimento de requisitos
+
+Cenário: Execução do wrapper com venv ausente
+  Dado que a venv não foi criada em harness-core/.venv
+  Quando o usuário executa `./harness decisions`
+  Então o wrapper aborta, exibe uma mensagem instruindo sobre o setup e retorna saída 1</code></pre>
+
+<h2>8. Prioridade MoSCoW</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Item</th>
+<th>MoSCoW</th>
+<th>Justificativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF-01</td>
+<td>Must</td>
+<td>Necessário para viabilizar a execução dos sub-serviços na raiz do projeto.</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Must</td>
+<td>Essencial para que os formatadores de hooks recebam o arquivo a formatar de forma correta.</td>
+</tr>
+<tr>
+<td>RNF de Portabilidade</td>
+<td>Should</td>
+<td>Garante o funcionamento cross-host em ambientes macOS e Linux do desenvolvedor.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>9. Esclarecimentos</h2>
+
+<p>&gt; Nenhuma sessão de dúvidas registrada ainda. Rode <code>/reversa-clarify</code> quando houver <code>[DÚVIDA]</code> pendente.</p>
+
+<h2>10. Lacunas</h2>
+<ul><li>Nenhuma lacuna identificada.</li></ul>
+
+<h2>11. Histórico de alterações</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Data</th>
+<th>Alteração</th>
+<th>Autor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2026-06-23</td>
+<td>Versão inicial gerada por <code>/reversa-writer</code></td>
+<td>reversa</td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </div>
+
+    
+    <!-- Tab Design -->
+    <div class="tab-content-panel" id="tab-design">
+      <div class="dashboard-card">
+        <h1>Design: Execução Local do Harness Core</h1>
+
+<p>&gt; Identificador: <code>run-harness-core-local</code></p>
+<p>&gt; Data: <code>2026-06-23</code></p>
+<p>&gt; Requirements: <code>_reversa_sdd/run-harness-core-local/requirements.md</code></p>
+<p>&gt; Confidência: <span class="badge badge-low">Confirmado</span> CONFIRMADO, <span class="badge badge-medium">Inferido</span> INFERIDO, <span class="badge badge-high">Lacuna</span> LACUNA / DÚVIDA</p>
+
+<h2>1. Visão Geral do Design</h2>
+
+<p>O design foca em desacoplar a execução do Harness Core de ferramentas globais instaladas no host, encapsulando a chamada no ambiente virtual de dependências Python. Ele é composto por duas partes integradas:</p>
+
+<pre><code>[ Usuário / Ganchos da IDE ] 
+          │
+          ▼
+   [ Script harness ] (Raiz)
+          │
+          ├─► (Verifica se harness-core/.venv existe)
+          │
+          ▼ (Se válido, repassa "$@")
+[ harness-core/.venv/bin/python3 ] ──► [ harness-core/src/main.py ]</code></pre>
+
+<p>---</p>
+
+<h2>2. Componentes Chaves</h2>
+
+<h3>2.1 Script Wrapper <code>harness</code> <span class="badge badge-low">Confirmado</span></h3>
+<ul><li><strong>Tipo:</strong> Executável Bash (POSIX compliant).</li>
+<li><strong>Localização:</strong> Raiz do repositório (<code>/Users/iagoleal/dev/harness/harness</code>).</li>
+<li><strong>Responsabilidade:</strong> </li></ul>
+<p>  1. Descobrir o diretório absoluto de sua própria localização no disco local.</p>
+<p>  2. Verificar se o interpretador Python virtual <code>harness-core/.venv/bin/python3</code> e o entry point principal <code>harness-core/src/main.py</code> estão presentes.</p>
+<p>  3. Abortar e alertar o usuário caso a venv não exista.</p>
+<p>  4. Encaminhar de forma atômica a execução repassando os parâmetros.</p>
+
+<h3>2.2 Interpretador Virtual Python (<code>.venv</code>) <span class="badge badge-low">Confirmado</span></h3>
+<ul><li><strong>Tipo:</strong> Runtime Python 3 isolado.</li>
+<li><strong>Localização:</strong> <code>harness-core/.venv/</code>.</li>
+<li><strong>Responsabilidade:</strong> Executar o script principal da CLI do núcleo com acesso garantido a dependências compiladas e instaladas localmente (ex: <code>toml</code>, <code>mcp</code>, <code>pytest</code>).</li></ul>
+
+<p>---</p>
+
+<h2>3. Algoritmo de Execução do Wrapper</h2>
+
+<p>O algoritmo escrito em Bash deve garantir portabilidade e detecção confiável de caminhos relativos ao próprio script, independentemente de onde o usuário o chame no shell.</p>
+
+<pre><code># 1. Resolve o caminho absoluto onde o próprio script reside (independente do CWD atual)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"
+ABS_VENV_PYTHON="$SCRIPT_DIR/harness-core/.venv/bin/python3"
+ABS_MAIN_PY="$SCRIPT_DIR/harness-core/src/main.py"
+
+# 2. Valida venv (Fail-fast)
+if [ ! -f "$ABS_VENV_PYTHON" ]; then
+    echo "Erro: O ambiente virtual do harness-core não está configurado em..." &gt;&amp;2
+    exit 1
+fi
+
+# 3. Executa utilizando exec (substitui o processo Bash atual pelo processo Python)
+exec "$ABS_VENV_PYTHON" "$ABS_MAIN_PY" "$@"</code></pre>
+
+<p>---</p>
+
+<h2>4. Integração de Ganchos do Agente (Automação)</h2>
+
+<p>A integração com o ciclo de vida do agente de IA local (Claude Code / Gemini) baseia-se na delegação de comandos de hooks ao wrapper local. O modelo de integração é definido em <code>.reversa/settings.json.snippet</code>:</p>
+<ul><li><strong><code>SessionStart</code> (Startup/Resume):</strong> Delegação para <code>./harness cmd resume</code> para carregamento de âncoras e consistência Git.</li>
+<li><strong><code>PostToolUse</code> (Format-on-save):</strong> Delegação para <code>./harness format</code> (com o caminho do arquivo modificado anexado pela IDE).</li>
+<li><strong><code>Stop</code> (Encerramento de ciclo):</strong> Delegação para <code>./harness decisions</code> para consolidação do grafo e geração de backlinks.</li></ul>
+
+      </div>
+    </div>
+        
+    
+    <!-- Tab Tasks -->
+    <div class="tab-content-panel" id="tab-tasks">
+      <div class="dashboard-card">
+        <h1>Execução Local do Harness Core, Tarefas de Implementação</h1>
+
+<p>&gt; Identificador: <code>run-harness-core-local</code></p>
+<p>&gt; Data: <code>2026-06-23</code></p>
+<p>&gt; Requirements: <code>_reversa_sdd/run-harness-core-local/requirements.md</code></p>
+<p>&gt; Design: <code>_reversa_sdd/run-harness-core-local/design.md</code></p>
+
+<h2>Pré-requisitos</h2>
+<ul><li>[x] O sub-módulo <code>harness-core</code> está presente no repositório.</li>
+<li>[x] Python 3 e venv configurados localmente em <code>harness-core/.venv</code>.</li>
+<li>[x] Dependências do <code>harness-core</code> instaladas no ambiente virtual.</li></ul>
+
+<h2>Tarefas</h2>
+<ul><li>[x] T-01, Criar o script wrapper de conveniência Bash <code>harness</code> na raiz do projeto <span class="badge badge-low">Confirmado</span></li>
+<li>Origem no legado: <code>_reversa_sdd/inventory.md#wrapper-de-conveniencia-raiz-do-projeto</code> e <code>_reversa_sdd/adrs/0007-wrapper-conveniencia-raiz.md</code></li>
+<li>Critério de pronto: Executar <code>./harness</code> na raiz encaminha a chamada para <code>harness-core/src/main.py</code> usando <code>harness-core/.venv/bin/python3</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span> CONFIRMADO</li>
+<li>[x] T-02, Adicionar fail-fast e instruções para venv ausente <span class="badge badge-low">Confirmado</span></li>
+<li>Origem no legado: <code>_reversa_sdd/run-harness-core-local/requirements.md</code> (RN-02)</li>
+<li>Critério de pronto: Ao deletar ou renomear temporariamente a pasta <code>harness-core/.venv</code>, executar <code>./harness</code> falha com código 1, escrevendo erro instrutivo no stderr.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span> CONFIRMADO</li>
+<li>[x] T-03, Definir snippet de ganchos do agente local <span class="badge badge-low">Confirmado</span></li>
+<li>Origem no legado: <code>.reversa/settings.json.snippet</code></li>
+<li>Critério de pronto: O snippet <code>.reversa/settings.json.snippet</code> define regras para os hooks <code>SessionStart</code>, <code>PostToolUse</code> e <code>Stop</code> apontando para o wrapper <code>./harness</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span> CONFIRMADO</li></ul>
+
+<h2>Tarefas de Teste</h2>
+<ul><li>[x] TT-01, Teste do happy path do wrapper <span class="badge badge-low">Confirmado</span></li>
+<li>Origem no legado: <code>harness-core/tests/test_wrapper.py:4-19</code> (<code>test_wrapper_help</code>)</li>
+<li>Critério de pronto: Rodar <code>PYTHONPATH=harness-core harness-core/.venv/bin/pytest harness-core/tests/test_wrapper.py</code> e validar se a chamada com <code>--help</code> retorna código de saída 0 e imprime o texto correto de ajuda.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span> CONFIRMADO</li>
+<li>[x] TT-02, Teste do happy path para comandos específicos do core <span class="badge badge-low">Confirmado</span></li>
+<li>Origem no legado: <code>harness-core/tests/test_wrapper.py:21-33</code> (<code>test_wrapper_cmd_clarificar</code>)</li>
+<li>Critério de pronto: Rodar pytest e validar que chamas a <code>cmd clarificar</code> via wrapper executam corretamente sem erros.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span> CONFIRMADO</li></ul>
+
+<h2>Ordem Sugerida</h2>
+<p>1. Criar o wrapper <code>./harness</code> básico e garantir permissão executável (<code>chmod +x</code>).</p>
+<p>2. Adicionar validação de caminho absoluto e verificação de venv ausente.</p>
+<p>3. Desenvolver o snippet de hooks <code>.reversa/settings.json.snippet</code>.</p>
+<p>4. Implementar testes automatizados em <code>harness-core/tests/test_wrapper.py</code>.</p>
+
+<h2>Lacunas Pendentes (<span class="badge badge-high">Lacuna</span>)</h2>
+<ul><li>Nenhuma lacuna identificada para esta unit.</li></ul>
+
+      </div>
+    </div>
+        
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
+      document.querySelectorAll(".tab-content-panel").forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      // Ativar botão correspondente
+      event.target.classList.add("active");
+      // Ativar painel correspondente
+      document.getElementById("tab-" + tabId).classList.add("active");
+    }
+  </script>
+</body>
+</html>

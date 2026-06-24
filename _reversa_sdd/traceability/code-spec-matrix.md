@@ -1,13 +1,11 @@
 # Matriz de Rastreabilidade Código-Especificação (Code-Spec Matrix)
 
-> Regenerado pelo Writer em 2026-06-24 (Re-extração após as features 003, 004 e 005)
+> Regenerado pelo Writer em 2026-06-24 (Re-extração pós-feature 008-reprodutibilidade-e-config)
 > Layout das specs: `feature-folder`, granularity `feature`. Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · n/a (sem unit dedicada).
 
 Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As pastas de spec mapeiam capacidades/features do `harness-core`. Arquivos de framework (`.claude/skills/`, `.agents/skills/`) e artefatos do próprio Reversa (`.reversa/`, `_reversa_sdd/`, `_reversa_forward/`) ficam fora do escopo.
 
-> ⚠️ **Mudança vs versão anterior:** o módulo `claude-config/` (scripts shell `bootstrap.sh`, `format-on-edit.sh`, `sync-check.sh`, `gerar-index-decisoes.sh`, `commands/*.md`) **não existe mais** (purgado, commit `5624f78`). As specs antes ancoradas nele foram **reescritas** sobre o core Python equivalente. Surgiram as units `install/` (f003) e `session/` (f004).
-
-> ⚠️ **Atualização cirúrgica (feature 006, commit `e894c59`):** `config.py` ganhou `SessionSection` e o `harness.toml` a seção `[session]`; o caminho de sessão passou a ser lido de `config.session.state_file` em CLI e MCP (fim do literal chumbado e da divergência T2). Via única de configuração: `load_harness_config`/`import toml` removidos de `main.py` (T5 fechado). Novo contrato de footprint testado (`tests/test_footprint.py` + `tests/helpers.py`). T1 e T3 resolvidos no commit anterior `cf73980`.
+> ⚠️ **Mudança vs versão anterior (feature 007):** Além do bootstrap evolucionário (`init`/`upgrade`), a feature 008 adicionou a compilação travada de dependências a partir do `requirements.in` (gerenciado por `uv`) gerando o `requirements.txt`, e a infraestrutura de integração contínua sob `.github/workflows/ci.yml`.
 
 ---
 
@@ -16,38 +14,39 @@ Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As past
 | Arquivo do legado                     | Unit correspondente      | Cobertura |
 | ------------------------------------- | ------------------------ | --------- |
 | `core/bootstrap/service.py`           | `bootstrap/`             | 🟢        |
+| `core/bootstrap/init_service.py` ✨  | `bootstrap/`             | 🟢        |
 | `core/formatting/service.py`          | `format-on-edit/`        | 🟢        |
-| `core/sync/service.py`                | `sync-check/`            | 🟢        |
+| `core/sync/service.py`                | `sync-check/` (aviso ver) | 🟢        |
 | `core/decisions/service.py`           | `microdecisoes/`         | 🟢        |
 | `core/commands/service.py`            | `comandos-customizados/` | 🟢        |
 | `core/documentation/service.py`       | `documentacao-uso-html/` | 🟢        |
 | `core/documentation/template.html`    | `documentacao-uso-html/` | 🟢        |
-| `core/install/service.py` ✨          | `install/`               | 🟢        |
-| `core/install/harness_profiles.py` ✨ | `install/`               | 🟢        |
-| `core/install/template.md` ✨         | `install/`               | 🟢        |
-| `core/session/serializer.py` ✨       | `session/`               | 🟢        |
-| `core/session/sinks.py` ✨            | `session/`               | 🟢        |
-| `core/session/errors.py` ✨           | `session/`               | 🟢        |
+| `core/install/service.py`             | `install/`               | 🟢        |
+| `core/install/harness_profiles.py`    | `install/`               | 🟢        |
+| `core/install/template.md`            | `install/`               | 🟢        |
+| `core/session/serializer.py`          | `session/`               | 🟢        |
+| `core/session/sinks.py`               | `session/`               | 🟢        |
+| `core/session/errors.py`              | `session/`               | 🟢        |
 
 ## 📁 2. Domínio compartilhado (`core/domain/`, `core/ports/`)
 
 | Arquivo do legado       | Unit correspondente                                                                                                                                        | Cobertura |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
 | `core/domain/models.py` | `session/` + `microdecisoes/` (transversal)                                                                                                                | 🟢        |
-| `core/domain/config.py` | `microdecisoes/` (origem de `[decisions]`); `install/` (origem de `active_harness`); `session/` (origem de `[session]` → `SessionSection`, feature 006) 🟢 | 🟢        |
+| `core/domain/config.py` | `microdecisoes/` (`[decisions]`); `install/` (`active_harness`); `session/` (`[session]`); `bootstrap/` (`upstream_path`, `version`, feature 007) ✨       | 🟢        |
 | `core/domain/cache.py`  | `sync-check/`                                                                                                                                              | 🟢        |
-| `core/ports/fs.py`      | transversal (todas as units que fazem I/O)                                                                                                                 | 🟡        |
+| `core/ports/fs.py`      | transversal (inclui `is_dir` estendido para `bootstrap/` na feature 007)                                                                                   | 🟡        |
 | `core/ports/git.py`     | `sync-check/`, `comandos-customizados/`, `bootstrap/`                                                                                                      | 🟡        |
-| `core/ports/process.py` | `format-on-edit/`                                                                                                                                          | 🟡        |
+| `core/ports/process.py` | transversal (inclui `run_command` estendido para `bootstrap/` na feature 007)                                                                              | 🟡        |
 
 ## 📁 3. Adaptadores (`harness-core/src/adapters/`)
 
 | Arquivo do legado               | Unit correspondente                                                                                                                                               | Cobertura |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `adapters/fs/local.py`          | transversal (gravação atômica)                                                                                                                                    | 🟡        |
+| `adapters/fs/local.py`          | transversal (inclui `is_dir` física)                                                                                                                              | 🟡        |
 | `adapters/git/subprocess.py`    | `sync-check/`, `comandos-customizados/`                                                                                                                           | 🟢        |
-| `adapters/process/formatter.py` | `format-on-edit/` (contracts.md)                                                                                                                                  | 🟢        |
-| `adapters/mcp/server.py`        | transversal — `format-on-edit/`, `sync-check/`, `microdecisoes/`, `session/` (expõe as 4 tools; `session_file` lido de `config.session.state_file` — feature 006) | 🟡        |
+| `adapters/process/formatter.py` | `format-on-edit/` + `bootstrap/` (inclui `run_command` físico)                                                                                                    | 🟢        |
+| `adapters/mcp/server.py`        | transversal — `format-on-edit/`, `sync-check/`, `microdecisoes/`, `session/` (inclui alertas passivos de versão na feature 007)                                    | 🟡        |
 
 ## 📁 4. Drivers e wrapper
 
@@ -60,8 +59,10 @@ Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As past
 
 | Arquivo do legado                             | Unit correspondente                                                                                                                       | Cobertura |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `harness-core/harness.toml`                   | `microdecisoes/` (`[decisions]`), `format-on-edit/` (`[formatting]`, T4), `sync-check/` (`[sync]`), `session/` (`[session]`, feature 006) | 🟢        |
-| `harness-core/requirements.txt`               | n/a (manifesto de dependências; ver `dependencies.md`)                                                                                    | n/a       |
+| `harness-core/harness.toml`                   | `microdecisoes/` (`[decisions]`), `format-on-edit/` (`[formatting]`), `sync-check/` (`[sync]`), `session/` (`[session]`), `bootstrap/` (`[harness]`) | 🟢        |
+| `harness-core/requirements.in` ✨             | n/a (dependências abstratas; ver `dependencies.md`)                                                                                      | n/a       |
+| `harness-core/requirements.txt`               | n/a (manifesto de dependências físicas trancadas; ver `dependencies.md`)                                                                 | n/a       |
+| `.github/workflows/ci.yml` ✨                 | n/a (workflow de integração contínua; ver `dependencies.md`)                                                                              | n/a       |
 | `.harness/estado-da-sessao.md`                | `session/` + `comandos-customizados/`                                                                                                     | 🟢        |
 | `.harness/decisoes/MD-*.md`                   | `microdecisoes/`                                                                                                                          | 🟢        |
 | `.harness/decisoes/_cabecalho.md`             | `microdecisoes/`                                                                                                                          | 🟢        |
@@ -86,8 +87,6 @@ Todos os `__init__.py` em `harness-core/src/**` são marcadores de pacote (sem l
 
 ## 📊 8. Resumo de cobertura
 
-- **Arquivos de produto com lógica mapeados a uma unit:** todos os `service.py`/módulos de `core/*`, os 3 adaptadores físicos, o driver MCP, a CLI e o wrapper → **cobertura 🟢/🟡 completa**.
-- **`n/a` (candidatos a análise adicional / não-produto):** `requirements.txt`, `CLAUDE.md`/`GEMINI.md`/`AGENTS.md`, os `__init__.py`, e as duas árvores de skills do Reversa (framework).
-- **Units de spec ativas (9):** `bootstrap/`, `format-on-edit/`, `sync-check/`, `microdecisoes/`, `comandos-customizados/`, `documentacao-uso-html/`, `run-harness-core-local/`, `install/` ✨, `session/` ✨.
-- **Contrato de footprint (feature 006) 🟢:** `harness-core/tests/test_footprint.py` + `harness-core/tests/helpers.py` (`RecordingFileSystem`) fixam por teste a zona protegida BR-MIGRAR-007 — o harness falha barulhento se escrever em `~/.claude`, `~/.agent-memory` ou fora do repositório. Não há unit de spec dedicada; mapeia-se transversalmente a `session/`, `microdecisoes/`, `install/` e aos dois drivers. Confiança 🟡 quanto à cobertura: cobre só os serviços efetivamente exercitados; é teste, não guard de runtime.
-- **Bugs antes latentes — situação atual:** T1 (MCP `process_decisions`/`session_command` com `load_config`) **RESOLVIDO** no commit `cf73980` (import de `load_config` em `server.py`). T2 (estado de sessão divergente CLI×MCP) **RESOLVIDO** na feature 006: ambos os drivers leem `session_file` de `config.session.state_file` (sem literal chumbado). T3 (`json` ausente em `main.py`, autoformat por hook) **RESOLVIDO** no commit `cf73980` (import de `json`). T5 (duas vias de config — `load_harness_config` dict legado) **FECHADO** na feature 006: via única tipada `load_config`; `load_harness_config` e `import toml` removidos de `main.py`. Permanece latente apenas **T4** (`format-on-edit/`, `[formatting]` declarado mas não consumido).
+- **Arquivos de produto com lógica mapeados a uma unit:** todos os `service.py`/módulos de `core/*`, adaptadores físicos, driver MCP, CLI e wrapper → **cobertura completa**.
+- **`n/a` (candidatos a análise adicional / não-produto):** `requirements.in`, `requirements.txt`, `.github/workflows/ci.yml`, `CLAUDE.md`/`GEMINI.md`/`AGENTS.md`, os `__init__.py`, e as duas árvores de skills do Reversa (framework).
+- **Units de spec ativas (9):** `bootstrap/` (estendido na f007), `format-on-edit/`, `sync-check/`, `microdecisoes/`, `comandos-customizados/`, `documentacao-uso-html/`, `run-harness-core-local/`, `install/`, `session/`.

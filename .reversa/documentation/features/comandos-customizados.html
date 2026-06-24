@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comandos Customizados | harness</title>
+  <meta name="reversa-category" content="feature-spec">
+  <meta name="reversa-producer-agent" content="reversa-docs-storyteller">
+  <meta name="reversa-template" content="feature">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <style>
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-color: var(--border-color);
+      background-color: var(--panel-bg);
+    }
+    .tab-content-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-page-id="feature-comandos-customizados">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="../index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="../arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="../modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="../topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="../metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item active aria-current="page"" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Feature: Comandos Customizados</h1>
+        <p>Especificação funcional, design e tarefas de evolução desta capacidade.</p>
+      </div>
+      <div class="meta-info">
+        Módulo: <code>harness-core</code><br>
+        Slug: <code>comandos-customizados</code>
+      </div>
+    </header>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('requirements')">📋 Requisitos</button>
+      <button class="tab-btn" onclick="switchTab('design')">📐 Design Técnico</button>
+      <button class="tab-btn" onclick="switchTab('tasks')">🛠️ Roadmap &amp; Tarefas</button>
+    </div>
+
+    <!-- Tab Requisitos -->
+    <div class="tab-content-panel active" id="tab-requirements">
+      <div class="dashboard-card">
+        <h1>Comandos Customizados (Commands) — Requisitos (Requirements)</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 004)</p>
+<p>&gt; Nível de Documentação: <strong>Completo</strong> · Escala: <span class="badge badge-low">Confirmado</span> CONFIRMADO · <span class="badge badge-medium">Inferido</span> INFERIDO · <span class="badge badge-high">Lacuna</span> LACUNA</p>
+<p>&gt; Rastreabilidade ao Legado: <a href="file:///Users/iagoleal/dev/harness/harness-core/src/core/commands/service.py"><code>harness-core/src/core/commands/service.py</code></a>; consome <code>core/session/*</code>. Driver: <code>src/main.py</code> (subcomando <code>cmd</code>, hook <code>SessionStart</code>).</p>
+
+<p>&gt; ⚠️ <strong>Reescrita vs versão anterior:</strong> os comandos <strong>deixaram de ser</strong> arquivos Markdown em <code>harness-config/commands/</code> (purgados, commit <code>5624f78</code>) e passaram a ser o <code>CommandService</code> Python em <code>harness-core</code>. O estado de sessão saiu de <code>ESTADO-DA-SESSAO.md</code> (raiz) para <code>.harness/estado-da-sessao.md</code> (feature 004). Não há mais <code>~/.agent-memory/BASTAO.md</code> nem ponte de memória; <code>handoff</code>/<code>resume</code> operam sobre o estado local.</p>
+
+<h2>Visão Geral</h2>
+
+<p>Despacha slash commands de sessão agnósticos à IDE: <code>resume</code>, <code>encerrar-sessao</code>, <code>handoff</code>, <code>clarificar</code>. Carrega/grava o estado de sessão em <code>.harness/estado-da-sessao.md</code>, valida a âncora Git na retomada e reinjeta a narrativa preservada. O serviço não conhece o harness — a seleção do _sink_ fica na borda (<code>main.py</code>).</p>
+
+<h2>Responsabilidades</h2>
+<ul><li>Normalizar e despachar o comando (<code>strip().lower().lstrip("/")</code>). <span class="badge badge-low">Confirmado</span></li>
+<li><code>resume</code>: criar/reativar a sessão preservando a narrativa; alertar se HEAD ≠ âncora. <span class="badge badge-low">Confirmado</span></li>
+<li><code>encerrar-sessao</code>: gravar o commit-âncora e desativar a sessão. <span class="badge badge-low">Confirmado</span></li>
+<li><code>handoff</code> / <code>clarificar</code>: produzir blocos de texto (handoff com feature+HEAD; clarificar com texto fixo de limite de rodadas). <span class="badge badge-low">Confirmado</span></li>
+<li>Distinguir estado <strong>ausente</strong> de <strong>malformado</strong> (falha barulhenta). <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Regras de Negócio</h2>
+<ul><li><strong>RN-07 — Âncora Git de integridade:</strong> em <code>resume</code>, se HEAD ≠ <code>commit_hash</code> do estado, monta <code>⚠️ ALERTA</code> que antecede a narrativa; reativa mesmo assim. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N3 — Narrativa preservada:</strong> <code>start_session</code> reativa preservando a narrativa escrita pelo agente; a CLI reinjeta o corpo dela, nunca o inventa. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N4 — Ausente ≠ malformado:</strong> arquivo ausente → <code>None</code> (sessão nova); malformado → <code>MalformedSessionStateError</code>. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>RN-N5 — Core não conhece o harness:</strong> o serviço produz texto puro; a seleção do mecanismo de entrega por <code>active_harness</code> vive na borda (<code>get_sink</code> + <code>main.py</code>). <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Isolamento no fechamento:</strong> <code>encerrar-sessao</code> exige sessão ativa (senão erro), lê HEAD, <code>close_session(commit)</code> e salva atomicamente. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Requisitos Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>ID</th>
+<th>Requisito</th>
+<th>Prioridade</th>
+<th>Critério de Aceite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF-01</td>
+<td>Comando <code>resume</code>.</td>
+<td>Must</td>
+<td>Sem sessão → cria com HEAD e feature <code>args[0]</code> (ou <code>default_feature</code>); com sessão → reativa, reinjeta narrativa, alerta se âncora divergir.</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Comando <code>encerrar-sessao</code>.</td>
+<td>Must</td>
+<td>Exige sessão ativa; grava commit-âncora via <code>close_session</code>; salva atomicamente.</td>
+</tr>
+<tr>
+<td>RF-03</td>
+<td>Comando <code>handoff</code>.</td>
+<td>Should</td>
+<td>Monta bloco Markdown com feature ativa + HEAD.</td>
+</tr>
+<tr>
+<td>RF-04</td>
+<td>Comando <code>clarificar</code>.</td>
+<td>Should</td>
+<td>Retorna texto fixo (limite de 2 rodadas de diálogo).</td>
+</tr>
+<tr>
+<td>RF-05</td>
+<td>Comando desconhecido.</td>
+<td>Must</td>
+<td>Retorna <code>"Comando desconhecido: &lt;command&gt;"</code>.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Requisitos Não Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Requisito inferido</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Robustez</td>
+<td>Estado corrompido falha barulhento (distingue de ausente).</td>
+<td><code>core/commands/service.py</code> (<code>load_session</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Baixo acoplamento</td>
+<td>Serviço agnóstico a harness; sink na borda.</td>
+<td><code>core/commands/service.py</code>, <code>main.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Atomicidade</td>
+<td>Estado salvo via serializer + gravação atômica.</td>
+<td><code>core/commands/service.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Critérios de Aceitação</h2>
+
+<pre><code>Dado que não existe estado de sessão
+Quando `./harness cmd resume 005-decisoes-em-harness`
+Então uma nova sessão é criada com o HEAD atual e a feature informada, e retorna "Nova sessão".
+
+Dado uma sessão existente e HEAD diferente da âncora gravada
+Quando `./harness cmd resume`
+Então a resposta antecede um ⚠️ ALERTA de divergência de âncora à narrativa reinjetada.
+
+Dado uma sessão ativa
+Quando `./harness cmd encerrar-sessao`
+Então o commit HEAD é gravado como âncora e a sessão fica inativa.
+
+Dado um arquivo de estado malformado
+Quando load_session é chamado
+Então um MalformedSessionStateError é levantado (não tratado como sessão nova).</code></pre>
+
+<h2>Prioridade (MoSCoW)</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Requisito</th>
+<th>MoSCoW</th>
+<th>Justificativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>resume</code> com âncora e narrativa (RF-01)</td>
+<td>Must</td>
+<td>Coração da retomada do ciclo forward.</td>
+</tr>
+<tr>
+<td><code>encerrar-sessao</code> (RF-02)</td>
+<td>Must</td>
+<td>Fecha a sessão e grava a âncora; sem ele a retomada não tem base.</td>
+</tr>
+<tr>
+<td><code>handoff</code> / <code>clarificar</code> (RF-03/04)</td>
+<td>Should</td>
+<td>Apoios ao fluxo; texto derivado/fixo.</td>
+</tr>
+<tr>
+<td>Comando desconhecido (RF-05)</td>
+<td>Must</td>
+<td>Falha previsível e legível.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Rastreabilidade de Código</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Arquivo</th>
+<th>Função / Classe</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core/commands/service.py</code></td>
+<td><code>CommandService.execute_command</code>, <code>load_session</code>, <code>save_session</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/session/serializer.py</code></td>
+<td><code>render</code>, <code>render_narrative</code> (consumidos)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>core/domain/models.py</code></td>
+<td><code>SessionState</code>, <code>SessionNarrative</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>src/main.py</code></td>
+<td>Subcomando <code>cmd</code>, caminho de sessão lido de <code>config.session.state_file</code> (default <code>.harness/estado-da-sessao.md</code>), resolução de sink</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<p>&gt; <span class="badge badge-low">Confirmado</span> <strong>T2 — RESOLVIDO (feature 006):</strong> via MCP (<code>server.py:94</code>), <code>session_command</code> lê o caminho de sessão de <code>config.session.state_file</code>, o mesmo <code>.harness/estado-da-sessao.md</code> que a CLI usa. Não há mais literal <code>ESTADO-DA-SESSAO.md</code> na raiz nem divergência CLI×MCP; o estado converge.</p>
+
+      </div>
+    </div>
+
+    
+    <!-- Tab Design -->
+    <div class="tab-content-panel" id="tab-design">
+      <div class="dashboard-card">
+        <h1>Comandos Customizados (Commands) — Design Técnico</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 004)</p>
+<p>&gt; Foca no COMO a unit é construída, a partir do código legado lido. Escala: <span class="badge badge-low">Confirmado</span> / <span class="badge badge-medium">Inferido</span> / <span class="badge badge-high">Lacuna</span></p>
+
+<h2>Interface</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Símbolo</th>
+<th>Assinatura</th>
+<th>Retorno</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CommandService.execute_command</code></td>
+<td><code>(command, args, repo_path, session_filepath)</code></td>
+<td><code>str</code></td>
+<td>Normaliza e despacha; comando desconhecido → string de erro.</td>
+</tr>
+<tr>
+<td><code>CommandService.load_session</code></td>
+<td><code>(session_filepath)</code></td>
+<td>`SessionState \</td>
+<td>None`</td>
+<td>Ausente → <code>None</code>; malformado → <code>MalformedSessionStateError</code>.</td>
+</tr>
+<tr>
+<td><code>CommandService.save_session</code></td>
+<td><code>(state, session_filepath)</code></td>
+<td>—</td>
+<td><code>serializer.render</code> + gravação atômica.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Fluxo Principal</h2>
+
+<p>1. <strong>Normalização:</strong> <code>command.strip().lower().lstrip("/")</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>2. <strong><code>encerrar-sessao</code>:</strong> carrega sessão; ausente/inativa → erro. Lê HEAD (<code>GitPort</code>), <code>session.close_session(commit)</code>, salva atomicamente. <span class="badge badge-low">Confirmado</span></p>
+<p>3. <strong><code>resume</code>:</strong></p>
+<ul><li>Sem sessão → cria <code>SessionState</code> com HEAD atual e feature <code>args[0]</code> (ou <code>"default_feature"</code>), salva, retorna "Nova sessão". <span class="badge badge-low">Confirmado</span></li>
+<li>Com sessão → compara <code>session.commit_hash</code> com HEAD; se divergir, monta <code>⚠️ ALERTA</code> (RN-07); <code>start_session</code> reativa <strong>preservando a narrativa</strong> (RN-N3); salva; retorna <code>&lt;warning&gt;&lt;corpo da narrativa&gt;\n&lt;footer&gt;</code>. O corpo vem de <code>serializer.render_narrative</code>. <span class="badge badge-low">Confirmado</span></li></ul>
+<p>4. <strong><code>clarificar</code>:</strong> texto fixo (limite de 2 rodadas). <span class="badge badge-low">Confirmado</span></p>
+<p>5. <strong><code>handoff</code>:</strong> monta bloco Markdown com feature ativa + HEAD. <span class="badge badge-low">Confirmado</span></p>
+<p>6. <strong>Desconhecido:</strong> <code>"Comando desconhecido: &lt;command&gt;"</code>. <span class="badge badge-low">Confirmado</span></p>
+
+<h2>Fluxos Alternativos</h2>
+<ul><li><strong>Estado ausente em <code>resume</code>:</strong> sessão nova normal (não erro). <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Estado malformado:</strong> <code>load_session</code> levanta <code>MalformedSessionStateError</code> (RN-N4). <span class="badge badge-low">Confirmado</span></li>
+<li><strong><code>encerrar-sessao</code> sem sessão ativa:</strong> erro explícito. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Divergência de âncora:</strong> alerta antecede a narrativa; reativa mesmo assim. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Dependências</h2>
+<ul><li><code>GitPort</code> — HEAD para criação/encerramento e validação da âncora.</li>
+<li><code>FileSystemPort</code> — leitura/gravação atômica do estado.</li>
+<li><code>core/session/serializer</code> — <code>render</code> (persistência) e <code>render_narrative</code> (reinjeção).</li>
+<li><code>core/session/errors.MalformedSessionStateError</code>.</li>
+<li><code>core/domain/models.SessionState</code> / <code>SessionNarrative</code>.</li>
+<li>(Na borda) <code>core/session/sinks.get_sink</code> — escolhido por <code>main.py</code> conforme <code>active_harness</code> (RN-N5).</li></ul>
+
+<h2>Decisões de Design Identificadas</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Decisão</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Serviço agnóstico a IDE/harness; sink escolhido na borda</td>
+<td><code>service.py</code> (texto puro) + <code>main.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Âncora Git como detector de divergência na retomada</td>
+<td><code>service.py</code> (<code>resume</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Narrativa preservada na reativação (não reinventada)</td>
+<td><code>service.py</code> (<code>start_session</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Ausente ≠ malformado em <code>load_session</code></td>
+<td><code>service.py</code> + <code>session/errors.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Estado Interno</h2>
+
+<p>O estado de domínio é externalizado em <code>.harness/estado-da-sessao.md</code> (gerido pela unit <code>session</code>). O <code>CommandService</code> não guarda estado em memória entre chamadas; cada comando carrega/grava o arquivo.</p>
+
+<h2>Observabilidade</h2>
+<ul><li>Alerta <code>⚠️</code> textual em divergência de âncora.</li>
+<li><code>MalformedSessionStateError</code> como sinal barulhento de corrupção.</li>
+<li>A reinjeção real (stdout/arquivo) acontece na borda, pelo sink.</li></ul>
+
+<h2>Riscos e Lacunas</h2>
+<ul><li><span class="badge badge-low">Confirmado</span> <strong>T2 (resolvido na feature 006):</strong> via MCP, <code>session_command</code> lê o caminho de sessão de <code>config.session.state_file</code> — o mesmo <code>.harness/estado-da-sessao.md</code> da CLI. Não há mais estado paralelo na raiz nem divergência CLI×MCP.</li>
+<li><span class="badge badge-medium">Inferido</span> <code>clarificar</code> e <code>handoff</code> produzem texto; a ação efetiva (commits, push) descrita no Markdown legado não é mais executada pelo serviço (escopo reduzido).</li></ul>
+
+      </div>
+    </div>
+        
+    
+    <!-- Tab Tasks -->
+    <div class="tab-content-panel" id="tab-tasks">
+      <div class="dashboard-card">
+        <h1>Comandos Customizados (Commands) — Tarefas de Implementação</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 004)</p>
+<p>&gt; Sequência executável para reimplementar a unit a partir do legado, com rastreabilidade ao código original.</p>
+
+<p>&gt; ⚠️ Reescrita: a unit agora é o <code>CommandService</code> Python (<code>harness-core</code>), não os arquivos Markdown legados <code>commands/*.md</code> (purgados). Estado em <code>.harness/estado-da-sessao.md</code>; sem <code>~/.agent-memory/BASTAO.md</code>.</p>
+
+<h2>Pré-requisitos</h2>
+<ul><li>[ ] <code>GitPort</code> / <code>FileSystemPort</code> disponíveis.</li>
+<li>[ ] <code>core/session/{serializer,sinks,errors}</code> implementados (unit <code>session</code>).</li>
+<li>[ ] <code>SessionState</code> / <code>SessionNarrative</code> em <code>core/domain/models.py</code>.</li></ul>
+
+<h2>Tarefas</h2>
+<ul><li>[ ] T-01, Implementar <code>load_session</code> / <code>save_session</code></li>
+<li>Origem no legado: <code>core/commands/service.py</code></li>
+<li>Critério de pronto: ausente → <code>None</code>; malformado → <code>MalformedSessionStateError</code>; <code>save</code> via <code>serializer.render</code> + gravação atômica.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-02, Implementar <code>resume</code></li>
+<li>Origem no legado: <code>core/commands/service.py</code></li>
+<li>Critério de pronto: cria sessão nova com HEAD/feature; reativa preservando a narrativa; alerta <code>⚠️</code> se HEAD ≠ âncora; retorna a narrativa reinjetada.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-03, Implementar <code>encerrar-sessao</code></li>
+<li>Origem no legado: <code>core/commands/service.py</code></li>
+<li>Critério de pronto: exige sessão ativa; <code>close_session(commit)</code> com HEAD; salva atomicamente.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-04, Implementar <code>handoff</code> e <code>clarificar</code></li>
+<li>Origem no legado: <code>core/commands/service.py</code></li>
+<li>Critério de pronto: <code>handoff</code> monta bloco com feature+HEAD; <code>clarificar</code> retorna texto fixo (limite 2 rodadas).</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-05, Despacho e comando desconhecido</li>
+<li>Origem no legado: <code>core/commands/service.py</code></li>
+<li>Critério de pronto: normaliza comando; desconhecido → <code>"Comando desconhecido: &lt;command&gt;"</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-06, Integrar no driver CLI (<code>cmd</code>) com sink</li>
+<li>Origem no legado: <code>src/main.py</code></li>
+<li>Critério de pronto: usa <code>.harness/estado-da-sessao.md</code>; resolve o sink por <code>active_harness</code> (RN-N5); hook <code>SessionStart</code>→<code>cmd resume</code>.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Tarefas de Teste</h2>
+<ul><li>[ ] TT-01, <code>resume</code> sem estado cria sessão; com estado reativa preservando narrativa.</li>
+<li>[ ] TT-02, Divergência de âncora antecede alerta <code>⚠️</code>.</li>
+<li>[ ] TT-03, <code>encerrar-sessao</code> sem sessão ativa → erro; com sessão ativa grava âncora.</li>
+<li>[ ] TT-04, Estado malformado → <code>MalformedSessionStateError</code>.</li></ul>
+
+<h2>Ordem Sugerida</h2>
+
+<p>1. T-01 (load/save) primeiro — base dos demais.</p>
+<p>2. T-02/T-03 (resume/encerrar) antes de T-04/T-05.</p>
+<p>3. T-06 fecha a integração CLI + sink.</p>
+
+<h2>Lacunas Pendentes (<span class="badge badge-high">Lacuna</span>)</h2>
+<ul><li>Nenhuma <span class="badge badge-high">Lacuna</span>. <span class="badge badge-low">Confirmado</span> <strong>T2 resolvido (feature 006):</strong> o caminho divergente CLI×MCP do estado de sessão foi fechado — ambos os drivers leem <code>session_file</code> de <code>config.session.state_file</code>. Não há mais ressalva pendente nesta unit.</li></ul>
+
+      </div>
+    </div>
+        
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
+      document.querySelectorAll(".tab-content-panel").forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      // Ativar botão correspondente
+      event.target.classList.add("active");
+      // Ativar painel correspondente
+      document.getElementById("tab-" + tabId).classList.add("active");
+    }
+  </script>
+</body>
+</html>

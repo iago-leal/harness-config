@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bootstrap | harness</title>
+  <meta name="reversa-category" content="feature-spec">
+  <meta name="reversa-producer-agent" content="reversa-docs-storyteller">
+  <meta name="reversa-template" content="feature">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/nav.js"></script>
+  <style>
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-color: var(--border-color);
+      background-color: var(--panel-bg);
+    }
+    .tab-content-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body data-page-id="feature-bootstrap">
+  <!-- Sidebar de Navegação -->
+  <aside class="nav-sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <polygon points="32,8 52,20 52,44 32,56 12,44 12,20" fill="none" stroke="url(#mini-grad)" stroke-width="3" />
+  <circle cx="32" cy="32" r="6" fill="#ffffff" />
+</svg></div>
+      <div class="brand-title">Harness</div>
+    </div>
+    <nav class="nav-menu">
+  <a class="nav-item" href="../index.html" data-page-id="index">Visão geral</a>
+  <a class="nav-item" href="../arquitetura.html" data-page-id="arquitetura">Arquitetura 3D</a>
+  <a class="nav-item" href="../modulos.html" data-page-id="modulos">Módulos</a>
+  <a class="nav-item" href="../topologia.html" data-page-id="topologia">Topologia</a>
+  <a class="nav-item" href="../metricas.html" data-page-id="metricas">Métricas</a>
+  <a class="nav-item active aria-current="page"" href="features/bootstrap.html" data-page-id="feature-bootstrap">Spec: Bootstrap</a>
+  <a class="nav-item" href="features/comandos-customizados.html" data-page-id="feature-comandos-customizados">Spec: Comandos Customizados</a>
+  <a class="nav-item" href="features/documentacao-uso-html.html" data-page-id="feature-documentacao-uso-html">Spec: Documentacao Uso Html</a>
+  <a class="nav-item" href="features/format-on-edit.html" data-page-id="feature-format-on-edit">Spec: Format On Edit</a>
+  <a class="nav-item" href="features/install.html" data-page-id="feature-install">Spec: Install</a>
+  <a class="nav-item" href="features/microdecisoes.html" data-page-id="feature-microdecisoes">Spec: Microdecisoes</a>
+  <a class="nav-item" href="features/run-harness-core-local.html" data-page-id="feature-run-harness-core-local">Spec: Run Harness Core Local</a>
+  <a class="nav-item" href="features/session.html" data-page-id="feature-session">Spec: Session</a>
+  <a class="nav-item" href="features/sync-check.html" data-page-id="feature-sync-check">Spec: Sync Check</a>
+</nav>
+      <span class="placeholder-nav">Carregando menu...</span>
+    </nav>
+  </aside>
+
+  <!-- Área Principal -->
+  <main class="main-content">
+    <header>
+      <div class="title-area">
+        <h1>Feature: Bootstrap</h1>
+        <p>Especificação funcional, design e tarefas de evolução desta capacidade.</p>
+      </div>
+      <div class="meta-info">
+        Módulo: <code>harness-core</code><br>
+        Slug: <code>bootstrap</code>
+      </div>
+    </header>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('requirements')">📋 Requisitos</button>
+      <button class="tab-btn" onclick="switchTab('design')">📐 Design Técnico</button>
+      <button class="tab-btn" onclick="switchTab('tasks')">🛠️ Roadmap &amp; Tarefas</button>
+    </div>
+
+    <!-- Tab Requisitos -->
+    <div class="tab-content-panel active" id="tab-requirements">
+      <div class="dashboard-card">
+        <h1>Bootstrap (Ganchos Git Locais) — Requisitos (Requirements)</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração)</p>
+<p>&gt; Nível de Documentação: <strong>Completo</strong> · Escala: <span class="badge badge-low">Confirmado</span> CONFIRMADO · <span class="badge badge-medium">Inferido</span> INFERIDO · <span class="badge badge-high">Lacuna</span> LACUNA</p>
+<p>&gt; Rastreabilidade ao Legado: <a href="file:///Users/iagoleal/dev/harness/harness-core/src/core/bootstrap/service.py"><code>harness-core/src/core/bootstrap/service.py</code></a>. Driver: <code>src/main.py</code> (subcomando <code>bootstrap</code>).</p>
+
+<p>&gt; ⚠️ <strong>Reescrita vs versão anterior:</strong> a implementação <strong>deixou de ser</strong> o script <code>harness-config/bin/bootstrap.sh</code> (purgado, commit <code>5624f78</code>) e passou a ser o <code>BootstrapService</code> Python em <code>harness-core</code>. Não há mais <code>verify-prerequisites.sh</code>, ponte de memória Gemini, nem <code>core.hooksPath</code>; o serviço apenas grava dois scripts Bash em <code>.git/hooks/</code>.</p>
+
+<h2>Visão Geral</h2>
+
+<p>Instala ganchos Git locais de forma idempotente: grava <code>pre-commit</code> (→ <code>format</code>) e <code>post-merge</code> (→ <code>decisions</code>) em <code>.git/hooks/</code>, reescrevendo a cada execução. Cada gancho só age se o interpretador Python da venv existir; senão <code>exit 0</code> (não bloqueia).</p>
+
+<h2>Responsabilidades</h2>
+<ul><li>Criar <code>.git/hooks/</code> (se ausente) e gravar os scripts <code>pre-commit</code> e <code>post-merge</code>. <span class="badge badge-low">Confirmado</span></li>
+<li>Tornar os scripts idempotentes (reescritos a cada execução). <span class="badge badge-low">Confirmado</span></li>
+<li>Garantir que os ganchos não bloqueiem caso o interpretador esteja ausente. <span class="badge badge-low">Confirmado</span></li>
+<li>Retornar a lista de caminhos instalados. <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Regras de Negócio</h2>
+<ul><li><strong>RN-N15 — Bootstrap idempotente e não-bloqueante:</strong> <code>install_hooks</code> grava <code>pre-commit</code> (→ <code>format</code>) e <code>post-merge</code> (→ <code>decisions</code>) reescrevendo a cada execução; cada script só roda se o interpretador (<code>$PYTHON_CLI</code>) existir, senão <code>exit 0</code>. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Mecanismo distinto dos hooks de ciclo de vida:</strong> estes ganchos Git (pre-commit/post-merge) coexistem com — e são separados de — os hooks de agente (<code>SessionStart</code>/<code>PostToolUse</code>/<code>Stop</code>) configurados nos <code>settings.json</code>. <span class="badge badge-medium">Inferido</span></li></ul>
+
+<h2>Requisitos Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>ID</th>
+<th>Requisito</th>
+<th>Prioridade</th>
+<th>Critério de Aceite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF-01</td>
+<td>Instalar <code>pre-commit</code> e <code>post-merge</code>.</td>
+<td>Must</td>
+<td>Após <code>./harness bootstrap</code>, os dois scripts existem em <code>.git/hooks/</code> e invocam a CLI (<code>format</code>/<code>decisions</code>).</td>
+</tr>
+<tr>
+<td>RF-02</td>
+<td>Idempotência.</td>
+<td>Must</td>
+<td>Reexecutar o bootstrap regrava os scripts sem erro nem duplicação.</td>
+</tr>
+<tr>
+<td>RF-03</td>
+<td>Não-bloqueio sob interpretador ausente.</td>
+<td>Must</td>
+<td>Se o interpretador não existir, o gancho faz <code>exit 0</code> sem abortar o commit/merge.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Requisitos Não Funcionais</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Requisito inferido</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Robustez</td>
+<td>Não bloqueia operações Git se o ambiente estiver incompleto.</td>
+<td><code>core/bootstrap/service.py</code> (<code>exit 0</code> condicional)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Reprodutibilidade</td>
+<td>Scripts reescritos deterministicamente a cada execução.</td>
+<td><code>core/bootstrap/service.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Critérios de Aceitação</h2>
+
+<pre><code>Dado um repositório sem ganchos instalados
+Quando executo `./harness bootstrap`
+Então `.git/hooks/pre-commit` e `.git/hooks/post-merge` são criados e invocam a CLI (format/decisions).
+
+Dado que a venv do harness-core não existe
+Quando um commit dispara o pre-commit instalado
+Então o gancho faz exit 0 sem bloquear o commit.</code></pre>
+
+<h2>Prioridade (MoSCoW)</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Requisito</th>
+<th>MoSCoW</th>
+<th>Justificativa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Instalação dos ganchos</td>
+<td>Must</td>
+<td>Razão de existir da unit.</td>
+</tr>
+<tr>
+<td>Idempotência</td>
+<td>Must</td>
+<td>Permite reexecução segura no setup.</td>
+</tr>
+<tr>
+<td>Não-bloqueio</td>
+<td>Must</td>
+<td>Salvaguarda: ambiente incompleto não trava o Git.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Rastreabilidade de Código</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Arquivo</th>
+<th>Função / Classe</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core/bootstrap/service.py</code></td>
+<td><code>BootstrapService.install_hooks</code>, <code>_pre_commit_script</code>, <code>_post_merge_script</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>src/main.py</code></td>
+<td>Subcomando <code>bootstrap</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </div>
+
+    
+    <!-- Tab Design -->
+    <div class="tab-content-panel" id="tab-design">
+      <div class="dashboard-card">
+        <h1>Bootstrap (Ganchos Git Locais) — Design Técnico</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração)</p>
+<p>&gt; Foca no COMO a unit é construída, a partir do código legado lido. Escala: <span class="badge badge-low">Confirmado</span> / <span class="badge badge-medium">Inferido</span> / <span class="badge badge-high">Lacuna</span></p>
+
+<h2>Interface</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Símbolo</th>
+<th>Assinatura</th>
+<th>Retorno</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BootstrapService.install_hooks</code></td>
+<td><code>(repo_path: str)</code></td>
+<td><code>List[str]</code></td>
+<td>Lista de caminhos dos ganchos instalados.</td>
+</tr>
+<tr>
+<td><code>BootstrapService._pre_commit_script</code></td>
+<td><code>()</code> (<code>@staticmethod</code>)</td>
+<td><code>str</code></td>
+<td>Corpo Bash do <code>pre-commit</code> (chama <code>format</code>).</td>
+</tr>
+<tr>
+<td><code>BootstrapService._post_merge_script</code></td>
+<td><code>()</code> (<code>@staticmethod</code>)</td>
+<td><code>str</code></td>
+<td>Corpo Bash do <code>post-merge</code> (chama <code>decisions</code>).</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Fluxo Principal</h2>
+
+<p>1. <code>install_hooks(repo_path)</code> cria <code>.git/hooks/</code> (via <code>FileSystemPort.makedirs</code>) se ausente. <span class="badge badge-low">Confirmado</span></p>
+<p>2. Grava <code>pre-commit</code> com o corpo de <code>_pre_commit_script()</code>, que invoca <code>harness-core/.venv/bin/python3 harness-core/src/main.py format "$@"</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>3. Grava <code>post-merge</code> com o corpo de <code>_post_merge_script()</code>, que invoca a mesma CLI com <code>decisions "$@"</code>. <span class="badge badge-low">Confirmado</span></p>
+<p>4. Cada script gravado checa a existência do interpretador (<code>$PYTHON_CLI</code>); se ausente, <code>exit 0</code> (não bloqueia). <span class="badge badge-low">Confirmado</span></p>
+<p>5. Retorna a lista de caminhos instalados. <span class="badge badge-low">Confirmado</span></p>
+
+<p>Fluxo <strong>linear, sem condicionais de negócio</strong>; único efeito colateral é I/O em <code>.git/hooks/</code>.</p>
+
+<h2>Fluxos Alternativos</h2>
+<ul><li><strong>Reexecução:</strong> os scripts são reescritos idempotentemente a cada chamada. <span class="badge badge-low">Confirmado</span></li>
+<li><strong>Interpretador ausente em runtime do gancho:</strong> o próprio script faz <code>exit 0</code> (salvaguarda dentro do Bash gravado). <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Dependências</h2>
+<ul><li><code>FileSystemPort</code> — criação do diretório e gravação dos scripts.</li>
+<li>(Em runtime do gancho) o interpretador <code>harness-core/.venv/bin/python3</code> e a CLI <code>src/main.py</code>.</li></ul>
+
+<h2>Decisões de Design Identificadas</h2>
+
+<table class="data-table">
+<thead>
+<tr>
+<th>Decisão</th>
+<th>Evidência no código</th>
+<th>Confiança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Caminhos do interpretador e da CLI literais nos scripts gravados</td>
+<td><code>service.py</code> (<code>_pre_commit_script</code>/<code>_post_merge_script</code>)</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td><code>pre-commit</code>→<code>format</code>, <code>post-merge</code>→<code>decisions</code> (ganchos Git, não de agente)</td>
+<td><code>service.py</code></td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+<tr>
+<td>Não-bloqueio: <code>exit 0</code> se o interpretador não existir</td>
+<td>corpo Bash gravado</td>
+<td><span class="badge badge-low">Confirmado</span></td>
+</tr>
+</tbody>
+</table>
+
+<h2>Estado Interno</h2>
+
+<p>Sem estado em memória. O efeito persistente são os dois arquivos em <code>.git/hooks/</code>.</p>
+
+<h2>Observabilidade</h2>
+
+<p>Sem logging estruturado. O retorno da lista de caminhos é a confirmação de instalação; a não-existência do interpretador degrada para no-op silencioso no runtime do gancho.</p>
+
+<h2>Riscos e Lacunas</h2>
+<ul><li><span class="badge badge-medium">Inferido</span> Coexistência de dois mecanismos de gancho (Git pre-commit/post-merge vs hooks de agente nos <code>settings.json</code>) — possível confusão sobre qual caminho está ativo num dado fluxo.</li>
+<li><span class="badge badge-medium">Inferido</span> Os caminhos do interpretador/CLI são chumbados nos scripts; mudança da localização da venv exige re-bootstrap.</li></ul>
+
+      </div>
+    </div>
+        
+    
+    <!-- Tab Tasks -->
+    <div class="tab-content-panel" id="tab-tasks">
+      <div class="dashboard-card">
+        <h1>Bootstrap (Ganchos Git Locais) — Tarefas de Implementação</h1>
+
+<p>&gt; Regenerado pelo Writer em 2026-06-24 (Re-extração)</p>
+<p>&gt; Sequência executável para reimplementar a unit a partir do legado, com rastreabilidade ao código original.</p>
+
+<p>&gt; ⚠️ Reescrita: a unit agora é o <code>BootstrapService</code> Python (<code>harness-core</code>), não o script shell legado <code>bin/bootstrap.sh</code> (purgado). Sem <code>verify-prerequisites.sh</code> nem ponte de memória Gemini.</p>
+
+<h2>Pré-requisitos</h2>
+<ul><li>[ ] <code>FileSystemPort</code> disponível (criação de diretório + gravação).</li>
+<li>[ ] Permissões de escrita em <code>.git/hooks/</code> do repositório.</li></ul>
+
+<h2>Tarefas</h2>
+<ul><li>[ ] T-01, Implementar <code>_pre_commit_script</code> e <code>_post_merge_script</code></li>
+<li>Origem no legado: <code>core/bootstrap/service.py</code></li>
+<li>Critério de pronto: retornam corpos Bash que invocam <code>harness-core/.venv/bin/python3 harness-core/src/main.py</code> com <code>format</code>/<code>decisions</code> e fazem <code>exit 0</code> se o interpretador não existir.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-02, Implementar <code>install_hooks(repo_path)</code></li>
+<li>Origem no legado: <code>core/bootstrap/service.py</code></li>
+<li>Critério de pronto: cria <code>.git/hooks/</code>, grava os dois scripts idempotentemente e retorna a lista de caminhos.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li>
+<li>[ ] T-03, Expor o subcomando <code>bootstrap</code> na CLI</li>
+<li>Origem no legado: <code>src/main.py</code></li>
+<li>Critério de pronto: <code>./harness bootstrap</code> instala os ganchos no repositório corrente.</li>
+<li>Confiança: <span class="badge badge-low">Confirmado</span></li></ul>
+
+<h2>Tarefas de Teste</h2>
+<ul><li>[ ] TT-01, Happy path: após <code>install_hooks</code>, os dois scripts existem e referenciam a CLI.</li>
+<li>[ ] TT-02, Idempotência: reexecutar regrava os scripts sem erro.</li></ul>
+
+<h2>Ordem Sugerida</h2>
+
+<p>1. T-01 (corpos dos scripts) antes de T-02 (instalação).</p>
+<p>2. T-03 fecha a integração CLI.</p>
+
+<h2>Lacunas Pendentes (<span class="badge badge-high">Lacuna</span>)</h2>
+<ul><li>Nenhuma <span class="badge badge-high">Lacuna</span>.</li></ul>
+
+      </div>
+    </div>
+        
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
+      document.querySelectorAll(".tab-content-panel").forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      // Ativar botão correspondente
+      event.target.classList.add("active");
+      // Ativar painel correspondente
+      document.getElementById("tab-" + tabId).classList.add("active");
+    }
+  </script>
+</body>
+</html>

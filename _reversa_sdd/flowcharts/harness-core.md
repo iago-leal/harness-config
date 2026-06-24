@@ -1,6 +1,6 @@
 # Fluxogramas (Flowcharts) — harness-core
 
-> Gerado pelo Archaeologist em 2026-06-23 (Re-extração após Feature 002)
+> Gerado pelo Archaeologist em 2026-06-24 (Re-extração após as features 003, 004, 005, 006 e 007)
 > Nível de Documentação: **Completo**
 
 Este documento ilustra o fluxo de controle e os algoritmos dos principais sub-serviços do `harness-core`.
@@ -9,7 +9,7 @@ Este documento ilustra o fluxo de controle e os algoritmos dos principais sub-se
 
 ## 🔄 1. Fluxo de Formatação (`FormattingService.format_file`)
 
-O diagrama abaixo descreve o algoritmo de formatação de arquivos, incluindo verificações de diretórios protegidos, detecção de opt-out recursivo e inibição de erros de compiladores.
+O diagrama abaixo descreve o algoritmo de formatação de arquivos, incluindo verificações de diretórios protegidos, detecção de opt-out recursivo e inibição de erros de formatadores.
 
 ```mermaid
 graph TD
@@ -52,7 +52,7 @@ graph TD
 
 ## 🔄 2. Fluxo de Verificação de Sincronia (`SyncService.check_sync`)
 
-Este diagrama mapeia a lógica de verificação resiliente de sincronia Git do repositório de memória compartilhada.
+Este diagrama mapeia a lógica de verificação resiliente de sincronia Git do repositório.
 
 ```mermaid
 graph TD
@@ -100,4 +100,48 @@ graph TD
     
     InjectData --> WriteAtomic[Escrever harness-docs.html de forma atômica]
     WriteAtomic --> End([Fim: Documentação Gerada])
+```
+
+---
+
+## 🔄 4. Inicialização de Repositório (`InitService.init_target`)
+
+Este fluxograma ilustra o algoritmo de cópia recursiva e provisionamento do ambiente virtual local em workspaces de destino.
+
+```mermaid
+graph TD
+    Start([Início: init_target]) --> CheckTarget{Destino existe?}
+    CheckTarget -- Não --> CreateDir[Criar diretório de destino recursivo]
+    CheckTarget -- Sim --> CopyCore[Copiar recursivamente harness-core e wrapper]
+    CreateDir --> CopyCore
+    
+    CopyCore --> FilterFiles[Ignorar .git, .venv, .pytest_cache, .ruff_cache, tmp]
+    FilterFiles --> WriteConfig[Criar harness.toml com upstream_path e version]
+    WriteConfig --> CreateVenv[Executar python3 -m venv .venv no destino]
+    
+    CreateVenv --> CheckVenv{Sucesso?}
+    CheckVenv -- Sim --> InstallHooks[Instalar ganchos Git locais]
+    CheckVenv -- Não --> LogWarning[Exibir alerta de dependência host para ação humana]
+    
+    InstallHooks --> End([Fim: Repositório Inicializado])
+    LogWarning --> End
+```
+
+---
+
+## 🔄 5. Evolução Não-Destrutiva do Core (`InitService.upgrade_target`)
+
+Este fluxograma ilustra a atualização de arquivos de código preservando os metadados de engenharia reversa locais e as decisões do projeto.
+
+```mermaid
+graph TD
+    Start([Início: upgrade_target]) --> UpdateWrapper[Atualizar wrapper harness na raiz do destino]
+    UpdateWrapper --> CopyCore[Copiar recursivamente harness-core do upstream]
+    
+    CopyCore --> FilterDirs[Ignorar .git, .venv e caminhos de dados]
+    FilterDirs --> PreservedDirs{Preservar pastas locais?<br/>.reversa/ e .harness/decisoes/}
+    
+    PreservedDirs -- Sim --> WriteNewCore[Gravar novos arquivos do core no destino]
+    WriteNewCore --> UpdateTOML[Atualizar campo de versão no harness.toml local]
+    UpdateTOML --> End([Fim: Upgrade Concluído])
 ```
