@@ -10,4 +10,6 @@
 - **MD-0003** — Reinjeção para os três harnesses e mecanismos por harness
   ↳ refina MD-0002
 - **MD-0004** — Remoção da sincronização cross-harness Claude↔Gemini
-  ↳ relaciona MD-0002
+  ↳ relaciona MD-0002 · refinado-por MD-0005
+- **MD-0005** — harness-core como módulo per-projeto, não substituto da config global
+  ↳ refina MD-0004

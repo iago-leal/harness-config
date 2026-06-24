@@ -25,11 +25,16 @@ class DecisionsSection(BaseModel):
     header_file: str = ".harness/decisoes/_cabecalho.md"
 
 
+class SessionSection(BaseModel):
+    state_file: str = ".harness/estado-da-sessao.md"
+
+
 class HarnessConfig(BaseModel):
     harness: HarnessSection = Field(default_factory=HarnessSection)
     formatting: FormattingSection = Field(default_factory=FormattingSection)
     sync: SyncSection = Field(default_factory=SyncSection)
     decisions: DecisionsSection = Field(default_factory=DecisionsSection)
+    session: SessionSection = Field(default_factory=SessionSection)
 
 
 def load_config(fs: FileSystemPort, config_path: str = "harness.toml") -> HarnessConfig:

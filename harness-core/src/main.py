@@ -3,7 +3,6 @@ import os
 import sys
 import argparse
 import json
-import toml
 
 # Adiciona o diretório contendo 'src' ao sys.path para imports absolutos funcionarem de qualquer lugar
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -17,29 +16,6 @@ from src.core.decisions.service import DecisionService
 from src.core.commands.service import CommandService
 from src.core.documentation.service import DocumentationService
 from src.core.domain.config import load_config
-
-
-def load_harness_config(fs: LocalFileSystemAdapter) -> dict:
-    """Carrega as configurações do harness.toml se existir."""
-    default_config = {
-        "harness": {"active_harness": "claude"},
-        "formatting": {"exclude_paths": [], "opt_out_file": ".no-autoformat"},
-        "sync": {"cache_ttl_hours": 24, "remote_check_enabled": True},
-    }
-    config_file = "harness.toml"
-    if fs.exists(config_file):
-        try:
-            content = fs.read_file(config_file)
-            user_config = toml.loads(content)
-            # Merge simples
-            for section in default_config:
-                if section in user_config:
-                    default_config[section].update(user_config[section])
-        except Exception as e:
-            print(
-                f"Aviso: Falha ao carregar harness.toml: {e}. Usando configuração padrão."
-            )
-    return default_config
 
 
 def resolve_format_target(arg_path):
@@ -139,8 +115,8 @@ def main():
     git = SubprocessGitAdapter()
     process = HostFormatterAdapter()
 
-    # Carrega configurações
-    config = load_harness_config(fs)
+    # Carrega configurações (via única tipada — feature 006 removeu o dict legado)
+    config = load_config(fs)
 
     # Execução das sub-ações da CLI
     if args.command == "bootstrap":
@@ -190,7 +166,7 @@ def main():
         from src.core.session.errors import MalformedSessionStateError
 
         service = CommandService(fs, git)
-        session_file = ".harness/estado-da-sessao.md"
+        session_file = config.session.state_file
         cmd_name_norm = args.cmd_name.strip().lower().lstrip("/")
         try:
             result_msg = service.execute_command(
@@ -211,7 +187,7 @@ def main():
         # Só o `resume` alimenta o SessionStart: entrega via sink do harness ativo.
         # Os demais comandos (encerrar-sessao, handoff, clarificar) imprimem normal.
         if cmd_name_norm == "resume":
-            sink = get_sink(config["harness"]["active_harness"], fs)
+            sink = get_sink(config.harness.active_harness, fs)
             sink.emit(result_msg)
         else:
             print(result_msg)

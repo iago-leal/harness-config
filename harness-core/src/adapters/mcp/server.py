@@ -90,7 +90,8 @@ def process_decisions(
 )
 def session_command(cmd_name: str, active_feature: Optional[str] = None) -> str:
     service = CommandService(fs, git)
-    session_file = ".harness/estado-da-sessao.md"
+    config = load_config(fs)
+    session_file = config.session.state_file
     args = [active_feature] if active_feature else []
 
     return service.execute_command(

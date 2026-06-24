@@ -15,3 +15,6 @@ remote_check_enabled = true
 dir = ".harness/decisoes"
 index_file = ".harness/microdecisoes.md"
 header_file = ".harness/decisoes/_cabecalho.md"
+
+[session]
+state_file = ".harness/estado-da-sessao.md"

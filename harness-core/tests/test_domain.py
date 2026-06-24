@@ -118,3 +118,17 @@ def test_load_config_decisions_override():
 def test_load_config_absent_uses_decisions_defaults():
     cfg = load_config(MockFileSystem())
     assert cfg.decisions.dir == ".harness/decisoes"
+
+
+def test_session_config_defaults():
+    # O caminho do estado de sessão mora em .harness/ por padrão (feature 006).
+    cfg = HarnessConfig()
+    assert cfg.session.state_file == ".harness/estado-da-sessao.md"
+
+
+def test_load_config_session_override():
+    # [session] no harness.toml sobrescreve o caminho do estado de sessão.
+    fs = MockFileSystem()
+    fs.write_file("harness.toml", '[session]\nstate_file = "custom/estado.md"\n')
+    cfg = load_config(fs)
+    assert cfg.session.state_file == "custom/estado.md"
