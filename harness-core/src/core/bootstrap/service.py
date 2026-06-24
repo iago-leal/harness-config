@@ -50,7 +50,7 @@ class BootstrapService:
             'PYTHON_CLI="harness-core/src/main.py"\n'
             'PYTHON_BIN="harness-core/.venv/bin/python3"\n'
             'if [ -f "$PYTHON_CLI" ]; then\n'
-            '    "$PYTHON_BIN" "$PYTHON_CLI" decisions "$@"\n'
+            '    "$PYTHON_BIN" "$PYTHON_CLI" decisions\n'
             "    exit $?\n"
             "fi\n"
             "exit 0\n"

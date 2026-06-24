@@ -12,4 +12,6 @@
 - **MD-0004** — Remoção da sincronização cross-harness Claude↔Gemini
   ↳ relaciona MD-0002 · refinado-por MD-0005
 - **MD-0005** — harness-core como módulo per-projeto, não substituto da config global
-  ↳ refina MD-0004
+  ↳ refina MD-0004 · relacionado-com MD-0006
+- **MD-0006** — hook post-merge não repassa o argumento do git ao `decisions`
+  ↳ relaciona MD-0005

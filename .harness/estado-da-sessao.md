@@ -1,31 +1,31 @@
 ---
-commit: 8f8a381
-feature: 008-reprodutibilidade-e-config
+commit: 8b3cd4c
+feature: correção pós-009 — hook post-merge (MD-0006)
 start_time: "2026-06-24T16:57:44+00:00"
 status: active
 ---
 
 ## O que foi feito
 
-- **Feature 007 — `bootstrap-harness-init`** codada e commitada (`67c50cc`). Expõe `./harness init <destino> [--harness ...]` e `./harness upgrade`: o `InitializationService` copia o núcleo, o wrapper e `.harness/` para o destino, cria a venv e instala os hooks; `HarnessSection` ganhou `upstream_path` e `version`, e `SyncService.check_version_update` dispara aviso passivo de nova versão. Portas/adapters ganharam `is_dir` (fs) e `run_command` (process). Comandos documentados em `CLAUDE.md`/`GEMINI.md`.
-- **Feature 008 — `reprodutibilidade-e-config`** codada e commitada (`8c136af`). Lock determinístico (`requirements.in` → `requirements.txt`), CI no GitHub Actions (`.github/workflows/ci.yml`), e `FormattingService` passando a respeitar o `harness.toml` em runtime — opt-out com nome configurável e exclusão por glob (`fnmatch`) —, pagando as dívidas **T4** e **T6**.
-- **Re-extração reversa cirúrgica pós-008 + regression-check** commitada (`8f8a381`). 8 features, 24 watch items: **23 🟢, 1 🟡, 0 🔴**. ADRs **0014** (bootstrap) e **0015** (reprodutibilidade). Mini-site em `.reversa/documentation/`; backup timestampado descartável passou a ser ignorado.
-- **Suíte verde: 69 passed** (`python -m pytest` a partir de `harness-core/` — `pytest` direto não acha `src`). O `main.py` entrelaçava as duas features; foi separado em dois commits via patch (split 007/008 validado, `main.py` final bit a bit idêntico ao working tree original).
+- **Feature 009 — `hooks-antigravity`** mesclada em `main` (`8b3cd4c`, merge de `feat/009-hooks-antigravity`). Ganchos de ciclo de vida para o Antigravity, com re-extração reversa cirúrgica e regression-check pós-009.
+- **Correção do hook post-merge (MD-0006)** — `BootstrapService._post_merge_script()` repassava `"$@"` ao subcomando `decisions`. O git invoca `post-merge` com o flag de squash (`0`/`1`) como posicional, e `decisions` (parser sem `add_argument`) o recusava com `unrecognized arguments: 0`. Disparou no merge da 009. Defeito no **gerador**, não na instância — regressão viva desde `af4a034`, preservada por `5624f78`; propaga a todo projeto criado por `harness init`. Conduzido como **TDD direto + registro leve**, fora do pipeline forward (Princípio nº 4), por decisão do mantenedor.
+  - Teste de regressão em `test_bootstrap.py`: invertido o assert que codificava o bug (`'decisions "$@"' in post_content`) e adicionado `test_post_merge_hook_does_not_forward_git_args_to_decisions`. Vermelho antes, verde depois.
+  - Correção de uma linha em `service.py:53` (remoção do `"$@"`).
+  - Hook da raiz regenerado via `./harness bootstrap`. Provado de ponta a ponta: `./.git/hooks/post-merge 0` retorna `exit 0`.
+- **Suíte verde: 111 passed** (`.venv/bin/python -m pytest` a partir de `harness-core/`).
 
 ## Próximos passos
 
-- Os quatro commits foram **empurrados** para `origin/main` (`1b23498..2d6e749`); o CI no GitHub Actions passou a rodar a cada push. Concedido o escopo `workflow` ao token do `gh` e configurado como credential helper.
-- `003/W003` segue **🟡** — defasagem só documental no `template.md` (SessionStart já pago pela 004), mantida por decisão do mantenedor.
-- Premissa aberta da 004: validar o gatilho de boot do Antigravity (`agy`).
+- **Cuidado operacional registrado:** `./harness bootstrap` instala em `os.getcwd()/.git/hooks`. Rodá-lo com o cwd dentro de `harness-core/` cria um `.git` degenerado lá (só `hooks/`, sem HEAD/objects) — aconteceu uma vez nesta sessão e foi removido. Rodar sempre a partir da raiz do projeto.
 
 ## Pendências / bloqueios
 
-- Inconsistência menor não corrigida: no MCP, `process_decisions` deriva `header_file` de `os.path.join(dir, "_cabecalho.md")` e ignora o override `config.decisions.header_file`.
-- **001/W001–W003** acumulam 3 vereditos verdes consecutivos (limiar `archive-after=3`): candidatos a arquivamento. O Reversa não move a tabela principal; ação manual do mantenedor.
+- Inconsistência menor não corrigida (herdada): no MCP, `process_decisions` deriva `header_file` de `os.path.join(dir, "_cabecalho.md")` e ignora o override `config.decisions.header_file`.
+- `001/W001–W003` acumulam 3 vereditos verdes consecutivos (limiar `archive-after=3`): candidatos a arquivamento. Ação manual do mantenedor.
 
 ## Ponteiros
 
-- Commits desta sessão: `67c50cc` (feat 007), `8c136af` (feat 008), `8f8a381` (re-extração + mini-site), `2d6e749` (chore sessão). Todos em `main`, **empurrados** para `origin/main`.
-- Artefatos forward: `_reversa_forward/007-bootstrap-harness-init/`, `_reversa_forward/008-reprodutibilidade-e-config/`.
-- `_reversa_sdd/adrs/0014`, `0015`; `_reversa_sdd/confidence-report.md`, `gaps.md`, `questions.md`.
-- Mini-site: `.reversa/documentation/` (regeneráveis via `.reversa/scripts/`).
+- Microdecisão da correção: `.harness/decisoes/MD-0006.md` (relaciona MD-0005, footprint per-projeto).
+- Gerador do hook: `harness-core/src/core/bootstrap/service.py::_post_merge_script` (linha ~53).
+- Testes: `harness-core/tests/test_bootstrap.py`.
+- Memória do bug: `post-merge-hook-arg-bug.md` (atualizar para resolvido).
