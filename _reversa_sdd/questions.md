@@ -11,7 +11,7 @@ A re-extração tem confiança alta (≈85%) e cobertura completa do código de 
 
 **Contexto:** Reprodutibilidade — `harness-core/requirements.txt` usa pins `>=` (mínimos); não há lock file commitado nem CI/CD (`surface.json.ci_cd = []`).
 **Spec afetada:** [`_reversa_sdd/dependencies.md`], `confidence-report.md` (Lacunas Pendentes), `gaps.md#G-07`
-**Pergunta:** A ausência de lock file e de CI é uma escolha deliberada (projeto pessoal, *single maintainer*) ou uma dívida a sanar? Se a sanar, qual ferramenta de lock prefere (`pip-tools`/`requirements.lock`, `uv`, `poetry`)?
+**Pergunta:** A ausência de lock file e de CI é uma escolha deliberada (projeto pessoal, _single maintainer_) ou uma dívida a sanar? Se a sanar, qual ferramenta de lock prefere (`pip-tools`/`requirements.lock`, `uv`, `poetry`)?
 **Impacto:** Define se a lacuna de reprodutibilidade vira 🟢 (decisão consciente, registrada como tal) ou permanece 🔴 com ticket de manutenção. Princípio nº 5.3 do mantenedor sugere lock file commitado sempre.
 
 **Resposta:** <!-- preencha aqui -->
@@ -58,4 +58,4 @@ A re-extração tem confiança alta (≈85%) e cobertura completa do código de 
 **Pergunta:** Quer que esses artefatos sejam **regenerados** alinhados ao estado atual (o Revisor não os reescreveu por estarem fora do conjunto desta re-extração), **marcados como históricos** (snapshot da feature 002), ou **removidos**?
 **Impacto:** Hoje são a maior fonte de inconsistência cruzada do `_reversa_sdd/`. Mantê-los como estão pode confundir o "eu de daqui a 12 meses" ao descrever código que não existe mais.
 
-**Resposta:** <!-- preencha aqui -->
+**Resposta:** **Remover** (decidido em 2026-06-24). Correção da premissa: o conjunto obsoleto era de **4** flowcharts — `bin.md`, `commands.md`, `decisoes.md`, `hooks.md` — mais a user-story `fluxo-de-sincronia-e-sessao.md`, todos diagramando os scripts bash purgados (`sync-check.sh`, `format-on-edit.sh`, `gerar-index-decisoes.sh`, bastão Gemini, `.claude/ESTADO-DA-SESSAO.md`). O quinto flowchart, `harness-core.md` (gerado às 13:30 na re-extração), já descreve o core Python atual e foi **mantido**. Os cinco arquivos obsoletos foram removidos; o snapshot histórico segue recuperável no git (commit `af4a034`). Fecha G-02 e G-03.
