@@ -25,11 +25,12 @@ def test_prompt_scopes_to_project_settings():
     assert "Nunca edite" in out
 
 
-def test_prompt_signals_sessionstart_gap():
+def test_prompt_has_no_obsolete_sessionstart_pending():
+    # A reinjeção de estado do SessionStart foi entregue na feature 004; a nota de
+    # "pendência conhecida" MD-0001 não deve mais aparecer no prompt de instalação.
     out = _render("claude")
-    assert "SessionStart" in out
-    assert "pendente" in out.lower()
-    assert "MD-0001" in out
+    assert "MD-0001" not in out
+    assert "pendência conhecida" not in out.lower()
 
 
 def test_prompt_parametrized_by_harness():

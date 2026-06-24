@@ -20,8 +20,6 @@ Cole este prompt no agente. Ele executa a instalação local do harness-core, et
 {{HOOKS_BLOCK}}
 ```
 
-> **Escopo:** aplique SEMPRE no `.claude/settings.json` do **projeto**. Nunca edite a configuração global em `~/.claude`.
-
 ## Passo 4 — Índice de decisões
 
 - Rode `./harness decisions`. Deve validar o grafo e derivar `.harness/microdecisoes.md` sem erros.
@@ -36,14 +34,9 @@ Confira cada item e reporte aprovado/pendente:
 
 - [ ] `harness-core/.venv` presente e com dependências instaladas
 - [ ] `./harness` existe na raiz e é executável
-- [ ] Ganchos aplicados no `.claude/settings.json` do projeto
+- [ ] Ganchos aplicados conforme o Passo 3 (escopo do harness ativo)
 - [ ] `./harness decisions` retorna verde
-
-> **Pendência conhecida (não é falha de instalação):** o `SessionStart` ainda não reinjeta o estado da última sessão no contexto — regressão registrada em `.harness/decisoes/MD-0001.md`, a ser fechada na feature 004. Reporte-a como **pendente conhecida**, não como erro.
 
 ## Resultado
 
-Resuma ao final, distinguindo os dois desfechos:
-
-- **Instalação concluída:** todos os itens do Passo 5 aprovados.
-- **Concluída com pendência conhecida:** todos aprovados, exceto a reinjeção de estado do `SessionStart` (feature 004) — desfecho esperado, não invalida a instalação.
+Resuma ao final: a **instalação está concluída** quando todos os itens do Passo 5 estão aprovados. Se algum ficar pendente, reporte-o de forma explícita — nunca siga em silêncio.

@@ -3,6 +3,7 @@ import re
 from typing import List, Optional
 from src.core.ports.fs import FileSystemPort
 from src.core.ports.process import ProcessPort
+from src.core.install.antigravity_hooks import materialize_hooks_json
 
 
 class InitializationService:
@@ -12,7 +13,10 @@ class InitializationService:
         self.current_version = "1.2.43"
 
     def initialize_project(
-        self, target_path: str, active_harness: str = "claude", upstream_path: Optional[str] = None
+        self,
+        target_path: str,
+        active_harness: str = "claude",
+        upstream_path: Optional[str] = None,
     ) -> None:
         """Inicializa um novo repositório de destino com o Harness Core de forma física e isolada."""
         # 1. Valida se o destino é um repositório git válido
@@ -28,9 +32,7 @@ class InitializationService:
             upstream_path = os.path.dirname(
                 os.path.dirname(
                     os.path.dirname(
-                        os.path.dirname(
-                            os.path.dirname(os.path.abspath(__file__))
-                        )
+                        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                     )
                 )
             )
@@ -39,7 +41,7 @@ class InitializationService:
         # 3. Copia a pasta harness-core recursivamente (ignora venv, caches, etc.)
         src_core = os.path.join(upstream_path, "harness-core")
         dst_core = os.path.join(target_path, "harness-core")
-        
+
         excludes = [".venv", ".pytest_cache", ".ruff_cache", "__pycache__", ".DS_Store"]
         self._copy_tree(src_core, dst_core, excludes)
 
@@ -80,9 +82,15 @@ class InitializationService:
         if self.fs.exists(toml_path):
             toml_content = self.fs.read_file(toml_path)
             # Atualiza versão e upstream_path
-            toml_content = self._update_toml_field(toml_content, "upstream_path", upstream_path)
-            toml_content = self._update_toml_field(toml_content, "version", self.current_version)
-            toml_content = self._update_toml_field(toml_content, "active_harness", active_harness)
+            toml_content = self._update_toml_field(
+                toml_content, "upstream_path", upstream_path
+            )
+            toml_content = self._update_toml_field(
+                toml_content, "version", self.current_version
+            )
+            toml_content = self._update_toml_field(
+                toml_content, "active_harness", active_harness
+            )
             self.fs.write_file(toml_path, toml_content)
         else:
             self.fs.write_file(
@@ -92,29 +100,45 @@ class InitializationService:
 
         # 7. Configura a venv e roda pip install no destino
         self.process.run_command(["python3", "-m", "venv", ".venv"], cwd=dst_core)
-        self.process.run_command([".venv/bin/pip", "install", "-r", "requirements.txt"], cwd=dst_core)
+        self.process.run_command(
+            [".venv/bin/pip", "install", "-r", "requirements.txt"], cwd=dst_core
+        )
 
         # 8. Executa bootstrap de hooks git no destino
         dest_python_bin = os.path.join(dst_core, ".venv", "bin", "python3")
         dest_main_cli = os.path.join(dst_core, "src", "main.py")
         if self.fs.exists(dest_main_cli):
             # Executa bootstrap para criar ganchos git pre-commit e post-merge
-            self.process.run_command([dest_python_bin, dest_main_cli, "bootstrap"], cwd=target_path)
+            self.process.run_command(
+                [dest_python_bin, dest_main_cli, "bootstrap"], cwd=target_path
+            )
+
+        # 9. Materializa o .agents/hooks.json quando o harness ativo é o Antigravity.
+        # O command_path é o caminho absoluto do projeto-alvo (prefixo de `<ABS>/harness ...`).
+        if active_harness == "antigravity":
+            command_path = os.path.abspath(target_path)
+            materialize_hooks_json(self.fs, target_path, command_path)
 
     def upgrade_project(self, target_path: str) -> None:
         """Atualiza a instalação do Harness Core no projeto de destino a partir do upstream configurado."""
         toml_path = os.path.join(target_path, "harness.toml")
         if not self.fs.exists(toml_path):
-            raise ValueError(f"O projeto em '{target_path}' não possui um arquivo harness.toml configurado.")
+            raise ValueError(
+                f"O projeto em '{target_path}' não possui um arquivo harness.toml configurado."
+            )
 
         toml_content = self.fs.read_file(toml_path)
         upstream_path = self._parse_toml_field(toml_content, "upstream_path")
         if not upstream_path:
-            raise ValueError("O campo 'upstream_path' não foi encontrado no harness.toml do projeto de destino.")
+            raise ValueError(
+                "O campo 'upstream_path' não foi encontrado no harness.toml do projeto de destino."
+            )
 
         upstream_path = os.path.abspath(upstream_path)
         if not self.fs.exists(upstream_path):
-            raise ValueError(f"O caminho upstream '{upstream_path}' não está acessível no host local.")
+            raise ValueError(
+                f"O caminho upstream '{upstream_path}' não está acessível no host local."
+            )
 
         # 1. Compara versões
         upstream_version = self._get_upstream_version(upstream_path)
@@ -140,14 +164,25 @@ class InitializationService:
             self.process.run_command(["chmod", "+x", dst_wrapper])
 
         # 4. Atualiza a versão no harness.toml
-        toml_content = self._update_toml_field(toml_content, "version", upstream_version)
+        toml_content = self._update_toml_field(
+            toml_content, "version", upstream_version
+        )
         self.fs.write_file(toml_path, toml_content)
 
         # 5. Roda bootstrap de ganchos git no destino
         dest_python_bin = os.path.join(dst_core, ".venv", "bin", "python3")
         dest_main_cli = os.path.join(dst_core, "src", "main.py")
         if self.fs.exists(dest_main_cli):
-            self.process.run_command([dest_python_bin, dest_main_cli, "bootstrap"], cwd=target_path)
+            self.process.run_command(
+                [dest_python_bin, dest_main_cli, "bootstrap"], cwd=target_path
+            )
+
+        # 6. Reescreve o .agents/hooks.json quando o harness ativo é o Antigravity
+        # (mantém o `command` com o caminho absoluto correto se o repo foi movido).
+        active_harness = self._parse_toml_field(toml_content, "active_harness")
+        if active_harness == "antigravity":
+            command_path = os.path.abspath(target_path)
+            materialize_hooks_json(self.fs, target_path, command_path)
 
     def _copy_tree(self, src: str, dst: str, excludes: List[str]) -> None:
         """Copia a árvore de diretórios e arquivos recursivamente usando FileSystemPort."""
@@ -166,10 +201,12 @@ class InitializationService:
 
     def _get_upstream_version(self, upstream_path: str) -> str:
         """Lê a versão do config.py do upstream."""
-        config_path = os.path.join(upstream_path, "harness-core", "src", "core", "domain", "config.py")
+        config_path = os.path.join(
+            upstream_path, "harness-core", "src", "core", "domain", "config.py"
+        )
         if not self.fs.exists(config_path):
             return self.current_version
-        
+
         content = self.fs.read_file(config_path)
         match = re.search(r'version:\s*str\s*=\s*["\']([^"\']+)["\']', content)
         if match:
@@ -179,7 +216,7 @@ class InitializationService:
     @staticmethod
     def _parse_toml_field(toml_content: str, field_name: str) -> Optional[str]:
         """Faz o parsing simples de um campo no toml."""
-        match = re.search(fr'{field_name}\s*=\s*["\']([^"\']+)["\']', toml_content)
+        match = re.search(rf'{field_name}\s*=\s*["\']([^"\']+)["\']', toml_content)
         if match:
             return match.group(1)
         return None
@@ -187,10 +224,12 @@ class InitializationService:
     @staticmethod
     def _update_toml_field(toml_content: str, field_name: str, new_value: str) -> str:
         """Atualiza ou insere um campo no toml."""
-        pattern = fr'({field_name}\s*=\s*["\'])([^"\']+)(["\'])'
+        pattern = rf'({field_name}\s*=\s*["\'])([^"\']+)(["\'])'
         if re.search(pattern, toml_content):
-            return re.sub(pattern, fr'\g<1>{new_value}\g<3>', toml_content)
+            return re.sub(pattern, rf"\g<1>{new_value}\g<3>", toml_content)
         # Se for na seção [harness], tenta inserir logo após ela
         if "[harness]" in toml_content:
-            return toml_content.replace("[harness]", f"[harness]\n{field_name} = \"{new_value}\"")
-        return toml_content + f"\n{field_name} = \"{new_value}\"\n"
+            return toml_content.replace(
+                "[harness]", f'[harness]\n{field_name} = "{new_value}"'
+            )
+        return toml_content + f'\n{field_name} = "{new_value}"\n'
