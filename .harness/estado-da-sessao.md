@@ -1,5 +1,5 @@
 ---
-commit: 94cc6ab
+commit: 93c2263
 feature: correções pós-009 — hooks + CI (MD-0006, MD-0007, MD-0008)
 start_time: "2026-06-24T16:57:44+00:00"
 status: active
@@ -22,8 +22,9 @@ status: active
 
 ## Próximos passos
 
-- **`69a8e6c` e `94cc6ab` empurrados** para `origin/main` (após re-autenticar o `gh` por device flow; token agora com escopos `gist, read:org, repo` — **sem `workflow`**, então um push que toque `.github/workflows/` será rejeitado).
-- **Correção do CI (MD-0008) pendente de commit + push.** Deve deixar o CI verde pela primeira vez desde a ativação.
+- **Três commits empurrados** para `origin/main` (`69a8e6c`, `94cc6ab`, `93c2263`), após re-autenticar o `gh` por device flow. **CI verde pela primeira vez** desde a ativação: `test (3.12)` e `test (3.13)` passando (run `28126576102`).
+- **Token sem escopo `workflow`** — o `gh` reautenticado tem `gist, read:org, repo`; um push que toque `.github/workflows/` será rejeitado até reconceder `workflow`.
+- **Deprecação Node 20 nas Actions** — o CI avisa que `actions/checkout@v4`, `setup-python@v5` e `setup-uv@v5` rodam forçados no Node 24. Funcionam; atualizar versões num próximo ciclo de manutenção.
 
 ## Pendências / bloqueios
 
