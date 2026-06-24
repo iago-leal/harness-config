@@ -7,6 +7,7 @@ o domínio `SessionState`/`SessionNarrative`. Invariante: `parse(render(x)) == x
 
 import re
 from datetime import datetime, timezone
+from typing import Optional
 
 import yaml
 
