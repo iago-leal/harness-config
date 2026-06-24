@@ -1,14 +1,17 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/008-reprodutibilidade-e-config",
-  "feature-id": "008",
-  "short-name": "reprodutibilidade-e-config",
-  "started-at": "2026-06-24T11:30:02-03:00",
+  "feature-dir": "_reversa_forward/009-hooks-antigravity",
+  "feature-id": "009",
+  "short-name": "hooks-antigravity",
+  "started-at": "2026-06-24T14:26:04-03:00",
   "current-stage": "coding",
   "stages-completed": [
     "requirements",
+    "clarify",
     "plan",
-    "to-do"
+    "audit",
+    "to-do",
+    "coding"
   ],
   "paused-features": []
 }
