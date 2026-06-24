@@ -1,6 +1,6 @@
 ---
 commit: 93c2263
-feature: correções pós-009 — hooks + CI (MD-0006, MD-0007, MD-0008)
+feature: correções pós-009 — hooks + CI (MD-0006, MD-0007, MD-0008, MD-0009)
 start_time: "2026-06-24T16:57:44+00:00"
 status: active
 ---
@@ -23,8 +23,8 @@ status: active
 ## Próximos passos
 
 - **Três commits empurrados** para `origin/main` (`69a8e6c`, `94cc6ab`, `93c2263`), após re-autenticar o `gh` por device flow. **CI verde pela primeira vez** desde a ativação: `test (3.12)` e `test (3.13)` passando (run `28126576102`).
-- **Token sem escopo `workflow`** — o `gh` reautenticado tem `gist, read:org, repo`; um push que toque `.github/workflows/` será rejeitado até reconceder `workflow`.
-- **Deprecação Node 20 nas Actions** — o CI avisa que `actions/checkout@v4`, `setup-python@v5` e `setup-uv@v5` rodam forçados no Node 24. Funcionam; atualizar versões num próximo ciclo de manutenção.
+- **Deprecação Node 20 resolvida (MD-0009)** — actions do `ci.yml` pinadas em versão exata: `checkout@v7.0.0`, `setup-uv@v8.2.0`, `setup-python@v6.3.0` (usam Node 24). Pin exato por reprodutibilidade (5.3) e porque `setup-uv` não tem major tag movível.
+- **Token `gh` agora com `workflow`** — escopos `gist, read:org, repo, workflow` (reconcedido por device flow); pushes que tocam `.github/workflows/` deixaram de ser rejeitados.
 
 ## Pendências / bloqueios
 
@@ -33,7 +33,7 @@ status: active
 
 ## Ponteiros
 
-- Microdecisões: `.harness/decisoes/MD-0006.md` (post-merge `"$@"`), `MD-0007.md` (bootstrap recusa/oferta `git init`) e `MD-0008.md` (teste do adapter git portável; CI mascarado-vermelho).
+- Microdecisões: `.harness/decisoes/MD-0006.md` (post-merge `"$@"`), `MD-0007.md` (bootstrap recusa/oferta `git init`), `MD-0008.md` (teste do adapter git portável; CI mascarado-vermelho) e `MD-0009.md` (actions pinadas em versão exata; Node 20→24).
 - Gerador dos hooks: `harness-core/src/core/bootstrap/service.py` (`install_hooks`, `_post_merge_script`, `NotAGitRepositoryError`).
 - Oferta na CLI: `harness-core/src/main.py::offer_git_init` + handler `bootstrap`. Porta: `ports/git.py::init_repo`; adapter: `adapters/git/subprocess.py`.
 - Testes: `harness-core/tests/test_bootstrap.py`, `test_cli.py`, `test_adapters.py`.

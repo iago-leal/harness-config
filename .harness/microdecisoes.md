@@ -18,4 +18,6 @@
 - **MD-0007** — bootstrap recusa-se a instalar fora de um repositório git e oferece `git init`
   ↳ relaciona MD-0006 · relacionado-com MD-0008
 - **MD-0008** — teste do adapter git portável; o CI estava silenciosamente vermelho
-  ↳ relaciona MD-0007
+  ↳ relaciona MD-0007 · relacionado-com MD-0009
+- **MD-0009** — actions do CI pinadas em versão exata (Node 20 → 24)
+  ↳ relaciona MD-0008
