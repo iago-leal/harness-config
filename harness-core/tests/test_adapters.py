@@ -1,6 +1,6 @@
 import os
-import pytest
 import re
+import subprocess
 from src.adapters.fs.local import LocalFileSystemAdapter
 from src.adapters.git.subprocess import SubprocessGitAdapter
 from src.adapters.process.formatter import HostFormatterAdapter
@@ -28,17 +28,21 @@ def test_local_file_system_adapter(tmp_path):
     assert not adapter.exists(test_file)
 
 
-def test_subprocess_git_adapter():
+def test_subprocess_git_adapter(tmp_path):
     adapter = SubprocessGitAdapter()
-    repo_path = "/Users/iagoleal/dev/harness"
+    repo_path = str(tmp_path)
 
-    # Testa se rev-parse HEAD retorna um hash SHA1 de 40 hexadecimais
-    try:
-        head_commit = adapter.get_head_commit(repo_path)
-        assert len(head_commit) == 40
-        assert re.match(r"^[a-f0-9]{40}$", head_commit)
-    except RuntimeError as e:
-        pytest.fail(f"Erro ao obter HEAD do Git: {e}")
+    # Repositório portável com um commit, para o rev-parse ter um HEAD.
+    # (O teste anterior chumbava /Users/iagoleal/dev/harness e falhava no CI.)
+    adapter.init_repo(repo_path)
+    run = dict(cwd=repo_path, capture_output=True, check=True)
+    subprocess.run(["git", "config", "user.email", "ci@example.com"], **run)
+    subprocess.run(["git", "config", "user.name", "CI"], **run)
+    subprocess.run(["git", "commit", "--allow-empty", "-m", "init"], **run)
+
+    head_commit = adapter.get_head_commit(repo_path)
+    assert len(head_commit) == 40
+    assert re.match(r"^[a-f0-9]{40}$", head_commit)
 
 
 def test_subprocess_git_adapter_init_repo(tmp_path):

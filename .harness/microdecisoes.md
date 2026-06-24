@@ -16,4 +16,6 @@
 - **MD-0006** — hook post-merge não repassa o argumento do git ao `decisions`
   ↳ relaciona MD-0005 · relacionado-com MD-0007
 - **MD-0007** — bootstrap recusa-se a instalar fora de um repositório git e oferece `git init`
-  ↳ relaciona MD-0006
+  ↳ relaciona MD-0006 · relacionado-com MD-0008
+- **MD-0008** — teste do adapter git portável; o CI estava silenciosamente vermelho
+  ↳ relaciona MD-0007
