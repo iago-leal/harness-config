@@ -16,6 +16,22 @@
 | W008 | Suíte completa verde                                                       | `harness-core/.venv/bin/python -m pytest -q` → 110 passed                                                                                           | 🟢                      |
 | W009 | Premissa de runtime do Antigravity (não verificável local)                 | Validar contra o Antigravity real quando disponível: estabilidade do `stepIdx` entre Pre/PostToolUse e acesso ao `artifactDirectoryPath`            | 🟡 (não testável agora) |
 
+## Histórico de re-extrações
+
+### Re-extração 2026-06-24 19:30 (pós-feature 010)
+
+| ID   | Veredito   | Observação                                                                                                                                                                                                         |
+| ---- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| W001 | 🟢 verde   | Caminhos Claude/Gemini do `install-prompt` inalterados pela 010.                                                                                                                                                   |
+| W002 | 🟢 verde   | Pureza hexagonal preservada: `grep active_harness` em `core/{formatting,decisions}` vazio; a 010 **não** ramificou domínio por harness — o materializador é incondicional e o perfil encapsula o artefato (RN-N5). |
+| W003 | 🟢 verde   | Não-bloqueio do `agy-hook` inalterado.                                                                                                                                                                             |
+| W004 | 🟢 verde   | Footprint do `materialize_hooks_json` inalterado.                                                                                                                                                                  |
+| W005 | 🟢 verde   | Merge por named-hook (init e upgrade) inalterado.                                                                                                                                                                  |
+| W006 | 🟢 verde   | `hooks.json` válido com `<ABS>` resolvido — inalterado.                                                                                                                                                            |
+| W007 | 🟢 verde   | Round-trip de formatação por evento inalterado.                                                                                                                                                                    |
+| W008 | 🟢 verde   | Suíte completa verde: **130 passed** (era 110; +20 da 010, sem regressão).                                                                                                                                         |
+| W009 | 🟡 amarelo | Premissa de runtime do Antigravity segue não testável localmente; a 010 herda a mesma ressalva no comportamento do workflow.                                                                                       |
+
 ## Resumo
 
 - Itens: 9 · Verde: 8 · Amarelo: 1 (W009, dependente de runtime do Antigravity indisponível localmente) · Vermelho: 0.

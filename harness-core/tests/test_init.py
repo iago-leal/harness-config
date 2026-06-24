@@ -272,3 +272,64 @@ def test_upgrade_antigravity_materializes_hooks_json():
     assert '"harness"' in content
     assert "/Users/iagoleal/dev/harness/destino/harness agy-hook" in content
     assert "<ABS>" not in content
+
+
+def test_init_materializes_session_commands_for_both_harnesses():
+    """Feature 010: init grava os dois comandos de IDE, independente do active_harness.
+
+    O `active_harness` é propositalmente 'gemini' para provar a incondicionalidade:
+    o comando precisa surgir para Claude E Antigravity mesmo quando nenhum dos dois
+    é o harness ativo (D-03).
+    """
+    fs = InitMockFileSystem()
+    process = MockProcessPort()
+    service = InitializationService(fs, process)
+
+    service.initialize_project(
+        target_path="/Users/iagoleal/dev/harness/destino",
+        active_harness="gemini",
+        upstream_path="/Users/iagoleal/dev/harness",
+    )
+
+    claude_cmd = (
+        "/Users/iagoleal/dev/harness/destino/.claude/commands/encerrar-sessao.md"
+    )
+    agy_cmd = "/Users/iagoleal/dev/harness/destino/.agents/workflows/encerrar-sessao.md"
+    assert fs.exists(claude_cmd)
+    assert fs.exists(agy_cmd)
+    assert "harness cmd encerrar-sessao" in fs.read_file(claude_cmd)
+    # O Antigravity embute o caminho absoluto do wrapper do projeto.
+    assert (
+        "/Users/iagoleal/dev/harness/destino/harness cmd encerrar-sessao"
+        in fs.read_file(agy_cmd)
+    )
+
+
+def test_upgrade_materializes_session_commands():
+    """Feature 010: upgrade (re)materializa os dois comandos de IDE."""
+    fs = InitMockFileSystem()
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/destino/harness.toml",
+        '[harness]\nactive_harness = "claude"\nupstream_path = "/Users/iagoleal/dev/harness/origem"\nversion = "1.2.0"\n',
+    )
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/origem/harness-core/src/main.py",
+        "print('versao nova main')",
+    )
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/origem/harness-core/requirements.txt",
+        "pydantic\ntoml",
+    )
+    fs.write_file("/Users/iagoleal/dev/harness/origem/harness", "wrapper_novo")
+
+    process = MockProcessPort()
+    service = InitializationService(fs, process)
+
+    service.upgrade_project(target_path="/Users/iagoleal/dev/harness/destino")
+
+    claude_cmd = (
+        "/Users/iagoleal/dev/harness/destino/.claude/commands/encerrar-sessao.md"
+    )
+    agy_cmd = "/Users/iagoleal/dev/harness/destino/.agents/workflows/encerrar-sessao.md"
+    assert fs.exists(claude_cmd)
+    assert fs.exists(agy_cmd)

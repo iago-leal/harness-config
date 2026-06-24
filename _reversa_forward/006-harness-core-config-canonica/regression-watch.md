@@ -20,6 +20,15 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-24 19:30 (pós-feature 010)
+
+| ID   | Veredito | Observação                                                                                                                                                                                                                                                                                                                                                              |
+| ---- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Caminho de sessão lido de `config.session.state_file`; inalterado pela 010.                                                                                                                                                                                                                                                                                             |
+| W002 | 🟢 verde | `load_harness_config` segue removido; via única tipada `load_config`.                                                                                                                                                                                                                                                                                                   |
+| W003 | 🟢 verde | Footprint global zero **honrado proativamente**: a 010 introduziu o novo serviço escritor `materialize_session_commands` E o incluiu no teste de footprint (`test_session_commands_materializer.py::test_nada_e_escrito_fora_do_project_path`, `RecordingFileSystem`), exatamente como a observação D-03 deste watch pede ao adicionar serviços que escrevem artefatos. |
+| W004 | 🟢 verde | `MD-0005` (módulo per-projeto) ativo; nenhum mecanismo de substituição global reintroduzido.                                                                                                                                                                                                                                                                            |
+
 ### Re-extração 2026-06-24 10:06
 
 | ID   | Veredito | Observação                                                                                                                                                                                                                                                                 |

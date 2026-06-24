@@ -1,17 +1,10 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/009-hooks-antigravity",
-  "feature-id": "009",
-  "short-name": "hooks-antigravity",
-  "started-at": "2026-06-24T14:26:04-03:00",
+  "feature-dir": "_reversa_forward/010-command-encerrar-sessao",
+  "feature-id": "010",
+  "short-name": "command-encerrar-sessao",
+  "started-at": "2026-06-24T18:09:18-03:00",
   "current-stage": "coding",
-  "stages-completed": [
-    "requirements",
-    "clarify",
-    "plan",
-    "audit",
-    "to-do",
-    "coding"
-  ],
+  "stages-completed": ["requirements", "plan", "to-do", "coding"],
   "paused-features": []
 }

@@ -1,5 +1,6 @@
 import json
 from abc import ABC, abstractmethod
+from typing import Optional, Tuple
 
 
 class HarnessProfile(ABC):
@@ -19,6 +20,15 @@ class HarnessProfile(ABC):
     @abstractmethod
     def apply_instructions(self) -> str:
         """Instrução em uma frase sobre onde e como aplicar o bloco."""
+
+    def session_command_artifact(self, command_path: str) -> Optional[Tuple[str, str]]:
+        """Artefato de slash command de IDE para encerrar a sessão (feature 010).
+
+        Devolve ``(caminho_relativo, conteúdo)`` do arquivo de comando que aciona
+        ``./harness cmd encerrar-sessao``, ou ``None`` quando o harness não expõe
+        uma superfície de slash command para esta capacidade. Por padrão, ``None``.
+        """
+        return None
 
 
 class ClaudeProfile(HarnessProfile):
@@ -50,6 +60,23 @@ class ClaudeProfile(HarnessProfile):
             "(crie o arquivo se não existir). Aplique SEMPRE no `.claude/settings.json` do "
             "**projeto**. Nunca edite a configuração global em `~/.claude`."
         )
+
+    def session_command_artifact(self, command_path: str):
+        # O Claude lê slash commands de `.claude/commands/<nome>.md`. O `!`-bash
+        # roda com cwd na RAIZ do projeto, então `./harness` (relativo) resolve o
+        # wrapper e sobrevive a repo movido. `${CLAUDE_PROJECT_DIR}` NÃO é expandida
+        # nesse contexto — ao contrário dos hooks — e viraria `/harness` (bug
+        # conhecido do Claude Code, issue #33815); por isso usamos `./harness`,
+        # casando com o `allowed-tools`. `command_path` é ignorado.
+        content = (
+            "---\n"
+            "description: Encerra a sessão de trabalho do Harness, gravando o commit-âncora.\n"
+            "allowed-tools: Bash(./harness cmd encerrar-sessao:*)\n"
+            "---\n\n"
+            "Encerrando a sessão do Harness e gravando o commit-âncora:\n\n"
+            "!`./harness cmd encerrar-sessao`\n"
+        )
+        return (".claude/commands/encerrar-sessao.md", content)
 
 
 class GeminiProfile(HarnessProfile):
@@ -137,6 +164,22 @@ class AntigravityProfile(HarnessProfile):
             "já o materializa por merge; cole-o à mão só se for ajustar). Escopo SEMPRE no "
             "`.agents/hooks.json` do projeto: nunca em diretório global do usuário."
         )
+
+    def session_command_artifact(self, command_path: str):
+        # O Antigravity registra um comando de chat ao salvar um arquivo em
+        # `.agents/workflows/<nome>.md`. Usa o caminho ABSOLUTO do wrapper
+        # (resolvido na materialização), espelhando o `<ABS>` dos ganchos — não há
+        # env var de projeto garantida aqui. Se o workflow não executar shell
+        # embutido, o corpo instrui o agente a rodar o comando (D-06).
+        content = (
+            "---\n"
+            "name: encerrar-sessao\n"
+            "description: Encerra a sessão de trabalho do Harness, gravando o commit-âncora.\n"
+            "---\n\n"
+            "Execute, a partir da raiz do projeto, o comando de shell abaixo e mostre a saída ao usuário:\n\n"
+            f"`{command_path}/harness cmd encerrar-sessao`\n"
+        )
+        return (".agents/workflows/encerrar-sessao.md", content)
 
 
 _PROFILES = {

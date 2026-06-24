@@ -19,6 +19,15 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-24 19:30 (pós-feature 010)
+
+| ID   | Veredito | Observação                                                                            |
+| ---- | -------- | ------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Decisões em `.harness/decisoes/` + índice; raiz limpa. Inalterado pela 010.           |
+| W002 | 🟢 verde | Nenhum literal de caminho de decisão chumbado; a 010 não tocou `main.py`/`server.py`. |
+| W003 | 🟢 verde | `load_config` funcional; a 010 não alterou `config.py`.                               |
+| W004 | 🟢 verde | `./harness decisions` segue idempotente.                                              |
+
 ### Re-extração 2026-06-24 10:06
 
 | ID   | Veredito | Observação                                                                                                                                                                             |

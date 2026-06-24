@@ -15,6 +15,14 @@ Estes itens devem ser monitorados nas próximas rodadas da extração reversa pa
 
 ## 2. Histórico de re-extrações
 
+### Re-extração 2026-06-24 19:30 (pós-feature 010)
+
+| ID   | Veredito | Observação                                                                                           |
+| ---- | -------- | ---------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Wrapper `./harness` inalterado pela 010 (que só adiciona arquivos de comando sob o projeto).         |
+| W002 | 🟢 verde | `harness-core/.venv` e dependências inalterados; a 010 não adiciona dependência (só `os` da stdlib). |
+| W003 | 🟢 verde | `.reversa/settings.json.snippet` intacto.                                                            |
+
 ### Re-extração 2026-06-24 10:06
 
 | ID   | Veredito | Observação                                                                                                                                                      |

@@ -10,6 +10,10 @@
 
 ## 2. Histórico de re-extrações
 
+### Re-extração 2026-06-24 19:30 (pós-feature 010)
+
+Sem watch items de regressão (tabela principal vazia por design). A feature 010 não tocou esta unit. RN-08/RN-09 seguem válidas; RN-10 (introspecção do argparse) inalterada — a 010 **não** adicionou subcomando à CLI, então a lista de comandos derivada não muda.
+
 ### Re-extração 2026-06-24 10:06
 
 Sem watch items de regressão (tabela principal vazia por design). A feature 006 não tocou esta unit. Nada a verificar; as regras novas RN-08/RN-09/RN-10 seguem válidas.

@@ -4,6 +4,7 @@ from typing import List, Optional
 from src.core.ports.fs import FileSystemPort
 from src.core.ports.process import ProcessPort
 from src.core.install.antigravity_hooks import materialize_hooks_json
+from src.core.install.session_commands import materialize_session_commands
 
 
 class InitializationService:
@@ -119,6 +120,10 @@ class InitializationService:
             command_path = os.path.abspath(target_path)
             materialize_hooks_json(self.fs, target_path, command_path)
 
+        # 10. Materializa os slash commands de sessão de IDE (Claude + Antigravity),
+        # SEMPRE — independentemente do active_harness (feature 010, D-03).
+        materialize_session_commands(self.fs, target_path, os.path.abspath(target_path))
+
     def upgrade_project(self, target_path: str) -> None:
         """Atualiza a instalação do Harness Core no projeto de destino a partir do upstream configurado."""
         toml_path = os.path.join(target_path, "harness.toml")
@@ -183,6 +188,10 @@ class InitializationService:
         if active_harness == "antigravity":
             command_path = os.path.abspath(target_path)
             materialize_hooks_json(self.fs, target_path, command_path)
+
+        # 7. (Re)materializa os slash commands de sessão de IDE, sempre — mantém o
+        # caminho absoluto do wrapper correto se o repositório foi movido (D-03).
+        materialize_session_commands(self.fs, target_path, os.path.abspath(target_path))
 
     def _copy_tree(self, src: str, dst: str, excludes: List[str]) -> None:
         """Copia a árvore de diretórios e arquivos recursivamente usando FileSystemPort."""

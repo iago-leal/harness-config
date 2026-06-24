@@ -15,6 +15,14 @@ Nenhuma regra 🟢 do legado foi modificada (ver `legacy-impact.md#4-regras-modi
 
 ## 2. Histórico de re-extrações
 
+### Re-extração 2026-06-24 19:30 (pós-feature 010)
+
+| ID   | Veredito   | Observação                                                                                                                                                                                                  |
+| ---- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde   | Introspecção `{{COMMANDS}}` via `InstallPromptService` inalterada; a 010 não tocou o serviço de prompt nem o `template.md`.                                                                                 |
+| W002 | 🟢 verde   | Escopo `.claude/settings.json` do projeto e proibição de `~/.claude` preservados em `apply_instructions()`. A 010 só **adicionou** `session_command_artifact` aos perfis, sem alterar `apply_instructions`. |
+| W003 | 🟡 amarelo | Pendência do `SessionStart` no `template.md:42` segue obsoleta (dívida já paga na 004); fora do escopo da 010, inalterada. Aguarda atualização do template.                                                 |
+
 ### Re-extração 2026-06-24 10:06
 
 | ID   | Veredito   | Observação                                                                                                                                                                                                                      |

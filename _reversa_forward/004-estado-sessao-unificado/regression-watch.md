@@ -20,6 +20,15 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-24 19:30 (pós-feature 010)
+
+| ID   | Veredito | Observação                                                                                                                                   |
+| ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Alerta de divergência de âncora no `resume` inalterado; a 010 não tocou o fluxo de retomada.                                                 |
+| W002 | 🟢 verde | Estado em `.harness/estado-da-sessao.md`; a 010 não reintroduziu `ESTADO-DA-SESSAO.md`. O comando de IDE apenas delega ao `encerrar-sessao`. |
+| W003 | 🟢 verde | Glossário canônico (`.harness/estado-da-sessao.md`) inalterado.                                                                              |
+| W004 | 🟢 verde | `cmd resume` segue emitindo só o JSON `hookSpecificOutput.additionalContext` via sink.                                                       |
+
 ### Re-extração 2026-06-24 10:06
 
 | ID   | Veredito | Observação                                                                                                                                                                                                                 |

@@ -30,7 +30,10 @@
     },
     "archaeologist": {
       "completed_at": "2026-06-24T15:30:00-03:00",
-      "modules_analyzed": ["harness-core", "antigravity-hooks"],
+      "modules_analyzed": [
+        "harness-core",
+        "antigravity-hooks"
+      ],
       "modules_pending": []
     },
     "detective": {
@@ -46,7 +49,8 @@
         "_reversa_sdd/adrs/0013-harness-core-modulo-per-projeto-footprint.md",
         "_reversa_sdd/adrs/0014-bootstrap-e-evolucao-do-tooling.md",
         "_reversa_sdd/adrs/0015-reprodutibilidade-e-configuracoes-dinamicas-de-formatacao.md",
-        "_reversa_sdd/adrs/0016-ganchos-antigravity-driver-de-borda.md"
+        "_reversa_sdd/adrs/0016-ganchos-antigravity-driver-de-borda.md",
+        "_reversa_sdd/adrs/0017-comandos-ide-materializados-no-init.md"
       ]
     },
     "architect": {
@@ -90,28 +94,37 @@
   ],
   "last_reextraction": {
     "type": "cirurgica",
-    "scope": "feature-009-hooks-antigravity",
-    "anchor_commit": "fea976b",
-    "started_at": "2026-06-24T15:17:10-03:00",
-    "completed_at": "2026-06-24T15:26:00-03:00",
-    "method": "workflow re-extração pós-feature 009",
-    "artifacts_reconciled": 16,
-    "new_adr": "0016-ganchos-antigravity-driver-de-borda",
+    "scope": "feature-010-command-encerrar-sessao",
+    "anchor_commit": "f4d3896",
+    "started_at": "2026-06-24T19:35:09-03:00",
+    "completed_at": "2026-06-24T19:35:09-03:00",
+    "method": "re-extração de reconciliação pós-feature 010 (comando de IDE encerrar-sessao)",
+    "artifacts_reconciled": [
+      "_reversa_sdd/domain.md (RN-N28/RN-N29, seção 2.12)",
+      "_reversa_sdd/architecture.md (síntese, integrações de borda, ADRs)",
+      "_reversa_sdd/adrs/0017-comandos-ide-materializados-no-init.md (novo)",
+      "_reversa_sdd/comandos-customizados/requirements.md (nota f010)"
+    ],
+    "new_adr": "0017-comandos-ide-materializados-no-init",
     "reconciled_with": [
-      "1b23498 (feature 007)",
-      "feature 008",
-      "fea976b (feature 009)"
+      "feature 009 (fea976b)",
+      "feature 010 (HEAD f4d3896)"
     ],
     "regression_check": {
-      "features": 9,
-      "watch_items": 33,
-      "green": 32,
-      "yellow": 1,
+      "features": 10,
+      "watch_items": 37,
+      "green": 35,
+      "yellow": 2,
       "red": 0,
-      "yellow_detail": "009/W009 - premissa de runtime do Antigravity nao verificavel localmente (estabilidade do stepIdx entre Pre/PostToolUse e acesso ao artifactDirectoryPath); validar contra o Antigravity real quando disponivel. Nota: a feature 009 removeu a nota obsoleta do SessionStart do template.md, resolvendo o antigo amarelo 003/W003 (agora verde)."
+      "yellow_detail": "003/W003 (nota obsoleta do SessionStart no template.md, dívida já paga na 004, fora de escopo) e 009/W009 (premissa de runtime do Antigravity não verificável localmente). A feature 010 não introduziu nenhuma regressão; herda o amarelo de runtime do Antigravity no comportamento do workflow."
     }
   },
-  "engines": ["claude-code", "codex", "gemini-cli", "antigravity"],
+  "engines": [
+    "claude-code",
+    "codex",
+    "gemini-cli",
+    "antigravity"
+  ],
   "agents": [
     "reversa",
     "reversa-scout",
