@@ -14,7 +14,7 @@ status: active
 
 ## Próximos passos
 
-- **Empurrar os três commits** (`67c50cc`, `8c136af`, `8f8a381`): estão locais em `main`, ainda não empurrados.
+- Os quatro commits foram **empurrados** para `origin/main` (`1b23498..2d6e749`); o CI no GitHub Actions passou a rodar a cada push. Concedido o escopo `workflow` ao token do `gh` e configurado como credential helper.
 - `003/W003` segue **🟡** — defasagem só documental no `template.md` (SessionStart já pago pela 004), mantida por decisão do mantenedor.
 - Premissa aberta da 004: validar o gatilho de boot do Antigravity (`agy`).
 
@@ -25,7 +25,7 @@ status: active
 
 ## Ponteiros
 
-- Commits desta sessão: `67c50cc` (feat 007), `8c136af` (feat 008), `8f8a381` (re-extração + mini-site). Todos em `main`, **locais (não empurrados)**.
+- Commits desta sessão: `67c50cc` (feat 007), `8c136af` (feat 008), `8f8a381` (re-extração + mini-site), `2d6e749` (chore sessão). Todos em `main`, **empurrados** para `origin/main`.
 - Artefatos forward: `_reversa_forward/007-bootstrap-harness-init/`, `_reversa_forward/008-reprodutibilidade-e-config/`.
 - `_reversa_sdd/adrs/0014`, `0015`; `_reversa_sdd/confidence-report.md`, `gaps.md`, `questions.md`.
 - Mini-site: `.reversa/documentation/` (regeneráveis via `.reversa/scripts/`).
