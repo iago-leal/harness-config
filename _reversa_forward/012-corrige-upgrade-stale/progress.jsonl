@@ -1,0 +1,19 @@
+{"ts":"2026-06-25T15:44:31Z","action":"T001","status":"done","files":[".harness/harness-core/src/core/domain/layout.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T002","status":"done","files":[".harness/harness-core/tests/test_init.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T003","status":"done","files":[".harness/harness-core/tests/test_init.py",".harness/harness-core/tests/test_cli.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T004","status":"done","files":[".harness/harness-core/tests/test_init.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T005","status":"done","files":[".harness/harness-core/tests/test_init.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T006","status":"done","files":[".harness/harness-core/tests/test_sync.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T007","status":"done","files":[".harness/harness-core/tests/test_cli.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T008","status":"done","files":[".harness/harness-core/src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T009","status":"done","files":[".harness/harness-core/src/core/install/local_apply.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T010","status":"done","files":[".harness/harness-core/src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T011","status":"done","files":[".harness/harness-core/src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T012","status":"done","files":[".harness/harness-core/src/main.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T013","status":"done","files":[".harness/harness-core/src/main.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T014","status":"done","files":[".harness/harness-core/src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T015","status":"done","files":[".harness/harness-core/src/core/sync/service.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T016","status":"done","files":[".harness/harness-core/tests/"],"note":"149 passed em Python 3.12 e 3.13 (uv, igual ao CI)"}
+{"ts":"2026-06-25T15:44:31Z","action":"T017","status":"done","files":[".harness/harness-core/src/core/domain/config.py",".harness/harness-core/src/core/bootstrap/init_service.py",".harness/harness-core/tests/test_init.py"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T018","status":"done","files":[".harness/harness-core/src/core/install/template.md"]}
+{"ts":"2026-06-25T15:44:31Z","action":"T019","status":"done","files":[],"note":"smoke real: init, upgrade no-op, --force regenera artefato, abort com exit!=0 sem Sucesso; dev repo materialize OK (artefatos efemeros removidos)"}

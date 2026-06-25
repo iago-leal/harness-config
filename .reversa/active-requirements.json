@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/011-harness-core-em-dot-harness",
-  "feature-id": "011",
-  "short-name": "harness-core-em-dot-harness",
-  "started-at": "2026-06-25T10:09:25-03:00",
+  "feature-dir": "_reversa_forward/012-corrige-upgrade-stale",
+  "feature-id": "012",
+  "short-name": "corrige-upgrade-stale",
+  "started-at": "2026-06-25T11:57:32-03:00",
   "current-stage": "requirements",
   "stages-completed": [],
   "paused-features": []
