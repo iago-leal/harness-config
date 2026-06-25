@@ -30,10 +30,7 @@
     },
     "archaeologist": {
       "completed_at": "2026-06-24T15:30:00-03:00",
-      "modules_analyzed": [
-        "harness-core",
-        "antigravity-hooks"
-      ],
+      "modules_analyzed": ["harness-core", "antigravity-hooks"],
       "modules_pending": []
     },
     "detective": {
@@ -93,29 +90,30 @@
     "traceability/code-spec-matrix.md"
   ],
   "last_reextraction": {
-    "scope": "feature-011-paths + feature-012-deltas",
-    "type": "cirurgica",
-    "started_at": "2026-06-25T13:39:00-03:00",
-    "completed_at": "2026-06-25T13:39:00-03:00",
-    "method": "reconciliacao de paths harness-core/ -> .harness/harness-core/ em 28 arquivos do _reversa_sdd/; deltas da feature 012 no domain.md (RN-N20/N21 refinadas, nova subsecao 2.13/RN-N30); regression check das features 011 e 012",
-    "user_scope_choice": "foco no que mudou (011 + 012); features 001-010 nao varridas nesta rodada",
+    "scope": "regressao completa 001-012 (12 features)",
+    "type": "regressao-semantica-completa",
+    "started_at": "2026-06-25T14:26:00-03:00",
+    "completed_at": "2026-06-25T14:32:00-03:00",
+    "method": "step-04 sobre as 12 regression-watch.md; verificacao factual (filesystem + greps de invariante + suite 149 passed em 3,07s + ./harness decisions idempotente), nao so leitura de artefatos; bloco datado no historico de cada feature; tabelas principais intactas (regra absoluta)",
+    "user_scope_choice": "regressao completa 001-012, escolhida apos recomendacao do orquestrador; pipeline do zero descartado por nao haver codigo novo desde 13:47",
     "regression_check": {
-      "features_checked": [
-        "011-harness-core-em-dot-harness",
-        "012-corrige-upgrade-stale"
+      "features_checked": 12,
+      "watch_items": 47,
+      "green": 46,
+      "yellow": 1,
+      "red": 0,
+      "yellow_items": [
+        "009/W009 - premissa de runtime do Antigravity, nao testavel localmente"
       ],
-      "watch_items": 9,
-      "green": 9,
-      "yellow": 0,
-      "red": 0
+      "promotions": [
+        "003/W003 - amarelo->verde: premissa expirada (a 004 fechou o SessionStart) e a 011 limpou o template; candidato a arquivamento"
+      ],
+      "notes": [
+        "defasagem textual de caminhos harness-core/ -> .harness/harness-core/ nos watch items pre-011 (001/W002, 004, 006, 009); essencia preservada, nao e regressao"
+      ]
     }
   },
-  "engines": [
-    "claude-code",
-    "codex",
-    "gemini-cli",
-    "antigravity"
-  ],
+  "engines": ["claude-code", "codex", "gemini-cli", "antigravity"],
   "agents": [
     "reversa",
     "reversa-scout",

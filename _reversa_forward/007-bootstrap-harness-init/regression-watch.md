@@ -17,6 +17,14 @@ Este arquivo define os itens de verificação (watch items) que devem permanecer
 
 ## 📈 2. Histórico de re-extrações
 
+### Re-extração 2026-06-25 14:32
+
+| ID   | Veredito | Observação                                                                                                                                                                         |
+| ---- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | `upgrade` preserva `.reversa/` e `.harness/decisoes/` — **reforçado pela 011** (exclui `.harness` da cópia) e coberto por `test_upgrade` na suíte; `domain.md#RN-N20`.             |
+| W002 | 🟢 verde | `init` copia o core ignorando `.git`/`.venv`/caches; lógica preservada após a relocação para `.harness/harness-core/`; `domain.md#RN-N19`.                                         |
+| W003 | 🟢 verde | Checagem de versão passiva e resiliente **reforçada pela 012**: usa `CORE_CONFIG_CANDIDATE_RELPATHS` (canônico + legado) e aborta barulhento se indeterminada; `domain.md#RN-N21`. |
+
 ### Re-extração 2026-06-24 19:30 (pós-feature 010)
 
 | ID   | Veredito | Observação                                                                                                                                                                                 |

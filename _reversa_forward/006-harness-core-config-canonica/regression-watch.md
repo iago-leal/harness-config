@@ -6,12 +6,12 @@
 
 ## Watch items
 
-| ID   | Origem (arquivo, seção)                                                                                   | Regra esperada após a mudança                                                                                                              | Tipo de verificação | Sinal de violação                                                                                                                    |
-| ---- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| W001 | `harness-core/src/main.py` (branch `cmd`) e `harness-core/src/adapters/mcp/server.py` (`session_command`) | O caminho de estado de sessão é lido de `config.session.state_file`, não de literal chumbado                                               | presença            | Literal `".harness/estado-da-sessao.md"` reaparecer como atribuição de `session_file` em qualquer um dos dois drivers                |
-| W002 | `harness-core/src/main.py`                                                                                | Via única de configuração: `load_harness_config` permanece removido; tudo por `load_config` tipada                                         | ausência            | `def load_harness_config` ou `load_harness_config(` reaparecer no código                                                             |
-| W003 | `_reversa_forward/006.../requirements.md#5` (RF-03), `harness-core/tests/test_footprint.py`               | Footprint global zero: nenhuma escrita do harness mira `~/.claude` ou `~/.agent-memory`; o contrato de footprint existe e falha barulhento | presença            | Escrita do harness sob `~/.claude`/`~/.agent-memory`; ausência do teste de footprint ou do `RecordingFileSystem`                     |
-| W004 | `.harness/decisoes/MD-0005.md`                                                                            | A intenção "harness-core substituto da config global" segue revertida; `MD-0005` (módulo per-projeto) ativo                                | presença            | Reintrodução de mecanismo de substituição global (symlink/env/XDG/cópia de `~/.claude`) sem uma nova decisão que substitua `MD-0005` |
+| ID   | Origem (arquivo, seção)                                                                                                     | Regra esperada após a mudança                                                                                                              | Tipo de verificação | Sinal de violação                                                                                                                    |
+| ---- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| W001 | `.harness/harness-core/src/main.py` (branch `cmd`) e `.harness/harness-core/src/adapters/mcp/server.py` (`session_command`) | O caminho de estado de sessão é lido de `config.session.state_file`, não de literal chumbado                                               | presença            | Literal `".harness/estado-da-sessao.md"` reaparecer como atribuição de `session_file` em qualquer um dos dois drivers                |
+| W002 | `.harness/harness-core/src/main.py`                                                                                         | Via única de configuração: `load_harness_config` permanece removido; tudo por `load_config` tipada                                         | ausência            | `def load_harness_config` ou `load_harness_config(` reaparecer no código                                                             |
+| W003 | `_reversa_forward/006.../requirements.md#5` (RF-03), `.harness/harness-core/tests/test_footprint.py`                        | Footprint global zero: nenhuma escrita do harness mira `~/.claude` ou `~/.agent-memory`; o contrato de footprint existe e falha barulhento | presença            | Escrita do harness sob `~/.claude`/`~/.agent-memory`; ausência do teste de footprint ou do `RecordingFileSystem`                     |
+| W004 | `.harness/decisoes/MD-0005.md`                                                                                              | A intenção "harness-core substituto da config global" segue revertida; `MD-0005` (módulo per-projeto) ativo                                | presença            | Reintrodução de mecanismo de substituição global (symlink/env/XDG/cópia de `~/.claude`) sem uma nova decisão que substitua `MD-0005` |
 
 ## Observações (sem peso de regressão)
 
@@ -19,6 +19,15 @@
 - **RF-04 diferido (fora do escopo da 006):** ensinar os scripts globais `~/.agent-memory/bin/{guardrail-decisoes.sh,microdecisoes-guard.py}` a reconhecer `.harness/` permanece como mudança futura no repo `agent-memory`, não neste repositório.
 
 ## Histórico de re-extrações
+
+### Re-extração 2026-06-25 14:32
+
+| ID   | Veredito | Observação                                                                                                                                                                                                       |
+| ---- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Caminho de sessão lido de `config.session.state_file` (`domain.md:83`, `state-machines.md:40`); nenhum literal chumbado nos drivers.                                                                             |
+| W002 | 🟢 verde | `grep load_harness_config` no `src/` = vazio; via única tipada `load_config` preservada.                                                                                                                         |
+| W003 | 🟢 verde | Contrato de footprint presente (`tests/test_footprint.py`, exercitado em py 3.12/3.13/3.14) e verde na suíte; footprint global zero honrado. Ressalva 🟡 de cobertura permanece (é teste, não guard de runtime). |
+| W004 | 🟢 verde | `MD-0005.md` ativo em `.harness/decisoes/`; nenhum mecanismo de substituição global reintroduzido. ADR 0013 registra.                                                                                            |
 
 ### Re-extração 2026-06-24 19:30 (pós-feature 010)
 

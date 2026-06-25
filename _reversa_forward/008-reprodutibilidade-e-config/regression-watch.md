@@ -17,6 +17,14 @@ Este arquivo define os itens de verificação (watch items) que devem permanecer
 
 ## 📈 2. Histórico de re-extrações
 
+### Re-extração 2026-06-25 14:32
+
+| ID   | Veredito | Observação                                                                                                                    |
+| ---- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Blindagem incondicional em `formatting/service.py:23-28` (`expanduser("~")`, `~/Notas`, `~/.claude`). Inalterada por 011/012. |
+| W002 | 🟢 verde | Opt-out dinâmico vivo: `service.py:37` (`config.formatting.opt_out_file or ".no-autoformat"`).                                |
+| W003 | 🟢 verde | Glob na exclusão vivo: `import fnmatch` (`service.py:2`) aplicado sobre `exclude_paths` (`service.py:59-63`).                 |
+
 ### Re-extração 2026-06-24 19:30 (pós-feature 010)
 
 | ID   | Veredito | Observação                                                                   |

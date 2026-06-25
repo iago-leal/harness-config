@@ -5,12 +5,12 @@
 
 ## Watch items
 
-| ID   | Origem (arquivo, seção)              | Regra esperada após a mudança                                                                       | Tipo de verificação | Sinal de violação                                                                                  |
-| ---- | ------------------------------------ | --------------------------------------------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------- |
-| W001 | `_reversa_sdd/domain.md#2.3` (RN-07) | No `resume`, se o HEAD diverge da âncora de fechamento, um alerta explícito é emitido               | presença            | A re-extração não encontra mais o alerta de divergência no fluxo de `resume`                       |
-| W002 | `_reversa_sdd/state-machines.md#1`   | Estado de sessão persistido em `.harness/estado-da-sessao.md`; máquina `INACTIVE↔ACTIVE` preservada | presença            | Reaparece `ESTADO-DA-SESSAO.md` (raiz) ou `.claude/ESTADO-DA-SESSAO.md` como local de persistência |
-| W003 | `_reversa_sdd/domain.md#1.1`         | "Sessão do Agente" / "Âncora Git" ancoradas em `.harness/estado-da-sessao.md`                       | redação             | Glossário volta a citar `ESTADO-DA-SESSAO.md` como local canônico                                  |
-| W004 | `harness-core/src/main.py` (CLI)     | `cmd resume` emite no stdout apenas o JSON `hookSpecificOutput.additionalContext` (Claude/Gemini)   | presença            | stdout do `resume` volta a conter texto solto, quebrando o parse do hook                           |
+| ID   | Origem (arquivo, seção)                   | Regra esperada após a mudança                                                                       | Tipo de verificação | Sinal de violação                                                                                  |
+| ---- | ----------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------- |
+| W001 | `_reversa_sdd/domain.md#2.3` (RN-07)      | No `resume`, se o HEAD diverge da âncora de fechamento, um alerta explícito é emitido               | presença            | A re-extração não encontra mais o alerta de divergência no fluxo de `resume`                       |
+| W002 | `_reversa_sdd/state-machines.md#1`        | Estado de sessão persistido em `.harness/estado-da-sessao.md`; máquina `INACTIVE↔ACTIVE` preservada | presença            | Reaparece `ESTADO-DA-SESSAO.md` (raiz) ou `.claude/ESTADO-DA-SESSAO.md` como local de persistência |
+| W003 | `_reversa_sdd/domain.md#1.1`              | "Sessão do Agente" / "Âncora Git" ancoradas em `.harness/estado-da-sessao.md`                       | redação             | Glossário volta a citar `ESTADO-DA-SESSAO.md` como local canônico                                  |
+| W004 | `.harness/harness-core/src/main.py` (CLI) | `cmd resume` emite no stdout apenas o JSON `hookSpecificOutput.additionalContext` (Claude/Gemini)   | presença            | stdout do `resume` volta a conter texto solto, quebrando o parse do hook                           |
 
 ## Observações (sem peso de regressão — origem 🟡)
 
@@ -19,6 +19,17 @@
 - Bug latente: `json` não importado em `main.py` — corrigir à parte.
 
 ## Histórico de re-extrações
+
+### Re-extração 2026-06-25 14:32
+
+> Rodada completa 001–012. Vereditos confirmados por leitura direta do código (greps), não só pelos artefatos `_reversa_sdd/`.
+
+| ID   | Veredito | Observação                                                                                                                                                             |
+| ---- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Alerta de divergência de âncora vivo em `core/commands/service.py:64-65` (`if session.commit_hash != current_commit: ⚠️ ALERTA ... diverge do commit âncora`).         |
+| W002 | 🟢 verde | Estado em `.harness/estado-da-sessao.md` (arquivo presente); `grep ESTADO-DA-SESSAO.md` no `src/` = vazio; máquina `INACTIVE↔ACTIVE` preservada (`state-machines.md`). |
+| W003 | 🟢 verde | `_reversa_sdd/domain.md` (linhas 14/38/83) ancora `.harness/estado-da-sessao.md` como canônico; `ESTADO-DA-SESSAO.md` citado só como origem legada.                    |
+| W004 | 🟢 verde | `cmd resume` entrega via `core/session/sinks.py:38-40` (`hookSpecificOutput.additionalContext`), sem texto solto no stdout. Inalterado por 011/012.                    |
 
 ### Re-extração 2026-06-24 19:30 (pós-feature 010)
 

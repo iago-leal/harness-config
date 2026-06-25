@@ -12,7 +12,7 @@
 - **MD-0004** — Remoção da sincronização cross-harness Claude↔Gemini
   ↳ relaciona MD-0002 · refinado-por MD-0005
 - **MD-0005** — harness-core como módulo per-projeto, não substituto da config global
-  ↳ refina MD-0004 · relacionado-com MD-0006
+  ↳ refina MD-0004 · relacionado-com MD-0006 · relacionado-com MD-0010
 - **MD-0006** — hook post-merge não repassa o argumento do git ao `decisions`
   ↳ relaciona MD-0005 · relacionado-com MD-0007
 - **MD-0007** — bootstrap recusa-se a instalar fora de um repositório git e oferece `git init`
@@ -21,3 +21,5 @@
   ↳ relaciona MD-0007 · relacionado-com MD-0009
 - **MD-0009** — actions do CI pinadas em versão exata (Node 20 → 24)
   ↳ relaciona MD-0008
+- **MD-0010** — caminhos dos regression-watch pré-011 atualizados para o layout `.harness/`
+  ↳ relaciona MD-0005

@@ -20,6 +20,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-25 14:32
+
+> Re-confirmação na rodada completa 001–012 (a rodada cirúrgica de 13:39 já cobrira esta feature). Vereditos por leitura direta do código + suíte.
+
+| ID   | Veredito | Observação                                                                                                                                 |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| W001 | 🟢 verde | `grep` por `materialize_session_commands(`/`materialize_hooks_json(` diretos em `upgrade_project` = vazio; materialização via subprocesso. |
+| W002 | 🟢 verde | `_get_upstream_version` aborta barulhento (sem fallback `current_version`); `template.md:42` documenta o exit ≠ 0; coberto pela suíte.     |
+| W003 | 🟢 verde | `check_version_update` e `_get_upstream_version` usam `CORE_CONFIG_CANDIDATE_RELPATHS` (`layout.py`); caminho fixo único eliminado.        |
+| W004 | 🟢 verde | `init`/`upgrade` materializam pela função única `apply_local_materializers` (`install/local_apply.py:19`); `domain.md#2.13` (RN-N30).      |
+
 ### Re-extração 2026-06-25 13:39
 
 | ID   | Veredito | Observação                                                                                                                                                                                  |

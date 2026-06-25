@@ -20,6 +20,16 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-25 14:32
+
+| ID   | Veredito | Observação                                                                                                                                                         |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| W001 | 🟢 verde | `init` materializa `.claude/commands/encerrar-sessao.md` e `.agents/workflows/encerrar-sessao.md` — coberto por `test_init` na suíte; `domain.md#RN-N28`.          |
+| W002 | 🟢 verde | `upgrade` (re)materializa os dois comandos — agora via `apply_local_materializers`/subprocesso (fix da 012), com o caminho de wrapper correto; coberto pela suíte. |
+| W003 | 🟢 verde | Materialização escreve só sob `project_path` — `test_session_commands_materializer.py` (`RecordingFileSystem`) verde; RN-N17/RN-N28.                               |
+| W004 | 🟢 verde | O comando delega ao `encerrar-sessao` do core sem reimplementá-lo (RN-N5/RN-N29).                                                                                  |
+| W005 | 🟢 verde | Slash command do Claude usa `./harness` (não `${CLAUDE_PROJECT_DIR}`); coberto por `test_session_command_profiles.py`. Inalterado por 011/012.                     |
+
 ### Re-extração 2026-06-24 19:30 (pós-feature 010)
 
 | ID   | Veredito | Observação                                                                                                                                                                                                                                                                  |

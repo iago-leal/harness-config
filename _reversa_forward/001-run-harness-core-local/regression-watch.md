@@ -7,13 +7,25 @@
 
 Estes itens devem ser monitorados nas próximas rodadas da extração reversa para garantir que a evolução técnica permaneça intacta e não sofra regressões silenciosas:
 
-| ID   | Origem (arquivo, seção)                            | Regra esperada após mudança                                                                  | Tipo de verificação | Sinal de violação                                                      |
-| :--- | :------------------------------------------------- | :------------------------------------------------------------------------------------------- | :------------------ | :--------------------------------------------------------------------- |
-| W001 | `legacy-impact.md#mapeamento-de-impacto-no-legado` | O arquivo wrapper `./harness` existe na raiz do repositório e possui flag de execução ativa. | presença            | O script `./harness` está ausente ou não executável (`chmod -x`).      |
-| W002 | `legacy-impact.md#interface-executavel-nucleo`     | O ambiente virtual Python do núcleo está configurado e com dependências instaladas.          | presença            | A pasta `harness-core/.venv` está ausente ou falta o módulo `toml`.    |
-| W003 | `legacy-impact.md#ganchos-do-ciclo-de-vida`        | O snippet de ganchos recomendados está disponível para consulta do agente de IA local.       | presença            | O arquivo `.reversa/settings.json.snippet` está ausente ou corrompido. |
+| ID   | Origem (arquivo, seção)                            | Regra esperada após mudança                                                                  | Tipo de verificação | Sinal de violação                                                            |
+| :--- | :------------------------------------------------- | :------------------------------------------------------------------------------------------- | :------------------ | :--------------------------------------------------------------------------- |
+| W001 | `legacy-impact.md#mapeamento-de-impacto-no-legado` | O arquivo wrapper `./harness` existe na raiz do repositório e possui flag de execução ativa. | presença            | O script `./harness` está ausente ou não executável (`chmod -x`).            |
+| W002 | `legacy-impact.md#interface-executavel-nucleo`     | O ambiente virtual Python do núcleo está configurado e com dependências instaladas.          | presença            | A pasta `.harness/harness-core/.venv` está ausente ou falta o módulo `toml`. |
+| W003 | `legacy-impact.md#ganchos-do-ciclo-de-vida`        | O snippet de ganchos recomendados está disponível para consulta do agente de IA local.       | presença            | O arquivo `.reversa/settings.json.snippet` está ausente ou corrompido.       |
 
 ## 2. Histórico de re-extrações
+
+### Re-extração 2026-06-25 14:32
+
+> Rodada completa 001–012. Verificação **factual** desta rodada (filesystem + suíte 149 passed em 3,07s), não só leitura de artefatos.
+
+| ID   | Veredito | Observação                                                                                                                                                                                                   |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| W001 | 🟢 verde | Wrapper `./harness` presente na raiz e executável (`-rwxr-xr-x`). Resolve o core em `.harness/harness-core/` (layout pós-011). Inalterado por 011/012.                                                       |
+| W002 | 🟢 verde | Venv do núcleo presente e funcional (suíte 149 passed). **Defasagem textual:** o caminho no watch (`harness-core/.venv`) virou `.harness/harness-core/.venv` pela 011; essência preservada, não é regressão. |
+| W003 | 🟢 verde | `.reversa/settings.json.snippet` presente e válido.                                                                                                                                                          |
+
+> **Nota de arquivamento:** W001/W002/W003 mantêm ≥3 vereditos verdes consecutivos (limiar `archive-after = 3`). Candidatos a arquivamento — o Reversa não move a tabela principal (regra absoluta); ação a critério do mantenedor.
 
 ### Re-extração 2026-06-24 19:30 (pós-feature 010)
 
