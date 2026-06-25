@@ -6,7 +6,7 @@ from typing import Optional
 from src.core.ports.fs import FileSystemPort
 from src.core.ports.git import GitPort
 from src.core.domain.cache import SyncCache
-from src.core.domain.layout import CORE_REL_PATH
+from src.core.domain.layout import CORE_CONFIG_CANDIDATE_RELPATHS
 
 
 class SyncService:
@@ -86,18 +86,20 @@ class SyncService:
             return None
 
         try:
-            config_path = os.path.join(
-                upstream_path, CORE_REL_PATH, "src", "core", "domain", "config.py"
-            )
-            if not self.fs.exists(config_path):
-                return None
-
-            content = self.fs.read_file(config_path)
-            match = re.search(r'version:\s*str\s*=\s*["\']([^"\']+)["\']', content)
-            if match:
-                upstream_version = match.group(1)
-                if upstream_version != local_version:
-                    return upstream_version
+            # Varre os caminhos-candidato (canônico + legado) para sobreviver a
+            # relocações do core no upstream — espelha _get_upstream_version do
+            # init_service (feature 012). Mantém-se passiva e não-bloqueante.
+            for rel in CORE_CONFIG_CANDIDATE_RELPATHS:
+                config_path = os.path.join(upstream_path, rel)
+                if not self.fs.exists(config_path):
+                    continue
+                content = self.fs.read_file(config_path)
+                match = re.search(r'version:\s*str\s*=\s*["\']([^"\']+)["\']', content)
+                if match:
+                    upstream_version = match.group(1)
+                    if upstream_version != local_version:
+                        return upstream_version
+                    return None
         except Exception:
             pass
         return None

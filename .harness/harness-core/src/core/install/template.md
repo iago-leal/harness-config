@@ -37,6 +37,19 @@ Confira cada item e reporte aprovado/pendente:
 - [ ] Ganchos aplicados conforme o Passo 3 (escopo do harness ativo)
 - [ ] `./harness decisions` retorna verde
 
+## Manutenção — atualização e recuperação
+
+- **Atualizar o core:** `./harness upgrade` copia o core do `upstream_path` (registrado no `harness.toml`) e rematerializa os artefatos de IDE com o **código recém-copiado**. Se a versão do upstream não puder ser determinada, o comando **aborta com erro claro** (exit ≠ 0) em vez de fingir sucesso — siga a instrução de recuperação que ele imprime.
+- **Forçar a reidratação:** `./harness upgrade --force` ignora a comparação de versão e força recópia + rematerialização. Útil após edição local do core ou quando os artefatos divergem, sem precisar do caminho absoluto do `init`.
+- **Recuperar uma instalação no layout antigo** (core órfão `harness-core/` na raiz e nada em `.harness/harness-core/`, sintoma de uma instalação pré-relocação que não consegue se atualizar sozinha): rode o `init` do upstream por **caminho absoluto** e remova o órfão:
+
+  ```bash
+  <caminho-absoluto-do-upstream>/harness init <caminho-absoluto-deste-projeto>
+  rm -rf <caminho-absoluto-deste-projeto>/harness-core   # órfão, gitignored e não rastreado
+  ```
+
+  O `init` copia com o código novo e não compara versão; `.reversa/` e `.harness/decisoes/` são preservados.
+
 ## Resultado
 
 Resuma ao final: a **instalação está concluída** quando todos os itens do Passo 5 estão aprovados. Se algum ficar pendente, reporte-o de forma explícita — nunca siga em silêncio.

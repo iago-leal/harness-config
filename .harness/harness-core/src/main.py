@@ -133,9 +133,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     # 9. Comando: upgrade
-    subparsers.add_parser(
+    parser_upgrade = subparsers.add_parser(
         "upgrade",
         help="Atualiza a instalação do Harness Core no projeto a partir do upstream configurado",
+    )
+    parser_upgrade.add_argument(
+        "--force",
+        action="store_true",
+        help="Ignora a comparação de versão e força recópia + rematerialização do core",
     )
 
     # 10. Comando: agy-hook
@@ -150,6 +155,17 @@ def build_parser() -> argparse.ArgumentParser:
         "event",
         choices=["pre-tool-use", "post-tool-use", "stop"],
         help="Evento do ciclo de vida do Antigravity a tratar",
+    )
+
+    # 11. Comando: materialize (interno)
+    # Materializa os artefatos de IDE (slash commands de sessão; hooks.json do
+    # Antigravity) sob o projeto atual com o código LOCAL. O `upgrade` o invoca
+    # via subprocesso do python de destino para rematerializar com o código
+    # recém-copiado, nunca com os módulos antigos em memória (feature 012).
+    # Também é útil avulso para recriar os artefatos sem um upgrade completo.
+    subparsers.add_parser(
+        "materialize",
+        help="(interno) Materializa os artefatos de IDE do projeto atual com o código local",
     )
 
     return parser
@@ -170,12 +186,12 @@ def main():
     # escape como traceback antes do ramo. `init`/`upgrade` também não usam esta
     # config (recarregam o que precisam internamente).
     config = None
-    if args.command not in ("init", "upgrade", "agy-hook"):
+    if args.command not in ("init", "upgrade", "agy-hook", "materialize"):
         config = load_config(fs)
 
     # Alerta de atualização passiva
     if (
-        args.command not in ("init", "upgrade", "agy-hook")
+        args.command not in ("init", "upgrade", "agy-hook", "materialize")
         and config.harness.upstream_path
     ):
         from src.core.sync.service import SyncService
@@ -386,11 +402,26 @@ def main():
 
         service = InitializationService(fs, process)
         try:
-            service.upgrade_project(os.getcwd())
+            service.upgrade_project(os.getcwd(), force=args.force)
             print("Sucesso: Harness Core atualizado com sucesso a partir do upstream.")
             sys.exit(0)
         except Exception as e:
             print(f"Erro ao atualizar Harness Core: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    elif args.command == "materialize":
+        from src.core.install.local_apply import apply_local_materializers
+
+        cfg = load_config(fs)
+        target = os.getcwd()
+        try:
+            apply_local_materializers(
+                fs, target, os.path.abspath(target), cfg.harness.active_harness
+            )
+            print("Sucesso: Artefatos de IDE materializados com o código local.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Erro ao materializar artefatos de IDE: {e}", file=sys.stderr)
             sys.exit(1)
 
     elif args.command == "agy-hook":

@@ -166,3 +166,44 @@ def test_offer_git_init_parses_affirmative_answers():
         for nao in ("", "n", "não", "nope", "x"):
             with mock.patch("builtins.input", return_value=nao):
                 assert offer_git_init("/repo") is False
+
+
+def test_cli_upgrade_has_force_flag():
+    # Feature 012: o subcomando `upgrade` expõe a flag --force.
+    main_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../src/main.py")
+    )
+    python_bin = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../.venv/bin/python3")
+    )
+
+    result = subprocess.run(
+        [python_bin, main_path, "upgrade", "--help"], capture_output=True, text=True
+    )
+
+    assert result.returncode == 0
+    assert "--force" in result.stdout
+
+
+def test_cli_materialize_writes_session_command(tmp_path):
+    # Feature 012 (Modo 1, código real): o subcomando interno `materialize`,
+    # rodado como o upgrade o invocaria no destino, produz o slash command de
+    # sessão a partir do CÓDIGO LOCAL — prova de que a materialização não é stale.
+    main_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../src/main.py")
+    )
+    python_bin = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../.venv/bin/python3")
+    )
+
+    (tmp_path / "harness.toml").write_text('[harness]\nactive_harness = "claude"\n')
+
+    result = subprocess.run(
+        [python_bin, main_path, "materialize"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode == 0
+    assert (tmp_path / ".claude" / "commands" / "encerrar-sessao.md").exists()

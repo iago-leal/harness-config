@@ -3,16 +3,39 @@ import re
 from typing import List, Optional
 from src.core.ports.fs import FileSystemPort
 from src.core.ports.process import ProcessPort
-from src.core.domain.layout import CORE_REL_PATH, CORE_GITIGNORE_ENTRY
-from src.core.install.antigravity_hooks import materialize_hooks_json
-from src.core.install.session_commands import materialize_session_commands
+from src.core.domain.layout import (
+    CORE_REL_PATH,
+    CORE_GITIGNORE_ENTRY,
+    CORE_CONFIG_CANDIDATE_RELPATHS,
+)
+from src.core.install.local_apply import apply_local_materializers
+
+
+class UpstreamVersionUndeterminedError(Exception):
+    """Levantada quando a versão do core no upstream não pode ser lida.
+
+    Ocorre, por exemplo, quando o upstream relocou o core para um caminho fora
+    dos candidatos conhecidos (``CORE_CONFIG_CANDIDATE_RELPATHS``). Em vez de
+    cair num fallback que igualaria a versão local — gerando um upgrade fantasma
+    que imprime "Sucesso" sem copiar nada —, o ``upgrade`` aborta barulhento e
+    instrui a reidratação completa via ``init`` (feature 012, RN-04).
+    """
+
+    def __init__(self, upstream_path: str):
+        self.upstream_path = upstream_path
+        super().__init__(
+            "Não foi possível determinar a versão do Harness Core no upstream "
+            f"'{upstream_path}' (config.py não encontrado nos caminhos-candidato). "
+            "O layout do upstream pode ter mudado. Reidrate esta instalação com: "
+            f"'{upstream_path}/harness init <caminho-absoluto-deste-projeto>'."
+        )
 
 
 class InitializationService:
     def __init__(self, fs: FileSystemPort, process: ProcessPort):
         self.fs = fs
         self.process = process
-        self.current_version = "1.2.47"
+        self.current_version = "1.2.48"
 
     def initialize_project(
         self,
@@ -126,23 +149,25 @@ class InitializationService:
                 [dest_python_bin, dest_main_cli, "bootstrap"], cwd=target_path
             )
 
-        # 9. Materializa o .agents/hooks.json quando o harness ativo é o Antigravity.
-        # O command_path é o caminho absoluto do projeto-alvo (prefixo de `<ABS>/harness ...`).
-        if active_harness == "antigravity":
-            command_path = os.path.abspath(target_path)
-            materialize_hooks_json(self.fs, target_path, command_path)
-
-        # 10. Materializa os slash commands de sessão de IDE (Claude + Antigravity),
-        # SEMPRE — independentemente do active_harness (feature 010, D-03).
-        materialize_session_commands(self.fs, target_path, os.path.abspath(target_path))
+        # 9. Materializa os artefatos de IDE (slash commands sempre; hooks.json do
+        # Antigravity quando aplicável) pela função única compartilhada com o
+        # upgrade. No init a chamada é in-process: o código em execução já é o do
+        # upstream (fresco), então não há risco de staleness (feature 012).
+        apply_local_materializers(
+            self.fs, target_path, os.path.abspath(target_path), active_harness
+        )
 
         # 11. Registra a cópia vendored do core no .gitignore do alvo: ela é
         # regenerável via upgrade/init, então não deve poluir o histórico do
         # projeto-alvo. Só no alvo; o repo-fonte versiona o core (D-04).
         self._ensure_gitignore_entry(target_path, CORE_GITIGNORE_ENTRY)
 
-    def upgrade_project(self, target_path: str) -> None:
-        """Atualiza a instalação do Harness Core no projeto de destino a partir do upstream configurado."""
+    def upgrade_project(self, target_path: str, force: bool = False) -> None:
+        """Atualiza a instalação do Harness Core no projeto de destino a partir do upstream configurado.
+
+        Com ``force=True``, ignora a comparação de versão e tolera uma versão de
+        upstream indeterminada (vira aviso), sempre recopiando e rematerializando.
+        """
         toml_path = os.path.join(target_path, "harness.toml")
         if not self.fs.exists(toml_path):
             raise ValueError(
@@ -162,13 +187,23 @@ class InitializationService:
                 f"O caminho upstream '{upstream_path}' não está acessível no host local."
             )
 
-        # 1. Compara versões
-        upstream_version = self._get_upstream_version(upstream_path)
-        local_version = self._parse_toml_field(toml_content, "version") or "0.0.0"
+        # 1. Determina a versão do upstream. Sob --force, uma versão indeterminada
+        # vira aviso (segue mesmo assim); sem --force, propaga o erro (abort
+        # barulhento, RN-04) em vez de cair num fallback silencioso.
+        upstream_version = None
+        try:
+            upstream_version = self._get_upstream_version(upstream_path)
+        except UpstreamVersionUndeterminedError as exc:
+            if not force:
+                raise
+            print(f"Aviso: {exc} Prosseguindo mesmo assim por causa de --force.")
 
-        if upstream_version == local_version:
-            # Já está atualizado
-            return
+        # 2. Sem --force, encerra cedo quando já está atualizado.
+        if not force:
+            local_version = self._parse_toml_field(toml_content, "version") or "0.0.0"
+            if upstream_version == local_version:
+                # Já está atualizado
+                return
 
         # 2. Executa a cópia do core (ignora dados do usuário e venv)
         src_core = os.path.join(upstream_path, CORE_REL_PATH)
@@ -194,32 +229,35 @@ class InitializationService:
             self.fs.write_file(dst_wrapper, wrapper_content)
             self.process.run_command(["chmod", "+x", dst_wrapper])
 
-        # 4. Atualiza a versão no harness.toml
-        toml_content = self._update_toml_field(
-            toml_content, "version", upstream_version
-        )
-        self.fs.write_file(toml_path, toml_content)
+        # 5. Atualiza a versão no harness.toml, quando determinada. Sob --force
+        # com versão indeterminada, preserva o version existente (não grava None).
+        if upstream_version is not None:
+            toml_content = self._update_toml_field(
+                toml_content, "version", upstream_version
+            )
+            self.fs.write_file(toml_path, toml_content)
 
-        # 5. Roda bootstrap de ganchos git no destino
+        # 6. Roda bootstrap de ganchos Git e rematerializa os artefatos de IDE no
+        # destino, ambos via subprocesso do python de destino — executam com o
+        # CÓDIGO RECÉM-COPIADO, não com os módulos antigos carregados em memória
+        # (Modo 1 stale, RN-01/RN-02). O bootstrap já seguia este molde; a
+        # materialização passa a segui-lo também (feature 012).
         dest_python_bin = os.path.join(dst_core, ".venv", "bin", "python3")
         dest_main_cli = os.path.join(dst_core, "src", "main.py")
-        if self.fs.exists(dest_main_cli):
-            self.process.run_command(
-                [dest_python_bin, dest_main_cli, "bootstrap"], cwd=target_path
+        if not self.fs.exists(dest_python_bin) or not self.fs.exists(dest_main_cli):
+            raise ValueError(
+                f"O core de destino em '{dst_core}' está incompleto após a cópia "
+                "(falta a venv ou o main.py). Reidrate a instalação com: "
+                f"'{upstream_path}/harness init <caminho-absoluto-deste-projeto>'."
             )
+        self.process.run_command(
+            [dest_python_bin, dest_main_cli, "bootstrap"], cwd=target_path
+        )
+        self.process.run_command(
+            [dest_python_bin, dest_main_cli, "materialize"], cwd=target_path
+        )
 
-        # 6. Reescreve o .agents/hooks.json quando o harness ativo é o Antigravity
-        # (mantém o `command` com o caminho absoluto correto se o repo foi movido).
-        active_harness = self._parse_toml_field(toml_content, "active_harness")
-        if active_harness == "antigravity":
-            command_path = os.path.abspath(target_path)
-            materialize_hooks_json(self.fs, target_path, command_path)
-
-        # 7. (Re)materializa os slash commands de sessão de IDE, sempre — mantém o
-        # caminho absoluto do wrapper correto se o repositório foi movido (D-03).
-        materialize_session_commands(self.fs, target_path, os.path.abspath(target_path))
-
-        # 8. Garante (idempotente) a entrada do core no .gitignore do alvo — útil
+        # 7. Garante (idempotente) a entrada do core no .gitignore do alvo — útil
         # também na migração de instalações antigas para o novo layout (D-04).
         self._ensure_gitignore_entry(target_path, CORE_GITIGNORE_ENTRY)
 
@@ -258,18 +296,24 @@ class InitializationService:
                 self.fs.write_file(dst_item, content)
 
     def _get_upstream_version(self, upstream_path: str) -> str:
-        """Lê a versão do config.py do upstream."""
-        config_path = os.path.join(
-            upstream_path, CORE_REL_PATH, "src", "core", "domain", "config.py"
-        )
-        if not self.fs.exists(config_path):
-            return self.current_version
+        """Lê a versão do config.py do upstream, resiliente ao layout.
 
-        content = self.fs.read_file(config_path)
-        match = re.search(r'version:\s*str\s*=\s*["\']([^"\']+)["\']', content)
-        if match:
-            return match.group(1)
-        return self.current_version
+        Varre os caminhos-candidato (canônico + legado da raiz) e devolve a
+        primeira versão encontrada. Quando nenhum candidato existe ou nenhum
+        expõe a versão, levanta ``UpstreamVersionUndeterminedError`` em vez de
+        cair num fallback silencioso — caso contrário um relayout do upstream
+        faria a versão "indeterminada" coincidir com a local e o upgrade viraria
+        um no-op silencioso (feature 012, RN-03/RN-04).
+        """
+        for rel in CORE_CONFIG_CANDIDATE_RELPATHS:
+            config_path = os.path.join(upstream_path, rel)
+            if not self.fs.exists(config_path):
+                continue
+            content = self.fs.read_file(config_path)
+            match = re.search(r'version:\s*str\s*=\s*["\']([^"\']+)["\']', content)
+            if match:
+                return match.group(1)
+        raise UpstreamVersionUndeterminedError(upstream_path)
 
     @staticmethod
     def _parse_toml_field(toml_content: str, field_name: str) -> Optional[str]:
