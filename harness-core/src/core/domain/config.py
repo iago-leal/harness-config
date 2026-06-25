@@ -8,7 +8,7 @@ from src.core.ports.fs import FileSystemPort
 class HarnessSection(BaseModel):
     active_harness: Literal["claude", "gemini", "antigravity"] = "claude"
     upstream_path: Optional[str] = None
-    version: str = "1.2.44"
+    version: str = "1.2.45"
 
 
 class FormattingSection(BaseModel):
