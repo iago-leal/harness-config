@@ -15,10 +15,10 @@ O design foca em desacoplar a execução do Harness Core de ferramentas globais 
           ▼
    [ Script harness ] (Raiz)
           │
-          ├─► (Verifica se harness-core/.venv existe)
+          ├─► (Verifica se .harness/harness-core/.venv existe)
           │
           ▼ (Se válido, repassa "$@")
-[ harness-core/.venv/bin/python3 ] ──► [ harness-core/src/main.py ]
+[ .harness/harness-core/.venv/bin/python3 ] ──► [ .harness/harness-core/src/main.py ]
 ```
 
 ---
@@ -30,13 +30,13 @@ O design foca em desacoplar a execução do Harness Core de ferramentas globais 
 * **Localização:** Raiz do repositório (`/Users/iagoleal/dev/harness/harness`).
 * **Responsabilidade:** 
   1. Descobrir o diretório absoluto de sua própria localização no disco local.
-  2. Verificar se o interpretador Python virtual `harness-core/.venv/bin/python3` e o entry point principal `harness-core/src/main.py` estão presentes.
+  2. Verificar se o interpretador Python virtual `.harness/harness-core/.venv/bin/python3` e o entry point principal `.harness/harness-core/src/main.py` estão presentes.
   3. Abortar e alertar o usuário caso a venv não exista.
   4. Encaminhar de forma atômica a execução repassando os parâmetros.
 
 ### 2.2 Interpretador Virtual Python (`.venv`) 🟢
 * **Tipo:** Runtime Python 3 isolado.
-* **Localização:** `harness-core/.venv/`.
+* **Localização:** `.harness/harness-core/.venv/`.
 * **Responsabilidade:** Executar o script principal da CLI do núcleo com acesso garantido a dependências compiladas e instaladas localmente (ex: `toml`, `mcp`, `pytest`).
 
 ---
@@ -48,8 +48,8 @@ O algoritmo escrito em Bash deve garantir portabilidade e detecção confiável 
 ```bash
 # 1. Resolve o caminho absoluto onde o próprio script reside (independente do CWD atual)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ABS_VENV_PYTHON="$SCRIPT_DIR/harness-core/.venv/bin/python3"
-ABS_MAIN_PY="$SCRIPT_DIR/harness-core/src/main.py"
+ABS_VENV_PYTHON="$SCRIPT_DIR/.harness/harness-core/.venv/bin/python3"
+ABS_MAIN_PY="$SCRIPT_DIR/.harness/harness-core/src/main.py"
 
 # 2. Valida venv (Fail-fast)
 if [ ! -f "$ABS_VENV_PYTHON" ]; then

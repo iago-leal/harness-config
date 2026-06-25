@@ -2,7 +2,7 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração pós-feature 007)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
-> Rastreabilidade ao Legado: [`harness-core/src/core/bootstrap/service.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/bootstrap/service.py) e [`harness-core/src/core/bootstrap/init_service.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/bootstrap/init_service.py). Drivers: `src/main.py` (subcomandos `bootstrap`, `init` e `upgrade`).
+> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/bootstrap/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/bootstrap/service.py) e [`.harness/harness-core/src/core/bootstrap/init_service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/bootstrap/init_service.py). Drivers: `src/main.py` (subcomandos `bootstrap`, `init` e `upgrade`).
 
 ## Visão Geral
 

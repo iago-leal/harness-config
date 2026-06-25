@@ -75,7 +75,7 @@ graph TB
 
 | Container                                  | Tecnologia                      | Papel                                                                                                                                           |
 | ------------------------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Wrapper (`./harness`)**                  | Bash                            | Resolve `harness-core/.venv/bin/python3` e encaminha argumentos; falha barulhenta sem venv. 🟢                                                  |
+| **Wrapper (`./harness`)**                  | Bash                            | Resolve `.harness/harness-core/.venv/bin/python3` e encaminha argumentos; falha barulhenta sem venv. 🟢                                                  |
 | **Venv (`.venv`)**                         | Python 3.14 venv                | Runtime + dependências isoladas (`mcp`, `pydantic`, `pytest`, `toml`, `PyYAML`). 🟢                                                             |
 | **CLI (`main.py`)**                        | Python / argparse               | Driver de entrada primário. 7 subcomandos: `bootstrap`, `format`, `decisions`, `cmd`, `doc-gen`, `doc-serve`, `install-prompt` ✨f003. 🟢       |
 | **Servidor MCP (`server.py`)**             | FastMCP (JSON-RPC stdio)        | Driver de entrada secundário; 4 tools. T1 (cf73980) e T2 (f006) resolvidos. 🟢                                                                  |

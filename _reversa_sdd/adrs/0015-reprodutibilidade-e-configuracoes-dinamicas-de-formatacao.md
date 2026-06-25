@@ -2,7 +2,7 @@
 
 - **Status:** Aceito
 - **Data:** feature 008 — commit pendente (sobre base `1b23498`)
-- **Contexto Técnico:** Módulo `core/formatting/service.py` (`FormattingService`), CLI `main.py`, MCP `server.py`, `core/domain/config.py` (seção `[formatting]`), `harness-core/requirements.in`, `harness-core/requirements.txt`, `.github/workflows/ci.yml`, `tests/test_formatting.py`
+- **Contexto Técnico:** Módulo `core/formatting/service.py` (`FormattingService`), CLI `main.py`, MCP `server.py`, `core/domain/config.py` (seção `[formatting]`), `.harness/harness-core/requirements.in`, `.harness/harness-core/requirements.txt`, `.github/workflows/ci.yml`, `tests/test_formatting.py`
 - **Escala de Confiança:** 🟢 CONFIRMADO
 - **Decisões relacionadas:** MD-0002, ADR 0012, ADR 0013; watch items da feature 008
 

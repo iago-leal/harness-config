@@ -2,7 +2,7 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
-> Rastreabilidade ao Legado: [`harness-core/src/core/sync/service.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/sync/service.py); cache `core/domain/cache.py`. Exposto **apenas via MCP** (`adapters/mcp/server.py`, tool `check_repository_sync`).
+> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/sync/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/sync/service.py); cache `core/domain/cache.py`. Exposto **apenas via MCP** (`adapters/mcp/server.py`, tool `check_repository_sync`).
 
 > ⚠️ **Reescrita vs versão anterior:** a implementação **deixou de ser** o script `harness-config/bin/sync-check.sh` (purgado, commit `5624f78`) e passou a ser o `SyncService` Python em `harness-core`. **Não há subcomando `sync` na CLI** — a capacidade só é acessível pelo servidor MCP. O cache saiu de `~/.claude/.sync-check/` para `.harness/sync_cache.json` (chumbado no MCP). Não há mais verificação de trabalho local (ahead/dirty), apenas a comparação HEAD local × remoto.
 

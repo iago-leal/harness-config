@@ -1,7 +1,7 @@
 # Dicionário de Dados — harness-core
 
 > Regenerado pelo Archaeologist em 2026-06-24 (re-extração pós-feature 008-reprodutibilidade-e-config).
-> Nível de documentação: **completo**. Fonte: `harness-core/src/core/domain/{models.py,config.py,cache.py}` e os serviços que consomem/persistem essas estruturas.
+> Nível de documentação: **completo**. Fonte: `.harness/harness-core/src/core/domain/{models.py,config.py,cache.py}` e os serviços que consomem/persistem essas estruturas.
 
 Estruturas de dados e modelos de domínio do harness-core. Todos os modelos são Pydantic v2.
 

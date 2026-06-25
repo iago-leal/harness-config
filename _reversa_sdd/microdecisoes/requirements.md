@@ -2,7 +2,7 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 005)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
-> Rastreabilidade ao Legado: [`harness-core/src/core/decisions/service.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/decisions/service.py); fichas em [`.harness/decisoes/`](file:///Users/iagoleal/dev/harness/.harness/decisoes/); índice [`.harness/microdecisoes.md`](file:///Users/iagoleal/dev/harness/.harness/microdecisoes.md). Drivers: `src/main.py` (subcomando `decisions`, hook `Stop`) e `adapters/mcp/server.py` (`process_decisions`).
+> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/decisions/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/decisions/service.py); fichas em [`.harness/decisoes/`](file:///Users/iagoleal/dev/harness/.harness/decisoes/); índice [`.harness/microdecisoes.md`](file:///Users/iagoleal/dev/harness/.harness/microdecisoes.md). Drivers: `src/main.py` (subcomando `decisions`, hook `Stop`) e `adapters/mcp/server.py` (`process_decisions`).
 
 > ⚠️ **Reescrita vs versão anterior:** a implementação **deixou de ser** o script shell `bin/gerar-index-decisoes.sh` em `harness-config/` (purgado, commit `5624f78`) e passou a ser o `DecisionService` Python em `harness-core`. As fichas migraram de `decisoes/` (raiz) para `.harness/decisoes/` e o índice de `microdecisoes.md` (raiz) para `.harness/microdecisoes.md` (feature 005). Os caminhos não são mais chumbados: vêm de `[decisions]` no `harness.toml`.
 

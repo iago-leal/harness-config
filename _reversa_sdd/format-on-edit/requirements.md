@@ -2,7 +2,7 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração pós-feature 008-reprodutibilidade-e-config)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
-> Rastreabilidade ao Legado: [`harness-core/src/core/formatting/service.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/formatting/service.py); adaptador `adapters/process/formatter.py`. Driver: `src/main.py` (subcomando `format`, hook `PostToolUse`).
+> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/formatting/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/formatting/service.py); adaptador `adapters/process/formatter.py`. Driver: `src/main.py` (subcomando `format`, hook `PostToolUse`).
 
 > ⚠️ **Reescrita vs versão anterior:** a implementação é o `FormattingService` Python em `harness-core`. Ele consome ativamente o `HarnessConfig` para aplicar de forma dinâmica regras de exclusão de caminhos (glob) e customizar o nome do arquivo de opt-out (feature 008).
 

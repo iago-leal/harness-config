@@ -2,7 +2,7 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração; feature 004)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
-> Rastreabilidade ao Legado: [`harness-core/src/core/session/`](file:///Users/iagoleal/dev/harness/harness-core/src/core/session/) — `serializer.py`, `sinks.py`, `errors.py`; modelos em `core/domain/models.py` (`SessionState`, `SessionNarrative`). Consumidor: `core/commands/service.py`. Drivers: `src/main.py:169` (CLI) e `src/adapters/mcp/server.py:94` (MCP), ambos lendo o caminho de `config.session.state_file` (`SessionSection` em `core/domain/config.py`, feature 006).
+> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/session/`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/session/) — `serializer.py`, `sinks.py`, `errors.py`; modelos em `core/domain/models.py` (`SessionState`, `SessionNarrative`). Consumidor: `core/commands/service.py`. Drivers: `src/main.py:169` (CLI) e `src/adapters/mcp/server.py:94` (MCP), ambos lendo o caminho de `config.session.state_file` (`SessionSection` em `core/domain/config.py`, feature 006).
 
 ## Visão Geral
 

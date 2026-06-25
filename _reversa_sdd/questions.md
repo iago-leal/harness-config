@@ -9,7 +9,7 @@ A re-extração tem confiança alta (≈87%) e cobertura completa do código de 
 
 ## Pergunta 1 — ✅ RESOLVIDA (feature 008)
 
-**Contexto:** Reprodutibilidade — `harness-core/requirements.txt` usa pins `>=` (mínimos); não há lock file commitado nem CI/CD (`surface.json.ci_cd = []`).
+**Contexto:** Reprodutibilidade — `.harness/harness-core/requirements.txt` usa pins `>=` (mínimos); não há lock file commitado nem CI/CD (`surface.json.ci_cd = []`).
 **Spec afetada:** [`_reversa_sdd/dependencies.md`], `confidence-report.md` (Lacunas Pendentes), `gaps.md#G-07`
 **Pergunta:** A ausência de lock file e de CI é uma escolha deliberada (projeto pessoal, _single maintainer_) ou uma dívida a sanar? Se a sanar, qual ferramenta de lock prefere (`pip-tools`/`requirements.lock`, `uv`, `poetry`)?
 **Impacto:** Define se a lacuna de reprodutibilidade vira 🟢 (decisão consciente, registrada como tal) ou permanece 🔴 com ticket de manutenção. Princípio nº 5.3 do mantenedor sugere lock file commitado sempre.

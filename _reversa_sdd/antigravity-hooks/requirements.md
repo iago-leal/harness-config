@@ -2,7 +2,7 @@
 
 > Gerado pelo Archaeologist em 2026-06-24 15:19 (Re-extração após a feature 009-hooks-antigravity). Âncora (HEAD): `e30b9a6`.
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
-> Rastreabilidade ao Legado: [`harness-core/src/adapters/antigravity/hook_bridge.py`](file:///Users/iagoleal/dev/harness/harness-core/src/adapters/antigravity/hook_bridge.py), [`harness-core/src/core/install/antigravity_hooks.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/install/antigravity_hooks.py), [`harness-core/src/core/install/harness_profiles.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/install/harness_profiles.py). Drivers: `src/main.py` (subcomando `agy-hook`), `src/core/bootstrap/init_service.py` (materialização no `init`/`upgrade`).
+> Rastreabilidade ao Legado: [`.harness/harness-core/src/adapters/antigravity/hook_bridge.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/adapters/antigravity/hook_bridge.py), [`.harness/harness-core/src/core/install/antigravity_hooks.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/install/antigravity_hooks.py), [`.harness/harness-core/src/core/install/harness_profiles.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/install/harness_profiles.py). Drivers: `src/main.py` (subcomando `agy-hook`), `src/core/bootstrap/init_service.py` (materialização no `init`/`upgrade`).
 
 ## Visão Geral
 

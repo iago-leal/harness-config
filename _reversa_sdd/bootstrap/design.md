@@ -16,7 +16,7 @@ Este documento descreve as interfaces, fluxogramas de controle, dependências e 
 ## Fluxo Principal de Inicialização (`init_target`)
 
 1. Cria o diretório `target_path` recursivamente (via `FileSystemPort.makedirs`) caso não exista. 🟢
-2. Executa a replicação física do `harness-core/` e do wrapper `harness` da raiz do upstream para o destino. 🟢
+2. Executa a replicação física do `.harness/harness-core/` e do wrapper `harness` da raiz do upstream para o destino. 🟢
 3. Descarta arquivos e diretórios pertencentes a caches locais ou ganchos de versionamento do upstream (`.git/`, `.venv/`, `.pytest_cache/`, `.ruff_cache/`, `tmp/`). 🟢
 4. Grava o arquivo de configuração de destino `harness.toml` incluindo as chaves `upstream_path` (caminho absoluto do upstream) e `version` (versão do core instalado) na seção `[harness]`. 🟢
 5. Provisiona o ambiente virtual local disparando `python3 -m venv .venv` via `ProcessPort.run_command` na pasta `harness-core` do destino. 🟢
@@ -26,7 +26,7 @@ Este documento descreve as interfaces, fluxogramas de controle, dependências e 
 ## Fluxo Principal de Atualização (`upgrade_target`)
 
 1. Atualiza o wrapper executável `harness` na raiz do destino. 🟢
-2. Replicação recursiva não destrutiva do `harness-core/` a partir do `upstream_path` configurado. 🟢
+2. Replicação recursiva não destrutiva do `.harness/harness-core/` a partir do `upstream_path` configurado. 🟢
 3. Garante a preservação absoluta das pastas locais de dados de engenharia reversa (`.reversa/`) e decisões arquiteturais locais (`.harness/decisoes/`). Os arquivos e subpastas dessas duas estruturas são ignorados na substituição recursiva. 🟢
 4. Atualiza o `harness.toml` com o novo identificador de versão do upstream. 🟢
 

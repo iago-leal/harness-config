@@ -2,13 +2,13 @@
 
 > Gerado pelo Scout em 2026-06-24 (Re-extração após as features 003, 004, 005, 006, 007 e 008)
 
-Mapeamento de dependências do código da aplicação (`harness-core/` + wrapper), de configuração e de ferramentas de sistema.
+Mapeamento de dependências do código da aplicação (`.harness/harness-core/` + wrapper), de configuração e de ferramentas de sistema.
 
 ---
 
-## 🐍 Dependências do Core Python (`harness-core/requirements.txt`)
+## 🐍 Dependências do Core Python (`.harness/harness-core/requirements.txt`)
 
-O projeto gerencia suas dependências de alto nível em `harness-core/requirements.in` e utiliza o **`requirements.txt` como arquivo de lock determinístico**, compilado e travado via `uv pip compile`. Versões abaixo são as **efetivamente instaladas** na venv (`harness-core/.venv`, Python 3.14.6).
+O projeto gerencia suas dependências de alto nível em `.harness/harness-core/requirements.in` e utiliza o **`requirements.txt` como arquivo de lock determinístico**, compilado e travado via `uv pip compile`. Versões abaixo são as **efetivamente instaladas** na venv (`.harness/harness-core/.venv`, Python 3.14.6).
 
 | Pacote | Pin no manifesto | Instalado | Papel |
 |---|---|---|---|

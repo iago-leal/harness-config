@@ -2,7 +2,7 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração; feature 003)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
-> Rastreabilidade ao Legado: [`harness-core/src/core/install/`](file:///Users/iagoleal/dev/harness/harness-core/src/core/install/) — `service.py`, `harness_profiles.py`, `template.md`. Driver: `src/main.py` (subcomando `install-prompt`).
+> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/install/`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/install/) — `service.py`, `harness_profiles.py`, `template.md`. Driver: `src/main.py` (subcomando `install-prompt`).
 
 ## Visão Geral
 

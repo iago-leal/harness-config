@@ -60,7 +60,7 @@ hash: "sha256:552115669ef2c36073b58b6f9c1277a9018a5d0092caa250e4ce46028ac52c90"
   - Latência (cold start) que deve ser mitigada via wrappers leves.
 - **Esboço da árvore proposta**:
   ```
-  harness-core/
+  .harness/harness-core/
   ├── src/
   │   ├── core/                  # Núcleo de domínio (OOP, independente de infra/harness)
   │   │   ├── bootstrap/         # Caso de uso: bootstrap de ganchos Git locais

@@ -52,7 +52,7 @@ Esta unidade é responsável pela instalação dos ganchos Git locais, assim com
 
 `BootstrapService.install_hooks(repo_path)` cria `.git/hooks/` e grava dois scripts Bash **idempotentemente** (reescreve a cada execução):
 
-- `pre-commit` → invoca `harness-core/.venv/bin/python3 harness-core/src/main.py format "$@"`.
+- `pre-commit` → invoca `.harness/harness-core/.venv/bin/python3 .harness/harness-core/src/main.py format "$@"`.
 - `post-merge` → invoca o mesmo binário com `decisions "$@"`.
 
 Os caminhos do interpretador e da CLI são literais chumbados dentro dos scripts (`_pre_commit_script`/`_post_merge_script`, `@staticmethod`). Cada script só executa se `$PYTHON_CLI` existir, senão `exit 0` (não bloqueia). Retorna a lista de caminhos instalados.
@@ -70,7 +70,7 @@ A feature 007 introduziu a rotina de cópia física e setup evolucionário:
   6. **(feature 009)** Quando `active_harness == "antigravity"`, materializa `.agents/hooks.json` chamando `materialize_hooks_json(fs, target_path, command_path)`, onde `command_path = os.path.abspath(target_path)` é o prefixo absoluto que substitui `<ABS>` no `command` dos ganchos. 🟢
 - **`upgrade_target(fs, process, target_path, upstream_path, version)`**:
   1. Atualiza o wrapper executável `harness` na raiz do destino.
-  2. Realiza a replicação física do `harness-core/` do upstream para o destino de forma **estritamente não-destrutiva**: as pastas `.reversa/` (dados de engenharia reversa) e `.harness/decisoes/` (metadados arquiteturais locais) são preservadas intactas.
+  2. Realiza a replicação física do `.harness/harness-core/` do upstream para o destino de forma **estritamente não-destrutiva**: as pastas `.reversa/` (dados de engenharia reversa) e `.harness/decisoes/` (metadados arquiteturais locais) são preservadas intactas.
   3. Atualiza os campos de configuração no `harness.toml` do destino para sincronizar a versão do core instalado.
   4. **(feature 009)** Lê `active_harness` do `harness.toml`; se for `antigravity`, **reescreve** `.agents/hooks.json` via `materialize_hooks_json` com o caminho absoluto corrente — assim o `command` segue válido caso o repositório tenha sido movido desde o `init` (mitiga a dívida do caminho absoluto). 🟢
 

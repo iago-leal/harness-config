@@ -43,9 +43,9 @@ Para classes/funções:
 
 | Decisão | Evidência no código | Confiança |
 |---------|---------------------|-----------|
-| Injeção dinâmica de metadados em variável javascript global | `harness-core/src/core/documentation/service.py:100` | 🟢 |
-| Layout CSS standalone (sem CDNs) | `harness-core/src/core/documentation/template.html:15` | 🟢 |
-| Reuso de porta socket TCP habilitado (`allow_reuse_address`) | `harness-core/src/main.py:214` | 🟢 |
+| Injeção dinâmica de metadados em variável javascript global | `.harness/harness-core/src/core/documentation/service.py:100` | 🟢 |
+| Layout CSS standalone (sem CDNs) | `.harness/harness-core/src/core/documentation/template.html:15` | 🟢 |
+| Reuso de porta socket TCP habilitado (`allow_reuse_address`) | `.harness/harness-core/src/main.py:214` | 🟢 |
 
 ## Estado Interno
 O `DocumentationService` em si é stateless. O estado final da documentação é persistido fisicamente no arquivo `harness-docs.html` na raiz do projeto local e exposto de forma síncrona.

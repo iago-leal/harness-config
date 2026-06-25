@@ -29,10 +29,10 @@ A especificação baseia-se nos seguintes artefatos de engenharia reversa do nú
 
 1. **RN-01: Redirecionamento com Venv Isolada** 🟢
    - Tipo: nova
-   - Descrição: O script wrapper `./harness` deve direcionar a execução de parâmetros para `harness-core/src/main.py` utilizando o interpretador embutido em `harness-core/.venv/bin/python3`.
+   - Descrição: O script wrapper `./harness` deve direcionar a execução de parâmetros para `.harness/harness-core/src/main.py` utilizando o interpretador embutido em `.harness/harness-core/.venv/bin/python3`.
 2. **RN-02: Fail-fast em Venv Ausente** 🟢
    - Tipo: nova
-   - Descrição: Se a pasta do ambiente virtual `harness-core/.venv` estiver ausente, o script de conveniência deve abortar a execução com código `1`, exibindo instruções didáticas ao usuário de como inicializar a venv e instalar as dependências.
+   - Descrição: Se a pasta do ambiente virtual `.harness/harness-core/.venv` estiver ausente, o script de conveniência deve abortar a execução com código `1`, exibindo instruções didáticas ao usuário de como inicializar a venv e instalar as dependências.
 
 ## 5. Requisitos Funcionais
 
@@ -52,12 +52,12 @@ A especificação baseia-se nos seguintes artefatos de engenharia reversa do nú
 
 ```gherkin
 Cenário: Execução do wrapper com venv existente
-  Dado que a venv existe em harness-core/.venv
+  Dado que a venv existe em .harness/harness-core/.venv
   Quando o usuário executa o comando `./harness cmd clarificar`
   Então o wrapper localiza o interpretador e exibe o texto de esclarecimento de requisitos
 
 Cenário: Execução do wrapper com venv ausente
-  Dado que a venv não foi criada em harness-core/.venv
+  Dado que a venv não foi criada em .harness/harness-core/.venv
   Quando o usuário executa `./harness decisions`
   Então o wrapper aborta, exibe uma mensagem instruindo sobre o setup e retorna saída 1
 ```

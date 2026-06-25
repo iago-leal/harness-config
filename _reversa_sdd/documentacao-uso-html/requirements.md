@@ -33,9 +33,9 @@ Esta unit é responsável por coletar metadados dos comandos da CLI, regras de d
 
 | Tipo | Requisito inferido | Evidência no código | Confiança |
 |------|--------------------|---------------------|-----------|
-| Performance | Tempo de compilação da documentação imediato (<1s) | `harness-core/src/core/documentation/service.py` | 🟢 |
-| Segurança | Execução offline sem chamadas externas a CDNs | `harness-core/src/core/documentation/template.html` | 🟢 |
-| Portabilidade | Servidor local HTTP nativo em Python (`http.server`) | `harness-core/src/main.py` | 🟢 |
+| Performance | Tempo de compilação da documentação imediato (<1s) | `.harness/harness-core/src/core/documentation/service.py` | 🟢 |
+| Segurança | Execução offline sem chamadas externas a CDNs | `.harness/harness-core/src/core/documentation/template.html` | 🟢 |
+| Portabilidade | Servidor local HTTP nativo em Python (`http.server`) | `.harness/harness-core/src/main.py` | 🟢 |
 
 ## Critérios de Aceitação
 
@@ -62,7 +62,7 @@ Então o servidor local inicia em "http://localhost:8000" servindo a documentaç
 
 | Arquivo | Função / Classe | Cobertura |
 |---------|-----------------|-----------|
-| `harness-core/src/core/documentation/service.py` | `DocumentationService` | 🟢 |
-| `harness-core/src/main.py` | `build_parser`, `main` | 🟢 |
-| `harness-core/src/core/documentation/template.html` | n/a (HTML visual) | 🟢 |
-| `harness-core/tests/test_documentation.py` | n/a (Suíte de testes) | 🟢 |
+| `.harness/harness-core/src/core/documentation/service.py` | `DocumentationService` | 🟢 |
+| `.harness/harness-core/src/main.py` | `build_parser`, `main` | 🟢 |
+| `.harness/harness-core/src/core/documentation/template.html` | n/a (HTML visual) | 🟢 |
+| `.harness/harness-core/tests/test_documentation.py` | n/a (Suíte de testes) | 🟢 |

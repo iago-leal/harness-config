@@ -4,7 +4,7 @@
 > Estado: **aceito**
 
 ## D: Decisão
-Introduzir o script Bash wrapper `harness` na raiz do projeto local (/Users/iagoleal/dev/harness) que valida localmente a existência do ambiente virtual dedicado (`harness-core/.venv/bin/python3`) e encaminha todas as chamadas de parâmetros para o ponto de entrada principal do núcleo (`harness-core/src/main.py`).
+Introduzir o script Bash wrapper `harness` na raiz do projeto local (/Users/iagoleal/dev/harness) que valida localmente a existência do ambiente virtual dedicado (`.harness/harness-core/.venv/bin/python3`) e encaminha todas as chamadas de parâmetros para o ponto de entrada principal do núcleo (`.harness/harness-core/src/main.py`).
 
 ## PORQUÊ: Justificativa
 * **Isolamento de dependências:** Evita poluir o ambiente Python global do host com bibliotecas específicas do Harness (como `toml`).
@@ -12,4 +12,4 @@ Introduzir o script Bash wrapper `harness` na raiz do projeto local (/Users/iago
 * **Simplicidade de Invocação:** O usuário humano e os hooks de ciclo de vida da IDE podem chamar simplesmente `./harness <comando>` em vez de caminhos longos de venv.
 
 ## DESCARTADO: Alternativas consideradas
-* **Aliases de Terminal:** Definir `alias harness='harness-core/.venv/bin/python3 harness-core/src/main.py'`. Descartado porque aliases não são herdados em sub-shells não interativos iniciados por ganchos Git ou pela IDE.
+* **Aliases de Terminal:** Definir `alias harness='.harness/harness-core/.venv/bin/python3 .harness/harness-core/src/main.py'`. Descartado porque aliases não são herdados em sub-shells não interativos iniciados por ganchos Git ou pela IDE.

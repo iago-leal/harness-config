@@ -2,7 +2,7 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 004)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
-> Rastreabilidade ao Legado: [`harness-core/src/core/commands/service.py`](file:///Users/iagoleal/dev/harness/harness-core/src/core/commands/service.py); consome `core/session/*`. Driver: `src/main.py` (subcomando `cmd`, hook `SessionStart`).
+> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/commands/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/commands/service.py); consome `core/session/*`. Driver: `src/main.py` (subcomando `cmd`, hook `SessionStart`).
 
 > ⚠️ **Reescrita vs versão anterior:** os comandos **deixaram de ser** arquivos Markdown em `harness-config/commands/` (purgados, commit `5624f78`) e passaram a ser o `CommandService` Python em `harness-core`. O estado de sessão saiu de `ESTADO-DA-SESSAO.md` (raiz) para `.harness/estado-da-sessao.md` (feature 004). Não há mais `~/.agent-memory/BASTAO.md` nem ponte de memória; `handoff`/`resume` operam sobre o estado local.
 

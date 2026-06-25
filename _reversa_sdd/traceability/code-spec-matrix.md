@@ -11,7 +11,7 @@ Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As past
 
 ---
 
-## 📁 1. Núcleo de domínio (`harness-core/src/core/`)
+## 📁 1. Núcleo de domínio (`.harness/harness-core/src/core/`)
 
 | Arquivo do legado                      | Unit correspondente                                                                                                              | Cobertura |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------- |
@@ -42,7 +42,7 @@ Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As past
 | `core/ports/git.py`     | `sync-check/`, `comandos-customizados/`, `bootstrap/`                                                                                                | 🟡        |
 | `core/ports/process.py` | transversal (inclui `run_command` estendido para `bootstrap/` na feature 007)                                                                        | 🟡        |
 
-## 📁 3. Adaptadores (`harness-core/src/adapters/`)
+## 📁 3. Adaptadores (`.harness/harness-core/src/adapters/`)
 
 | Arquivo do legado                        | Unit correspondente                                                                                                                                                         | Cobertura |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
@@ -63,9 +63,9 @@ Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As past
 
 | Arquivo do legado                             | Unit correspondente                                                                                                                                  | Cobertura |
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `harness-core/harness.toml`                   | `microdecisoes/` (`[decisions]`), `format-on-edit/` (`[formatting]`), `sync-check/` (`[sync]`), `session/` (`[session]`), `bootstrap/` (`[harness]`) | 🟢        |
-| `harness-core/requirements.in` ✨             | n/a (dependências abstratas; ver `dependencies.md`)                                                                                                  | n/a       |
-| `harness-core/requirements.txt`               | n/a (manifesto de dependências físicas trancadas; ver `dependencies.md`)                                                                             | n/a       |
+| `.harness/harness-core/harness.toml`                   | `microdecisoes/` (`[decisions]`), `format-on-edit/` (`[formatting]`), `sync-check/` (`[sync]`), `session/` (`[session]`), `bootstrap/` (`[harness]`) | 🟢        |
+| `.harness/harness-core/requirements.in` ✨             | n/a (dependências abstratas; ver `dependencies.md`)                                                                                                  | n/a       |
+| `.harness/harness-core/requirements.txt`               | n/a (manifesto de dependências físicas trancadas; ver `dependencies.md`)                                                                             | n/a       |
 | `.github/workflows/ci.yml` ✨                 | n/a (workflow de integração contínua; ver `dependencies.md`)                                                                                         | n/a       |
 | `.harness/estado-da-sessao.md`                | `session/` + `comandos-customizados/`                                                                                                                | 🟢        |
 | `.harness/decisoes/MD-*.md`                   | `microdecisoes/`                                                                                                                                     | 🟢        |
@@ -85,7 +85,7 @@ Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As past
 
 ## 📂 7. Pacotes `__init__.py`
 
-Todos os `__init__.py` em `harness-core/src/**` são marcadores de pacote (sem lógica de negócio): cobertura **n/a**, herdam a unit do pacote a que pertencem.
+Todos os `__init__.py` em `.harness/harness-core/src/**` são marcadores de pacote (sem lógica de negócio): cobertura **n/a**, herdam a unit do pacote a que pertencem.
 
 ---
 

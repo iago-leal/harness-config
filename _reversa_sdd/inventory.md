@@ -11,13 +11,13 @@ Mapeamento da superfície de código e arquivos de configuração do diretório 
 ## 📊 Estatísticas Gerais
 
 - **Diretório Alvo:** `/Users/iagoleal/dev/harness`
-- **Escopo da contagem:** código da aplicação (`harness-core/`, wrapper de raiz, configs e `.harness/`). Excluídos: `.venv`, `.git`, `__pycache__`, `.pytest_cache`, `.ruff_cache`, `tmp/`, os artefatos do próprio Reversa (`.reversa/`, `_reversa_sdd/`, `_reversa_forward/`) e as duas árvores-espelho de **templates de skills do Reversa** (`.claude/skills/` e `.agents/skills/`, ~430 arquivos de framework, não de produto).
+- **Escopo da contagem:** código da aplicação (`.harness/harness-core/`, wrapper de raiz, configs e `.harness/`). Excluídos: `.venv`, `.git`, `__pycache__`, `.pytest_cache`, `.ruff_cache`, `tmp/`, os artefatos do próprio Reversa (`.reversa/`, `_reversa_sdd/`, `_reversa_forward/`) e as duas árvores-espelho de **templates de skills do Reversa** (`.claude/skills/` e `.agents/skills/`, ~430 arquivos de framework, não de produto).
 - **Linguagens Principais (aplicação):**
-  - **Python (`.py`)**: 60 arquivos — 41 em `harness-core/src/` e 19 em `harness-core/tests/`. A feature 007 acrescentou `init_service.py` e `test_init.py`; a feature 009 acrescentou `src/adapters/antigravity/__init__.py`, `src/adapters/antigravity/hook_bridge.py`, `src/core/install/antigravity_hooks.py` e os três testes `test_antigravity_hook_bridge.py`, `test_antigravity_hooks_materializer.py` e `test_antigravity_profile.py`.
+  - **Python (`.py`)**: 60 arquivos — 41 em `.harness/harness-core/src/` e 19 em `.harness/harness-core/tests/`. A feature 007 acrescentou `init_service.py` e `test_init.py`; a feature 009 acrescentou `src/adapters/antigravity/__init__.py`, `src/adapters/antigravity/hook_bridge.py`, `src/core/install/antigravity_hooks.py` e os três testes `test_antigravity_hook_bridge.py`, `test_antigravity_hooks_materializer.py` e `test_antigravity_profile.py`.
   - **Markdown (`.md`)**: 12 arquivos — instruções de agente (`CLAUDE.md`, `GEMINI.md`, `AGENTS.md`), as 5 fichas de decisão em `.harness/decisoes/` (`MD-0001`..`MD-0005`) mais o `_cabecalho.md`, o índice `.harness/microdecisoes.md`, o estado de sessão e o template `install/template.md`.
-  - **HTML (`.html`)**: 2 arquivos — `harness-core/src/core/documentation/template.html` e o consolidado `harness-docs.html` na raiz.
+  - **HTML (`.html`)**: 2 arquivos — `.harness/harness-core/src/core/documentation/template.html` e o consolidado `harness-docs.html` na raiz.
   - **Shell (`harness`)**: 1 wrapper Bash executável na raiz.
-  - **TOML (`.toml`)**: 1 arquivo (`harness-core/harness.toml`).
+  - **TOML (`.toml`)**: 1 arquivo (`.harness/harness-core/harness.toml`).
   - **JSON (`.json`)**: arquivos de configuração de ganchos por harness (`.claude/settings.json`, `.gemini/settings.json` e, para o Antigravity, `.agents/hooks.json` materializado no projeto-alvo pelo `init`/`upgrade`).
 
 > ⚠️ **Mudança estrutural vs extração anterior:** o módulo legado `claude-config/` foi purgado anteriormente. A feature 007 expandiu os arquivos e testes do core, introduzindo novos pontos de entrada para inicialização de repositório (`init`) e upgrade evolucionário (`upgrade`) preservando os metadados locais de engenharia reversa. A feature 009 adicionou um **terceiro driver de entrada** no anel de adaptadores (o `AntigravityHookBridge`), simétrico à CLI e ao servidor MCP, que fala o protocolo de ganchos do Antigravity e delega aos serviços de domínio sem ramificar o core por harness.
@@ -28,11 +28,11 @@ Mapeamento da superfície de código e arquivos de configuração do diretório 
 
 ### ⚡ Raiz do Projeto
 
-- **`harness`** 🟢 — Wrapper Bash executável. Resolve a venv local (`harness-core/.venv/bin/python3`) e encaminha todos os argumentos para `harness-core/src/main.py`.
+- **`harness`** 🟢 — Wrapper Bash executável. Resolve a venv local (`.harness/harness-core/.venv/bin/python3`) e encaminha todos os argumentos para `.harness/harness-core/src/main.py`.
 - **`harness-docs.html`** 🟢 — HTML standalone gerado por `doc-gen`, consolidando a superfície da CLI, o domínio (`_reversa_sdd/domain.md`) e o estado do Reversa.
 - **`CLAUDE.md` / `GEMINI.md` / `AGENTS.md`** 🟢 — Instruções de ativação do framework Reversa por harness, agora contendo a instrução de uso dos comandos `./harness init` e `./harness upgrade`.
 
-### 📦 Núcleo Python (`harness-core/`) — arquitetura hexagonal
+### 📦 Núcleo Python (`.harness/harness-core/`) — arquitetura hexagonal
 
 - **`src/main.py`** 🟢 — Entrada da CLI (v2.0.0). Subcomandos: `bootstrap`, `format`, `decisions`, `cmd`, `doc-gen`, `doc-serve`, `install-prompt`, `init`, `upgrade` (feature 007) e o **novo `agy-hook <evento>`** (feature 009), subcomando fino que instancia o `AntigravityHookBridge`, lê o payload do `stdin` e escreve a resposta no `stdout`. O `agy-hook` é exceção ao check passivo de sync e ao carregamento global de config (carrega a config dentro do próprio try/except). Injeta aviso de nova versão disponível se a versão local for menor que a versão do upstream.
 - **`src/core/`** — Regras de negócio (domínio puro), uma pasta por capacidade:

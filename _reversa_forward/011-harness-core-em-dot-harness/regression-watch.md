@@ -24,7 +24,15 @@
 
 <!-- Preenchido pelo agente reverso quando `/reversa` rodar novamente. -->
 
-_(vazio)_
+### Re-extração 2026-06-25 13:39
+
+| ID   | Veredito | Observação                                                                                                                                                                                                   |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| W001 | 🟢 verde | `init` copia para `.harness/harness-core/` (`CORE_REL_PATH`) e grava a entrada no `.gitignore`; RN-N19 reconciliada                                                                                          |
+| W002 | 🟢 verde | `upgrade` copia para `.harness/harness-core/`, exclui `.harness` da cópia, preserva `.reversa/`/`.harness/decisoes/` e mantém o `.gitignore` idempotente; RN-N20 reconciliada                                |
+| W003 | 🟢 verde | A leitura de versão lê o canônico `.harness/harness-core/src/core/domain/config.py` — agora como **primeiro candidato** (feature 012 generalizou para `CORE_CONFIG_CANDIDATE_RELPATHS`); essência preservada |
+| W004 | 🟢 verde | Wrapper da raiz resolve `MAIN_PY=.harness/harness-core/src/main.py`; `domain.md#wrapper-executavel` e `inventory.md` reconciliados                                                                           |
+| W005 | 🟢 verde | Ganchos Git embutem `.harness/harness-core/src/main.py` e `.harness/harness-core/.venv/bin/python3` via `CORE_MAIN_REL_PATH`/`CORE_VENV_PYTHON_REL_PATH`                                                     |
 
 ## Arquivadas
 

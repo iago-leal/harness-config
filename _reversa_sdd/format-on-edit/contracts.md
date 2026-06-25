@@ -24,7 +24,7 @@ Payload JSON entregue pelo Claude Code no evento `PostToolUse` (matchers `Write|
 ```json
 {
   "tool_input": {
-    "file_path": "/Users/iagoleal/dev/harness/harness-core/src/main.py"
+    "file_path": "/Users/iagoleal/dev/harness/.harness/harness-core/src/main.py"
   }
 }
 ```
