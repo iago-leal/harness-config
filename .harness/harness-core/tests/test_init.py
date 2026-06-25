@@ -168,7 +168,7 @@ def test_init_success():
     # Verifica se o harness.toml tem os metadados do upstream gravados
     toml_content = fs.read_file("/Users/iagoleal/dev/harness/destino/harness.toml")
     assert 'upstream_path = "/Users/iagoleal/dev/harness"' in toml_content
-    assert 'version = "1.2.46"' in toml_content
+    assert 'version = "1.2.47"' in toml_content
 
     # Verifica se os ganchos git foram instalados e se a venv foi configurada via subprocesso
     assert len(process.commands) >= 1
@@ -220,7 +220,7 @@ def test_upgrade_success():
     )
 
     # Configuração de versão deve ter sido atualizada no toml
-    assert 'version = "1.2.46"' in fs.read_file(
+    assert 'version = "1.2.47"' in fs.read_file(
         "/Users/iagoleal/dev/harness/destino/harness.toml"
     )
 
