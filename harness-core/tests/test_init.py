@@ -221,6 +221,43 @@ def test_upgrade_success():
     )
 
 
+def test_upgrade_nao_propaga_harness_runtime():
+    # Regressão: .harness/ é estado de runtime por-instalação (sessão,
+    # microdecisões). O upgrade jamais deve copiá-lo do upstream para o alvo —
+    # senão polui o projeto e pode até sobrescrever o estado local.
+    fs = InitMockFileSystem()
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/destino/harness.toml",
+        '[harness]\nupstream_path = "/Users/iagoleal/dev/harness/origem"\nversion = "1.2.0"\n',
+    )
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/origem/harness-core/src/main.py",
+        "print('novo')",
+    )
+    fs.write_file(
+        "/Users/iagoleal/dev/harness/origem/harness-core/.harness/microdecisoes.md",
+        "lixo de runtime do upstream",
+    )
+
+    process = MockProcessPort()
+    service = InitializationService(fs, process)
+
+    service.upgrade_project(target_path="/Users/iagoleal/dev/harness/destino")
+
+    # O core foi atualizado...
+    assert (
+        fs.read_file("/Users/iagoleal/dev/harness/destino/harness-core/src/main.py")
+        == "print('novo')"
+    )
+    # ...mas o .harness/ do upstream não viajou para o alvo.
+    assert (
+        fs.read_file(
+            "/Users/iagoleal/dev/harness/destino/harness-core/.harness/microdecisoes.md"
+        )
+        == ""
+    )
+
+
 def test_init_antigravity_materializes_hooks_json():
     """Cobre a fiação init -> materialize_hooks_json (não só a rotina isolada).
 

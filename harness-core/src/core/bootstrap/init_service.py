@@ -43,7 +43,16 @@ class InitializationService:
         src_core = os.path.join(upstream_path, "harness-core")
         dst_core = os.path.join(target_path, "harness-core")
 
-        excludes = [".venv", ".pytest_cache", ".ruff_cache", "__pycache__", ".DS_Store"]
+        # `.harness/` é estado de runtime por-instalação (sessão, microdecisões);
+        # nunca deve viajar do upstream para o alvo no init/upgrade.
+        excludes = [
+            ".venv",
+            ".pytest_cache",
+            ".ruff_cache",
+            "__pycache__",
+            ".DS_Store",
+            ".harness",
+        ]
         self._copy_tree(src_core, dst_core, excludes)
 
         # 4. Copia o wrapper harness
@@ -157,7 +166,16 @@ class InitializationService:
         src_core = os.path.join(upstream_path, "harness-core")
         dst_core = os.path.join(target_path, "harness-core")
 
-        excludes = [".venv", ".pytest_cache", ".ruff_cache", "__pycache__", ".DS_Store"]
+        # `.harness/` é estado de runtime por-instalação (sessão, microdecisões);
+        # nunca deve viajar do upstream para o alvo no init/upgrade.
+        excludes = [
+            ".venv",
+            ".pytest_cache",
+            ".ruff_cache",
+            "__pycache__",
+            ".DS_Store",
+            ".harness",
+        ]
         self._copy_tree(src_core, dst_core, excludes)
 
         # 3. Atualiza wrapper harness
