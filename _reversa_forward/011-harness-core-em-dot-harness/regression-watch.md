@@ -1,0 +1,31 @@
+# Regression Watch: harness-core dentro de `.harness/`
+
+> Feature `011-harness-core-em-dot-harness`
+> Itens a confirmar nas próximas extrações reversas (`/reversa`). Só regras originalmente 🟢 entram no watch principal; regras novas/inferidas vão para "Observações".
+
+## Watch principal
+
+| ID   | Origem (arquivo, seção)                         | Regra esperada após a mudança                                                                                                                                   | Tipo de verificação | Sinal de violação                                                                                 |
+| ---- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------- |
+| W001 | `_reversa_sdd/domain.md#2.9` (RN-N19)           | `init` copia o core para `<alvo>/.harness/harness-core/` (não mais a raiz) e registra `.harness/harness-core/` no `.gitignore` do alvo                          | presença            | `init` copiando para `<alvo>/harness-core/`, ou ausência da linha no `.gitignore` do alvo         |
+| W002 | `_reversa_sdd/domain.md#2.9` (RN-N20)           | `upgrade` copia para `<alvo>/.harness/harness-core/`, preserva `.reversa/` e `.harness/decisoes/`, e garante (idempotente) a entrada no `.gitignore`            | presença            | `upgrade` escrevendo na raiz, tocando `.harness/decisoes/`, ou duplicando a linha do `.gitignore` |
+| W003 | `_reversa_sdd/domain.md#2.9` (RN-N21)           | A checagem passiva de versão lê o `config.py` do upstream em `.harness/harness-core/src/core/domain/config.py`                                                  | redação             | Caminho `harness-core/src/core/domain/config.py` sem o prefixo `.harness/`                        |
+| W004 | `_reversa_sdd/domain.md#wrapper-executavel`     | O wrapper `harness` (na raiz) resolve o core em `.harness/harness-core/`; o diretório do core vive em `.harness/harness-core/` (layout de um diretório na raiz) | presença            | Diretório `harness-core/` na raiz, ou wrapper apontando para `harness-core/...`                   |
+| W005 | `_reversa_sdd/inventory.md` (`core/bootstrap/`) | Os ganchos Git pre-commit/post-merge embutem `.harness/harness-core/src/main.py` e `.harness/harness-core/.venv/bin/python3`                                    | redação             | Ganchos instalados referenciando `harness-core/...` sem o prefixo `.harness/`                     |
+
+## Observações (sem peso de regressão — comportamentos novos/inferidos)
+
+- **Gitignore só no alvo (D-04, 🟡 novo).** Nos projetos-alvo, `.harness/harness-core/` é gitignorado; no repo-fonte o core permanece **versionado** (`git ls-files .harness/harness-core/` não vazio). Confirmar que uma extração futura não interprete o gitignore como "core ausente".
+- **Falha barulhenta do wrapper (RN-07, 🟡 novo).** Com o core ausente, o wrapper encerra com código ≠ 0 e instrui restauração via `upgrade`/`init`. Verificado no smoke do `init`.
+- **`harness.toml` operativo na raiz (D-05, 🟢).** Permanece lido cwd-relative; só o template `harness-core/harness.toml` acompanha o core. Sem mudança em `load_config`.
+- **Instalações antigas com `harness-core/` órfão.** Após `upgrade`, alvos antigos mantêm o diretório `harness-core/` na raiz até remoção manual (não-destrutivo). Não é regressão; é dívida de migração documentada em `onboarding.md`.
+
+## Histórico de re-extrações
+
+<!-- Preenchido pelo agente reverso quando `/reversa` rodar novamente. -->
+
+_(vazio)_
+
+## Arquivadas
+
+_(vazio)_

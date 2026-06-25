@@ -4,8 +4,8 @@ Cole este prompt no agente. Ele executa a instalação local do harness-core, et
 
 ## Passo 1 — Ambiente virtual e dependências
 
-- Verifique se `harness-core/.venv` existe. Se não, crie: `python3 -m venv harness-core/.venv`.
-- Instale as dependências fixadas: `harness-core/.venv/bin/pip install -r harness-core/requirements.txt`.
+- Verifique se `.harness/harness-core/.venv` existe. Se não, crie: `python3 -m venv .harness/harness-core/.venv`.
+- Instale as dependências fixadas: `.harness/harness-core/.venv/bin/pip install -r .harness/harness-core/requirements.txt`.
 
 ## Passo 2 — Wrapper de raiz
 
@@ -32,7 +32,7 @@ Comandos disponíveis na CLI (referência):
 
 Confira cada item e reporte aprovado/pendente:
 
-- [ ] `harness-core/.venv` presente e com dependências instaladas
+- [ ] `.harness/harness-core/.venv` presente e com dependências instaladas
 - [ ] `./harness` existe na raiz e é executável
 - [ ] Ganchos aplicados conforme o Passo 3 (escopo do harness ativo)
 - [ ] `./harness decisions` retorna verde

@@ -8,6 +8,7 @@ import os
 import pytest
 
 from src.core.decisions.service import DecisionService
+from src.core.bootstrap.init_service import InitializationService
 from tests.helpers import RecordingFileSystem, FootprintViolation
 
 
@@ -44,3 +45,15 @@ def test_decisions_index_writes_inside_repo(tmp_path):
         not os.path.abspath(os.path.join(str(tmp_path), p)).startswith(forbidden)
         for p in fs.writes
     )
+
+
+def test_gitignore_entry_writes_inside_repo(tmp_path):
+    # Feature 011: a escrita da entrada do core no .gitignore do alvo ocorre
+    # sob o repositório, jamais em diretório global (RN-N17 estendida).
+    fs = RecordingFileSystem(repo_root=str(tmp_path))
+    service = InitializationService(fs, None)
+    service._ensure_gitignore_entry(str(tmp_path), ".harness/harness-core/")
+    gitignore_path = os.path.join(str(tmp_path), ".gitignore")
+    # A escrita foi aceita e capturada (não levantou FootprintViolation).
+    assert gitignore_path in fs.writes
+    assert ".harness/harness-core/" in fs.read_file(gitignore_path)

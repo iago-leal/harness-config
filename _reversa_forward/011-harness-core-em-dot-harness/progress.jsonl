@@ -1,0 +1,19 @@
+{"ts":"2026-06-25T10:39:24-0300","action":"T001","status":"done","files":["harness-core/src/core/domain/layout.py"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T002","status":"done","files":["harness-core/tests/test_init.py"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T003","status":"done","files":["harness-core/tests/test_footprint.py"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T004","status":"done","files":["harness-core/tests/test_gitignore_entry.py"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T005","status":"done","files":["harness-core/src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T006","status":"done","files":["harness-core/src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T007","status":"done","files":["harness-core/src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T008","status":"done","files":["harness-core/src/core/sync/service.py"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T009","status":"done","files":["harness-core/src/core/bootstrap/service.py"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T012","status":"done","files":["harness-core/src/core/install/template.md"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T013","status":"done","files":["harness-core/src/core/documentation/template.html"]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T014","status":"done","files":[]}
+{"ts":"2026-06-25T10:39:24-0300","action":"T015","status":"done","files":["harness-core/"]}
+{"ts":"2026-06-25T10:51:34-0300","action":"T002","status":"corrected","files":[".harness/harness-core/tests/test_wrapper.py"],"note":"caminho do wrapper passa a ../../../harness após o move (tests/ ficou 3 níveis abaixo da raiz)"}
+{"ts":"2026-06-25T10:51:34-0300","action":"T010","status":"done","files":["harness"]}
+{"ts":"2026-06-25T10:51:34-0300","action":"T011","status":"done","files":["harness"]}
+{"ts":"2026-06-25T10:51:34-0300","action":"T016","status":"done","files":[".harness/harness-core/"]}
+{"ts":"2026-06-25T10:51:34-0300","action":"T017","status":"done","files":[".git/hooks/pre-commit",".git/hooks/post-merge"]}
+{"ts":"2026-06-25T10:51:34-0300","action":"T018","status":"done","files":[]}

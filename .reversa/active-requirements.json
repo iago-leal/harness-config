@@ -1,10 +1,10 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/010-command-encerrar-sessao",
-  "feature-id": "010",
-  "short-name": "command-encerrar-sessao",
-  "started-at": "2026-06-24T18:09:18-03:00",
-  "current-stage": "coding",
-  "stages-completed": ["requirements", "plan", "to-do", "coding"],
+  "feature-dir": "_reversa_forward/011-harness-core-em-dot-harness",
+  "feature-id": "011",
+  "short-name": "harness-core-em-dot-harness",
+  "started-at": "2026-06-25T10:09:25-03:00",
+  "current-stage": "requirements",
+  "stages-completed": [],
   "paused-features": []
 }

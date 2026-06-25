@@ -1,6 +1,7 @@
 import os
 from typing import List
 from src.core.ports.fs import FileSystemPort
+from src.core.domain.layout import CORE_MAIN_REL_PATH, CORE_VENV_PYTHON_REL_PATH
 
 
 class NotAGitRepositoryError(Exception):
@@ -57,8 +58,8 @@ class BootstrapService:
         return (
             "#!/bin/bash\n"
             "# Hook pre-commit — Harness Core\n"
-            'PYTHON_CLI="harness-core/src/main.py"\n'
-            'PYTHON_BIN="harness-core/.venv/bin/python3"\n'
+            f'PYTHON_CLI="{CORE_MAIN_REL_PATH}"\n'
+            f'PYTHON_BIN="{CORE_VENV_PYTHON_REL_PATH}"\n'
             'if [ -f "$PYTHON_CLI" ]; then\n'
             '    "$PYTHON_BIN" "$PYTHON_CLI" format "$@"\n'
             "    exit $?\n"
@@ -71,8 +72,8 @@ class BootstrapService:
         return (
             "#!/bin/bash\n"
             "# Hook post-merge — Harness Core\n"
-            'PYTHON_CLI="harness-core/src/main.py"\n'
-            'PYTHON_BIN="harness-core/.venv/bin/python3"\n'
+            f'PYTHON_CLI="{CORE_MAIN_REL_PATH}"\n'
+            f'PYTHON_BIN="{CORE_VENV_PYTHON_REL_PATH}"\n'
             'if [ -f "$PYTHON_CLI" ]; then\n'
             '    "$PYTHON_BIN" "$PYTHON_CLI" decisions\n'
             "    exit $?\n"

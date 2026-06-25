@@ -9,10 +9,10 @@ from typing import List, Optional, Tuple
 class InitMockFileSystem(FileSystemPort):
     def __init__(self):
         self.files = {
-            "harness-core/src/main.py": "print('cli original')",
-            "harness-core/src/core/bootstrap/init_service.py": "print('init_service original')",
-            "harness-core/requirements.txt": "pydantic\ntoml",
-            "harness": "#!/bin/bash\npython3 harness-core/src/main.py $@\n",
+            ".harness/harness-core/src/main.py": "print('cli original')",
+            ".harness/harness-core/src/core/bootstrap/init_service.py": "print('init_service original')",
+            ".harness/harness-core/requirements.txt": "pydantic\ntoml",
+            "harness": "#!/bin/bash\npython3 .harness/harness-core/src/main.py $@\n",
             "destino/.git/config": "[core]\nrepositoryformatversion = 0",
         }
         self.dirs = {
@@ -152,9 +152,11 @@ def test_init_success():
     print("\nCHAVES GRAVADAS:", list(fs.files.keys()))
 
     # Verifica se os arquivos foram copiados
-    assert fs.exists("/Users/iagoleal/dev/harness/destino/harness-core/src/main.py")
     assert fs.exists(
-        "/Users/iagoleal/dev/harness/destino/harness-core/src/core/bootstrap/init_service.py"
+        "/Users/iagoleal/dev/harness/destino/.harness/harness-core/src/main.py"
+    )
+    assert fs.exists(
+        "/Users/iagoleal/dev/harness/destino/.harness/harness-core/src/core/bootstrap/init_service.py"
     )
     assert fs.exists("/Users/iagoleal/dev/harness/destino/harness")
     assert fs.exists(
@@ -183,11 +185,11 @@ def test_upgrade_success():
         '[harness]\nupstream_path = "/Users/iagoleal/dev/harness/origem"\nversion = "1.2.0"\n',
     )
     fs.write_file(
-        "/Users/iagoleal/dev/harness/origem/harness-core/src/main.py",
+        "/Users/iagoleal/dev/harness/origem/.harness/harness-core/src/main.py",
         "print('versao nova main')",
     )
     fs.write_file(
-        "/Users/iagoleal/dev/harness/origem/harness-core/requirements.txt",
+        "/Users/iagoleal/dev/harness/origem/.harness/harness-core/requirements.txt",
         "pydantic\ntoml",
     )
     fs.write_file("/Users/iagoleal/dev/harness/origem/harness", "wrapper_novo")
@@ -204,7 +206,9 @@ def test_upgrade_success():
 
     # Core deve ter sido atualizado com o código do upstream
     assert (
-        fs.read_file("/Users/iagoleal/dev/harness/destino/harness-core/src/main.py")
+        fs.read_file(
+            "/Users/iagoleal/dev/harness/destino/.harness/harness-core/src/main.py"
+        )
         == "print('versao nova main')"
     )
     assert fs.read_file("/Users/iagoleal/dev/harness/destino/harness") == "wrapper_novo"
@@ -231,11 +235,11 @@ def test_upgrade_nao_propaga_harness_runtime():
         '[harness]\nupstream_path = "/Users/iagoleal/dev/harness/origem"\nversion = "1.2.0"\n',
     )
     fs.write_file(
-        "/Users/iagoleal/dev/harness/origem/harness-core/src/main.py",
+        "/Users/iagoleal/dev/harness/origem/.harness/harness-core/src/main.py",
         "print('novo')",
     )
     fs.write_file(
-        "/Users/iagoleal/dev/harness/origem/harness-core/.harness/microdecisoes.md",
+        "/Users/iagoleal/dev/harness/origem/.harness/harness-core/.harness/microdecisoes.md",
         "lixo de runtime do upstream",
     )
 
@@ -246,13 +250,15 @@ def test_upgrade_nao_propaga_harness_runtime():
 
     # O core foi atualizado...
     assert (
-        fs.read_file("/Users/iagoleal/dev/harness/destino/harness-core/src/main.py")
+        fs.read_file(
+            "/Users/iagoleal/dev/harness/destino/.harness/harness-core/src/main.py"
+        )
         == "print('novo')"
     )
     # ...mas o .harness/ do upstream não viajou para o alvo.
     assert (
         fs.read_file(
-            "/Users/iagoleal/dev/harness/destino/harness-core/.harness/microdecisoes.md"
+            "/Users/iagoleal/dev/harness/destino/.harness/harness-core/.harness/microdecisoes.md"
         )
         == ""
     )
@@ -292,11 +298,11 @@ def test_upgrade_antigravity_materializes_hooks_json():
         '[harness]\nactive_harness = "antigravity"\nupstream_path = "/Users/iagoleal/dev/harness/origem"\nversion = "1.2.0"\n',
     )
     fs.write_file(
-        "/Users/iagoleal/dev/harness/origem/harness-core/src/main.py",
+        "/Users/iagoleal/dev/harness/origem/.harness/harness-core/src/main.py",
         "print('versao nova main')",
     )
     fs.write_file(
-        "/Users/iagoleal/dev/harness/origem/harness-core/requirements.txt",
+        "/Users/iagoleal/dev/harness/origem/.harness/harness-core/requirements.txt",
         "pydantic\ntoml",
     )
     fs.write_file("/Users/iagoleal/dev/harness/origem/harness", "wrapper_novo")
@@ -353,11 +359,11 @@ def test_upgrade_materializes_session_commands():
         '[harness]\nactive_harness = "claude"\nupstream_path = "/Users/iagoleal/dev/harness/origem"\nversion = "1.2.0"\n',
     )
     fs.write_file(
-        "/Users/iagoleal/dev/harness/origem/harness-core/src/main.py",
+        "/Users/iagoleal/dev/harness/origem/.harness/harness-core/src/main.py",
         "print('versao nova main')",
     )
     fs.write_file(
-        "/Users/iagoleal/dev/harness/origem/harness-core/requirements.txt",
+        "/Users/iagoleal/dev/harness/origem/.harness/harness-core/requirements.txt",
         "pydantic\ntoml",
     )
     fs.write_file("/Users/iagoleal/dev/harness/origem/harness", "wrapper_novo")

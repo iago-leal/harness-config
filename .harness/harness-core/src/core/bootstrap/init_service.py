@@ -3,6 +3,7 @@ import re
 from typing import List, Optional
 from src.core.ports.fs import FileSystemPort
 from src.core.ports.process import ProcessPort
+from src.core.domain.layout import CORE_REL_PATH, CORE_GITIGNORE_ENTRY
 from src.core.install.antigravity_hooks import materialize_hooks_json
 from src.core.install.session_commands import materialize_session_commands
 
@@ -29,19 +30,21 @@ class InitializationService:
 
         # 2. Resolve o upstream original
         if not upstream_path:
-            # Sobe 5 níveis a partir deste arquivo: init_service.py -> bootstrap -> core -> src -> harness-core -> raiz
+            # Sobe 6 níveis a partir deste arquivo: init_service.py -> bootstrap -> core -> src -> harness-core -> .harness -> raiz
             upstream_path = os.path.dirname(
                 os.path.dirname(
                     os.path.dirname(
-                        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        os.path.dirname(
+                            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        )
                     )
                 )
             )
         upstream_path = os.path.abspath(upstream_path)
 
         # 3. Copia a pasta harness-core recursivamente (ignora venv, caches, etc.)
-        src_core = os.path.join(upstream_path, "harness-core")
-        dst_core = os.path.join(target_path, "harness-core")
+        src_core = os.path.join(upstream_path, CORE_REL_PATH)
+        dst_core = os.path.join(target_path, CORE_REL_PATH)
 
         # `.harness/` é estado de runtime por-instalação (sessão, microdecisões);
         # nunca deve viajar do upstream para o alvo no init/upgrade.
@@ -133,6 +136,11 @@ class InitializationService:
         # SEMPRE — independentemente do active_harness (feature 010, D-03).
         materialize_session_commands(self.fs, target_path, os.path.abspath(target_path))
 
+        # 11. Registra a cópia vendored do core no .gitignore do alvo: ela é
+        # regenerável via upgrade/init, então não deve poluir o histórico do
+        # projeto-alvo. Só no alvo; o repo-fonte versiona o core (D-04).
+        self._ensure_gitignore_entry(target_path, CORE_GITIGNORE_ENTRY)
+
     def upgrade_project(self, target_path: str) -> None:
         """Atualiza a instalação do Harness Core no projeto de destino a partir do upstream configurado."""
         toml_path = os.path.join(target_path, "harness.toml")
@@ -163,8 +171,8 @@ class InitializationService:
             return
 
         # 2. Executa a cópia do core (ignora dados do usuário e venv)
-        src_core = os.path.join(upstream_path, "harness-core")
-        dst_core = os.path.join(target_path, "harness-core")
+        src_core = os.path.join(upstream_path, CORE_REL_PATH)
+        dst_core = os.path.join(target_path, CORE_REL_PATH)
 
         # `.harness/` é estado de runtime por-instalação (sessão, microdecisões);
         # nunca deve viajar do upstream para o alvo no init/upgrade.
@@ -211,6 +219,29 @@ class InitializationService:
         # caminho absoluto do wrapper correto se o repositório foi movido (D-03).
         materialize_session_commands(self.fs, target_path, os.path.abspath(target_path))
 
+        # 8. Garante (idempotente) a entrada do core no .gitignore do alvo — útil
+        # também na migração de instalações antigas para o novo layout (D-04).
+        self._ensure_gitignore_entry(target_path, CORE_GITIGNORE_ENTRY)
+
+    def _ensure_gitignore_entry(self, target_path: str, entry: str) -> None:
+        """Garante, de forma idempotente, que `entry` consta no .gitignore do alvo.
+
+        Lê o .gitignore existente (vazio se ausente), acrescenta a linha apenas
+        se ela ainda não estiver presente e grava de forma atômica. Toda escrita
+        ocorre sob `target_path` — footprint global zero preservado (RN-N17).
+        """
+        gitignore_path = os.path.join(target_path, ".gitignore")
+        content = (
+            self.fs.read_file(gitignore_path) if self.fs.exists(gitignore_path) else ""
+        )
+        if entry in [line.strip() for line in content.splitlines()]:
+            return
+        new_content = content
+        if new_content and not new_content.endswith("\n"):
+            new_content += "\n"
+        new_content += entry + "\n"
+        self.fs.write_file_atomic(gitignore_path, new_content)
+
     def _copy_tree(self, src: str, dst: str, excludes: List[str]) -> None:
         """Copia a árvore de diretórios e arquivos recursivamente usando FileSystemPort."""
         self.fs.makedirs(dst)
@@ -229,7 +260,7 @@ class InitializationService:
     def _get_upstream_version(self, upstream_path: str) -> str:
         """Lê a versão do config.py do upstream."""
         config_path = os.path.join(
-            upstream_path, "harness-core", "src", "core", "domain", "config.py"
+            upstream_path, CORE_REL_PATH, "src", "core", "domain", "config.py"
         )
         if not self.fs.exists(config_path):
             return self.current_version

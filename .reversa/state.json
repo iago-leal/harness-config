@@ -30,10 +30,7 @@
     },
     "archaeologist": {
       "completed_at": "2026-06-24T15:30:00-03:00",
-      "modules_analyzed": [
-        "harness-core",
-        "antigravity-hooks"
-      ],
+      "modules_analyzed": ["harness-core", "antigravity-hooks"],
       "modules_pending": []
     },
     "detective": {
@@ -106,10 +103,7 @@
       "_reversa_sdd/comandos-customizados/requirements.md (nota f010)"
     ],
     "new_adr": "0017-comandos-ide-materializados-no-init",
-    "reconciled_with": [
-      "feature 009 (fea976b)",
-      "feature 010 (HEAD f4d3896)"
-    ],
+    "reconciled_with": ["feature 009 (fea976b)", "feature 010 (HEAD f4d3896)"],
     "regression_check": {
       "features": 10,
       "watch_items": 37,
@@ -119,12 +113,14 @@
       "yellow_detail": "003/W003 (nota obsoleta do SessionStart no template.md, dívida já paga na 004, fora de escopo) e 009/W009 (premissa de runtime do Antigravity não verificável localmente). A feature 010 não introduziu nenhuma regressão; herda o amarelo de runtime do Antigravity no comportamento do workflow."
     }
   },
-  "engines": [
-    "claude-code",
-    "codex",
-    "gemini-cli",
-    "antigravity"
-  ],
+  "pending_reextraction": {
+    "scope": "feature-011-harness-core-em-dot-harness",
+    "type": "cirurgica",
+    "requested_at": "2026-06-25T11:18:03-03:00",
+    "reason": "reconciliar caminhos harness-core/ -> .harness/harness-core/ nos docs do _reversa_sdd/ (28 arquivos: inventory, architecture, domain, C4, matrizes de rastreabilidade, ADRs) e rodar o regression check dos W001-W005 da feature 011",
+    "next_action": "ao rodar /reversa em sessao nova: (1) reconciliar os paths do core nos artefatos do _reversa_sdd/; (2) executar step-04-regression-check.md contra _reversa_forward/011-harness-core-em-dot-harness/regression-watch.md e gravar o historico de re-extracao"
+  },
+  "engines": ["claude-code", "codex", "gemini-cli", "antigravity"],
   "agents": [
     "reversa",
     "reversa-scout",
