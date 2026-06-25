@@ -43,7 +43,7 @@ class CommandService:
             current_commit = self.git.get_head_commit(repo_path)
             session.close_session(current_commit)
             self.save_session(session_filepath, session)
-            return f"Sessão encerra com sucesso na feature '{session.active_feature}' com commit âncora {current_commit}."
+            return f"Sessão encerrada com sucesso na feature '{session.active_feature}' com commit âncora {current_commit}."
 
         elif cmd_normalized == "resume":
             session = self.load_session(session_filepath)

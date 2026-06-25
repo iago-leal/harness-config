@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+
 class FileSystemPort(ABC):
     @abstractmethod
     def read_file(self, path: str) -> str:
@@ -34,3 +35,6 @@ class FileSystemPort(ABC):
     def is_dir(self, path: str) -> bool:
         pass
 
+    @abstractmethod
+    def make_executable(self, path: str) -> None:
+        pass

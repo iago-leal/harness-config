@@ -42,10 +42,12 @@ class BootstrapService:
 
         pre_commit_path = os.path.join(hooks_dir, "pre-commit")
         self.fs.write_file(pre_commit_path, self._pre_commit_script())
+        self.fs.make_executable(pre_commit_path)
         installed_paths.append(pre_commit_path)
 
         post_merge_path = os.path.join(hooks_dir, "post-merge")
         self.fs.write_file(post_merge_path, self._post_merge_script())
+        self.fs.make_executable(post_merge_path)
         installed_paths.append(post_merge_path)
 
         return installed_paths

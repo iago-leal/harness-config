@@ -6,6 +6,7 @@ class MockFileSystem(FileSystemPort):
     def __init__(self, existing_files=None):
         self.existing_files = existing_files or set()
         self.written_files = {}
+        self.executable_files = set()
 
     def read_file(self, path: str) -> str:
         if path in self.written_files:
@@ -39,6 +40,9 @@ class MockFileSystem(FileSystemPort):
                 return True
         return False
 
+    def make_executable(self, path: str) -> None:
+        self.executable_files.add(path)
+
 
 class FootprintViolation(AssertionError):
     """Levantada pelo RecordingFileSystem quando uma escrita do harness
@@ -57,6 +61,7 @@ class RecordingFileSystem(FileSystemPort):
         self.repo_root = os.path.abspath(repo_root or os.getcwd())
         self.existing_files = set(existing_files or set())
         self.written_files = {}
+        self.executable_files = set()
         self.writes = []  # caminhos de escrita aceitos (auditoria do teste)
         home = os.path.expanduser("~")
         self._forbidden = (
@@ -111,3 +116,6 @@ class RecordingFileSystem(FileSystemPort):
                 return True
         return False
 
+    def make_executable(self, path: str) -> None:
+        self._guard(path)
+        self.executable_files.add(path)

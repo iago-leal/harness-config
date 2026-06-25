@@ -39,6 +39,21 @@ def test_bootstrap_install_hooks():
     assert "harness-config" not in post_content
 
 
+def test_install_hooks_marks_them_executable():
+    # Regressão: hook gravado sem bit de execução não roda — o git o ignora em
+    # silêncio (falha muda). install_hooks deve marcar pre-commit e post-merge
+    # como executáveis após gravá-los.
+    fs = _git_repo_fs()
+    service = BootstrapService(fs)
+
+    service.install_hooks("repo")
+
+    pre_commit = os.path.join("repo", ".git", "hooks", "pre-commit")
+    post_merge = os.path.join("repo", ".git", "hooks", "post-merge")
+    assert pre_commit in fs.executable_files
+    assert post_merge in fs.executable_files
+
+
 def test_post_merge_hook_does_not_forward_git_args_to_decisions():
     # Regressão: o git invoca post-merge com um flag posicional (0/1 de squash).
     # O subcomando `decisions` não aceita posicional; repassar "$@" quebrava o

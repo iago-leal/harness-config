@@ -1,9 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
 from src.core.ports.git import GitPort
 from src.core.commands.service import CommandService
 from src.core.domain.models import SessionState
 from tests.helpers import MockFileSystem
+
 
 def test_load_and_save_session():
     fs = MockFileSystem()
@@ -16,13 +16,14 @@ def test_load_and_save_session():
     service.save_session(session_file, state)
 
     assert fs.exists(session_file)
-    
+
     # Carrega sessão
     loaded = service.load_session(session_file)
     assert loaded is not None
     assert loaded.active_feature == "my-feat"
     assert loaded.commit_hash == "a" * 40
     assert loaded.is_active is True
+
 
 def test_execute_encerrar_sessao():
     fs = MockFileSystem()
@@ -42,13 +43,14 @@ def test_execute_encerrar_sessao():
 
     # Executa comando
     msg = service.execute_command("encerrar-sessao", [], repo_path, session_file)
-    assert "Sessão encerra com sucesso" in msg
+    assert "Sessão encerrada com sucesso" in msg
     assert new_commit in msg
 
     # Carrega para confirmar
     loaded = service.load_session(session_file)
     assert loaded.is_active is False
     assert loaded.commit_hash == new_commit
+
 
 def test_execute_resume_alignment_warning():
     fs = MockFileSystem()
@@ -59,7 +61,9 @@ def test_execute_resume_alignment_warning():
 
     # Salva sessão com um commit antigo
     old_commit = "a" * 40
-    state = SessionState(commit_hash=old_commit, active_feature="feat-1", is_active=False)
+    state = SessionState(
+        commit_hash=old_commit, active_feature="feat-1", is_active=False
+    )
     service.save_session(session_file, state)
 
     # Git mock retorna um commit diferente (divergente)
@@ -68,15 +72,16 @@ def test_execute_resume_alignment_warning():
 
     # Executa resume
     msg = service.execute_command("resume", [], repo_path, session_file)
-    
+
     # Deve emitir o Alerta de divergência Git
     assert "ALERTA: O commit HEAD atual" in msg
     assert "diverge do commit âncora" in msg
-    
+
     # Verifica que ativou a sessão no novo commit
     loaded = service.load_session(session_file)
     assert loaded.is_active is True
     assert loaded.commit_hash == current_commit
+
 
 def test_execute_clarificar_and_handoff():
     fs = MockFileSystem()
