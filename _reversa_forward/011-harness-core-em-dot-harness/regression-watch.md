@@ -24,6 +24,18 @@
 
 <!-- Preenchido pelo agente reverso quando `/reversa` rodar novamente. -->
 
+### Re-extração 2026-06-25 14:32
+
+> Re-confirmação na rodada completa 001–012 (a rodada cirúrgica de 13:39 já cobrira esta feature). Verificação factual: filesystem + suíte.
+
+| ID   | Veredito | Observação                                                                                                                                 |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| W001 | 🟢 verde | `init` copia para `.harness/harness-core/` e grava a entrada no `.gitignore`; raiz do repo-fonte limpa (sem resíduo `harness-core/`).      |
+| W002 | 🟢 verde | `upgrade` copia para `.harness/harness-core/`, preserva `.reversa/`/`.harness/decisoes/`, `.gitignore` idempotente; coberto pela suíte.    |
+| W003 | 🟢 verde | Leitura de versão usa `CORE_CONFIG_CANDIDATE_RELPATHS` com o canônico `.harness/harness-core/src/core/domain/config.py` como 1º candidato. |
+| W004 | 🟢 verde | Wrapper da raiz resolve `.harness/harness-core/src/main.py`; venv em `.harness/harness-core/.venv`; `domain.md`/`inventory.md` coerentes.  |
+| W005 | 🟢 verde | Ganchos Git embutem `.harness/harness-core/src/main.py` e `.harness/harness-core/.venv/bin/python3`.                                       |
+
 ### Re-extração 2026-06-25 13:39
 
 | ID   | Veredito | Observação                                                                                                                                                                                                   |

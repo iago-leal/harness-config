@@ -19,6 +19,15 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-25 14:32
+
+| ID   | Veredito | Observação                                                                                                                                                               |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| W001 | 🟢 verde | Decisões em `.harness/decisoes/` (MD-0001..MD-0009 + `_cabecalho.md`) e índice `.harness/microdecisoes.md`; raiz limpa. A 011 preserva `.harness/decisoes/`.             |
+| W002 | 🟢 verde | `grep` por `"decisoes"`/`"microdecisoes.md"` chumbados em `main.py`/`server.py` = vazio; caminhos derivam de `load_config().decisions`.                                  |
+| W003 | 🟢 verde | `load_config` funcional (suíte 149 passed; `./harness decisions` executa sem erro).                                                                                      |
+| W004 | 🟢 verde | Verificação **por execução**: `./harness decisions` → "grafo validado, zero erros" + índice recompilado **idempotente** (zero diff no git). IDs e backlinks preservados. |
+
 ### Re-extração 2026-06-24 19:30 (pós-feature 010)
 
 | ID   | Veredito | Observação                                                                            |

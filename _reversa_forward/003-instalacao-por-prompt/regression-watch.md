@@ -15,6 +15,16 @@ Nenhuma regra 🟢 do legado foi modificada (ver `legacy-impact.md#4-regras-modi
 
 ## 2. Histórico de re-extrações
 
+### Re-extração 2026-06-25 14:32
+
+| ID   | Veredito | Observação                                                                                                                                                                                                                                                                                                                |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Introspecção preservada: `InstallPromptService` (`service.py:7,27`) preenche `{{COMMANDS}}` do argparse; o `template.md` não é Markdown estático mantido à mão.                                                                                                                                                           |
+| W002 | 🟢 verde | Escopo de projeto vivo. A 011 reescreveu o `template.md` e o texto migrou para `harness_profiles.py:59-61` (`ClaudeProfile.apply_instructions()`: "Aplique SEMPRE no `.claude/settings.json` do **projeto**. Nunca edite `~/.claude`."). Mudou o local, não a regra; essência preservada.                                 |
+| W003 | 🟢 verde | **Premissa expirada → defasagem quitada.** A 004 fechou o `SessionStart` e a 011 reescreveu o `template.md`: a nota obsoleta sumiu (`grep SessionStart template.md` = 0). Não há mais dívida a mascarar nem texto defasado. **Recomenda-se arquivar** este W003 (a premissa "enquanto a 004 não fechar" deixou de valer). |
+
+> **Promoção:** W003 sai de 🟡 (4 rodadas consecutivas) para 🟢 — a correção foi a remoção da nota obsoleta, não a regressão da regra.
+
 ### Re-extração 2026-06-24 19:30 (pós-feature 010)
 
 | ID   | Veredito   | Observação                                                                                                                                                                                                  |
