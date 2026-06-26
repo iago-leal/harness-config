@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/013-commit-encerrar-sessao",
-  "feature-id": "013",
-  "short-name": "commit-encerrar-sessao",
-  "started-at": "2026-06-26T09:58:20-03:00",
+  "feature-dir": "_reversa_forward/014-oferta-upgrade-ao-encerrar",
+  "feature-id": "014",
+  "short-name": "oferta-upgrade-ao-encerrar",
+  "started-at": "2026-06-26T11:28:02-03:00",
   "current-stage": "requirements",
   "stages-completed": [],
   "paused-features": []

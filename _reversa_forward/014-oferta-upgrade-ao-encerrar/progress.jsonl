@@ -1,0 +1,15 @@
+{"ts":"2026-06-26T16:28:46Z","action":"T001","status":"done","files":[".harness/harness-core/src/core/ports/git.py"]}
+{"ts":"2026-06-26T16:28:46Z","action":"T002","status":"done","files":[".harness/harness-core/tests/test_commands.py"],"note":"FakeGit implementa os metodos novos; demais dubles sao MagicMock(spec)"}
+{"ts":"2026-06-26T16:28:46Z","action":"T007","status":"done","files":[".harness/harness-core/src/adapters/git/subprocess.py"],"note":"antecipado apos T001 para manter a suite instanciavel"}
+{"ts":"2026-06-26T16:28:46Z","action":"T003","status":"done","files":[".harness/harness-core/tests/test_adapters.py"],"note":"8 testes novos com repo git temporario + remoto bare"}
+{"ts":"2026-06-26T16:28:46Z","action":"T004","status":"done","files":[".harness/harness-core/tests/test_sync.py"]}
+{"ts":"2026-06-26T16:28:46Z","action":"T008","status":"done","files":[".harness/harness-core/src/core/sync/service.py"],"note":"check_version_update_remote: fetch + get_file_at_ref + regex reusado"}
+{"ts":"2026-06-26T16:28:46Z","action":"T005","status":"done","files":[".harness/harness-core/tests/test_offers.py"]}
+{"ts":"2026-06-26T16:28:46Z","action":"T009","status":"done","files":[".harness/harness-core/src/core/session/offers.py"],"note":"EndSessionOffersService + PushOffer/UpgradeOffer/EndSessionOffers"}
+{"ts":"2026-06-26T16:28:46Z","action":"T006","status":"done","files":[".harness/harness-core/tests/test_cli.py"],"note":"render markers, conduct TTY/nao-TTY, ordem, resiliencia, D-10 via subprocess"}
+{"ts":"2026-06-26T16:28:46Z","action":"T010","status":"done","files":[".harness/harness-core/src/main.py"],"note":"borda: conduct_end_session_offers + run_upgrade com merge_ff_only; nao-bloqueante"}
+{"ts":"2026-06-26T16:28:46Z","action":"T011","status":"done","files":[".harness/harness-core/src/core/install/harness_profiles.py",".harness/harness-core/tests/test_session_command_profiles.py"]}
+{"ts":"2026-06-26T16:28:46Z","action":"T012","status":"done","files":[".harness/harness-core/src/core/domain/config.py",".harness/harness-core/src/core/bootstrap/init_service.py",".harness/harness-core/tests/test_init.py"],"note":"1.2.49 -> 1.2.50"}
+{"ts":"2026-06-26T16:28:46Z","action":"T013","status":"done","files":[".harness/harness-core/tests/"],"note":"suite 178 passed"}
+{"ts":"2026-06-26T16:28:46Z","action":"T014","status":"done","files":[".claude/commands/encerrar-sessao.md",".agents/workflows/encerrar-sessao.md"],"note":"materialize com codigo local; texto novo (push/upgrade) confirmado nos dois perfis"}
+{"ts":"2026-06-26T16:28:46Z","action":"T015","status":"done","files":[],"note":"smoke sandbox: push marker nao-TTY (ahead=2, principal=true), exit 0; degradacao upstream inalcancavel sem oferta enganosa, push preservado"}
