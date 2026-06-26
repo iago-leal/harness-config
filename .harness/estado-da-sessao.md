@@ -1,40 +1,24 @@
 ---
-commit: 93c2263
-feature: correções pós-009 — hooks + CI (MD-0006, MD-0007, MD-0008, MD-0009)
-start_time: "2026-06-24T16:57:44+00:00"
-status: active
+commit: d25e5e0a36ed64603a3e015a48cd33fa9303312a
+feature: reversa-forward (roteamento) + brief da feature 015
+start_time: '2026-06-26T22:00:00+00:00'
+status: inactive
 ---
 
 ## O que foi feito
-
-- **Feature 009 — `hooks-antigravity`** mesclada em `main` (`8b3cd4c`, merge de `feat/009-hooks-antigravity`). Ganchos de ciclo de vida para o Antigravity, com re-extração reversa cirúrgica e regression-check pós-009.
-- **Correção do hook post-merge (MD-0006)** — `BootstrapService._post_merge_script()` repassava `"$@"` ao subcomando `decisions`. O git invoca `post-merge` com o flag de squash (`0`/`1`) como posicional, e `decisions` (parser sem `add_argument`) o recusava com `unrecognized arguments: 0`. Disparou no merge da 009. Defeito no **gerador**, não na instância — regressão viva desde `af4a034`, preservada por `5624f78`; propaga a todo projeto criado por `harness init`. Conduzido como **TDD direto + registro leve**, fora do pipeline forward (Princípio nº 4), por decisão do mantenedor.
-  - Teste de regressão em `test_bootstrap.py`: invertido o assert que codificava o bug (`'decisions "$@"' in post_content`) e adicionado `test_post_merge_hook_does_not_forward_git_args_to_decisions`. Vermelho antes, verde depois.
-  - Correção de uma linha em `service.py:53` (remoção do `"$@"`).
-  - Hook da raiz regenerado via `./harness bootstrap`. Provado de ponta a ponta: `./.git/hooks/post-merge 0` retorna `exit 0`. Commitado em `69a8e6c`.
-- **Endurecimento do bootstrap (MD-0007)** — `install_hooks` instalava em `os.getcwd()/.git/hooks` sem verificar o `.git`, criando um `.git` degenerado quando rodado fora da raiz (acidente da sessão anterior). Agora `BootstrapService.install_hooks` recusa fora de repo git (`NotAGitRepositoryError`), e a CLI **oferece** `git init` antes de instalar; sem TTY, aborta com `exit 1` sem instalar. `GitPort` ganhou `init_repo`. Também TDD direto + registro leve.
-  - Domínio: guarda em `service.py` (`fs.exists(.git)`) + exceção nomeada.
-  - Apresentação: `offer_git_init()` em `main.py` (espelha `sys.stdin.isatty()` de `resolve_format_target`) e novo fluxo no handler do `bootstrap`.
-  - Infra: `SubprocessGitAdapter.init_repo` (`git init`).
-  - Provado: sem git → recusa/`exit 1` sem criar `.git`; com git → instala os dois hooks.
-- **CI estava silenciosamente vermelho (MD-0008)** — descoberto ao empurrar `94cc6ab`/`69a8e6c`: o CI da `main` falhava em **todo** push desde a ativação (`12d6300`), com `1 failed`, por `test_subprocess_git_adapter` chumbar `/Users/iagoleal/dev/harness` (inexistente no runner Ubuntu → `FileNotFoundError`). O estado-da-sessao registrava "CI ativo" como se verde — não era. Os meus dois commits **não** introduziram regressão: o run herdou exatamente essa única falha (`1 failed, 116 passed`). Teste portado para repositório temporário com um commit (`tmp_path` + `init_repo`); `try/except`/`pytest.fail` removidos.
-- **Suíte verde: 117 passed** (`.venv/bin/python -m pytest` a partir de `harness-core/`).
+- **`/reversa-forward` rodado** no cenário legado (ancorado em `_reversa_sdd/`, specs com granularidade `feature`). Feature ativa `014-oferta-upgrade-ao-encerrar` detectada como **`done`**: 15/15 ações fechadas em `actions.md`, sem `[DÚVIDA]` em `requirements.md`, sem features pausadas. O ciclo da 014 já estava encerrado e commitado.
+- **`/reversa-requirements` iniciado e interrompido sem escrita.** Não havia descrição de escopo para uma feature nova, e o mantenedor decidiu parar por não haver nada em aberto. Nenhum artefato de feature foi criado: sem pasta nova em `_reversa_forward/`, sem toque em `active-requirements.json`.
+- **Commit `d25e5e0`** — `BRIEF-oferta-commit-pendente-ao-encerrar.md` na raiz: registro de intenção da futura feature 015 (oferecer commitar trabalho pendente da working tree, fora de `.harness/`, antes do fechamento; oferta irmã das ofertas de fim de sessão da 014, mas PRÉ-fechamento).
+- **Deixados deliberadamente fora do versionamento:** os artefatos materializados `.claude/commands/encerrar-sessao.md` e `.agents/workflows/encerrar-sessao.md` (saída local do dogfood, nunca rastreada em 14 features; o do Antigravity ainda carrega caminho absoluto da máquina) e o placeholder vazio `_reversa_forward/014-oferta-upgrade-ao-encerrar/.harness/microdecisoes.md`.
 
 ## Próximos passos
-
-- **Três commits empurrados** para `origin/main` (`69a8e6c`, `94cc6ab`, `93c2263`), após re-autenticar o `gh` por device flow. **CI verde pela primeira vez** desde a ativação: `test (3.12)` e `test (3.13)` passando (run `28126576102`).
-- **Deprecação Node 20 resolvida (MD-0009)** — actions do `ci.yml` pinadas em versão exata: `checkout@v7.0.0`, `setup-uv@v8.2.0`, `setup-python@v6.3.0` (usam Node 24). Pin exato por reprodutibilidade (5.3) e porque `setup-uv` não tem major tag movível.
-- **Token `gh` agora com `workflow`** — escopos `gist, read:org, repo, workflow` (reconcedido por device flow); pushes que tocam `.github/workflows/` deixaram de ser rejeitados.
-- **Cache do `setup-uv` sem colisão** — `cache-suffix: ${{ matrix.python-version }}` adicionado ao `ci.yml`: os jobs paralelos da matrix (3.12/3.13) deixaram de disputar a mesma chave de cache (annotation "Unable to reserve cache"). Complemento de MD-0009; `cache-suffix` confirmado como input válido de `setup-uv@v8.2.0`.
+- **Feature 015 provável: `oferta-commit-pendente-ao-encerrar`.** Abrir sessão neste repo e rodar `/reversa-requirements` passando `BRIEF-oferta-commit-pendente-ao-encerrar.md` (ou seu resumo) como argumento; seguir o forward (clarify → plan → to-do → coding). Bump previsto 1.2.51 → 1.2.52 nos três pontos (config, bootstrap, teste).
+- **Avaliar `.gitignore`** para `.claude/commands/` e `.agents/workflows/`: são materializações locais que reaparecem como untracked a cada sessão; decidir se entram no ignore do upstream.
 
 ## Pendências / bloqueios
-
-- Inconsistência menor não corrigida (herdada): no MCP, `process_decisions` deriva `header_file` de `os.path.join(dir, "_cabecalho.md")` e ignora o override `config.decisions.header_file`.
-- `001/W001–W003` acumulam 3 vereditos verdes consecutivos (limiar `archive-after=3`): candidatos a arquivamento. Ação manual do mantenedor.
+- **Defeito observado no `encerrar-sessao`:** diante de um `.harness/estado-da-sessao.md` legado com hash curto (escrito antes da validação de 40 caracteres do `SessionState`), o comando degrada para **aviso + exit 0 silencioso**, sem fechar nada. Foi necessário reescrever o estado com âncora de 40 caracteres para destravar. Vale endurecer: reparar o hash curto automaticamente, ou falhar barulhento (exit ≠ 0), em vez do no-op silencioso — contraria o princípio de erros barulhentos.
 
 ## Ponteiros
-
-- Microdecisões: `.harness/decisoes/MD-0006.md` (post-merge `"$@"`), `MD-0007.md` (bootstrap recusa/oferta `git init`), `MD-0008.md` (teste do adapter git portável; CI mascarado-vermelho) e `MD-0009.md` (actions pinadas em versão exata; Node 20→24).
-- Gerador dos hooks: `harness-core/src/core/bootstrap/service.py` (`install_hooks`, `_post_merge_script`, `NotAGitRepositoryError`).
-- Oferta na CLI: `harness-core/src/main.py::offer_git_init` + handler `bootstrap`. Porta: `ports/git.py::init_repo`; adapter: `adapters/git/subprocess.py`.
-- Testes: `harness-core/tests/test_bootstrap.py`, `test_cli.py`, `test_adapters.py`.
+- Brief da 015: `BRIEF-oferta-commit-pendente-ao-encerrar.md` (raiz do repo).
+- Trilha SDD da 014: `_reversa_forward/014-oferta-upgrade-ao-encerrar/` (requirements, roadmap, actions, interfaces, legacy-impact, regression-watch).
+- Âncora desta sessão: `d25e5e0` (último commit de trabalho).
