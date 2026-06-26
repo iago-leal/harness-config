@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/012-corrige-upgrade-stale",
-  "feature-id": "012",
-  "short-name": "corrige-upgrade-stale",
-  "started-at": "2026-06-25T11:57:32-03:00",
+  "feature-dir": "_reversa_forward/013-commit-encerrar-sessao",
+  "feature-id": "013",
+  "short-name": "commit-encerrar-sessao",
+  "started-at": "2026-06-26T09:58:20-03:00",
   "current-stage": "requirements",
   "stages-completed": [],
   "paused-features": []

@@ -1,0 +1,13 @@
+{"ts":"2026-06-26T13:34:23Z","action":"T001","status":"done","files":[".harness/harness-core/src/core/commands/errors.py"]}
+{"ts":"2026-06-26T13:34:23Z","action":"T002","status":"done","files":[".harness/harness-core/src/core/ports/git.py"]}
+{"ts":"2026-06-26T13:34:23Z","action":"T003","status":"done","files":[".harness/harness-core/tests/test_adapters.py"]}
+{"ts":"2026-06-26T13:34:23Z","action":"T004","status":"done","files":[".harness/harness-core/tests/test_commands.py"]}
+{"ts":"2026-06-26T13:34:23Z","action":"T005","status":"done","files":[".harness/harness-core/tests/test_commands.py"]}
+{"ts":"2026-06-26T13:34:23Z","action":"T006","status":"done","files":[".harness/harness-core/tests/test_session_command_profiles.py"]}
+{"ts":"2026-06-26T13:34:23Z","action":"T007","status":"done","files":[".harness/harness-core/src/adapters/git/subprocess.py"]}
+{"ts":"2026-06-26T13:34:23Z","action":"T008","status":"done","files":[".harness/harness-core/src/core/commands/service.py"]}
+{"ts":"2026-06-26T13:34:23Z","action":"T009","status":"done","files":[".harness/harness-core/src/core/install/harness_profiles.py"]}
+{"ts":"2026-06-26T13:34:23Z","action":"T010","status":"done","files":[".harness/harness-core/src/core/domain/config.py",".harness/harness-core/src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-26T13:34:23Z","action":"T011","status":"done","files":[".harness/harness-core/tests/test_init.py"],"note":"suite 153 passed"}
+{"ts":"2026-06-26T13:34:23Z","action":"T012","status":"done","files":[],"note":"rematerializacao verificada em sandbox (claude+antigravity); texto novo confirmado"}
+{"ts":"2026-06-26T13:34:23Z","action":"T013","status":"done","files":[],"note":"smoke onboarding: caso feliz + negativo (exit=1, SessionCommitError, estado preservado)"}
