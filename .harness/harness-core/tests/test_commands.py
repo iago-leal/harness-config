@@ -1,8 +1,48 @@
 from unittest.mock import MagicMock
+import pytest
 from src.core.ports.git import GitPort
 from src.core.commands.service import CommandService
+from src.core.commands.errors import SessionCommitError
 from src.core.domain.models import SessionState
 from tests.helpers import MockFileSystem
+
+
+class FakeGit(GitPort):
+    """Git fake que modela a transição de HEAD ao commitar.
+
+    ``get_head_commit`` devolve o HEAD corrente; ``commit_paths`` registra a
+    chamada, avança o HEAD para o hash do commit de encerramento e o devolve.
+    Assim o teste asseria que a âncora gravada é o HEAD PRÉ-commit.
+    """
+
+    CLOSING_HEAD = "c" * 40
+
+    def __init__(self, head: str):
+        self._head = head
+        self.commit_calls = []  # lista de (repo_path, paths, message)
+
+    def get_head_commit(self, repo_path: str) -> str:
+        return self._head
+
+    def get_remote_commit(
+        self, repo_path: str, remote_name: str = "origin", branch_name: str = "main"
+    ) -> str:
+        return self._head
+
+    def init_repo(self, repo_path: str) -> None:
+        pass
+
+    def commit_paths(self, repo_path: str, paths: list[str], message: str) -> str:
+        self.commit_calls.append((repo_path, list(paths), message))
+        self._head = self.CLOSING_HEAD
+        return self._head
+
+
+class FakeGitCommitFalha(FakeGit):
+    """Variante cujo commit não pode ser criado (falha barulhenta)."""
+
+    def commit_paths(self, repo_path: str, paths: list[str], message: str) -> str:
+        raise RuntimeError("git sem identidade configurada")
 
 
 def test_load_and_save_session():
@@ -27,29 +67,57 @@ def test_load_and_save_session():
 
 def test_execute_encerrar_sessao():
     fs = MockFileSystem()
-    git = MagicMock(spec=GitPort)
+    work_head = "a" * 40
+    git = FakeGit(work_head)
     service = CommandService(fs, git)
     session_file = "session.md"
     repo_path = "repo/"
 
-    # Prepara sessão ativa
-    initial_commit = "a" * 40
-    state = SessionState(commit_hash=initial_commit, active_feature="feat-1")
+    # Prepara sessão ativa sobre o commit de trabalho.
+    state = SessionState(commit_hash=work_head, active_feature="feat-1")
     service.save_session(session_file, state)
 
-    # Configura git mock
-    new_commit = "b" * 40
-    git.get_head_commit.return_value = new_commit
-
-    # Executa comando
     msg = service.execute_command("encerrar-sessao", [], repo_path, session_file)
-    assert "Sessão encerrada com sucesso" in msg
-    assert new_commit in msg
 
-    # Carrega para confirmar
+    # Âncora gravada = HEAD PRÉ-commit (commit de trabalho), não o de encerramento.
     loaded = service.load_session(session_file)
     assert loaded.is_active is False
-    assert loaded.commit_hash == new_commit
+    assert loaded.commit_hash == work_head
+
+    # commit_paths recebeu SOMENTE o state_file (nunca git add -A).
+    assert len(git.commit_calls) == 1
+    called_repo, called_paths, called_msg = git.commit_calls[0]
+    assert called_repo == repo_path
+    assert called_paths == [session_file]
+    assert "feat-1" in called_msg
+    assert work_head in called_msg  # âncora citada na mensagem do commit
+
+    # A saída reporta os DOIS hashes: âncora (trabalho) e encerramento.
+    assert "Sessão encerrada com sucesso" in msg
+    assert work_head in msg
+    assert FakeGit.CLOSING_HEAD in msg
+
+
+def test_execute_encerrar_sessao_falha_commit_preserva_estado():
+    fs = MockFileSystem()
+    work_head = "a" * 40
+    git = FakeGitCommitFalha(work_head)
+    service = CommandService(fs, git)
+    session_file = "session.md"
+    repo_path = "repo/"
+
+    state = SessionState(commit_hash=work_head, active_feature="feat-1")
+    service.save_session(session_file, state)
+
+    # Falha barulhenta: erro nomeado, sem mensagem de sucesso.
+    with pytest.raises(SessionCommitError):
+        service.execute_command("encerrar-sessao", [], repo_path, session_file)
+
+    # O estado salvo é PRESERVADO (save_session ocorreu antes do commit).
+    loaded = service.load_session(session_file)
+    assert loaded is not None
+    assert loaded.is_active is False
+    assert loaded.commit_hash == work_head
 
 
 def test_execute_resume_alignment_warning():

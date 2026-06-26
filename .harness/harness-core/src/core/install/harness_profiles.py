@@ -70,10 +70,10 @@ class ClaudeProfile(HarnessProfile):
         # casando com o `allowed-tools`. `command_path` é ignorado.
         content = (
             "---\n"
-            "description: Encerra a sessão de trabalho do Harness, gravando o commit-âncora.\n"
+            "description: Encerra a sessão do Harness, criando um commit de registro do fechamento por cima do último commit de trabalho.\n"
             "allowed-tools: Bash(./harness cmd encerrar-sessao:*)\n"
             "---\n\n"
-            "Encerrando a sessão do Harness e gravando o commit-âncora:\n\n"
+            "Encerrando a sessão do Harness: o fechamento é gravado como um commit de registro por cima do último commit de trabalho (a âncora segue apontando para o trabalho).\n\n"
             "!`./harness cmd encerrar-sessao`\n"
         )
         return (".claude/commands/encerrar-sessao.md", content)
@@ -174,9 +174,9 @@ class AntigravityProfile(HarnessProfile):
         content = (
             "---\n"
             "name: encerrar-sessao\n"
-            "description: Encerra a sessão de trabalho do Harness, gravando o commit-âncora.\n"
+            "description: Encerra a sessão do Harness, criando um commit de registro do fechamento por cima do último commit de trabalho.\n"
             "---\n\n"
-            "Execute, a partir da raiz do projeto, o comando de shell abaixo e mostre a saída ao usuário:\n\n"
+            "Encerra a sessão do Harness: o fechamento vira um commit de registro por cima do último commit de trabalho (a âncora segue no trabalho). Execute, a partir da raiz do projeto, o comando de shell abaixo e mostre a saída ao usuário:\n\n"
             f"`{command_path}/harness cmd encerrar-sessao`\n"
         )
         return (".agents/workflows/encerrar-sessao.md", content)

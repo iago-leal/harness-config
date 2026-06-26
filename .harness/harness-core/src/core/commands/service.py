@@ -1,6 +1,7 @@
 from typing import Optional, List
 from src.core.ports.fs import FileSystemPort
 from src.core.ports.git import GitPort
+from src.core.commands.errors import SessionCommitError
 from src.core.domain.models import SessionState, SessionNarrative
 from src.core.session import serializer
 
@@ -39,11 +40,32 @@ class CommandService:
             if not session or not session.is_active:
                 return "Erro: Nenhuma sessão ativa encontrada para encerrar."
 
-            # Valida âncora Git e isolamento (BR-MIGRAR-014 / BR-MIGRAR-015)
-            current_commit = self.git.get_head_commit(repo_path)
-            session.close_session(current_commit)
+            # Âncora = último commit de TRABALHO, capturada ANTES de qualquer
+            # escrita. O commit de encerramento fica por cima; a âncora nunca
+            # aponta para ele (BR-MIGRAR-014 / BR-MIGRAR-015, RN-07).
+            ancora = self.git.get_head_commit(repo_path)
+            feature = session.active_feature
+            session.close_session(ancora)
             self.save_session(session_filepath, session)
-            return f"Sessão encerrada com sucesso na feature '{session.active_feature}' com commit âncora {current_commit}."
+
+            # Versiona SOMENTE o arquivo de estado (jamais git add -A): o registro
+            # de encerramento entra no histórico sem arrastar mudanças alheias do
+            # working tree. Falha de commit é barulhenta e preserva o estado salvo.
+            try:
+                commit_encerramento = self.git.commit_paths(
+                    repo_path,
+                    [session_filepath],
+                    f"chore(sessao): encerrar sessão {feature}; âncora {ancora}",
+                )
+            except Exception as exc:
+                raise SessionCommitError(
+                    f"Falha ao versionar o encerramento da sessão '{feature}': {exc}"
+                ) from exc
+
+            return (
+                f"Sessão encerrada com sucesso na feature '{feature}' "
+                f"com commit âncora {ancora} e commit de encerramento {commit_encerramento}."
+            )
 
         elif cmd_normalized == "resume":
             session = self.load_session(session_filepath)

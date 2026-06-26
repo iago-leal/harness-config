@@ -53,6 +53,58 @@ def test_subprocess_git_adapter_init_repo(tmp_path):
     assert os.path.isdir(os.path.join(tmp_path, ".git"))
 
 
+def test_subprocess_git_adapter_commit_paths_isola_arquivo(tmp_path):
+    adapter = SubprocessGitAdapter()
+    repo_path = str(tmp_path)
+
+    adapter.init_repo(repo_path)
+    run = dict(cwd=repo_path, capture_output=True, check=True)
+    subprocess.run(["git", "config", "user.email", "ci@example.com"], **run)
+    subprocess.run(["git", "config", "user.name", "CI"], **run)
+    subprocess.run(["git", "commit", "--allow-empty", "-m", "trabalho"], **run)
+    work_head = adapter.get_head_commit(repo_path)
+
+    # Alvo a versionar + arquivo alheio que NÃO deve entrar no commit.
+    with open(os.path.join(repo_path, "estado.md"), "w") as f:
+        f.write("registro de encerramento\n")
+    with open(os.path.join(repo_path, "OUTRO.md"), "w") as f:
+        f.write("mudança pendente alheia\n")
+
+    new_head = adapter.commit_paths(repo_path, ["estado.md"], "chore(sessao): encerrar")
+
+    # Devolve o novo HEAD, por cima do commit de trabalho.
+    assert re.match(r"^[a-f0-9]{40}$", new_head)
+    assert new_head != work_head
+    parent = subprocess.run(
+        ["git", "rev-parse", "HEAD~1"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    assert parent == work_head
+
+    # O commit contém EXCLUSIVAMENTE o alvo.
+    names = subprocess.run(
+        ["git", "show", "--name-only", "--pretty=format:", "HEAD"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.split()
+    assert names == ["estado.md"]
+
+    # O arquivo alheio permanece não rastreado, fora do commit.
+    status = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    assert "?? OUTRO.md" in status
+
+
 def test_host_formatter_adapter_non_existent():
     adapter = HostFormatterAdapter()
     # Executa formatador inexistente e deve retornar 127 (command not found)

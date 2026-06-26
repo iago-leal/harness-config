@@ -51,3 +51,26 @@ class SubprocessGitAdapter(GitPort):
             )
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Falha ao executar git init: {e.stderr.strip()}")
+
+    def commit_paths(self, repo_path: str, paths: list[str], message: str) -> str:
+        # `git add -- <paths>`: o `--` separa opções de caminhos e restringe o
+        # stage EXCLUSIVAMENTE aos caminhos dados — nunca `git add -A`, para não
+        # arrastar mudanças alheias do working tree.
+        try:
+            subprocess.run(
+                ["git", "add", "--", *paths],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "commit", "-m", message],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Falha ao criar commit de caminhos: {e.stderr.strip()}")
+        return self.get_head_commit(repo_path)

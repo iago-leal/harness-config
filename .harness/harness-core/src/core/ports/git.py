@@ -18,3 +18,13 @@ class GitPort(ABC):
     def init_repo(self, repo_path: str) -> None:
         """Inicializa um repositório git vazio em repo_path (git init)."""
         pass
+
+    @abstractmethod
+    def commit_paths(self, repo_path: str, paths: list[str], message: str) -> str:
+        """Cria um commit contendo APENAS os caminhos informados.
+
+        Faz ``git add`` somente de ``paths`` (nunca ``git add -A``) e
+        ``git commit``, devolvendo o hash do novo HEAD. Não arrasta outras
+        mudanças pendentes do working tree.
+        """
+        pass

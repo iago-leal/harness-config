@@ -34,3 +34,15 @@ def test_antigravity_resolve_command_path_absoluto():
 
 def test_gemini_nao_expoe_comando():
     assert GeminiProfile().session_command_artifact("/abs/projeto") is None
+
+
+def test_claude_descreve_commit_de_encerramento():
+    _, content = ClaudeProfile().session_command_artifact("/abs/projeto")
+    assert "commit de registro" in content
+    assert "último commit de trabalho" in content
+
+
+def test_antigravity_descreve_commit_de_encerramento():
+    _, content = AntigravityProfile().session_command_artifact("/abs/projeto")
+    assert "commit de registro" in content
+    assert "último commit de trabalho" in content
