@@ -33,14 +33,19 @@ def test_materializa_os_dois_arquivos_em_projeto_vazio():
     assert fs.exists(_antigravity_path(project))
 
 
-def test_claude_usa_harness_relativo():
+def test_claude_resolve_raiz_via_git():
     fs = MockFileSystem()
     project = "/Users/iagoleal/projeto-x"
 
     materialize_session_commands(fs, project, "/abs/projeto-x")
 
     content = fs.read_file(_claude_path(project))
-    assert "!`./harness cmd encerrar-sessao`" in content
+    # `cd` para a raiz do git antes de `./harness`: funciona de qualquer
+    # subdiretório (o `!`-bash não garante cwd na raiz).
+    assert (
+        'cd "$(git rev-parse --show-toplevel)" && ./harness cmd encerrar-sessao'
+        in content
+    )
     assert "${CLAUDE_PROJECT_DIR}" not in content
 
 

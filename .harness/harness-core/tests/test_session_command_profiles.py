@@ -15,10 +15,23 @@ from src.core.install.harness_profiles import (
 def test_claude_expoe_comando_em_claude_commands():
     rel, content = ClaudeProfile().session_command_artifact("/abs/projeto")
     assert rel == ".claude/commands/encerrar-sessao.md"
-    assert "!`./harness cmd encerrar-sessao`" in content
+    assert "./harness cmd encerrar-sessao" in content
     # `${CLAUDE_PROJECT_DIR}` não é expandida no `!`-bash de slash commands
-    # (vira `/harness`); o comando usa `./harness`, relativo à raiz do projeto.
+    # (vira `/harness`); o comando resolve a raiz via git em vez disso.
     assert "${CLAUDE_PROJECT_DIR}" not in content
+
+
+def test_claude_roda_da_raiz_independente_do_cwd():
+    # O `!`-bash de slash command pode rodar de um subdiretório; `./harness`
+    # relativo quebraria fora da raiz. O comando faz `cd` para a raiz do git
+    # antes, resolvendo o wrapper E o cwd do core de qualquer subdiretório.
+    _, content = ClaudeProfile().session_command_artifact("/abs/projeto")
+    assert 'cd "$(git rev-parse --show-toplevel)"' in content
+
+
+def test_antigravity_roda_da_raiz_independente_do_cwd():
+    _, content = AntigravityProfile().session_command_artifact("/abs/projeto")
+    assert "cd /abs/projeto && " in content
 
 
 def test_antigravity_expoe_comando_em_agents_workflows():

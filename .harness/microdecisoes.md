@@ -23,3 +23,4 @@
   ↳ relaciona MD-0008
 - **MD-0010** — caminhos dos regression-watch pré-011 atualizados para o layout `.harness/`
   ↳ relaciona MD-0005
+- **MD-0011** — Slash command de encerrar-sessao resolve a raiz via git (robusto a cwd)

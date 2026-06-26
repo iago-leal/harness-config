@@ -63,18 +63,21 @@ class ClaudeProfile(HarnessProfile):
 
     def session_command_artifact(self, command_path: str):
         # O Claude lê slash commands de `.claude/commands/<nome>.md`. O `!`-bash
-        # roda com cwd na RAIZ do projeto, então `./harness` (relativo) resolve o
-        # wrapper e sobrevive a repo movido. `${CLAUDE_PROJECT_DIR}` NÃO é expandida
-        # nesse contexto — ao contrário dos hooks — e viraria `/harness` (bug
-        # conhecido do Claude Code, issue #33815); por isso usamos `./harness`,
-        # casando com o `allowed-tools`. `command_path` é ignorado.
+        # pode rodar de um SUBDIRETÓRIO da sessão — não há garantia de cwd na raiz;
+        # `./harness` (relativo) quebraria fora dela ("no such file or directory").
+        # Por isso `cd "$(git rev-parse --show-toplevel)"` precede o comando: resolve
+        # a raiz do projeto de qualquer subdiretório, fazendo o wrapper ser
+        # encontrado E o core rodar com cwd na raiz (config/estado são relativos a
+        # ela). `${CLAUDE_PROJECT_DIR}` NÃO é expandida no `!`-bash (viraria
+        # `/harness`, issue #33815), então a raiz vem do git — que também sobrevive a
+        # repo movido. `command_path` é ignorado.
         content = (
             "---\n"
             "description: Encerra a sessão do Harness, criando um commit de registro do fechamento por cima do último commit de trabalho.\n"
-            "allowed-tools: Bash(./harness cmd encerrar-sessao:*)\n"
+            "allowed-tools: Bash(cd:*), Bash(git rev-parse:*), Bash(./harness cmd encerrar-sessao:*)\n"
             "---\n\n"
-            "Encerrando a sessão do Harness: o fechamento é gravado como um commit de registro por cima do último commit de trabalho (a âncora segue apontando para o trabalho). Ao final, o comando pode oferecer publicar o trabalho (git push) e atualizar o Harness Core (upgrade).\n\n"
-            "!`./harness cmd encerrar-sessao`\n"
+            "Encerrando a sessão do Harness: o fechamento é gravado como um commit de registro por cima do último commit de trabalho (a âncora segue apontando para o trabalho). Ao final, o comando pode oferecer publicar o trabalho (git push) e atualizar o Harness Core (upgrade). O `cd` para a raiz do projeto (resolvida via git) faz o comando funcionar mesmo quando a sessão está num subdiretório.\n\n"
+            '!`cd "$(git rev-parse --show-toplevel)" && ./harness cmd encerrar-sessao`\n'
         )
         return (".claude/commands/encerrar-sessao.md", content)
 
@@ -176,8 +179,8 @@ class AntigravityProfile(HarnessProfile):
             "name: encerrar-sessao\n"
             "description: Encerra a sessão do Harness, criando um commit de registro do fechamento por cima do último commit de trabalho.\n"
             "---\n\n"
-            "Encerra a sessão do Harness: o fechamento vira um commit de registro por cima do último commit de trabalho (a âncora segue no trabalho). Ao final, o comando pode oferecer publicar o trabalho (git push) e atualizar o Harness Core (upgrade). Execute, a partir da raiz do projeto, o comando de shell abaixo e mostre a saída ao usuário:\n\n"
-            f"`{command_path}/harness cmd encerrar-sessao`\n"
+            "Encerra a sessão do Harness: o fechamento vira um commit de registro por cima do último commit de trabalho (a âncora segue no trabalho). Ao final, o comando pode oferecer publicar o trabalho (git push) e atualizar o Harness Core (upgrade). O `cd` para a raiz garante que rode bem de qualquer diretório. Execute o comando de shell abaixo e mostre a saída ao usuário:\n\n"
+            f"`cd {command_path} && {command_path}/harness cmd encerrar-sessao`\n"
         )
         return (".agents/workflows/encerrar-sessao.md", content)
 
