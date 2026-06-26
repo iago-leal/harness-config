@@ -60,6 +60,100 @@ def offer_git_init(repo_path: str) -> bool:
     return resposta.strip().lower() in ("s", "sim", "y", "yes")
 
 
+def render_offer_markers(offers) -> list:
+    """Modo sem TTY: linhas-marcador estáveis das ofertas, sem ler entrada.
+
+    Contrato consumido pelo agente (ver
+    `_reversa_forward/014-oferta-upgrade-ao-encerrar/interfaces/session-end-offers.md`).
+    Uma linha por oferta cabível; ordem push → upgrade.
+    """
+    lines = []
+    if offers.push:
+        lines.append(
+            "[HARNESS:PUSH_DISPONIVEL "
+            f"branch={offers.push.branch} remote={offers.push.remote} "
+            f"ahead={offers.push.ahead} "
+            f"principal={'true' if offers.push.is_default_branch else 'false'} "
+            'acao="git push"]'
+        )
+    if offers.upgrade:
+        lines.append(
+            "[HARNESS:UPGRADE_DISPONIVEL "
+            f"atual={offers.upgrade.current_version} "
+            f"alvo={offers.upgrade.target_version} "
+            'acao="./harness upgrade"]'
+        )
+    return lines
+
+
+def _ask_yes(question: str) -> bool:
+    return input(question).strip().lower() in ("s", "sim", "y", "yes")
+
+
+def conduct_end_session_offers(
+    offers,
+    repo_path: str,
+    git,
+    run_upgrade,
+    *,
+    is_interactive=None,
+    asker=_ask_yes,
+    out=print,
+    err=None,
+):
+    """Conduz as ofertas de fim de sessão (push → upgrade), feature 014.
+
+    Sem TTY, emite os marcadores estruturados e não lê entrada. Com TTY,
+    pergunta ``[s/N]`` por oferta, na ordem push → upgrade (RN-10), executando a
+    aceita. Cada ação é protegida para que uma falha (rede/push/upgrade) avise e
+    siga, sem abortar a outra nem o encerramento já feito (RN-02/RN-09).
+    """
+    if err is None:
+
+        def err(message):
+            print(message, file=sys.stderr)
+
+    if not offers.has_any:
+        return
+    if is_interactive is None:
+        is_interactive = sys.stdin.isatty()
+
+    if not is_interactive:
+        for line in render_offer_markers(offers):
+            out(line)
+        return
+
+    if offers.push:
+        p = offers.push
+        if p.is_default_branch:
+            question = (
+                f"⚠️  '{p.branch}' é a branch principal. Publicar diretamente em "
+                f"{p.remote}/{p.branch} ({p.ahead} commit(s)) com git push? [s/N] "
+            )
+        else:
+            question = (
+                f"Há {p.ahead} commit(s) à frente de {p.remote}/{p.branch}. "
+                "Publicar agora (git push)? [s/N] "
+            )
+        if asker(question):
+            try:
+                git.push(repo_path)
+                out("Trabalho publicado com sucesso.")
+            except Exception as exc:
+                err(f"Falha ao publicar (git push): {exc}")
+
+    if offers.upgrade:
+        u = offers.upgrade
+        if asker(
+            f"🔼 Atualização do Harness Core disponível: {u.current_version} → "
+            f"{u.target_version}. Atualizar agora? [s/N] "
+        ):
+            try:
+                run_upgrade(u)
+            except Exception as exc:
+                err(f"Falha ao atualizar o Harness Core: {exc}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Configura e retorna o parser de argumentos CLI do Harness Core."""
     parser = argparse.ArgumentParser(description="Harness Core CLI v2.0.0")
@@ -299,6 +393,47 @@ def main():
             sink.emit(result_msg)
         else:
             print(result_msg)
+
+        # Ofertas de fim de sessão (feature 014): SÓ após um `encerrar-sessao`
+        # bem-sucedido, como etapa POSTERIOR e estritamente não-bloqueante. Toda
+        # a etapa roda sob try/except: qualquer falha de detecção/rede/ação vira
+        # aviso em stderr e nunca regride o encerramento já versionado (RN-01/02).
+        if cmd_name_norm == "encerrar-sessao" and result_msg.startswith(
+            "Sessão encerrada com sucesso"
+        ):
+            try:
+                from src.core.sync.service import SyncService
+                from src.core.session.offers import EndSessionOffersService
+
+                repo_path = os.getcwd()
+                sync_service = SyncService(fs, git, ".harness/sync-cache.json")
+                offers = EndSessionOffersService(git, sync_service).detect(
+                    repo_path, config
+                )
+
+                def run_upgrade(upgrade_offer):
+                    # D-05: sincroniza o clone do upstream por fast-forward antes
+                    # de copiar; não-FF (sujo/divergente) aborta sem sobrescrever.
+                    up = upgrade_offer.upstream_path
+                    default = git.get_default_branch(up)
+                    if not git.merge_ff_only(up, f"origin/{default}"):
+                        raise RuntimeError(
+                            "não foi possível sincronizar o upstream por "
+                            "fast-forward (working tree sujo ou divergência); "
+                            "upgrade abortado sem sobrescrever trabalho"
+                        )
+                    from src.core.bootstrap.init_service import InitializationService
+
+                    InitializationService(fs, process).upgrade_project(repo_path)
+                    print("Harness Core atualizado com sucesso.")
+
+                conduct_end_session_offers(offers, repo_path, git, run_upgrade)
+            except Exception as exc:
+                print(
+                    f"Aviso: ofertas de fim de sessão (não-bloqueantes) falharam: {exc}",
+                    file=sys.stderr,
+                )
+
         sys.exit(0)
 
     elif args.command == "doc-gen":

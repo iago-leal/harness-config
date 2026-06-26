@@ -73,7 +73,7 @@ class ClaudeProfile(HarnessProfile):
             "description: Encerra a sessão do Harness, criando um commit de registro do fechamento por cima do último commit de trabalho.\n"
             "allowed-tools: Bash(./harness cmd encerrar-sessao:*)\n"
             "---\n\n"
-            "Encerrando a sessão do Harness: o fechamento é gravado como um commit de registro por cima do último commit de trabalho (a âncora segue apontando para o trabalho).\n\n"
+            "Encerrando a sessão do Harness: o fechamento é gravado como um commit de registro por cima do último commit de trabalho (a âncora segue apontando para o trabalho). Ao final, o comando pode oferecer publicar o trabalho (git push) e atualizar o Harness Core (upgrade).\n\n"
             "!`./harness cmd encerrar-sessao`\n"
         )
         return (".claude/commands/encerrar-sessao.md", content)
@@ -176,7 +176,7 @@ class AntigravityProfile(HarnessProfile):
             "name: encerrar-sessao\n"
             "description: Encerra a sessão do Harness, criando um commit de registro do fechamento por cima do último commit de trabalho.\n"
             "---\n\n"
-            "Encerra a sessão do Harness: o fechamento vira um commit de registro por cima do último commit de trabalho (a âncora segue no trabalho). Execute, a partir da raiz do projeto, o comando de shell abaixo e mostre a saída ao usuário:\n\n"
+            "Encerra a sessão do Harness: o fechamento vira um commit de registro por cima do último commit de trabalho (a âncora segue no trabalho). Ao final, o comando pode oferecer publicar o trabalho (git push) e atualizar o Harness Core (upgrade). Execute, a partir da raiz do projeto, o comando de shell abaixo e mostre a saída ao usuário:\n\n"
             f"`{command_path}/harness cmd encerrar-sessao`\n"
         )
         return (".agents/workflows/encerrar-sessao.md", content)

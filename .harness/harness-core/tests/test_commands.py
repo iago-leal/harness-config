@@ -37,6 +37,36 @@ class FakeGit(GitPort):
         self._head = self.CLOSING_HEAD
         return self._head
 
+    # Capacidades de fim de sessão (feature 014): defaults inócuos — o
+    # CommandService não as usa; existem só para o fake satisfazer o contrato.
+    def fetch(
+        self, repo_path: str, remote: str = "origin", branch: str | None = None
+    ) -> None:
+        pass
+
+    def get_current_branch(self, repo_path: str) -> str:
+        return "main"
+
+    def get_default_branch(self, repo_path: str, remote: str = "origin") -> str:
+        return "main"
+
+    def count_commits_ahead(self, repo_path: str, rev: str = "@{u}..HEAD") -> int:
+        return 0
+
+    def get_file_at_ref(self, repo_path: str, ref: str, rel_path: str) -> str | None:
+        return None
+
+    def is_working_tree_clean(self, repo_path: str) -> bool:
+        return True
+
+    def merge_ff_only(self, repo_path: str, ref: str) -> bool:
+        return True
+
+    def push(
+        self, repo_path: str, remote: str | None = None, branch: str | None = None
+    ) -> None:
+        pass
+
 
 class FakeGitCommitFalha(FakeGit):
     """Variante cujo commit não pode ser criado (falha barulhenta)."""

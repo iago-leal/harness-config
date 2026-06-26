@@ -129,3 +129,49 @@ def test_check_version_update_returns_none_when_no_candidate():
     service = SyncService(fs, git, cache_filepath="cache.json")
 
     assert service.check_version_update("1.0.0", "/up") is None
+
+
+# --- Comparação de versão REMOTA (feature 014) ----------------------------
+
+
+def test_check_version_update_remote_aponta_para_publicado():
+    # Versão publicada no remoto do upstream à frente da local → devolve o alvo,
+    # e a rede foi consultada (fetch).
+    fs = MockFileSystem()
+    git = MagicMock(spec=GitPort)
+    git.get_default_branch.return_value = "main"
+    git.get_file_at_ref.return_value = 'version: str = "2.0.0"'
+    service = SyncService(fs, git, cache_filepath="cache.json")
+
+    assert service.check_version_update_remote("1.0.0", "/up") == "2.0.0"
+    git.fetch.assert_called_once()
+    git.get_file_at_ref.assert_called()
+
+
+def test_check_version_update_remote_igual_devolve_none():
+    fs = MockFileSystem()
+    git = MagicMock(spec=GitPort)
+    git.get_default_branch.return_value = "main"
+    git.get_file_at_ref.return_value = 'version: str = "1.0.0"'
+    service = SyncService(fs, git, cache_filepath="cache.json")
+
+    assert service.check_version_update_remote("1.0.0", "/up") is None
+
+
+def test_check_version_update_remote_resiliente_a_falha_de_rede():
+    # fetch falhando (offline/credencial) → None, sem propagar exceção.
+    fs = MockFileSystem()
+    git = MagicMock(spec=GitPort)
+    git.fetch.side_effect = RuntimeError("offline")
+    service = SyncService(fs, git, cache_filepath="cache.json")
+
+    assert service.check_version_update_remote("1.0.0", "/up") is None
+
+
+def test_check_version_update_remote_sem_upstream_devolve_none():
+    fs = MockFileSystem()
+    git = MagicMock(spec=GitPort)
+    service = SyncService(fs, git, cache_filepath="cache.json")
+
+    assert service.check_version_update_remote("1.0.0", None) is None
+    git.fetch.assert_not_called()

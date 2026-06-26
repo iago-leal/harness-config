@@ -103,3 +103,40 @@ class SyncService:
         except Exception:
             pass
         return None
+
+    def check_version_update_remote(
+        self,
+        local_version: str,
+        upstream_path: Optional[str],
+        remote: str = "origin",
+        branch: Optional[str] = None,
+    ) -> Optional[str]:
+        """Compara a versão local com a **publicada** no remoto do upstream.
+
+        Diferente de ``check_version_update`` (que lê o filesystem do upstream),
+        aqui um ``git fetch`` no upstream traz as refs do remoto e a versão é
+        lida diretamente da ref publicada (``git show <remote>/<branch>:<config>``),
+        sem tocar o working tree. Reusa a varredura de
+        ``CORE_CONFIG_CANDIDATE_RELPATHS`` (resiliente a relocações) e o mesmo
+        regex de versão. Estritamente **não-bloqueante**: qualquer falha de
+        rede/git/credencial degrada para ``None`` (sem oferta enganosa).
+        """
+        if not upstream_path:
+            return None
+        try:
+            self.git.fetch(upstream_path, remote, branch)
+            ref_branch = branch or self.git.get_default_branch(upstream_path, remote)
+            ref = f"{remote}/{ref_branch}"
+            for rel in CORE_CONFIG_CANDIDATE_RELPATHS:
+                content = self.git.get_file_at_ref(upstream_path, ref, rel)
+                if not content:
+                    continue
+                match = re.search(r'version:\s*str\s*=\s*["\']([^"\']+)["\']', content)
+                if match:
+                    upstream_version = match.group(1)
+                    if upstream_version != local_version:
+                        return upstream_version
+                    return None
+        except Exception:
+            return None
+        return None

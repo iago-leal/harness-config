@@ -28,3 +28,74 @@ class GitPort(ABC):
         mudanças pendentes do working tree.
         """
         pass
+
+    # --- Capacidades de fim de sessão (feature 014) -----------------------
+    # Verbos usados pela detecção das ofertas (push/upgrade) e pela
+    # sincronização não-destrutiva do upstream. O domínio só fala com git por
+    # aqui (RN-N5); as consultas são chamadas pela borda sob try/except, então
+    # devem sinalizar ausência por valor (0/None/False) quando isso é estado
+    # normal, e levantar RuntimeError apenas em falha real de execução.
+
+    @abstractmethod
+    def fetch(
+        self, repo_path: str, remote: str = "origin", branch: str | None = None
+    ) -> None:
+        """Atualiza as refs remotas (``git fetch <remote> [<branch>]``)."""
+        pass
+
+    @abstractmethod
+    def get_current_branch(self, repo_path: str) -> str:
+        """Nome do branch corrente (``git rev-parse --abbrev-ref HEAD``)."""
+        pass
+
+    @abstractmethod
+    def get_default_branch(self, repo_path: str, remote: str = "origin") -> str:
+        """Nome do branch principal do remoto.
+
+        Resolve ``refs/remotes/<remote>/HEAD`` por ``symbolic-ref``; em sua
+        ausência, recai sobre ``main``/``master`` por existência de ref. Nunca
+        levanta: devolve o melhor palpite.
+        """
+        pass
+
+    @abstractmethod
+    def count_commits_ahead(self, repo_path: str, rev: str = "@{u}..HEAD") -> int:
+        """Quantos commits o HEAD está à frente do upstream de rastreamento.
+
+        Devolve ``0`` (não levanta) quando não há upstream tracking — sinal de
+        que não há push a oferecer (RN-11).
+        """
+        pass
+
+    @abstractmethod
+    def get_file_at_ref(self, repo_path: str, ref: str, rel_path: str) -> str | None:
+        """Conteúdo de ``rel_path`` na ref dada (``git show <ref>:<rel_path>``).
+
+        Read-only: não toca o working tree. Devolve ``None`` quando o arquivo
+        não existe naquela ref.
+        """
+        pass
+
+    @abstractmethod
+    def is_working_tree_clean(self, repo_path: str) -> bool:
+        """``True`` se ``git status --porcelain`` é vazio (sem pendências)."""
+        pass
+
+    @abstractmethod
+    def merge_ff_only(self, repo_path: str, ref: str) -> bool:
+        """Avança o branch corrente até ``ref`` apenas por fast-forward.
+
+        Devolve ``True`` quando o fast-forward é aplicado; ``False`` quando não
+        é possível (working tree sujo ou divergência), sem sobrescrever nada.
+        """
+        pass
+
+    @abstractmethod
+    def push(
+        self, repo_path: str, remote: str | None = None, branch: str | None = None
+    ) -> None:
+        """Publica os commits do branch corrente (``git push``).
+
+        Respeita o rastreamento configurado e **nunca** usa ``--force``.
+        """
+        pass

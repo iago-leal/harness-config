@@ -46,3 +46,12 @@ def test_antigravity_descreve_commit_de_encerramento():
     _, content = AntigravityProfile().session_command_artifact("/abs/projeto")
     assert "commit de registro" in content
     assert "último commit de trabalho" in content
+
+
+def test_perfis_mencionam_ofertas_de_fim_de_sessao():
+    # Feature 014 (RF-12): o texto dos slash commands menciona as ofertas de
+    # publicar (push) e atualizar (upgrade), consistente entre os perfis.
+    for profile in (ClaudeProfile(), AntigravityProfile()):
+        _, content = profile.session_command_artifact("/abs/projeto")
+        assert "push" in content
+        assert "upgrade" in content

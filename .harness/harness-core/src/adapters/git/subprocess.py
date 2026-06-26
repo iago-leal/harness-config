@@ -74,3 +74,128 @@ class SubprocessGitAdapter(GitPort):
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Falha ao criar commit de caminhos: {e.stderr.strip()}")
         return self.get_head_commit(repo_path)
+
+    # --- Capacidades de fim de sessão (feature 014) -----------------------
+
+    def fetch(
+        self, repo_path: str, remote: str = "origin", branch: str | None = None
+    ) -> None:
+        args = ["git", "fetch", remote]
+        if branch:
+            args.append(branch)
+        try:
+            subprocess.run(
+                args, cwd=repo_path, capture_output=True, text=True, check=True
+            )
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Falha ao executar git fetch: {e.stderr.strip()}")
+
+    def get_current_branch(self, repo_path: str) -> str:
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(
+                f"Falha ao resolver o branch corrente: {e.stderr.strip()}"
+            )
+
+    def get_default_branch(self, repo_path: str, remote: str = "origin") -> str:
+        # Preferência: o HEAD simbólico do remoto (default real do servidor).
+        try:
+            result = subprocess.run(
+                ["git", "symbolic-ref", "--short", f"refs/remotes/{remote}/HEAD"],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            ref = result.stdout.strip()  # ex.: "origin/main"
+            if ref:
+                return ref.split("/", 1)[1] if "/" in ref else ref
+        except subprocess.CalledProcessError:
+            pass
+        # Fallback: a primeira de main/master cuja ref exista; senão "main".
+        for candidate in ("main", "master"):
+            existe = subprocess.run(
+                ["git", "rev-parse", "--verify", "--quiet", candidate],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+            )
+            if existe.returncode == 0:
+                return candidate
+        return "main"
+
+    def count_commits_ahead(self, repo_path: str, rev: str = "@{u}..HEAD") -> int:
+        # Sem upstream tracking, `@{u}` é indefinido: devolve 0 (não há push a
+        # oferecer) em vez de levantar — é estado normal, não falha (RN-11).
+        result = subprocess.run(
+            ["git", "rev-list", "--count", rev],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            return 0
+        try:
+            return int(result.stdout.strip())
+        except ValueError:
+            return 0
+
+    def get_file_at_ref(self, repo_path: str, ref: str, rel_path: str) -> str | None:
+        # Read-only; não toca o working tree. Ausência do arquivo na ref → None.
+        result = subprocess.run(
+            ["git", "show", f"{ref}:{rel_path}"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            return None
+        return result.stdout
+
+    def is_working_tree_clean(self, repo_path: str) -> bool:
+        try:
+            result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Falha ao ler git status: {e.stderr.strip()}")
+        return result.stdout.strip() == ""
+
+    def merge_ff_only(self, repo_path: str, ref: str) -> bool:
+        # Não-fast-forward (working tree sujo ou divergência) não é falha fatal:
+        # devolve False sem sobrescrever nada, deixando a borda abortar o upgrade.
+        result = subprocess.run(
+            ["git", "merge", "--ff-only", ref],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        )
+        return result.returncode == 0
+
+    def push(
+        self, repo_path: str, remote: str | None = None, branch: str | None = None
+    ) -> None:
+        # Sem `--force`, jamais. Sem remote/branch, respeita o rastreamento.
+        args = ["git", "push"]
+        if remote:
+            args.append(remote)
+            if branch:
+                args.append(branch)
+        try:
+            subprocess.run(
+                args, cwd=repo_path, capture_output=True, text=True, check=True
+            )
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Falha ao executar git push: {e.stderr.strip()}")
