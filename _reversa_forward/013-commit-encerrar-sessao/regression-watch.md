@@ -22,7 +22,18 @@
 
 ## Histórico de re-extrações
 
-<!-- Preenchido pelo agente reverso quando `/reversa` rodar de novo. -->
+### Re-extração 2026-06-26 11:02
+
+> Primeira verificação da 013, na mesma sessão da implementação. Vereditos por evidência factual: suíte **153 passed**, smoke end-to-end (caso feliz + negativo) e greps de invariante. Reconciliado em `_reversa_sdd/domain.md#2.14` (RN-N31/RN-N32), `architecture.md` (✨f013) e `comandos-customizados/requirements.md` (✨f013).
+
+| ID   | Veredito | Observação                                                                                                                                                                                                                    |
+| ---- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Commit isola o `state_file` (`git add -- <paths>`, nunca `-A`) — `test_subprocess_git_adapter_commit_paths_isola_arquivo` + smoke (commit lista só `.harness/estado-da-sessao.md`; `AGENTS.md`/`CLAUDE.md` seguem untracked). |
+| W002 | 🟢 verde | Âncora = HEAD pré-commit; `HEAD~1 == âncora` no smoke; `test_execute_encerrar_sessao`. RN-07 preservada.                                                                                                                      |
+| W003 | 🟢 verde | Domínio commita só pela porta `GitPort.commit_paths`; nenhum `subprocess`/`git` no `CommandService` (RN-N5/RN-N32).                                                                                                           |
+| W004 | 🟢 verde | Falha de commit → `SessionCommitError` (exit 1, sem "sucesso"), estado preservado — `test_execute_encerrar_sessao_falha_commit_preserva_estado` + smoke negativo.                                                             |
+| W005 | 🟢 verde | Saída reporta os dois hashes (âncora + encerramento) — asserção em `test_execute_encerrar_sessao` e smoke.                                                                                                                    |
+| W006 | 🟢 verde | Materializadores descrevem o commit de registro; rematerialização não-stale confirmada em sandbox (claude + antigravity) pós-bump 1.2.49 — `test_session_command_profiles.py`.                                                |
 
 ## Arquivadas
 

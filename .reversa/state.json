@@ -30,7 +30,10 @@
     },
     "archaeologist": {
       "completed_at": "2026-06-24T15:30:00-03:00",
-      "modules_analyzed": ["harness-core", "antigravity-hooks"],
+      "modules_analyzed": [
+        "harness-core",
+        "antigravity-hooks"
+      ],
       "modules_pending": []
     },
     "detective": {
@@ -90,30 +93,32 @@
     "traceability/code-spec-matrix.md"
   ],
   "last_reextraction": {
-    "scope": "regressao completa 001-012 (12 features)",
-    "type": "regressao-semantica-completa",
-    "started_at": "2026-06-25T14:26:00-03:00",
-    "completed_at": "2026-06-25T14:32:00-03:00",
-    "method": "step-04 sobre as 12 regression-watch.md; verificacao factual (filesystem + greps de invariante + suite 149 passed em 3,07s + ./harness decisions idempotente), nao so leitura de artefatos; bloco datado no historico de cada feature; tabelas principais intactas (regra absoluta)",
-    "user_scope_choice": "regressao completa 001-012, escolhida apos recomendacao do orquestrador; pipeline do zero descartado por nao haver codigo novo desde 13:47",
+    "scope": "reconciliação + regressão pós-feature 013 (013 nova + 004/010 tocadas)",
+    "type": "reconciliacao-e-regressao",
+    "started_at": "2026-06-26T11:00:00-03:00",
+    "completed_at": "2026-06-26T11:02:00-03:00",
+    "method": "reconciliação do _reversa_sdd/ (domain.md#2.14 RN-N31/N32; architecture.md e comandos-customizados ✨f013) + step-04 sobre 013/010/004 por verificação factual: suíte 153 passed, smoke end-to-end (feliz+negativo), greps de invariante, rematerialização em sandbox (claude+antigravity)",
+    "user_scope_choice": "reconciliação + regressão focada (013 + tocadas), escolhida via menu de escopo",
     "regression_check": {
-      "features_checked": 12,
-      "watch_items": 47,
-      "green": 46,
-      "yellow": 1,
+      "features_checked": 3,
+      "watch_items": 15,
+      "green": 15,
+      "yellow": 0,
       "red": 0,
-      "yellow_items": [
-        "009/W009 - premissa de runtime do Antigravity, nao testavel localmente"
-      ],
-      "promotions": [
-        "003/W003 - amarelo->verde: premissa expirada (a 004 fechou o SessionStart) e a 011 limpou o template; candidato a arquivamento"
-      ],
+      "yellow_items": [],
+      "promotions": [],
       "notes": [
-        "defasagem textual de caminhos harness-core/ -> .harness/harness-core/ nos watch items pre-011 (001/W002, 004, 006, 009); essencia preservada, nao e regressao"
+        "vários watch items de 010/004 acumulam >=3 vereditos verdes consecutivos; candidatos a arquivamento futuro (não movidos nesta rodada)",
+        "001-003, 005-009, 011-012 não re-verificadas: a 013 é aditiva e não as toca; última verificação em a783f9f permanece válida"
       ]
     }
   },
-  "engines": ["claude-code", "codex", "gemini-cli", "antigravity"],
+  "engines": [
+    "claude-code",
+    "codex",
+    "gemini-cli",
+    "antigravity"
+  ],
   "agents": [
     "reversa",
     "reversa-scout",

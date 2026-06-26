@@ -16,7 +16,7 @@ Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessa
 
 - Normalizar e despachar o comando (`strip().lower().lstrip("/")`). 🟢
 - `resume`: criar/reativar a sessão preservando a narrativa; alertar se HEAD ≠ âncora. 🟢
-- `encerrar-sessao`: gravar o commit-âncora e desativar a sessão. 🟢
+- `encerrar-sessao`: capturar a âncora (HEAD de trabalho), desativar a sessão e **versionar** o registro num commit isolado (só o `state_file`) por cima do trabalho. 🟢
 - `handoff` / `clarificar`: produzir blocos de texto (handoff com feature+HEAD; clarificar com texto fixo de limite de rodadas). 🟢
 - Distinguir estado **ausente** de **malformado** (falha barulhenta). 🟢
 
@@ -26,17 +26,17 @@ Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessa
 - **RN-N3 — Narrativa preservada:** `start_session` reativa preservando a narrativa escrita pelo agente; a CLI reinjeta o corpo dela, nunca o inventa. 🟢
 - **RN-N4 — Ausente ≠ malformado:** arquivo ausente → `None` (sessão nova); malformado → `MalformedSessionStateError`. 🟢
 - **RN-N5 — Core não conhece o harness:** o serviço produz texto puro; a seleção do mecanismo de entrega por `active_harness` vive na borda (`get_sink` + `main.py`). 🟢
-- **Isolamento no fechamento:** `encerrar-sessao` exige sessão ativa (senão erro), lê HEAD, `close_session(commit)` e salva atomicamente. 🟢
+- **Isolamento no fechamento:** `encerrar-sessao` exige sessão ativa (senão erro), captura a âncora com `get_head_commit` **antes** das escritas, `close_session(ancora)`, salva atomicamente e então cria um commit contendo **só** o `state_file` via `GitPort.commit_paths` (nunca `git add -A`); a âncora segue no trabalho, o commit de encerramento por cima. Falha de commit → `SessionCommitError` (barulhento), sem reverter o estado salvo; a saída reporta os dois hashes. ✨f013 (ver `domain.md#2.14`). 🟢
 
 ## Requisitos Funcionais
 
-| ID    | Requisito                  | Prioridade | Critério de Aceite                                                                                                                          |
-| ----- | -------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| RF-01 | Comando `resume`.          | Must       | Sem sessão → cria com HEAD e feature `args[0]` (ou `default_feature`); com sessão → reativa, reinjeta narrativa, alerta se âncora divergir. |
-| RF-02 | Comando `encerrar-sessao`. | Must       | Exige sessão ativa; grava commit-âncora via `close_session`; salva atomicamente.                                                            |
-| RF-03 | Comando `handoff`.         | Should     | Monta bloco Markdown com feature ativa + HEAD.                                                                                              |
-| RF-04 | Comando `clarificar`.      | Should     | Retorna texto fixo (limite de 2 rodadas de diálogo).                                                                                        |
-| RF-05 | Comando desconhecido.      | Must       | Retorna `"Comando desconhecido: <command>"`.                                                                                                |
+| ID    | Requisito                  | Prioridade | Critério de Aceite                                                                                                                                                                                  |
+| ----- | -------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RF-01 | Comando `resume`.          | Must       | Sem sessão → cria com HEAD e feature `args[0]` (ou `default_feature`); com sessão → reativa, reinjeta narrativa, alerta se âncora divergir.                                                         |
+| RF-02 | Comando `encerrar-sessao`. | Must       | Exige sessão ativa; grava a âncora via `close_session`; salva atomicamente; **versiona** só o `state_file` num commit por cima do trabalho e reporta os dois hashes (falha → `SessionCommitError`). |
+| RF-03 | Comando `handoff`.         | Should     | Monta bloco Markdown com feature ativa + HEAD.                                                                                                                                                      |
+| RF-04 | Comando `clarificar`.      | Should     | Retorna texto fixo (limite de 2 rodadas de diálogo).                                                                                                                                                |
+| RF-05 | Comando desconhecido.      | Must       | Retorna `"Comando desconhecido: <command>"`.                                                                                                                                                        |
 
 ## Requisitos Não Funcionais
 
@@ -83,5 +83,7 @@ Então um MalformedSessionStateError é levantado (não tratado como sessão nov
 | `core/session/serializer.py` | `render`, `render_narrative` (consumidos)                                                                                           | 🟢        |
 | `core/domain/models.py`      | `SessionState`, `SessionNarrative`                                                                                                  | 🟢        |
 | `src/main.py`                | Subcomando `cmd`, caminho de sessão lido de `config.session.state_file` (default `.harness/estado-da-sessao.md`), resolução de sink | 🟢        |
+
+> ✨ **f013 — Encerramento versionado:** `encerrar-sessao` cria um commit isolado do `state_file` via `GitPort.commit_paths` (porta em `core/ports/git.py`, adapter em `adapters/git/subprocess.py`); falha de commit → `SessionCommitError` (`core/commands/errors.py`). A âncora segue no trabalho e a saída reporta os dois hashes. Ver `domain.md#2.14` (RN-N31/RN-N32).
 
 > 🟢 **T2 — RESOLVIDO (feature 006):** via MCP (`server.py:94`), `session_command` lê o caminho de sessão de `config.session.state_file`, o mesmo `.harness/estado-da-sessao.md` que a CLI usa. Não há mais literal `ESTADO-DA-SESSAO.md` na raiz nem divergência CLI×MCP; o estado converge.

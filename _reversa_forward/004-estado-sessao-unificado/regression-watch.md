@@ -20,6 +20,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-26 11:02
+
+> Pós-feature 013. A 013 estende o `encerrar-sessao` (versiona o estado) mas **não** toca o `resume`, o local do estado nem o stdout do hook. Verificação factual (greps + suíte 153 passed).
+
+| ID   | Veredito | Observação                                                                                                                                 |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| W001 | 🟢 verde | Alerta de divergência de âncora vivo em `core/commands/service.py:87`; `test_execute_resume_alignment_warning` verde. Inalterado pela 013. |
+| W002 | 🟢 verde | Estado em `.harness/estado-da-sessao.md`; `grep ESTADO-DA-SESSAO.md` em `src/` = 0; a 013 versiona o mesmo arquivo, não muda o local.      |
+| W003 | 🟢 verde | `_reversa_sdd/domain.md` mantém `.harness/estado-da-sessao.md` como canônico.                                                              |
+| W004 | 🟢 verde | `cmd resume` segue emitindo só o JSON `additionalContext` via sink; ramo `resume` inalterado pela 013.                                     |
+
 ### Re-extração 2026-06-25 14:32
 
 > Rodada completa 001–012. Vereditos confirmados por leitura direta do código (greps), não só pelos artefatos `_reversa_sdd/`.

@@ -20,6 +20,18 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-26 11:02
+
+> Pós-feature 013 (aditiva: `encerrar-sessao` passou a versionar o estado). A 013 reescreveu o **texto** dos slash commands, preservando o acionamento e a delegação. Verificação factual (greps + suíte 153 passed + rematerialização em sandbox).
+
+| ID   | Veredito | Observação                                                                                                                       |
+| ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | `init` materializa os dois comandos — `test_init` verde; inalterado pela 013.                                                    |
+| W002 | 🟢 verde | `upgrade` rematerializa os dois — confirmado em sandbox pós-bump 1.2.49 (não-stale); a 013 só mudou o texto do artefato.         |
+| W003 | 🟢 verde | Materialização escreve só sob `project_path` — `test_session_commands_materializer.py` verde.                                    |
+| W004 | 🟢 verde | O comando segue delegando a `./harness cmd encerrar-sessao` sem reimplementar o fechamento (RN-N5/RN-N29).                       |
+| W005 | 🟢 verde | Slash command do Claude usa `./harness`; `${CLAUDE_PROJECT_DIR}` ausente do artefato — `test_session_command_profiles.py` verde. |
+
 ### Re-extração 2026-06-25 14:32
 
 | ID   | Veredito | Observação                                                                                                                                                         |
