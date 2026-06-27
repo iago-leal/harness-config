@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/015-corrige-encerrar-sessao-noop",
-  "feature-id": "015",
-  "short-name": "corrige-encerrar-sessao-noop",
-  "started-at": "2026-06-26T19:41:34-03:00",
+  "feature-dir": "_reversa_forward/016-encerrar-sessao-autonomo",
+  "feature-id": "016",
+  "short-name": "encerrar-sessao-autonomo",
+  "started-at": "2026-06-27T17:47:43-03:00",
   "current-stage": "requirements",
   "stages-completed": [],
   "paused-features": []
