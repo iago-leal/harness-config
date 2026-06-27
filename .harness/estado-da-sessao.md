@@ -1,24 +1,29 @@
 ---
-commit: ff485cdb77f9d03428fe488fc1164951dbeaba54
+commit: 0ca68c7d0986c99c9bd968c54d5f0754c39a3cdd
 feature: reversa-forward (roteamento) + brief da feature 015
-start_time: '2026-06-26T22:35:38.310601+00:00'
+start_time: '2026-06-27T11:07:57.881090+00:00'
 status: inactive
 ---
 
 ## O que foi feito
-- **`/reversa-forward` rodado** no cenário legado (ancorado em `_reversa_sdd/`, specs com granularidade `feature`). Feature ativa `014-oferta-upgrade-ao-encerrar` detectada como **`done`**: 15/15 ações fechadas em `actions.md`, sem `[DÚVIDA]` em `requirements.md`, sem features pausadas. O ciclo da 014 já estava encerrado e commitado.
-- **`/reversa-requirements` iniciado e interrompido sem escrita.** Não havia descrição de escopo para uma feature nova, e o mantenedor decidiu parar por não haver nada em aberto. Nenhum artefato de feature foi criado: sem pasta nova em `_reversa_forward/`, sem toque em `active-requirements.json`.
-- **Commit `d25e5e0`** — `BRIEF-oferta-commit-pendente-ao-encerrar.md` na raiz: registro de intenção da futura feature 015 (oferecer commitar trabalho pendente da working tree, fora de `.harness/`, antes do fechamento; oferta irmã das ofertas de fim de sessão da 014, mas PRÉ-fechamento).
-- **Deixados deliberadamente fora do versionamento:** os artefatos materializados `.claude/commands/encerrar-sessao.md` e `.agents/workflows/encerrar-sessao.md` (saída local do dogfood, nunca rastreada em 14 features; o do Antigravity ainda carrega caminho absoluto da máquina) e o placeholder vazio `_reversa_forward/014-oferta-upgrade-ao-encerrar/.harness/microdecisoes.md`.
+- **Feature 015 (`corrige-encerrar-sessao-noop`) implementada e verificada.** Corrigido o no-op silencioso do `encerrar-sessao`: dois caminhos saíam com `exit 0` sem fechar — hash curto legado (`MalformedSessionStateError` mascarada pela borda) e sessão `inactive` (string "Erro" + `exit 0` no `main.py`). Agora comandos explícitos falham barulhento (`exit ≠ 0`) com mensagem orientadora; `resume`/boot segue não-bloqueante. Nova exceção `NoActiveSessionError`; a borda `cmd` ramifica por nome do comando (o core segue agnóstico, RN-N5). Bump **1.2.51 → 1.2.52** (config, bootstrap, test_init).
+- **Verificação real:** suíte do core **185 passed** (4 testes novos eram red contra o código antigo); smoke end-to-end OK — hash curto/inativa → `exit≠0`, `resume` malformado → `exit 0`, caminho feliz → `exit 0` + commit de encerramento com âncora correta.
+- **Pipeline forward completo da 015** em uma sessão: requirements (escopo ampliado p/ os 2 no-ops) → clarify (2 dúvidas decididas: falha barulhenta + orientar, sem comando de "abrir"; hash curto sem auto-reparo) → plan → to-do → coding. Artefatos em `_reversa_forward/015-corrige-encerrar-sessao-noop/`.
+- **Trabalho commitado manualmente antes do fechamento** (a feature-irmã que automatiza isso ainda não existe).
 
 ## Próximos passos
-- **Feature 015 provável: `oferta-commit-pendente-ao-encerrar`.** Abrir sessão neste repo e rodar `/reversa-requirements` passando `BRIEF-oferta-commit-pendente-ao-encerrar.md` (ou seu resumo) como argumento; seguir o forward (clarify → plan → to-do → coding). Bump previsto 1.2.51 → 1.2.52 nos três pontos (config, bootstrap, teste).
-- **Avaliar `.gitignore`** para `.claude/commands/` e `.agents/workflows/`: são materializações locais que reaparecem como untracked a cada sessão; decidir se entram no ignore do upstream.
+- **PRIORIDADE — leveza do `microdecisoes`.** Investigar por que registrar uma MD virou um mini-ADR (front-matter + 4 seções `D/PORQUÊ/DESCARTADO/ESTADO` + relações + validação de grafo) e propor enxugar. Decisão do mantenedor: priorizar isto **à frente** da oferta-commit-pendente.
+- **Depois — feature `oferta-commit-pendente-ao-encerrar`** (brief na raiz): `encerrar-sessao` oferece commitar trabalho solto da working tree (fora de `.harness/`) antes de fechar — exatamente o atrito que tornou este commit manual.
+- **Push do bump 1.2.52** para o `harness-config` (pendente de aval) → consumidores recebem via `./harness upgrade`.
+- **Re-extração** (`/reversa`) para reconciliar o `_reversa_sdd/` com a 015.
+- **Avaliar `.gitignore`** para `.claude/commands/` e `.agents/workflows/` (materializações locais untracked recorrentes).
 
 ## Pendências / bloqueios
-- **Defeito observado no `encerrar-sessao`:** diante de um `.harness/estado-da-sessao.md` legado com hash curto (escrito antes da validação de 40 caracteres do `SessionState`), o comando degrada para **aviso + exit 0 silencioso**, sem fechar nada. Foi necessário reescrever o estado com âncora de 40 caracteres para destravar. Vale endurecer: reparar o hash curto automaticamente, ou falhar barulhento (exit ≠ 0), em vez do no-op silencioso — contraria o princípio de erros barulhentos.
+- O defeito do no-op (hash curto + sessão inativa) está **RESOLVIDO** nesta sessão — era a pendência da sessão anterior.
+- Push ainda não feito (aguarda aval); o trabalho está commitado localmente na `main`.
 
 ## Ponteiros
-- Brief da 015: `BRIEF-oferta-commit-pendente-ao-encerrar.md` (raiz do repo).
-- Trilha SDD da 014: `_reversa_forward/014-oferta-upgrade-ao-encerrar/` (requirements, roadmap, actions, interfaces, legacy-impact, regression-watch).
-- Âncora desta sessão: `d25e5e0` (último commit de trabalho).
+- Trilha SDD da 015: `_reversa_forward/015-corrige-encerrar-sessao-noop/` (requirements, roadmap, investigation, data-delta, onboarding, interfaces, actions, legacy-impact, regression-watch).
+- Contrato de saída do `cmd`: `_reversa_forward/015-corrige-encerrar-sessao-noop/interfaces/session-command-exit-contract.md`.
+- Brief da próxima feature de commit: `BRIEF-oferta-commit-pendente-ao-encerrar.md` (raiz).
+- Âncora desta sessão: o commit de trabalho da 015 (gravado pelo fechamento).
