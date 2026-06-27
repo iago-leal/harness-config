@@ -1,8 +1,10 @@
 """Materialização local compartilhada por ``init`` e ``upgrade`` (feature 012).
 
 Função única que aplica os materializadores de IDE sob ``project_path``: os
-slash commands de sessão (sempre, RN-N28) e o ``.agents/hooks.json`` do
-Antigravity (somente quando o harness ativo é o Antigravity, RN-N27).
+slash commands de sessão (sempre, RN-N28), o ``.agents/hooks.json`` do
+Antigravity (somente quando o harness ativo é o Antigravity, RN-N27) e o
+``.claude/settings.json`` do Claude com o hook de resume (somente quando o
+harness ativo é o Claude, feature 016/RN-05).
 
 Centralizar a chamada aqui permite que ``init`` a execute in-process — lá o
 código em execução já é o do upstream, fresco — e que ``upgrade`` a invoque via
@@ -14,6 +16,7 @@ código recém-copiado, nunca com os módulos antigos carregados em memória
 from src.core.ports.fs import FileSystemPort
 from src.core.install.session_commands import materialize_session_commands
 from src.core.install.antigravity_hooks import materialize_hooks_json
+from src.core.install.claude_settings import materialize_claude_settings
 
 
 def apply_local_materializers(
@@ -31,3 +34,5 @@ def apply_local_materializers(
     materialize_session_commands(fs, project_path, command_path)
     if active_harness == "antigravity":
         materialize_hooks_json(fs, project_path, command_path)
+    elif active_harness == "claude":
+        materialize_claude_settings(fs, project_path)

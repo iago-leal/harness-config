@@ -68,3 +68,12 @@ def test_perfis_mencionam_ofertas_de_fim_de_sessao():
         _, content = profile.session_command_artifact("/abs/projeto")
         assert "push" in content
         assert "upgrade" in content
+
+
+def test_perfis_sequenciam_regen_e_tratam_commit_pendente():
+    # Feature 016 (RF-08/D-06): o slash command sequencia regen → encerrar e
+    # instrui o agente a tratar o marker COMMIT_PENDENTE, em ambos os perfis.
+    for profile in (ClaudeProfile(), AntigravityProfile()):
+        _, content = profile.session_command_artifact("/abs/projeto")
+        assert "harness cmd regen" in content
+        assert "COMMIT_PENDENTE" in content

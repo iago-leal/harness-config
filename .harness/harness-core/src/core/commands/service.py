@@ -1,7 +1,7 @@
 from typing import Optional, List
 from src.core.ports.fs import FileSystemPort
 from src.core.ports.git import GitPort
-from src.core.commands.errors import SessionCommitError, NoActiveSessionError
+from src.core.commands.errors import SessionCommitError
 from src.core.domain.models import SessionState, SessionNarrative
 from src.core.session import serializer
 
@@ -37,13 +37,14 @@ class CommandService:
 
         if cmd_normalized == "encerrar-sessao":
             session = self.load_session(session_filepath)
-            if not session or not session.is_active:
-                # Terceira categoria além de ausente/malformado (RN-N4): sessão
-                # válida porém inativa. Falha barulhenta por tipo; a borda decide
-                # o código de saída (o core permanece agnóstico — RN-N5).
-                raise NoActiveSessionError(
-                    "Nenhuma sessão ativa encontrada para encerrar. A sessão "
-                    "reabre no próximo boot/resume; nada foi encerrado."
+            if session is None:
+                # D1 (016): sessão AUSENTE não é erro — não há nada a encerrar.
+                # No-op ruidoso (a borda imprime e sai com 0), sem commit. O
+                # malformado segue barulhento (load_session levanta antes daqui,
+                # RN-N4): ausente ≠ malformado.
+                return (
+                    "Nenhuma sessão para encerrar (estado de sessão ausente). "
+                    "Nada foi encerrado; a sessão reabre no próximo boot/resume."
                 )
 
             # Âncora = último commit de TRABALHO, capturada ANTES de qualquer
@@ -51,6 +52,13 @@ class CommandService:
             # aponta para ele (BR-MIGRAR-014 / BR-MIGRAR-015, RN-07).
             ancora = self.git.get_head_commit(repo_path)
             feature = session.active_feature
+
+            reativada = not session.is_active
+            if reativada:
+                # D1/D3 (016): sessão INATIVA reativa preservando a narrativa
+                # (RN-N3) e fecha no mesmo passo. O espírito ruidoso da 015 é
+                # mantido pelo anúncio na mensagem de saída, não por um erro.
+                session.start_session(feature, ancora)
             session.close_session(ancora)
             self.save_session(session_filepath, session)
 
@@ -68,10 +76,16 @@ class CommandService:
                     f"Falha ao versionar o encerramento da sessão '{feature}': {exc}"
                 ) from exc
 
-            return (
+            msg = (
                 f"Sessão encerrada com sucesso na feature '{feature}' "
                 f"com commit âncora {ancora} e commit de encerramento {commit_encerramento}."
             )
+            if reativada:
+                msg += (
+                    "\n(Sessão estava inativa; reativada automaticamente antes de "
+                    "encerrar.)"
+                )
+            return msg
 
         elif cmd_normalized == "resume":
             session = self.load_session(session_filepath)

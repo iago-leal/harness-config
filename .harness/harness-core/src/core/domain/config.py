@@ -8,7 +8,7 @@ from src.core.ports.fs import FileSystemPort
 class HarnessSection(BaseModel):
     active_harness: Literal["claude", "gemini", "antigravity"] = "claude"
     upstream_path: Optional[str] = None
-    version: str = "1.2.52"
+    version: str = "1.2.53"
 
 
 class FormattingSection(BaseModel):
@@ -31,12 +31,26 @@ class SessionSection(BaseModel):
     state_file: str = ".harness/estado-da-sessao.md"
 
 
+class RegenSection(BaseModel):
+    """Contrato de regeneração de artefatos derivados do projeto (feature 016).
+
+    ``command`` é um comando de shell, declarado pelo dono do projeto, que
+    regenera os artefatos derivados (ex.: ``python gerar_site.py && python
+    empacotar.py``). Ausente/``None`` → ``cmd regen`` é no-op (exit 0). O core
+    não conhece o que cada projeto deriva (baixo acoplamento, RN-N5); só dispara
+    o comando declarado, por via única tipada (RN-N16).
+    """
+
+    command: Optional[str] = None
+
+
 class HarnessConfig(BaseModel):
     harness: HarnessSection = Field(default_factory=HarnessSection)
     formatting: FormattingSection = Field(default_factory=FormattingSection)
     sync: SyncSection = Field(default_factory=SyncSection)
     decisions: DecisionsSection = Field(default_factory=DecisionsSection)
     session: SessionSection = Field(default_factory=SessionSection)
+    regen: RegenSection = Field(default_factory=RegenSection)
 
 
 def load_config(fs: FileSystemPort, config_path: str = "harness.toml") -> HarnessConfig:

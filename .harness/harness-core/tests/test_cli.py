@@ -315,9 +315,9 @@ def test_conduct_falha_no_push_nao_aborta_upgrade():
     assert any("push" in e for e in erros)
 
 
-def test_encerrar_sem_sessao_ativa_nao_dispara_ofertas(tmp_path):
-    # D-10 + RN-03: sem sessão ativa o encerrar EXPLÍCITO falha barulhento
-    # (exit != 0, erro em stderr) e NÃO emite marcadores de oferta.
+def test_encerrar_sem_sessao_e_noop_silencioso(tmp_path):
+    # 016/D1: sem estado de sessão, encerrar é no-op RUIDOSO (exit 0), sem fechar
+    # nem emitir marcadores. Reverte a falha barulhenta da 015 para o caso ausente.
     main_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "../src/main.py")
     )
@@ -334,8 +334,8 @@ def test_encerrar_sem_sessao_ativa_nao_dispara_ofertas(tmp_path):
         cwd=str(tmp_path),
     )
 
-    assert result.returncode != 0
-    assert "Nenhuma sessão ativa" in result.stderr
+    assert result.returncode == 0
+    assert "Nenhuma sessão" in result.stdout
     assert "[HARNESS:" not in result.stdout
 
 
@@ -380,6 +380,12 @@ def _seed_session_repo(tmp_path, commit, status):
     curto, que o modelo `SessionState` atual recusaria.
     """
     subprocess.run(["git", "init"], cwd=str(tmp_path), capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "t@t.t"], cwd=str(tmp_path), capture_output=True
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "t"], cwd=str(tmp_path), capture_output=True
+    )
     (tmp_path / "harness.toml").write_text('[harness]\nactive_harness = "claude"\n')
     estado = tmp_path / ".harness" / "estado-da-sessao.md"
     estado.parent.mkdir(parents=True, exist_ok=True)
@@ -409,11 +415,16 @@ def test_encerrar_hash_curto_falha_barulhento(tmp_path):
     assert "[HARNESS:" not in result.stdout
 
 
-def test_encerrar_sessao_inativa_falha_barulhento(tmp_path):
-    # Sessão válida porém inativa (já encerrada antes): encerrar explícito não
-    # devolve falso sucesso — exit != 0 e mensagem orientadora (RN-03).
+def test_encerrar_sessao_inativa_reativa_e_fecha(tmp_path):
+    # 016/D1/D3: sessão válida porém inativa → reativa, fecha e commita num passo
+    # (exit 0), anunciando a reativação. Reverte a falha barulhenta da 015.
     main_path, python_bin = _harness_cli_paths()
     _seed_session_repo(tmp_path, "a" * 40, "inactive")
+    # Limpa a working tree para não disparar o pré-check de trabalho pendente.
+    subprocess.run(["git", "add", "-A"], cwd=str(tmp_path), capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "seed"], cwd=str(tmp_path), capture_output=True
+    )
 
     result = subprocess.run(
         [python_bin, main_path, "cmd", "encerrar-sessao"],
@@ -422,9 +433,85 @@ def test_encerrar_sessao_inativa_falha_barulhento(tmp_path):
         cwd=str(tmp_path),
     )
 
+    assert result.returncode == 0
+    assert "Sessão encerrada com sucesso" in result.stdout
+    assert "reativ" in result.stdout.lower()
+
+
+def test_encerrar_com_trabalho_solto_emite_marker_e_nao_fecha(tmp_path):
+    # 016/RN-03: trabalho solto fora de .harness/ → marker COMMIT_PENDENTE e o
+    # fechamento NÃO ocorre (early return, exit 0). A sessão segue ativa.
+    main_path, python_bin = _harness_cli_paths()
+    estado = _seed_session_repo(tmp_path, "a" * 40, "active")
+    subprocess.run(["git", "add", "-A"], cwd=str(tmp_path), capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "seed"], cwd=str(tmp_path), capture_output=True
+    )
+    # Trabalho não commitado fora de .harness/
+    (tmp_path / "trabalho.txt").write_text("rascunho")
+
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "encerrar-sessao"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode == 0
+    assert "[HARNESS:COMMIT_PENDENTE" in result.stdout
+    assert "trabalho.txt" in result.stdout
+    # Não fechou: o estado permanece ativo.
+    assert "status: active" in estado.read_text()
+
+
+def test_cmd_regen_runs_configured_command(tmp_path):
+    # 016/RF-02: cmd regen executa o comando declarado em [regen].
+    main_path, python_bin = _harness_cli_paths()
+    (tmp_path / "harness.toml").write_text(
+        '[harness]\nactive_harness = "claude"\n\n[regen]\ncommand = "touch regen_marker.txt"\n'
+    )
+
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "regen"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode == 0
+    assert (tmp_path / "regen_marker.txt").exists()
+
+
+def test_cmd_regen_absent_is_noop(tmp_path):
+    # 016/RF-02: sem [regen], cmd regen é no-op (exit 0).
+    main_path, python_bin = _harness_cli_paths()
+    (tmp_path / "harness.toml").write_text('[harness]\nactive_harness = "claude"\n')
+
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "regen"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode == 0
+
+
+def test_cmd_regen_failure_is_loud(tmp_path):
+    # 016/RF-03: comando de regen com exit != 0 → cmd regen falha barulhento.
+    main_path, python_bin = _harness_cli_paths()
+    (tmp_path / "harness.toml").write_text(
+        '[harness]\nactive_harness = "claude"\n\n[regen]\ncommand = "exit 3"\n'
+    )
+
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "regen"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
     assert result.returncode != 0
-    assert "sessão ativa" in (result.stdout + result.stderr).lower()
-    assert "[HARNESS:" not in result.stdout
 
 
 def test_resume_sobre_estado_malformado_nao_bloqueia(tmp_path):

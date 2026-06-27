@@ -35,7 +35,7 @@ class InitializationService:
     def __init__(self, fs: FileSystemPort, process: ProcessPort):
         self.fs = fs
         self.process = process
-        self.current_version = "1.2.52"
+        self.current_version = "1.2.53"
 
     def initialize_project(
         self,
@@ -131,7 +131,7 @@ class InitializationService:
         else:
             self.fs.write_file(
                 toml_path,
-                f'[harness]\nactive_harness = "{active_harness}"\nupstream_path = "{upstream_path}"\nversion = "{self.current_version}"\n\n[session]\nstate_file = ".harness/estado-da-sessao.md"\n\n[decisions]\ndir = ".harness/decisoes"\nindex_file = ".harness/microdecisoes.md"\nheader_file = ".harness/decisoes/_cabecalho.md"\n',
+                f'[harness]\nactive_harness = "{active_harness}"\nupstream_path = "{upstream_path}"\nversion = "{self.current_version}"\n\n[session]\nstate_file = ".harness/estado-da-sessao.md"\n\n[decisions]\ndir = ".harness/decisoes"\nindex_file = ".harness/microdecisoes.md"\nheader_file = ".harness/decisoes/_cabecalho.md"\n\n# [regen]\n# Comando que regenera os artefatos derivados do projeto antes de encerrar a sessão.\n# command = "python gerar_site.py && python empacotar.py"\n',
             )
 
         # 7. Configura a venv e roda pip install no destino

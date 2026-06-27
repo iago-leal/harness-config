@@ -9,14 +9,7 @@ class SessionCommitError(Exception):
     """
 
 
-class NoActiveSessionError(Exception):
-    """Tentativa de encerrar uma sessão ausente ou inativa.
-
-    Levantada quando ``encerrar-sessao`` é invocado sem uma sessão ativa para
-    fechar — arquivo de estado ausente, ou presente mas com ``is_active`` falso
-    (sessão já encerrada antes). Falha barulhenta no espírito de
-    ``MalformedSessionStateError`` (RN-N4 estendida à terceira categoria,
-    "válida porém inativa"): o comando explícito nunca devolve ``exit 0``
-    silencioso. A borda distingue boot (``resume``, não-bloqueante) de invocação
-    explícita e converte esta exceção em saída diferente de zero.
-    """
+# NOTA (feature 016): a antiga ``NoActiveSessionError`` foi removida. Sessão
+# ausente ou inativa deixou de ser falha barulhenta — o encerramento agora as
+# tolera (ausente → no-op; inativa → reativa e fecha; D1/D3). Apenas o estado
+# MALFORMADO segue barulhento, via ``MalformedSessionStateError`` (RN-N4).

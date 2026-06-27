@@ -173,6 +173,30 @@ class SubprocessGitAdapter(GitPort):
             raise RuntimeError(f"Falha ao ler git status: {e.stderr.strip()}")
         return result.stdout.strip() == ""
 
+    def list_dirty_paths(self, repo_path: str) -> list[str]:
+        try:
+            result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Falha ao listar a working tree: {e.stderr.strip()}")
+        paths = []
+        for line in result.stdout.splitlines():
+            if not line.strip():
+                continue
+            # Porcelain v1: 'XY <path>' ou 'XY <old> -> <new>' (rename/copy).
+            rest = line[3:] if len(line) > 3 else line.strip()
+            if " -> " in rest:
+                rest = rest.split(" -> ", 1)[1]
+            path = rest.strip().strip('"')
+            if path:
+                paths.append(path)
+        return paths
+
     def merge_ff_only(self, repo_path: str, ref: str) -> bool:
         # Não-fast-forward (working tree sujo ou divergência) não é falha fatal:
         # devolve False sem sobrescrever nada, deixando a borda abortar o upgrade.

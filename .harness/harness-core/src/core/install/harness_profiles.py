@@ -73,11 +73,14 @@ class ClaudeProfile(HarnessProfile):
         # repo movido. `command_path` é ignorado.
         content = (
             "---\n"
-            "description: Encerra a sessão do Harness, criando um commit de registro do fechamento por cima do último commit de trabalho.\n"
-            "allowed-tools: Bash(cd:*), Bash(git rev-parse:*), Bash(./harness cmd encerrar-sessao:*)\n"
+            "description: Encerra a sessão do Harness: regenera os artefatos derivados, oferece commitar o trabalho pendente e grava o commit de registro do fechamento por cima do último commit de trabalho.\n"
+            "allowed-tools: Bash(cd:*), Bash(git rev-parse:*), Bash(git status:*), Bash(git add:*), Bash(git commit:*), Bash(./harness cmd regen:*), Bash(./harness cmd encerrar-sessao:*)\n"
             "---\n\n"
-            "Encerrando a sessão do Harness: o fechamento é gravado como um commit de registro por cima do último commit de trabalho (a âncora segue apontando para o trabalho). Ao final, o comando pode oferecer publicar o trabalho (git push) e atualizar o Harness Core (upgrade). O `cd` para a raiz do projeto (resolvida via git) faz o comando funcionar mesmo quando a sessão está num subdiretório.\n\n"
-            '!`cd "$(git rev-parse --show-toplevel)" && ./harness cmd encerrar-sessao`\n'
+            "Conduza o encerramento autônomo da sessão do Harness. Rode os comandos a partir da raiz do projeto (resolvida via git), nesta ordem:\n\n"
+            '1. **Regenerar os artefatos derivados:** `cd "$(git rev-parse --show-toplevel)" && ./harness cmd regen`. Se sair com código diferente de zero, **pare** e mostre o erro — não encerre a sessão.\n'
+            '2. **Encerrar a sessão:** `cd "$(git rev-parse --show-toplevel)" && ./harness cmd encerrar-sessao`. O fechamento vira um commit de registro por cima do último commit de trabalho (a âncora segue apontando para o trabalho).\n'
+            "3. **Se a saída trouxer um marker `[HARNESS:COMMIT_PENDENTE …]`**, há trabalho não commitado fora de `.harness/`: commite apenas o que for trabalho real, **por caminho** (`git add -- <arquivo>` e `git commit` com mensagem descritiva; nunca `git add -A`; separe fonte de artefato regenerável, que pode ir ao `.gitignore`) e rode de novo o `./harness cmd encerrar-sessao`.\n"
+            "4. Ao final, o comando pode oferecer publicar o trabalho (git push) e atualizar o Harness Core (upgrade) via markers; conduza essas ofertas se aparecerem.\n"
         )
         return (".claude/commands/encerrar-sessao.md", content)
 
@@ -177,10 +180,13 @@ class AntigravityProfile(HarnessProfile):
         content = (
             "---\n"
             "name: encerrar-sessao\n"
-            "description: Encerra a sessão do Harness, criando um commit de registro do fechamento por cima do último commit de trabalho.\n"
+            "description: Encerra a sessão do Harness: regenera os artefatos derivados, oferece commitar o trabalho pendente e grava o commit de registro do fechamento por cima do último commit de trabalho.\n"
             "---\n\n"
-            "Encerra a sessão do Harness: o fechamento vira um commit de registro por cima do último commit de trabalho (a âncora segue no trabalho). Ao final, o comando pode oferecer publicar o trabalho (git push) e atualizar o Harness Core (upgrade). O `cd` para a raiz garante que rode bem de qualquer diretório. Execute o comando de shell abaixo e mostre a saída ao usuário:\n\n"
-            f"`cd {command_path} && {command_path}/harness cmd encerrar-sessao`\n"
+            "Conduza o encerramento autônomo da sessão do Harness, nesta ordem (rode da raiz do projeto):\n\n"
+            f"1. Regenerar os artefatos derivados: `cd {command_path} && {command_path}/harness cmd regen`. Se falhar (exit ≠ 0), pare e mostre o erro; não encerre.\n"
+            f"2. Encerrar a sessão: `cd {command_path} && {command_path}/harness cmd encerrar-sessao` — commit de registro por cima do último commit de trabalho (a âncora segue no trabalho).\n"
+            "3. Se a saída trouxer um marker `[HARNESS:COMMIT_PENDENTE …]`, commite o trabalho real por caminho (`git add -- <arquivo>` e `git commit` com mensagem descritiva; nunca `git add -A`) e rode o `harness cmd encerrar-sessao` de novo.\n"
+            "4. Ao final, conduza as ofertas de publicar o trabalho (git push) e atualizar o Harness Core (upgrade) se aparecerem. Mostre a saída ao usuário.\n"
         )
         return (".agents/workflows/encerrar-sessao.md", content)
 

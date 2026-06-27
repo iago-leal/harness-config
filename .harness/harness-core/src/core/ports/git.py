@@ -82,6 +82,16 @@ class GitPort(ABC):
         pass
 
     @abstractmethod
+    def list_dirty_paths(self, repo_path: str) -> list[str]:
+        """Caminhos sujos da working tree (``git status --porcelain``).
+
+        Inclui modificados, adicionados, deletados, renomeados e não rastreados,
+        relativos à raiz do repositório. Árvore limpa → lista vazia. A consulta é
+        read-only; falha real de execução levanta ``RuntimeError`` (RN-N4).
+        """
+        pass
+
+    @abstractmethod
     def merge_ff_only(self, repo_path: str, ref: str) -> bool:
         """Avança o branch corrente até ``ref`` apenas por fast-forward.
 

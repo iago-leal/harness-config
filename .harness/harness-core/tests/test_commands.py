@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 import pytest
 from src.core.ports.git import GitPort
 from src.core.commands.service import CommandService
-from src.core.commands.errors import SessionCommitError, NoActiveSessionError
+from src.core.commands.errors import SessionCommitError
 from src.core.domain.models import SessionState
 from tests.helpers import MockFileSystem
 
@@ -58,6 +58,9 @@ class FakeGit(GitPort):
 
     def is_working_tree_clean(self, repo_path: str) -> bool:
         return True
+
+    def list_dirty_paths(self, repo_path: str) -> list[str]:
+        return []
 
     def merge_ff_only(self, repo_path: str, ref: str) -> bool:
         return True
@@ -150,37 +153,54 @@ def test_execute_encerrar_sessao_falha_commit_preserva_estado():
     assert loaded.commit_hash == work_head
 
 
-def test_execute_encerrar_sessao_sem_sessao_levanta_erro():
-    """Encerrar sem arquivo de sessão (None) → NoActiveSessionError barulhento.
+def test_execute_encerrar_sessao_ausente_e_noop():
+    """Encerrar sem arquivo de sessão (None) → no-op ruidoso, sem commit (D1/016).
 
-    RN-03: a terceira categoria ("nenhuma sessão a encerrar") nunca devolve um
-    falso sucesso; o serviço sinaliza por exceção nomeada, não por string.
+    A 016 reverte a falha barulhenta da 015 para a categoria *ausente*: não há
+    nada a encerrar, então o comando devolve um aviso explícito e NÃO commita.
+    Não levanta exceção, e a mensagem não começa por "Sessão encerrada".
     """
     fs = MockFileSystem()
     git = FakeGit("a" * 40)
     service = CommandService(fs, git)
 
-    with pytest.raises(NoActiveSessionError):
-        service.execute_command("encerrar-sessao", [], "repo/", "session.md")
+    msg = service.execute_command("encerrar-sessao", [], "repo/", "session.md")
 
-    # Não tentou commitar nada.
+    assert "Nenhuma sessão" in msg
+    assert not msg.startswith("Sessão encerrada")
     assert git.commit_calls == []
 
 
-def test_execute_encerrar_sessao_inativa_levanta_erro():
-    """Encerrar sobre sessão válida porém inativa (já encerrada) → NoActiveSessionError."""
+def test_execute_encerrar_sessao_inativa_reativa_e_fecha():
+    """Sessão inativa → reativa, fecha e commita num passo (D1/D3, 016).
+
+    Reverte a falha barulhenta da 015 para a categoria *inativa*: o comando
+    reativa preservando a narrativa, fecha e versiona o estado; a âncora segue
+    sendo o HEAD de trabalho, e a saída anuncia a reativação automática.
+    """
     fs = MockFileSystem()
-    git = FakeGit("a" * 40)
+    work_head = "a" * 40
+    git = FakeGit(work_head)
     service = CommandService(fs, git)
     session_file = "session.md"
 
-    state = SessionState(commit_hash="a" * 40, active_feature="feat-1", is_active=False)
+    state = SessionState(
+        commit_hash=work_head, active_feature="feat-1", is_active=False
+    )
     service.save_session(session_file, state)
 
-    with pytest.raises(NoActiveSessionError):
-        service.execute_command("encerrar-sessao", [], "repo/", session_file)
+    msg = service.execute_command("encerrar-sessao", [], "repo/", session_file)
 
-    assert git.commit_calls == []
+    # Fechou de fato e commitou só o estado, com âncora no trabalho.
+    loaded = service.load_session(session_file)
+    assert loaded.is_active is False
+    assert loaded.commit_hash == work_head
+    assert len(git.commit_calls) == 1
+    assert git.commit_calls[0][1] == [session_file]
+
+    # Caminho feliz + anúncio ruidoso de reativação.
+    assert msg.startswith("Sessão encerrada com sucesso")
+    assert "reativ" in msg.lower()
 
 
 def test_execute_resume_alignment_warning():

@@ -154,6 +154,58 @@ def conduct_end_session_offers(
                 err(f"Falha ao atualizar o Harness Core: {exc}")
 
 
+def pending_work_paths(git, repo_path: str, session_file: str) -> list:
+    """Caminhos sujos da working tree FORA do diretório do harness (feature 016).
+
+    Exclui o diretório que contém o ``state_file`` (ex.: ``.harness/``), que o
+    próprio fechamento versiona; o restante é trabalho do usuário a commitar
+    antes de encerrar (RN-03). Read-only — não toca o working tree.
+    """
+    harness_dir = session_file.split("/", 1)[0] or ".harness"
+    dirty = git.list_dirty_paths(repo_path)
+    return [
+        p for p in dirty if not (p == harness_dir or p.startswith(harness_dir + "/"))
+    ]
+
+
+def render_commit_pendente_marker(paths: list, *, cap: int = 20) -> str:
+    """Marker estruturado de trabalho pendente (modo sem TTY).
+
+    Contrato consumido pelo agente (ver
+    `_reversa_forward/016-encerrar-sessao-autonomo/interfaces/commit-pendente-marker.md`).
+    """
+    shown = paths[:cap]
+    truncado = "" if len(paths) <= cap else f" truncado=true mostrados={len(shown)}"
+    arquivos = ",".join(shown)
+    return (
+        f'[HARNESS:COMMIT_PENDENTE arquivos="{arquivos}" total={len(paths)}{truncado} '
+        'acao="git add -- <arquivos> e git commit (mensagem descritiva); '
+        'depois rode novamente encerrar-sessao"]'
+    )
+
+
+def conduct_commit_pendente(paths, *, is_interactive=None, out=print) -> None:
+    """Anuncia trabalho pendente antes de encerrar (dualidade TTY × marker).
+
+    Sem TTY, emite o marker estruturado para o agente mediar. Com TTY, lista os
+    arquivos em texto legível. Em ambos os casos NÃO commita nem fecha: o commit
+    com mensagem descritiva cabe ao agente/usuário, que então re-roda o comando
+    (RN-03, abortar-e-reexecutar; o core nunca faz ``git add`` do trabalho).
+    """
+    if is_interactive is None:
+        is_interactive = sys.stdin.isatty()
+    if not is_interactive:
+        out(render_commit_pendente_marker(paths))
+        return
+    out("Há trabalho não commitado fora de .harness/ antes de encerrar a sessão:")
+    for p in paths:
+        out(f"  - {p}")
+    out(
+        "Commit esse trabalho (git add -- <arquivo> && git commit, com mensagem "
+        "descritiva) e rode encerrar-sessao novamente."
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Configura e retorna o parser de argumentos CLI do Harness Core."""
     parser = argparse.ArgumentParser(description="Harness Core CLI v2.0.0")
@@ -366,12 +418,36 @@ def main():
     elif args.command == "cmd":
         from src.core.session.sinks import get_sink
         from src.core.session.errors import MalformedSessionStateError
-        from src.core.commands.errors import NoActiveSessionError
 
         service = CommandService(fs, git)
         session_file = config.session.state_file
         cmd_name_norm = args.cmd_name.strip().lower().lstrip("/")
+
+        # Subcomando `regen` (016): regenera os artefatos derivados declarados em
+        # [regen]. Não passa pelo CommandService (depende do ProcessPort, não de
+        # git); ausente → no-op exit 0; falha do comando → exit ≠ 0 (barulhento),
+        # de modo que o fluxo "faz tudo" aborte antes de fechar.
+        if cmd_name_norm == "regen":
+            from src.core.regen.service import RegenService
+
+            code, message = RegenService(process).run(config, os.getcwd())
+            print(message, file=(sys.stdout if code == 0 else sys.stderr))
+            sys.exit(code)
+
         try:
+            # Pré-check de trabalho pendente (016/RN-03): só para encerrar-sessao
+            # COM sessão presente. Ausente cai no no-op tolerante do serviço;
+            # malformado é levantado por load_session e tratado abaixo.
+            if cmd_name_norm == "encerrar-sessao":
+                sessao_existente = service.load_session(session_file)
+                if sessao_existente is not None:
+                    pendentes = pending_work_paths(git, os.getcwd(), session_file)
+                    if pendentes:
+                        # Emite marker / lista (não fecha). O agente commita o
+                        # trabalho real e re-roda o encerrar-sessao.
+                        conduct_commit_pendente(pendentes)
+                        sys.exit(0)
+
             result_msg = service.execute_command(
                 command=args.cmd_name,
                 args=args.cmd_args,
@@ -393,12 +469,6 @@ def main():
                 f"{session_file} para um SHA-1 de 40 caracteres e tente de novo.",
                 file=sys.stderr,
             )
-            sys.exit(1)
-        except NoActiveSessionError as exc:
-            # Não há sessão ativa a encerrar (ausente ou inativa). Comando explícito
-            # falha barulhento e orienta o ciclo de vida (RN-03); o boot nunca chega
-            # aqui — resume cria ou reativa a sessão.
-            print(f"Erro: {exc}", file=sys.stderr)
             sys.exit(1)
 
         # Só o `resume` alimenta o SessionStart: entrega via sink do harness ativo.
