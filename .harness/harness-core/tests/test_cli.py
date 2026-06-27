@@ -316,8 +316,8 @@ def test_conduct_falha_no_push_nao_aborta_upgrade():
 
 
 def test_encerrar_sem_sessao_ativa_nao_dispara_ofertas(tmp_path):
-    # D-10: as ofertas só rodam após encerramento com sucesso. Sem sessão ativa,
-    # o comando reporta o erro e NÃO emite marcadores de oferta.
+    # D-10 + RN-03: sem sessão ativa o encerrar EXPLÍCITO falha barulhento
+    # (exit != 0, erro em stderr) e NÃO emite marcadores de oferta.
     main_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "../src/main.py")
     )
@@ -334,8 +334,8 @@ def test_encerrar_sem_sessao_ativa_nao_dispara_ofertas(tmp_path):
         cwd=str(tmp_path),
     )
 
-    assert result.returncode == 0
-    assert "Nenhuma sessão ativa" in result.stdout
+    assert result.returncode != 0
+    assert "Nenhuma sessão ativa" in result.stderr
     assert "[HARNESS:" not in result.stdout
 
 
@@ -361,3 +361,83 @@ def test_cli_materialize_writes_session_command(tmp_path):
 
     assert result.returncode == 0
     assert (tmp_path / ".claude" / "commands" / "encerrar-sessao.md").exists()
+
+
+def _harness_cli_paths():
+    main_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../src/main.py")
+    )
+    python_bin = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../.venv/bin/python3")
+    )
+    return main_path, python_bin
+
+
+def _seed_session_repo(tmp_path, commit, status):
+    """Repo git com harness.toml e um estado de sessão escrito como TEXTO bruto.
+
+    Escrever direto (sem o serializer) permite reproduzir o estado legado de hash
+    curto, que o modelo `SessionState` atual recusaria.
+    """
+    subprocess.run(["git", "init"], cwd=str(tmp_path), capture_output=True)
+    (tmp_path / "harness.toml").write_text('[harness]\nactive_harness = "claude"\n')
+    estado = tmp_path / ".harness" / "estado-da-sessao.md"
+    estado.parent.mkdir(parents=True, exist_ok=True)
+    estado.write_text(
+        f"---\ncommit: {commit}\nfeature: feat-1\n"
+        f"start_time: 2026-06-01T10:00:00+00:00\nstatus: {status}\n---\n\n"
+        "## O que foi feito\n- x\n"
+    )
+    return estado
+
+
+def test_encerrar_hash_curto_falha_barulhento(tmp_path):
+    # Estado legado de hash curto (anterior à validação de 40 chars): o encerrar
+    # EXPLÍCITO falha barulhento (exit != 0), nunca no-op com exit 0 (RN-01/RN-04).
+    main_path, python_bin = _harness_cli_paths()
+    _seed_session_repo(tmp_path, "abc1234", "active")
+
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "encerrar-sessao"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode != 0
+    assert "estado-da-sessao.md" in result.stderr
+    assert "[HARNESS:" not in result.stdout
+
+
+def test_encerrar_sessao_inativa_falha_barulhento(tmp_path):
+    # Sessão válida porém inativa (já encerrada antes): encerrar explícito não
+    # devolve falso sucesso — exit != 0 e mensagem orientadora (RN-03).
+    main_path, python_bin = _harness_cli_paths()
+    _seed_session_repo(tmp_path, "a" * 40, "inactive")
+
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "encerrar-sessao"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode != 0
+    assert "sessão ativa" in (result.stdout + result.stderr).lower()
+    assert "[HARNESS:" not in result.stdout
+
+
+def test_resume_sobre_estado_malformado_nao_bloqueia(tmp_path):
+    # Boot (resume) é não-bloqueante: estado malformado não pode travar o
+    # SessionStart — exit 0 (RN-02/RF-02), mesmo com o encerrar endurecido.
+    main_path, python_bin = _harness_cli_paths()
+    _seed_session_repo(tmp_path, "abc1234", "active")
+
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "resume"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode == 0

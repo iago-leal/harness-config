@@ -366,6 +366,7 @@ def main():
     elif args.command == "cmd":
         from src.core.session.sinks import get_sink
         from src.core.session.errors import MalformedSessionStateError
+        from src.core.commands.errors import NoActiveSessionError
 
         service = CommandService(fs, git)
         session_file = config.session.state_file
@@ -378,13 +379,27 @@ def main():
                 session_filepath=session_file,
             )
         except MalformedSessionStateError as exc:
-            # Erro barulhento, porém não-bloqueante no boot: evita um exit 2 que
-            # travaria o SessionStart do agente. O aviso vai para stderr.
+            # Boot (resume) é não-bloqueante: estado malformado não pode travar o
+            # SessionStart do agente — aviso em stderr e exit 0. Comando explícito
+            # falha barulhento (exit != 0): nunca um falso sucesso (RN-N4/RN-04).
             print(
                 f"Aviso: estado de sessão malformado em {session_file}: {exc}",
                 file=sys.stderr,
             )
-            sys.exit(0)
+            if cmd_name_norm == "resume":
+                sys.exit(0)
+            print(
+                "Encerramento abortado: corrija a âncora do estado de sessão em "
+                f"{session_file} para um SHA-1 de 40 caracteres e tente de novo.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        except NoActiveSessionError as exc:
+            # Não há sessão ativa a encerrar (ausente ou inativa). Comando explícito
+            # falha barulhento e orienta o ciclo de vida (RN-03); o boot nunca chega
+            # aqui — resume cria ou reativa a sessão.
+            print(f"Erro: {exc}", file=sys.stderr)
+            sys.exit(1)
 
         # Só o `resume` alimenta o SessionStart: entrega via sink do harness ativo.
         # Os demais comandos (encerrar-sessao, handoff, clarificar) imprimem normal.

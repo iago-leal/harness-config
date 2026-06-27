@@ -1,0 +1,9 @@
+{"ts":"2026-06-27T11:09:56Z","action":"T001","status":"done","files":["src/core/commands/errors.py"]}
+{"ts":"2026-06-27T11:09:56Z","action":"T002","status":"done","files":["tests/test_commands.py"]}
+{"ts":"2026-06-27T11:09:56Z","action":"T003","status":"done","files":["tests/test_cli.py"]}
+{"ts":"2026-06-27T11:09:56Z","action":"T004","status":"done","files":["src/core/commands/service.py"]}
+{"ts":"2026-06-27T11:09:56Z","action":"T005","status":"done","files":["src/main.py"]}
+{"ts":"2026-06-27T11:09:56Z","action":"T006","status":"done","files":["tests/test_cli.py"]}
+{"ts":"2026-06-27T11:09:56Z","action":"T007","status":"done","files":["src/core/domain/config.py","src/core/bootstrap/init_service.py","tests/test_init.py"]}
+{"ts":"2026-06-27T11:09:56Z","action":"T008","status":"done","files":[]}
+{"ts":"2026-06-27T11:09:56Z","action":"T008","status":"note","files":[],"detail":"suíte do core 185 passed; smoke end-to-end: hash curto/inativa → exit≠0, resume malformado → exit 0, caminho feliz → exit 0 + commit de encerramento"}

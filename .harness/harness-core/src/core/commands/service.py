@@ -1,7 +1,7 @@
 from typing import Optional, List
 from src.core.ports.fs import FileSystemPort
 from src.core.ports.git import GitPort
-from src.core.commands.errors import SessionCommitError
+from src.core.commands.errors import SessionCommitError, NoActiveSessionError
 from src.core.domain.models import SessionState, SessionNarrative
 from src.core.session import serializer
 
@@ -38,7 +38,13 @@ class CommandService:
         if cmd_normalized == "encerrar-sessao":
             session = self.load_session(session_filepath)
             if not session or not session.is_active:
-                return "Erro: Nenhuma sessão ativa encontrada para encerrar."
+                # Terceira categoria além de ausente/malformado (RN-N4): sessão
+                # válida porém inativa. Falha barulhenta por tipo; a borda decide
+                # o código de saída (o core permanece agnóstico — RN-N5).
+                raise NoActiveSessionError(
+                    "Nenhuma sessão ativa encontrada para encerrar. A sessão "
+                    "reabre no próximo boot/resume; nada foi encerrado."
+                )
 
             # Âncora = último commit de TRABALHO, capturada ANTES de qualquer
             # escrita. O commit de encerramento fica por cima; a âncora nunca

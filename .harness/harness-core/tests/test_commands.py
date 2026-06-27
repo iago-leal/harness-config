@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 import pytest
 from src.core.ports.git import GitPort
 from src.core.commands.service import CommandService
-from src.core.commands.errors import SessionCommitError
+from src.core.commands.errors import SessionCommitError, NoActiveSessionError
 from src.core.domain.models import SessionState
 from tests.helpers import MockFileSystem
 
@@ -148,6 +148,39 @@ def test_execute_encerrar_sessao_falha_commit_preserva_estado():
     assert loaded is not None
     assert loaded.is_active is False
     assert loaded.commit_hash == work_head
+
+
+def test_execute_encerrar_sessao_sem_sessao_levanta_erro():
+    """Encerrar sem arquivo de sessão (None) → NoActiveSessionError barulhento.
+
+    RN-03: a terceira categoria ("nenhuma sessão a encerrar") nunca devolve um
+    falso sucesso; o serviço sinaliza por exceção nomeada, não por string.
+    """
+    fs = MockFileSystem()
+    git = FakeGit("a" * 40)
+    service = CommandService(fs, git)
+
+    with pytest.raises(NoActiveSessionError):
+        service.execute_command("encerrar-sessao", [], "repo/", "session.md")
+
+    # Não tentou commitar nada.
+    assert git.commit_calls == []
+
+
+def test_execute_encerrar_sessao_inativa_levanta_erro():
+    """Encerrar sobre sessão válida porém inativa (já encerrada) → NoActiveSessionError."""
+    fs = MockFileSystem()
+    git = FakeGit("a" * 40)
+    service = CommandService(fs, git)
+    session_file = "session.md"
+
+    state = SessionState(commit_hash="a" * 40, active_feature="feat-1", is_active=False)
+    service.save_session(session_file, state)
+
+    with pytest.raises(NoActiveSessionError):
+        service.execute_command("encerrar-sessao", [], "repo/", session_file)
+
+    assert git.commit_calls == []
 
 
 def test_execute_resume_alignment_warning():
