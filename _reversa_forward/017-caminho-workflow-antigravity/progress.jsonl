@@ -1,0 +1,9 @@
+{"ts":"2026-06-28T00:36:42Z","action":"T001","status":"done","files":["src/core/domain/config.py","src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-28T00:36:42Z","action":"T002","status":"done","files":["tests/test_antigravity_profile.py"]}
+{"ts":"2026-06-28T00:36:42Z","action":"T003","status":"done","files":["tests/test_session_commands_materializer.py"]}
+{"ts":"2026-06-28T00:36:42Z","action":"T004","status":"done","files":["tests/test_init.py"]}
+{"ts":"2026-06-28T00:36:42Z","action":"T005","status":"done","files":["src/core/install/harness_profiles.py"]}
+{"ts":"2026-06-28T00:36:42Z","action":"T006","status":"done","files":["src/core/install/session_commands.py"]}
+{"ts":"2026-06-28T00:36:42Z","action":"T007","status":"done","files":["tests/test_local_apply.py"]}
+{"ts":"2026-06-28T00:36:42Z","action":"T008","status":"done","files":["(verificacao: 210 passed; ruff All checks passed; tambem adaptados test_session_command_profiles.py e test_init.py)"]}
+{"ts":"2026-06-28T00:36:42Z","action":"T009","status":"done","files":["(verificacao: smoke real A1-A3/B1-B3 verde no filesystem)"]}

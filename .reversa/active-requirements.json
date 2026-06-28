@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/016-encerrar-sessao-autonomo",
-  "feature-id": "016",
-  "short-name": "encerrar-sessao-autonomo",
-  "started-at": "2026-06-27T17:47:43-03:00",
+  "feature-dir": "_reversa_forward/017-caminho-workflow-antigravity",
+  "feature-id": "017",
+  "short-name": "caminho-workflow-antigravity",
+  "started-at": "2026-06-27T21:05:55-03:00",
   "current-stage": "requirements",
   "stages-completed": [],
   "paused-features": []

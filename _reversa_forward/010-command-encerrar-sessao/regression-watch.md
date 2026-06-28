@@ -20,6 +20,16 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-28 00:40
+
+> Pós-feature 017 (caminho do workflow do Antigravity corrigido para `.agent/workflows/` singular). Reconciliação focada + regressão. Verificação factual: suíte 210 passed, ruff limpo, smoke real (init→singular; upgrade→migra/limpa/preserva). A 017 atualizou o **caminho** do artefato do Antigravity (plural→singular, mudança pretendida); a regra de materializar os dois comandos permanece.
+
+| ID   | Veredito | Observação                                                                                                                                                                   |
+| ---- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | `init` materializa os dois comandos; o do Antigravity agora em `.agent/workflows/encerrar-sessao.md` (singular ✨f017) — regra de presença preservada; `test_init.py` verde. |
+| W002 | 🟢 verde | `upgrade` rematerializa os dois via `apply_local_materializers`; o do Antigravity migra para o singular e remove o órfão plural (não-destrutivo); smoke cenário B verde.     |
+| W003 | 🟢 verde | Materialização (inclusive a remoção do órfão) escreve só sob `project_path`; `RecordingFileSystem` e smoke verdes.                                                           |
+
 ### Re-extração 2026-06-26 11:02
 
 > Pós-feature 013 (aditiva: `encerrar-sessao` passou a versionar o estado). A 013 reescreveu o **texto** dos slash commands, preservando o acionamento e a delegação. Verificação factual (greps + suíte 153 passed + rematerialização em sandbox).

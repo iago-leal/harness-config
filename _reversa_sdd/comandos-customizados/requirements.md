@@ -10,7 +10,7 @@
 
 Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessao`, `handoff`, `clarificar`. Carrega/grava o estado de sessão em `.harness/estado-da-sessao.md`, valida a âncora Git na retomada e reinjeta a narrativa preservada. O serviço não conhece o harness — a seleção do _sink_ fica na borda (`main.py`).
 
-> ✨ **f010 — `encerrar-sessao` exposto como slash command de IDE:** além do acionamento por `./harness cmd encerrar-sessao` e pela tool MCP, o `init`/`upgrade` materializa arquivos de slash command que disparam essa capacidade direto no chat do agente — `.claude/commands/encerrar-sessao.md` (Claude) e `.agents/workflows/encerrar-sessao.md` (Antigravity), sempre os dois. Os arquivos apenas **delegam** ao `CommandService` via wrapper, sem reimplementar a lógica de fechamento (RN-N5 preservada). Ver `_reversa_sdd/domain.md#2.12` (RN-N28/RN-N29) e ADR 0017.
+> ✨ **f010 — `encerrar-sessao` exposto como slash command de IDE:** além do acionamento por `./harness cmd encerrar-sessao` e pela tool MCP, o `init`/`upgrade` materializa arquivos de slash command que disparam essa capacidade direto no chat do agente — `.claude/commands/encerrar-sessao.md` (Claude) e `.agent/workflows/encerrar-sessao.md` (Antigravity, caminho **singular** ✨f017 — o plural `.agents/workflows/` não é reconhecido pelo Antigravity; frontmatter só com `description`), sempre os dois. Os arquivos apenas **delegam** ao `CommandService` via wrapper, sem reimplementar a lógica de fechamento (RN-N5 preservada). Ver `_reversa_sdd/domain.md#2.12` (RN-N28/RN-N29) e ADR 0017.
 
 ## Responsabilidades
 

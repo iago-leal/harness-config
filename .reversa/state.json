@@ -30,10 +30,7 @@
     },
     "archaeologist": {
       "completed_at": "2026-06-24T15:30:00-03:00",
-      "modules_analyzed": [
-        "harness-core",
-        "antigravity-hooks"
-      ],
+      "modules_analyzed": ["harness-core", "antigravity-hooks"],
       "modules_pending": []
     },
     "detective": {
@@ -93,32 +90,28 @@
     "traceability/code-spec-matrix.md"
   ],
   "last_reextraction": {
-    "scope": "reconciliação + regressão pós-feature 013 (013 nova + 004/010 tocadas)",
+    "scope": "reconciliação + regressão pós-feature 017 (caminho do workflow Antigravity; 010/012 tocadas)",
     "type": "reconciliacao-e-regressao",
-    "started_at": "2026-06-26T11:00:00-03:00",
-    "completed_at": "2026-06-26T11:02:00-03:00",
-    "method": "reconciliação do _reversa_sdd/ (domain.md#2.14 RN-N31/N32; architecture.md e comandos-customizados ✨f013) + step-04 sobre 013/010/004 por verificação factual: suíte 153 passed, smoke end-to-end (feliz+negativo), greps de invariante, rematerialização em sandbox (claude+antigravity)",
-    "user_scope_choice": "reconciliação + regressão focada (013 + tocadas), escolhida via menu de escopo",
+    "started_at": "2026-06-28T00:30:00-03:00",
+    "completed_at": "2026-06-28T00:45:00-03:00",
+    "method": "reconciliação do _reversa_sdd/ (architecture.md#slash-commands-IDE, domain.md#RN-N29, comandos-customizados/#f010, adrs/0017 → caminho singular ✨f017) + step-04 sobre 017/010/012 por verificação factual: suíte 210 passed, ruff limpo, smoke real (init→.agent singular; upgrade→migra/remove órfão/preserva terceiro)",
+    "user_scope_choice": "reconciliação + regressão focada (017 + tocadas), escolhida via menu de escopo",
     "regression_check": {
       "features_checked": 3,
-      "watch_items": 15,
-      "green": 15,
+      "watch_items": 8,
+      "green": 8,
       "yellow": 0,
       "red": 0,
       "yellow_items": [],
       "promotions": [],
       "notes": [
-        "vários watch items de 010/004 acumulam >=3 vereditos verdes consecutivos; candidatos a arquivamento futuro (não movidos nesta rodada)",
-        "001-003, 005-009, 011-012 não re-verificadas: a 013 é aditiva e não as toca; última verificação em a783f9f permanece válida"
+        "017 (W001-W003), 010 (W001-W003), 012 (W001/W004) verificadas e verdes; 010/W001 teve o caminho do Antigravity atualizado plural→singular (mudança pretendida, regra de presença preservada)",
+        "016 não re-verificada: seus watch items (comportamento de encerrar-sessao, settings.json) não são tocados pela 017",
+        "001-009, 011, 013-015 não re-verificadas: a 017 é aditiva/cirúrgica e não as toca; última verificação permanece válida"
       ]
     }
   },
-  "engines": [
-    "claude-code",
-    "codex",
-    "gemini-cli",
-    "antigravity"
-  ],
+  "engines": ["claude-code", "codex", "gemini-cli", "antigravity"],
   "agents": [
     "reversa",
     "reversa-scout",

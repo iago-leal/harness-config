@@ -20,6 +20,15 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-28 00:40
+
+> Pós-feature 017 (reconciliação focada + regressão). A 017 estende `session_commands.py` (chamado por `apply_local_materializers`), sem tocar o mecanismo de upgrade. Verificação: suíte 210 passed, `test_local_apply.py` verde.
+
+| ID   | Veredito | Observação                                                                                                                                                       |
+| ---- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | `upgrade_project` segue materializando via subprocesso (`materialize`), nunca in-process; inalterado pela 017.                                                   |
+| W004 | 🟢 verde | `init`/`upgrade` seguem pela função única `apply_local_materializers`; a 017 só estendeu `materialize_session_commands` (limpeza do órfão), sem duplicar lógica. |
+
 ### Re-extração 2026-06-25 14:32
 
 > Re-confirmação na rodada completa 001–012 (a rodada cirúrgica de 13:39 já cobrira esta feature). Vereditos por leitura direta do código + suíte.
