@@ -34,9 +34,10 @@ def test_antigravity_roda_da_raiz_independente_do_cwd():
     assert "cd /abs/projeto && " in content
 
 
-def test_antigravity_expoe_comando_em_agents_workflows():
+def test_antigravity_expoe_comando_em_agent_workflows():
     rel, content = AntigravityProfile().session_command_artifact("/abs/projeto")
-    assert rel == ".agents/workflows/encerrar-sessao.md"
+    # feature 017: caminho singular reconhecido pelo Antigravity (IDE e CLI).
+    assert rel == ".agent/workflows/encerrar-sessao.md"
     assert "harness cmd encerrar-sessao" in content
 
 

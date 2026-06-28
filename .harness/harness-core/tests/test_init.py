@@ -171,7 +171,7 @@ def test_init_success():
     # Verifica se o harness.toml tem os metadados do upstream gravados
     toml_content = fs.read_file("/Users/iagoleal/dev/harness/destino/harness.toml")
     assert 'upstream_path = "/Users/iagoleal/dev/harness"' in toml_content
-    assert 'version = "1.2.53"' in toml_content
+    assert 'version = "1.2.54"' in toml_content
 
     # Verifica se os ganchos git foram instalados e se a venv foi configurada via subprocesso
     assert len(process.commands) >= 1
@@ -439,7 +439,7 @@ def test_init_materializes_session_commands_for_both_harnesses():
     claude_cmd = (
         "/Users/iagoleal/dev/harness/destino/.claude/commands/encerrar-sessao.md"
     )
-    agy_cmd = "/Users/iagoleal/dev/harness/destino/.agents/workflows/encerrar-sessao.md"
+    agy_cmd = "/Users/iagoleal/dev/harness/destino/.agent/workflows/encerrar-sessao.md"
     assert fs.exists(claude_cmd)
     assert fs.exists(agy_cmd)
     assert "harness cmd encerrar-sessao" in fs.read_file(claude_cmd)

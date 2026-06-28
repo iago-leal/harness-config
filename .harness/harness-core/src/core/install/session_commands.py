@@ -4,7 +4,7 @@ Rotina única, compartilhada por `init` e `upgrade`, que grava os arquivos de
 slash command que acionam `./harness cmd encerrar-sessao` na IDE do agente. A
 escrita é INCONDICIONAL (não depende do `active_harness`): grava para todo
 perfil que exponha um artefato de comando — hoje o Claude (`.claude/commands/`)
-e o Antigravity (`.agents/workflows/`). O conteúdo de cada arquivo vive no
+e o Antigravity (`.agent/workflows/`). O conteúdo de cada arquivo vive no
 respectivo `HarnessProfile`; aqui só iteramos e gravamos, sempre sob
 `project_path` (footprint global zero, RN-N17). Espelha o molde de
 `antigravity_hooks.materialize_hooks_json`.
@@ -49,3 +49,10 @@ def materialize_session_commands(
         dest = os.path.join(project_path, rel_path)
         fs.makedirs(os.path.dirname(dest))
         fs.write_file_atomic(dest, content)
+        # Remove órfãos de caminhos legados (ex.: migração `.agents/` -> `.agent/`
+        # do workflow do Antigravity). Apaga só o arquivo nomeado pelo perfil,
+        # nunca o diretório nem arquivos de terceiros (não-destrutivo, RN-03).
+        for stale_rel in profile.stale_session_command_paths():
+            stale_dest = os.path.join(project_path, stale_rel)
+            if stale_dest != dest and fs.exists(stale_dest):
+                fs.remove(stale_dest)

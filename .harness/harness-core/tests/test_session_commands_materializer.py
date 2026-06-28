@@ -1,7 +1,7 @@
 """Testes da materialização dos slash commands de sessão (feature 010, T002).
 
 Cobrem:
-- grava `.claude/commands/encerrar-sessao.md` e `.agents/workflows/encerrar-sessao.md`;
+- grava `.claude/commands/encerrar-sessao.md` e `.agent/workflows/encerrar-sessao.md`;
 - Claude usa `./harness` relativo à raiz; Antigravity usa o `command_path` absoluto;
 - escrita atômica via `write_file_atomic`;
 - idempotência na reexecução;
@@ -20,6 +20,12 @@ def _claude_path(project: str) -> str:
 
 
 def _antigravity_path(project: str) -> str:
+    # feature 017: caminho singular reconhecido pelo Antigravity.
+    return os.path.join(project, ".agent", "workflows", "encerrar-sessao.md")
+
+
+def _antigravity_stale_path(project: str) -> str:
+    # Caminho plural legado (gerado por versões anteriores), a ser limpo.
     return os.path.join(project, ".agents", "workflows", "encerrar-sessao.md")
 
 
@@ -114,3 +120,76 @@ def test_nada_e_escrito_fora_do_project_path():
         abs_p = os.path.abspath(os.path.join(project_root, p))
         assert abs_p == project_root or abs_p.startswith(project_root + os.sep)
     assert any("encerrar-sessao.md" in p for p in fs.writes)
+
+
+# --- feature 017: migração do órfão `.agents/workflows/` -> `.agent/workflows/` ---
+
+
+def test_remove_orfao_do_caminho_plural_legado():
+    project = "/Users/iagoleal/projeto-x"
+    stale = _antigravity_stale_path(project)
+    fs = MockFileSystem()
+    fs.existing_files.add(stale)
+    fs.written_files[stale] = "workflow antigo (plural)"
+
+    materialize_session_commands(fs, project, project)
+
+    # Grava no caminho novo (singular)...
+    assert fs.exists(_antigravity_path(project))
+    # ...e remove o órfão do caminho plural legado.
+    assert not fs.exists(stale)
+
+
+def test_preserva_workflow_de_terceiro_no_diretorio_plural():
+    project = "/Users/iagoleal/projeto-x"
+    stale = _antigravity_stale_path(project)
+    terceiro = os.path.join(project, ".agents", "workflows", "outro-workflow.md")
+    fs = MockFileSystem()
+    fs.existing_files.update({stale, terceiro})
+    fs.written_files[stale] = "workflow antigo"
+    fs.written_files[terceiro] = "workflow de terceiro"
+
+    materialize_session_commands(fs, project, project)
+
+    assert not fs.exists(stale)
+    # Terceiro intacto: a limpeza remove só o arquivo nomeado (não-destrutivo, RN-03).
+    assert fs.read_file(terceiro) == "workflow de terceiro"
+
+
+def test_sem_orfao_projeto_novo_nao_falha():
+    fs = MockFileSystem()
+    project = "/Users/iagoleal/projeto-x"
+
+    materialize_session_commands(fs, project, project)
+
+    assert fs.exists(_antigravity_path(project))
+    assert not fs.exists(_antigravity_stale_path(project))
+
+
+def test_perfil_sem_stale_paths_nao_remove_nada():
+    from src.core.install.harness_profiles import HarnessProfile
+
+    class FakeProfile(HarnessProfile):
+        name = "fake"
+
+        def hooks_block(self):
+            return ""
+
+        def apply_instructions(self):
+            return ""
+
+        def session_command_artifact(self, command_path):
+            return (".fake/cmd.md", "x")
+
+        # sem override de stale_session_command_paths -> default [].
+
+    project = "/proj"
+    pre_existente = os.path.join(project, ".agents", "workflows", "encerrar-sessao.md")
+    fs = MockFileSystem()
+    fs.existing_files.add(pre_existente)
+    fs.written_files[pre_existente] = "intacto"
+
+    materialize_session_commands(fs, project, project, profiles=[FakeProfile()])
+
+    # FakeProfile não declara órfãos -> nada é removido.
+    assert fs.exists(pre_existente)

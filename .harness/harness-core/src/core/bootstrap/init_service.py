@@ -35,7 +35,7 @@ class InitializationService:
     def __init__(self, fs: FileSystemPort, process: ProcessPort):
         self.fs = fs
         self.process = process
-        self.current_version = "1.2.53"
+        self.current_version = "1.2.54"
 
     def initialize_project(
         self,

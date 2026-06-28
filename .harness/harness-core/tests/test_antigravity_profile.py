@@ -109,3 +109,32 @@ def test_get_profile_resolves_antigravity():
 def test_get_profile_unknown_raises():
     with pytest.raises(ValueError):
         get_profile("naoexiste")
+
+
+# --- feature 017: caminho singular do workflow + frontmatter mínimo + órfão ---
+
+
+def test_session_command_artifact_uses_singular_workflows_path():
+    rel_path, _ = AntigravityProfile().session_command_artifact("/abs/proj")
+    # O Antigravity registra slash commands a partir de `.agent/workflows/`
+    # (singular); o plural `.agents/workflows/` é ignorado.
+    assert rel_path == ".agent/workflows/encerrar-sessao.md"
+
+
+def test_session_command_artifact_frontmatter_has_description_and_no_name():
+    _, content = AntigravityProfile().session_command_artifact("/abs/proj")
+    assert "description:" in content
+    # A doc do Antigravity só exige `description`; `name` foi removido (017).
+    assert "\nname:" not in content
+
+
+def test_stale_session_command_paths_lists_legacy_plural():
+    assert AntigravityProfile().stale_session_command_paths() == [
+        ".agents/workflows/encerrar-sessao.md"
+    ]
+
+
+def test_base_profiles_have_empty_stale_paths_by_default():
+    # Perfis sem override do caminho não declaram órfãos a remover.
+    assert ClaudeProfile().stale_session_command_paths() == []
+    assert GeminiProfile().stale_session_command_paths() == []

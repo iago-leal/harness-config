@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 
 class HarnessProfile(ABC):
@@ -29,6 +29,17 @@ class HarnessProfile(ABC):
         uma superfície de slash command para esta capacidade. Por padrão, ``None``.
         """
         return None
+
+    def stale_session_command_paths(self) -> List[str]:
+        """Caminhos relativos de artefatos de slash command LEGADOS a remover.
+
+        Quando um perfil muda o caminho de materialização do seu artefato, os
+        arquivos gravados por versões anteriores viram órfãos. Cada perfil
+        declara aqui os caminhos legados que a materialização deve limpar — só o
+        arquivo nomeado, nunca o diretório (não-destrutivo, RN-03). Por padrão,
+        vazio.
+        """
+        return []
 
 
 class ClaudeProfile(HarnessProfile):
@@ -179,7 +190,6 @@ class AntigravityProfile(HarnessProfile):
         # embutido, o corpo instrui o agente a rodar o comando (D-06).
         content = (
             "---\n"
-            "name: encerrar-sessao\n"
             "description: Encerra a sessão do Harness: regenera os artefatos derivados, oferece commitar o trabalho pendente e grava o commit de registro do fechamento por cima do último commit de trabalho.\n"
             "---\n\n"
             "Conduza o encerramento autônomo da sessão do Harness, nesta ordem (rode da raiz do projeto):\n\n"
@@ -188,7 +198,12 @@ class AntigravityProfile(HarnessProfile):
             "3. Se a saída trouxer um marker `[HARNESS:COMMIT_PENDENTE …]`, commite o trabalho real por caminho (`git add -- <arquivo>` e `git commit` com mensagem descritiva; nunca `git add -A`) e rode o `harness cmd encerrar-sessao` de novo.\n"
             "4. Ao final, conduza as ofertas de publicar o trabalho (git push) e atualizar o Harness Core (upgrade) se aparecerem. Mostre a saída ao usuário.\n"
         )
-        return (".agents/workflows/encerrar-sessao.md", content)
+        return (".agent/workflows/encerrar-sessao.md", content)
+
+    def stale_session_command_paths(self) -> List[str]:
+        # Versões anteriores gravavam o workflow em `.agents/workflows/` (plural),
+        # caminho que o Antigravity não reconhece. Limpa o órfão na migração.
+        return [".agents/workflows/encerrar-sessao.md"]
 
 
 _PROFILES = {
