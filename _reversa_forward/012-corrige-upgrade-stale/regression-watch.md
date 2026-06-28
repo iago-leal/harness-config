@@ -20,6 +20,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-28 09:45
+
+> Pós-feature 018. O mecanismo de upgrade resiliente (subprocesso do python de destino; aborto barulhento; caminhos-candidatos) está **intacto**. A 018 só troca o _conteúdo_ da função única `apply_local_materializers`: `materialize_session_commands` → `materialize_session_skills`. Verificação factual: suíte 212 passed, `test_local_apply.py` verde.
+
+| ID   | Veredito | Observação                                                                                                                                                                                                                                                                                  |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | `upgrade_project` segue materializando via subprocesso (`materialize`), nunca in-process — `materialize_session_commands(`/`materialize_hooks_json(` diretos ausentes de `upgrade_project`. O materializador de sessão agora é `materialize_session_skills`, igualmente fora do in-process. |
+| W002 | 🟢 verde | `_get_upstream_version` aborta barulhento (sem fallback `current_version`): inalterado.                                                                                                                                                                                                     |
+| W003 | 🟢 verde | Leitura de versão usa `CORE_CONFIG_CANDIDATE_RELPATHS` (`layout.py`): inalterado.                                                                                                                                                                                                           |
+| W004 | 🟢 verde | `init`/`upgrade` materializam pela função única `apply_local_materializers` (`install/local_apply.py`): preservada; agora invoca `materialize_session_skills` sempre (✨f018) + `materialize_hooks_json`/`materialize_claude_settings` por harness. `domain.md#2.13` (RN-N30) reconciliado. |
+
 ### Re-extração 2026-06-28 00:40
 
 > Pós-feature 017 (reconciliação focada + regressão). A 017 estende `session_commands.py` (chamado por `apply_local_materializers`), sem tocar o mecanismo de upgrade. Verificação: suíte 210 passed, `test_local_apply.py` verde.

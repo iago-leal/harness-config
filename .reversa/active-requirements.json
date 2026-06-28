@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/017-caminho-workflow-antigravity",
-  "feature-id": "017",
-  "short-name": "caminho-workflow-antigravity",
-  "started-at": "2026-06-27T21:05:55-03:00",
+  "feature-dir": "_reversa_forward/018-encerrar-sessao-como-skill",
+  "feature-id": "018",
+  "short-name": "encerrar-sessao-como-skill",
+  "started-at": "2026-06-27T23:02:47-03:00",
   "current-stage": "requirements",
   "stages-completed": [],
   "paused-features": []

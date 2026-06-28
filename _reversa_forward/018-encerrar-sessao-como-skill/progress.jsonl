@@ -1,0 +1,17 @@
+{"ts":"2026-06-28T12:07:12Z","action":"T001","status":"done","files":["src/core/domain/config.py","src/core/bootstrap/init_service.py","tests/test_init.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T002","status":"done","files":["src/core/session/close_flow.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T003","status":"done","files":["tests/test_close_flow.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T004","status":"done","files":["tests/test_harness_profiles.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T005","status":"done","files":["tests/test_session_skills.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T006","status":"done","files":["tests/test_init.py","tests/test_cli.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T007","status":"done","files":["tests/test_skill_scripts.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T008","status":"done","files":["src/core/session/close_flow.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T009","status":"done","files":["src/main.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T010","status":"done","files":["src/core/install/harness_profiles.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T011","status":"done","files":["src/core/install/assets/skills/encerrar-sessao/SKILL.md"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T012","status":"done","files":["src/core/install/assets/skills/encerrar-sessao/scripts/_bootstrap.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T013","status":"done","files":["src/core/install/assets/skills/encerrar-sessao/scripts/encerrar_sessao.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T014","status":"done","files":["src/core/install/session_skills.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T015","status":"done","files":["src/core/install/local_apply.py","src/core/bootstrap/init_service.py","tests/test_init.py","tests/test_cli.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T016","status":"done","files":["src/core/install/harness_profiles.py","src/core/install/session_commands.py(removido)","tests/test_session_command_profiles.py(removido)","tests/test_session_commands_materializer.py(removido)","tests/test_antigravity_profile.py","tests/test_local_apply.py"]}
+{"ts":"2026-06-28T12:07:12Z","action":"T017","status":"done","files":["src/core/install/assets/skills/encerrar-sessao/scripts/_bootstrap.py"]}

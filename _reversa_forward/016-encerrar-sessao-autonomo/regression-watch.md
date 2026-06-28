@@ -25,7 +25,21 @@
 
 ## Histórico de re-extrações
 
-<!-- Preenchido pelo agente reverso quando `/reversa` rodar de novo. -->
+### Re-extração 2026-06-28 09:45
+
+> Primeira verificação dos watch da 016. A feature 018 **moveu** o pré-check de pendência e as ofertas da borda `main.py` para `SessionCloseFlow` (core), e o regen para o script da skill — comportamento **preservado**, não alterado (helpers reexportados por `src.main`, suíte 212 verde). O `CommandService`/`RegenService` ficaram intactos. Verificação factual: suíte 212 passed.
+
+| ID   | Veredito | Observação                                                                                                                                                                                                                   |
+| ---- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | Sessão inativa → reativa+fecha+commit (exit 0): `CommandService` inalterado; `SessionCloseFlow.run` invoca `execute_command`.                                                                                                |
+| W002 | 🟢 verde | Sessão ausente → no-op ruidoso (exit 0): `close_flow.run` pula o pré-check (`sessao_existente is None`), chama `execute_command` e devolve 0.                                                                                |
+| W003 | 🟢 verde | Malformado em comando explícito → exit ≠ 0: `SessionCloseFlow._abort_malformed` retorna 1 (RN-N4) — antes em `main.py`, agora no core, comportamento idêntico.                                                               |
+| W004 | 🟢 verde | Commit de fechamento versiona só o `state_file` via `git add -- <path>`: `CommandService` inalterado (RN-N31/N32).                                                                                                           |
+| W005 | 🟢 verde | Âncora = HEAD de trabalho, capturada antes de escrever: inalterado.                                                                                                                                                          |
+| W006 | 🟢 verde | `cmd regen` segue intacto (`main.py:296-299`, `RegenService`); regen falho não fecha. O encadeamento regen→fechar migrou para o script da skill (`encerrar_sessao.py`: regen, se exit≠0 aborta antes de `SessionCloseFlow`). |
+| W007 | 🟢 verde | Trabalho solto fora de `.harness/` → marker `[HARNESS:COMMIT_PENDENTE …]` sem fechar: `pending_work_paths` + `conduct_commit_pendente` migraram para `close_flow.py` (return 0 sem fechar), comportamento idêntico.          |
+| W008 | 🟢 verde | `init`/`upgrade` (claude) plantam `SessionStart→resume` no `.claude/settings.json`: `local_apply.py` chama `materialize_claude_settings` quando `active_harness == "claude"` — inalterado pela 018.                          |
+| W009 | 🟢 verde | `NoActiveSessionError` permanece removida: ausência confirmada em `errors.py`.                                                                                                                                               |
 
 ## Arquivadas
 

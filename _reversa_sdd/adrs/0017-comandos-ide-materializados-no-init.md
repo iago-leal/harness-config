@@ -1,6 +1,8 @@
 # ADR 0017: Slash commands de IDE materializados no `init`/`upgrade`, sempre Claude+Antigravity
 
-- **Status:** Aceito
+> ⚠️ **Substituída pela [ADR 0018](0018-encerrar-sessao-como-skill-adaptador.md) (feature 018-encerrar-sessao-como-skill).** A decisão de materializar a capacidade `encerrar-sessao` como slash command/workflow `.md` que delega ao binário foi trocada pela materialização de uma **skill versionável** (`SKILL.md` + `scripts/` finos sobre o core). A descoberta empírica de 017 (o Antigravity ignora slash commands/workflows locais; só skills ativam por contexto) invalidou a premissa central desta ADR. O registro abaixo é preservado como memória histórica; o mecanismo vigente é o da ADR 0018.
+
+- **Status:** Substituída pela ADR 0018 (✨f018)
 - **Data:** 2026-06-24 (feature 010-command-encerrar-sessao)
 - **Contexto Técnico:** Novo módulo `src/core/install/session_commands.py` (`materialize_session_commands`); novo método `session_command_artifact` em `src/core/install/harness_profiles.py` (`HarnessProfile`/`ClaudeProfile`/`AntigravityProfile`/`GeminiProfile`); fiação em `src/core/bootstrap/init_service.py` (`initialize_project`, `upgrade_project`)
 - **Escala de Confiança:** 🟢 CONFIRMADO (código as-built; 130 testes verdes). 🟡 Comportamento de execução do workflow do Antigravity não verificável localmente (ver Consequências)

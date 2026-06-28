@@ -90,24 +90,34 @@
     "traceability/code-spec-matrix.md"
   ],
   "last_reextraction": {
-    "scope": "reconciliação + regressão pós-feature 017 (caminho do workflow Antigravity; 010/012 tocadas)",
+    "scope": "reconciliação + regressão pós-feature 018 (encerrar-sessao como skill versionável; mecanismo de 010/017 substituído; fluxo extraído p/ SessionCloseFlow)",
     "type": "reconciliacao-e-regressao",
-    "started_at": "2026-06-28T00:30:00-03:00",
-    "completed_at": "2026-06-28T00:45:00-03:00",
-    "method": "reconciliação do _reversa_sdd/ (architecture.md#slash-commands-IDE, domain.md#RN-N29, comandos-customizados/#f010, adrs/0017 → caminho singular ✨f017) + step-04 sobre 017/010/012 por verificação factual: suíte 210 passed, ruff limpo, smoke real (init→.agent singular; upgrade→migra/remove órfão/preserva terceiro)",
-    "user_scope_choice": "reconciliação + regressão focada (017 + tocadas), escolhida via menu de escopo",
+    "started_at": "2026-06-28T09:30:00-03:00",
+    "completed_at": "2026-06-28T09:45:00-03:00",
+    "method": "reconciliação do _reversa_sdd/ (domain.md#2.12 RN-N28/N29 reescritas command→skill, #2.13 RN-N30, nova #2.15 RN-N33 SessionCloseFlow; architecture.md; comandos-customizados/requirements.md#f010; ADR 0017 marcada Substituída + ADR 0018 nova) + step-04 sobre 018/017/016/014/013/012/010 por verificação factual: suíte 212 passed, smoke real de `materialize` (skill nos dois skills_dir; 3 órfãos removidos; terceiros deploy-de-terceiro.md/SPEC.md preservados)",
+    "user_scope_choice": "Re-extração da 018 (reconciliar _reversa_sdd/ + regression-check), escolhida via menu",
     "regression_check": {
-      "features_checked": 3,
-      "watch_items": 8,
-      "green": 8,
-      "yellow": 0,
+      "features_checked": 7,
+      "watch_items": 41,
+      "green": 35,
+      "yellow": 6,
       "red": 0,
-      "yellow_items": [],
+      "yellow_items": [
+        "017/W001",
+        "017/W002",
+        "013/W006",
+        "010/W001",
+        "010/W002",
+        "010/W005"
+      ],
       "promotions": [],
       "notes": [
-        "017 (W001-W003), 010 (W001-W003), 012 (W001/W004) verificadas e verdes; 010/W001 teve o caminho do Antigravity atualizado plural→singular (mudança pretendida, regra de presença preservada)",
-        "016 não re-verificada: seus watch items (comportamento de encerrar-sessao, settings.json) não são tocados pela 017",
-        "001-009, 011, 013-015 não re-verificadas: a 017 é aditiva/cirúrgica e não as toca; última verificação permanece válida"
+        "018 (W001-W005) verde: skill materializada nos dois harnesses, 3 órfãos removidos preservando terceiros, SessionCloseFlow fonte única (CLI + skill), scripts finos barulhentos (re-exec sob venv por sys.prefix)",
+        "Amarelos = mecanismo superado DELIBERADAMENTE pela 018 (command/workflow → skill; session_command_artifact removido; frontmatter sem name → SKILL.md com name); NÃO são regressões acidentais. Candidatos a arquivar quando a 018 estabilizar",
+        "016/014/013 verdes: pré-check/ofertas/commit movidos para SessionCloseFlow e scripts, comportamento preservado (helpers reexportados por src.main, suíte 212)",
+        "012 verde: mecanismo de upgrade resiliente intacto; só o conteúdo de apply_local_materializers mudou (materialize_session_commands → materialize_session_skills)",
+        "DEFASAGEM PRÉ-EXISTENTE (fora do escopo da 018): inventory.md, code-analysis.md, c4-components.md, traceability/spec-impact-matrix.md são snapshot da feature 009 e não incorporam 010-018 — exigem re-extração estrutural ampla (Scout/Archaeologist/Architect) à parte",
+        "001-009, 011, 015 não re-verificadas: a 018 é cirúrgica no encerramento/materialização e não as toca; última verificação permanece válida"
       ]
     }
   },

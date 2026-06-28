@@ -31,7 +31,21 @@ os watch items cobrem os **novos invariantes** e a **preservação** do fechamen
 
 ## Histórico de re-extrações
 
-<!-- Preenchido pelo agente reverso quando `/reversa` rodar de novo. -->
+### Re-extração 2026-06-28 09:45
+
+> Primeira verificação dos watch da 014. A feature 018 **moveu** a condução das ofertas (e os helpers `render_offer_markers`/`conduct_end_session_offers`/`run_upgrade`) de `main.py` para `SessionCloseFlow` (`close_flow.py`), reexportados por `src.main` — comportamento **preservado**, testes da 014 verdes na suíte 212. `offers.py`/`sync` intactos. Verificação factual: suíte 212 passed.
+
+| ID   | Veredito | Observação                                                                                                                                                                                            |
+| ---- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | `CommandService.execute_command('encerrar-sessao')` segue só fechando+commitando, sem push/upgrade nem I/O — `CommandService` inalterado.                                                             |
+| W002 | 🟢 verde | Ofertas só após sucesso, etapa posterior: `close_flow.run` chama `_conduct_offers` apenas quando `result_msg.startswith("Sessão encerrada com sucesso")`.                                             |
+| W003 | 🟢 verde | Etapa não-bloqueante: `_conduct_offers` roda sob `try/except` que vira aviso sem regredir o encerramento já versionado.                                                                               |
+| W004 | 🟢 verde | Oferta de push só com upstream tracking e commits à frente: `offers.py` inalterado.                                                                                                                   |
+| W005 | 🟢 verde | `push` nunca usa `--force`: `subprocess.py` inalterado.                                                                                                                                               |
+| W006 | 🟢 verde | `check_version_update_remote` consulta a rede e degrada para `None` sem levantar: `sync/service.py` inalterado.                                                                                       |
+| W007 | 🟢 verde | Aceitar upgrade sincroniza por `merge_ff_only` antes de copiar; não-FF aborta sem sobrescrever: lógica migrada para `_conduct_offers.run_upgrade`, idêntica; `upgrade_project` standalone inalterado. |
+| W008 | 🟢 verde | Detecção fala com git só pela porta `GitPort`: `offers.py` inalterado (RN-N5).                                                                                                                        |
+| W009 | 🟢 verde | Ordem push → upgrade quando ambas se aplicam: preservada em `conduct_end_session_offers` (push antes de upgrade).                                                                                     |
 
 ## Arquivadas
 

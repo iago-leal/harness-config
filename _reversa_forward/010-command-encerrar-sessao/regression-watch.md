@@ -20,6 +20,18 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-06-28 09:45
+
+> ⚠️ **Mecanismo de entrega superado pela feature 018 (ADR 0018 substitui a 0017).** O artefato de IDE deixou de ser slash command/workflow `.md` e passou a ser **skill versionável**. Os watch que fixam a _forma_ do artefato (presença dos dois `.md`, corpo `./harness`) são superados **por decisão de produto**; as propriedades de domínio (incondicional nos dois harnesses, footprint zero, não-reimplementação) seguem válidas na nova forma. Verificação factual: suíte 212 passed, smoke real de `materialize`.
+
+| ID   | Veredito   | Observação                                                                                                                                                                                                                                                                                 |
+| ---- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| W001 | 🟡 amarelo | **Superado pela 018:** em vez de `.claude/commands/…` + `.agents/workflows/…`, o `init` agora materializa a **skill** nos dois `skills_dir` (`.claude/skills/`, `.agents/skills/`). A presença-nos-dois-harnesses (incondicional) persiste; a forma do artefato mudou. Mudança pretendida. |
+| W002 | 🟡 amarelo | **Superado pela 018:** o `upgrade` rematerializa a skill (não os `.md`); não há mais caminho absoluto de wrapper a corrigir (a skill resolve a raiz via git). Propriedade de rematerialização preservada na nova forma.                                                                    |
+| W003 | 🟢 verde   | **Preservado:** `materialize_session_skills` escreve só sob `project_path` — `domain.md#RN-N28`/RN-N17, teste de footprint e smoke real verdes.                                                                                                                                            |
+| W004 | 🟢 verde   | **Preservado em essência:** a skill **não reimplementa** o fechamento — consome `SessionCloseFlow` do core (RN-N5/RN-N33). A delegação migrou de `./harness cmd` (wrapper) para script-que-importa-o-core; o princípio persiste.                                                           |
+| W005 | 🟡 amarelo | **Superado pela 018:** não há mais slash command `.md` do Claude — o risco do `${CLAUDE_PROJECT_DIR}` no `!`-bash deixou de existir (a skill usa script Python). Regra específica do artefato antigo, aposentada com ele.                                                                  |
+
 ### Re-extração 2026-06-28 00:40
 
 > Pós-feature 017 (caminho do workflow do Antigravity corrigido para `.agent/workflows/` singular). Reconciliação focada + regressão. Verificação factual: suíte 210 passed, ruff limpo, smoke real (init→singular; upgrade→migra/limpa/preserva). A 017 atualizou o **caminho** do artefato do Antigravity (plural→singular, mudança pretendida); a regra de materializar os dois comandos permanece.
