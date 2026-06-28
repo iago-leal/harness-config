@@ -1,7 +1,7 @@
 """Materialização local compartilhada por ``init`` e ``upgrade`` (feature 012).
 
-Função única que aplica os materializadores de IDE sob ``project_path``: os
-slash commands de sessão (sempre, RN-N28), o ``.agents/hooks.json`` do
+Função única que aplica os materializadores de IDE sob ``project_path``: a skill
+de sessão ``encerrar-sessao`` (sempre, feature 018), o ``.agents/hooks.json`` do
 Antigravity (somente quando o harness ativo é o Antigravity, RN-N27) e o
 ``.claude/settings.json`` do Claude com o hook de resume (somente quando o
 harness ativo é o Claude, feature 016/RN-05).
@@ -14,7 +14,7 @@ código recém-copiado, nunca com os módulos antigos carregados em memória
 """
 
 from src.core.ports.fs import FileSystemPort
-from src.core.install.session_commands import materialize_session_commands
+from src.core.install.session_skills import materialize_session_skills
 from src.core.install.antigravity_hooks import materialize_hooks_json
 from src.core.install.claude_settings import materialize_claude_settings
 
@@ -31,7 +31,9 @@ def apply_local_materializers(
     embutido no comando do Antigravity. Toda escrita ocorre sob ``project_path``
     (footprint global zero, RN-N17).
     """
-    materialize_session_commands(fs, project_path, command_path)
+    # A skill `encerrar-sessao` é agnóstica ao harness (resolve a raiz via git nos
+    # scripts), então não usa `command_path`; ele segue só para os hooks do AGY.
+    materialize_session_skills(fs, project_path)
     if active_harness == "antigravity":
         materialize_hooks_json(fs, project_path, command_path)
     elif active_harness == "claude":

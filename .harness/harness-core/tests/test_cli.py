@@ -339,10 +339,10 @@ def test_encerrar_sem_sessao_e_noop_silencioso(tmp_path):
     assert "[HARNESS:" not in result.stdout
 
 
-def test_cli_materialize_writes_session_command(tmp_path):
-    # Feature 012 (Modo 1, código real): o subcomando interno `materialize`,
-    # rodado como o upgrade o invocaria no destino, produz o slash command de
-    # sessão a partir do CÓDIGO LOCAL — prova de que a materialização não é stale.
+def test_cli_materialize_writes_session_skill(tmp_path):
+    # Feature 012 (Modo 1, código real) + 018: o subcomando interno `materialize`,
+    # rodado como o upgrade o invocaria no destino, produz a SKILL de sessão a
+    # partir do CÓDIGO LOCAL — prova de que a materialização não é stale.
     main_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "../src/main.py")
     )
@@ -360,7 +360,9 @@ def test_cli_materialize_writes_session_command(tmp_path):
     )
 
     assert result.returncode == 0
-    assert (tmp_path / ".claude" / "commands" / "encerrar-sessao.md").exists()
+    skill_dir = tmp_path / ".claude" / "skills" / "encerrar-sessao"
+    assert (skill_dir / "SKILL.md").exists()
+    assert (skill_dir / "scripts" / "encerrar_sessao.py").exists()
 
 
 def _harness_cli_paths():

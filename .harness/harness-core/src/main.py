@@ -17,6 +17,18 @@ from src.core.commands.service import CommandService
 from src.core.documentation.service import DocumentationService
 from src.core.domain.config import load_config
 
+# Helpers de orquestração do encerramento vivem no core (feature 018, D-01) e são
+# reexportados aqui: a borda CLI e os scripts finos da skill compartilham a mesma
+# fonte, sem duplicar. Reexpostos via `src.main` para compat. dos testes da 014.
+from src.core.session.close_flow import (  # noqa: F401
+    render_offer_markers,
+    conduct_end_session_offers,
+    pending_work_paths,
+    render_commit_pendente_marker,
+    conduct_commit_pendente,
+    SessionCloseFlow,
+)
+
 
 def resolve_format_target(arg_path):
     """Resolve o arquivo a formatar.
@@ -58,152 +70,6 @@ def offer_git_init(repo_path: str) -> bool:
         "Inicializar agora com 'git init'? [s/N] "
     )
     return resposta.strip().lower() in ("s", "sim", "y", "yes")
-
-
-def render_offer_markers(offers) -> list:
-    """Modo sem TTY: linhas-marcador estáveis das ofertas, sem ler entrada.
-
-    Contrato consumido pelo agente (ver
-    `_reversa_forward/014-oferta-upgrade-ao-encerrar/interfaces/session-end-offers.md`).
-    Uma linha por oferta cabível; ordem push → upgrade.
-    """
-    lines = []
-    if offers.push:
-        lines.append(
-            "[HARNESS:PUSH_DISPONIVEL "
-            f"branch={offers.push.branch} remote={offers.push.remote} "
-            f"ahead={offers.push.ahead} "
-            f"principal={'true' if offers.push.is_default_branch else 'false'} "
-            'acao="git push"]'
-        )
-    if offers.upgrade:
-        lines.append(
-            "[HARNESS:UPGRADE_DISPONIVEL "
-            f"atual={offers.upgrade.current_version} "
-            f"alvo={offers.upgrade.target_version} "
-            'acao="./harness upgrade"]'
-        )
-    return lines
-
-
-def _ask_yes(question: str) -> bool:
-    return input(question).strip().lower() in ("s", "sim", "y", "yes")
-
-
-def conduct_end_session_offers(
-    offers,
-    repo_path: str,
-    git,
-    run_upgrade,
-    *,
-    is_interactive=None,
-    asker=_ask_yes,
-    out=print,
-    err=None,
-):
-    """Conduz as ofertas de fim de sessão (push → upgrade), feature 014.
-
-    Sem TTY, emite os marcadores estruturados e não lê entrada. Com TTY,
-    pergunta ``[s/N]`` por oferta, na ordem push → upgrade (RN-10), executando a
-    aceita. Cada ação é protegida para que uma falha (rede/push/upgrade) avise e
-    siga, sem abortar a outra nem o encerramento já feito (RN-02/RN-09).
-    """
-    if err is None:
-
-        def err(message):
-            print(message, file=sys.stderr)
-
-    if not offers.has_any:
-        return
-    if is_interactive is None:
-        is_interactive = sys.stdin.isatty()
-
-    if not is_interactive:
-        for line in render_offer_markers(offers):
-            out(line)
-        return
-
-    if offers.push:
-        p = offers.push
-        if p.is_default_branch:
-            question = (
-                f"⚠️  '{p.branch}' é a branch principal. Publicar diretamente em "
-                f"{p.remote}/{p.branch} ({p.ahead} commit(s)) com git push? [s/N] "
-            )
-        else:
-            question = (
-                f"Há {p.ahead} commit(s) à frente de {p.remote}/{p.branch}. "
-                "Publicar agora (git push)? [s/N] "
-            )
-        if asker(question):
-            try:
-                git.push(repo_path)
-                out("Trabalho publicado com sucesso.")
-            except Exception as exc:
-                err(f"Falha ao publicar (git push): {exc}")
-
-    if offers.upgrade:
-        u = offers.upgrade
-        if asker(
-            f"🔼 Atualização do Harness Core disponível: {u.current_version} → "
-            f"{u.target_version}. Atualizar agora? [s/N] "
-        ):
-            try:
-                run_upgrade(u)
-            except Exception as exc:
-                err(f"Falha ao atualizar o Harness Core: {exc}")
-
-
-def pending_work_paths(git, repo_path: str, session_file: str) -> list:
-    """Caminhos sujos da working tree FORA do diretório do harness (feature 016).
-
-    Exclui o diretório que contém o ``state_file`` (ex.: ``.harness/``), que o
-    próprio fechamento versiona; o restante é trabalho do usuário a commitar
-    antes de encerrar (RN-03). Read-only — não toca o working tree.
-    """
-    harness_dir = session_file.split("/", 1)[0] or ".harness"
-    dirty = git.list_dirty_paths(repo_path)
-    return [
-        p for p in dirty if not (p == harness_dir or p.startswith(harness_dir + "/"))
-    ]
-
-
-def render_commit_pendente_marker(paths: list, *, cap: int = 20) -> str:
-    """Marker estruturado de trabalho pendente (modo sem TTY).
-
-    Contrato consumido pelo agente (ver
-    `_reversa_forward/016-encerrar-sessao-autonomo/interfaces/commit-pendente-marker.md`).
-    """
-    shown = paths[:cap]
-    truncado = "" if len(paths) <= cap else f" truncado=true mostrados={len(shown)}"
-    arquivos = ",".join(shown)
-    return (
-        f'[HARNESS:COMMIT_PENDENTE arquivos="{arquivos}" total={len(paths)}{truncado} '
-        'acao="git add -- <arquivos> e git commit (mensagem descritiva); '
-        'depois rode novamente encerrar-sessao"]'
-    )
-
-
-def conduct_commit_pendente(paths, *, is_interactive=None, out=print) -> None:
-    """Anuncia trabalho pendente antes de encerrar (dualidade TTY × marker).
-
-    Sem TTY, emite o marker estruturado para o agente mediar. Com TTY, lista os
-    arquivos em texto legível. Em ambos os casos NÃO commita nem fecha: o commit
-    com mensagem descritiva cabe ao agente/usuário, que então re-roda o comando
-    (RN-03, abortar-e-reexecutar; o core nunca faz ``git add`` do trabalho).
-    """
-    if is_interactive is None:
-        is_interactive = sys.stdin.isatty()
-    if not is_interactive:
-        out(render_commit_pendente_marker(paths))
-        return
-    out("Há trabalho não commitado fora de .harness/ antes de encerrar a sessão:")
-    for p in paths:
-        out(f"  - {p}")
-    out(
-        "Commit esse trabalho (git add -- <arquivo> && git commit, com mensagem "
-        "descritiva) e rode encerrar-sessao novamente."
-    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -434,20 +300,14 @@ def main():
             print(message, file=(sys.stdout if code == 0 else sys.stderr))
             sys.exit(code)
 
-        try:
-            # Pré-check de trabalho pendente (016/RN-03): só para encerrar-sessao
-            # COM sessão presente. Ausente cai no no-op tolerante do serviço;
-            # malformado é levantado por load_session e tratado abaixo.
-            if cmd_name_norm == "encerrar-sessao":
-                sessao_existente = service.load_session(session_file)
-                if sessao_existente is not None:
-                    pendentes = pending_work_paths(git, os.getcwd(), session_file)
-                    if pendentes:
-                        # Emite marker / lista (não fecha). O agente commita o
-                        # trabalho real e re-roda o encerrar-sessao.
-                        conduct_commit_pendente(pendentes)
-                        sys.exit(0)
+        # Encerrar-sessao: delega ao fluxo único do core (feature 018, D-01), que
+        # também alimenta os scripts finos da skill — fonte única, sem duplicar a
+        # orquestração (pré-check de pendência → fechamento → ofertas).
+        if cmd_name_norm == "encerrar-sessao":
+            sys.exit(SessionCloseFlow(fs, git, process).run(os.getcwd(), config))
 
+        # Demais comandos de sessão (resume, handoff, clarificar).
+        try:
             result_msg = service.execute_command(
                 command=args.cmd_name,
                 args=args.cmd_args,
@@ -465,59 +325,19 @@ def main():
             if cmd_name_norm == "resume":
                 sys.exit(0)
             print(
-                "Encerramento abortado: corrija a âncora do estado de sessão em "
+                "Comando abortado: corrija a âncora do estado de sessão em "
                 f"{session_file} para um SHA-1 de 40 caracteres e tente de novo.",
                 file=sys.stderr,
             )
             sys.exit(1)
 
         # Só o `resume` alimenta o SessionStart: entrega via sink do harness ativo.
-        # Os demais comandos (encerrar-sessao, handoff, clarificar) imprimem normal.
+        # Os demais comandos (handoff, clarificar) imprimem normal.
         if cmd_name_norm == "resume":
             sink = get_sink(config.harness.active_harness, fs)
             sink.emit(result_msg)
         else:
             print(result_msg)
-
-        # Ofertas de fim de sessão (feature 014): SÓ após um `encerrar-sessao`
-        # bem-sucedido, como etapa POSTERIOR e estritamente não-bloqueante. Toda
-        # a etapa roda sob try/except: qualquer falha de detecção/rede/ação vira
-        # aviso em stderr e nunca regride o encerramento já versionado (RN-01/02).
-        if cmd_name_norm == "encerrar-sessao" and result_msg.startswith(
-            "Sessão encerrada com sucesso"
-        ):
-            try:
-                from src.core.sync.service import SyncService
-                from src.core.session.offers import EndSessionOffersService
-
-                repo_path = os.getcwd()
-                sync_service = SyncService(fs, git, ".harness/sync-cache.json")
-                offers = EndSessionOffersService(git, sync_service).detect(
-                    repo_path, config
-                )
-
-                def run_upgrade(upgrade_offer):
-                    # D-05: sincroniza o clone do upstream por fast-forward antes
-                    # de copiar; não-FF (sujo/divergente) aborta sem sobrescrever.
-                    up = upgrade_offer.upstream_path
-                    default = git.get_default_branch(up)
-                    if not git.merge_ff_only(up, f"origin/{default}"):
-                        raise RuntimeError(
-                            "não foi possível sincronizar o upstream por "
-                            "fast-forward (working tree sujo ou divergência); "
-                            "upgrade abortado sem sobrescrever trabalho"
-                        )
-                    from src.core.bootstrap.init_service import InitializationService
-
-                    InitializationService(fs, process).upgrade_project(repo_path)
-                    print("Harness Core atualizado com sucesso.")
-
-                conduct_end_session_offers(offers, repo_path, git, run_upgrade)
-            except Exception as exc:
-                print(
-                    f"Aviso: ofertas de fim de sessão (não-bloqueantes) falharam: {exc}",
-                    file=sys.stderr,
-                )
 
         sys.exit(0)
 

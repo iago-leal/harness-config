@@ -171,7 +171,7 @@ def test_init_success():
     # Verifica se o harness.toml tem os metadados do upstream gravados
     toml_content = fs.read_file("/Users/iagoleal/dev/harness/destino/harness.toml")
     assert 'upstream_path = "/Users/iagoleal/dev/harness"' in toml_content
-    assert 'version = "1.2.54"' in toml_content
+    assert 'version = "1.2.55"' in toml_content
 
     # Verifica se os ganchos git foram instalados e se a venv foi configurada via subprocesso
     assert len(process.commands) >= 1
@@ -419,12 +419,13 @@ def test_upgrade_force_bypasses_version_compare():
     )
 
 
-def test_init_materializes_session_commands_for_both_harnesses():
-    """Feature 010: init grava os dois comandos de IDE, independente do active_harness.
+def test_init_materializes_session_skill_for_both_harnesses():
+    """Feature 018: init grava a skill `encerrar-sessao` para Claude E Antigravity,
+    independente do active_harness.
 
     O `active_harness` é propositalmente 'gemini' para provar a incondicionalidade:
-    o comando precisa surgir para Claude E Antigravity mesmo quando nenhum dos dois
-    é o harness ativo (D-03).
+    a skill precisa surgir para Claude E Antigravity mesmo quando nenhum dos dois
+    é o harness ativo (D-04).
     """
     fs = InitMockFileSystem()
     process = MockProcessPort()
@@ -436,18 +437,15 @@ def test_init_materializes_session_commands_for_both_harnesses():
         upstream_path="/Users/iagoleal/dev/harness",
     )
 
-    claude_cmd = (
-        "/Users/iagoleal/dev/harness/destino/.claude/commands/encerrar-sessao.md"
-    )
-    agy_cmd = "/Users/iagoleal/dev/harness/destino/.agent/workflows/encerrar-sessao.md"
-    assert fs.exists(claude_cmd)
-    assert fs.exists(agy_cmd)
-    assert "harness cmd encerrar-sessao" in fs.read_file(claude_cmd)
-    # O Antigravity embute o caminho absoluto do wrapper do projeto.
-    assert (
-        "/Users/iagoleal/dev/harness/destino/harness cmd encerrar-sessao"
-        in fs.read_file(agy_cmd)
-    )
+    base = "/Users/iagoleal/dev/harness/destino"
+    claude_skill = f"{base}/.claude/skills/encerrar-sessao/SKILL.md"
+    agy_skill = f"{base}/.agents/skills/encerrar-sessao/SKILL.md"
+    claude_entry = f"{base}/.claude/skills/encerrar-sessao/scripts/encerrar_sessao.py"
+    assert fs.exists(claude_skill)
+    assert fs.exists(agy_skill)
+    assert fs.exists(claude_entry)
+    # A skill é agnóstica: front-matter com a capacidade, sem caminho chumbado.
+    assert "encerrar-sessao" in fs.read_file(claude_skill)
 
 
 def test_get_upstream_version_reads_canonical_layout():

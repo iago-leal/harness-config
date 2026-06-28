@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 
 class HarnessProfile(ABC):
@@ -21,12 +21,13 @@ class HarnessProfile(ABC):
     def apply_instructions(self) -> str:
         """Instrução em uma frase sobre onde e como aplicar o bloco."""
 
-    def session_command_artifact(self, command_path: str) -> Optional[Tuple[str, str]]:
-        """Artefato de slash command de IDE para encerrar a sessão (feature 010).
+    def skills_dir(self) -> Optional[str]:
+        """Diretório (relativo ao projeto) onde o harness lê skills versionáveis.
 
-        Devolve ``(caminho_relativo, conteúdo)`` do arquivo de comando que aciona
-        ``./harness cmd encerrar-sessao``, ou ``None`` quando o harness não expõe
-        uma superfície de slash command para esta capacidade. Por padrão, ``None``.
+        A capacidade `encerrar-sessao` é entregue como uma skill (`SKILL.md` +
+        `scripts/`) materializada aqui (feature 018). Devolve o prefixo por
+        harness (ex.: ``.claude/skills``) ou ``None`` quando o harness não expõe
+        superfície de skill para esta capacidade. Por padrão, ``None``.
         """
         return None
 
@@ -72,28 +73,15 @@ class ClaudeProfile(HarnessProfile):
             "**projeto**. Nunca edite a configuração global em `~/.claude`."
         )
 
-    def session_command_artifact(self, command_path: str):
-        # O Claude lê slash commands de `.claude/commands/<nome>.md`. O `!`-bash
-        # pode rodar de um SUBDIRETÓRIO da sessão — não há garantia de cwd na raiz;
-        # `./harness` (relativo) quebraria fora dela ("no such file or directory").
-        # Por isso `cd "$(git rev-parse --show-toplevel)"` precede o comando: resolve
-        # a raiz do projeto de qualquer subdiretório, fazendo o wrapper ser
-        # encontrado E o core rodar com cwd na raiz (config/estado são relativos a
-        # ela). `${CLAUDE_PROJECT_DIR}` NÃO é expandida no `!`-bash (viraria
-        # `/harness`, issue #33815), então a raiz vem do git — que também sobrevive a
-        # repo movido. `command_path` é ignorado.
-        content = (
-            "---\n"
-            "description: Encerra a sessão do Harness: regenera os artefatos derivados, oferece commitar o trabalho pendente e grava o commit de registro do fechamento por cima do último commit de trabalho.\n"
-            "allowed-tools: Bash(cd:*), Bash(git rev-parse:*), Bash(git status:*), Bash(git add:*), Bash(git commit:*), Bash(./harness cmd regen:*), Bash(./harness cmd encerrar-sessao:*)\n"
-            "---\n\n"
-            "Conduza o encerramento autônomo da sessão do Harness. Rode os comandos a partir da raiz do projeto (resolvida via git), nesta ordem:\n\n"
-            '1. **Regenerar os artefatos derivados:** `cd "$(git rev-parse --show-toplevel)" && ./harness cmd regen`. Se sair com código diferente de zero, **pare** e mostre o erro — não encerre a sessão.\n'
-            '2. **Encerrar a sessão:** `cd "$(git rev-parse --show-toplevel)" && ./harness cmd encerrar-sessao`. O fechamento vira um commit de registro por cima do último commit de trabalho (a âncora segue apontando para o trabalho).\n'
-            "3. **Se a saída trouxer um marker `[HARNESS:COMMIT_PENDENTE …]`**, há trabalho não commitado fora de `.harness/`: commite apenas o que for trabalho real, **por caminho** (`git add -- <arquivo>` e `git commit` com mensagem descritiva; nunca `git add -A`; separe fonte de artefato regenerável, que pode ir ao `.gitignore`) e rode de novo o `./harness cmd encerrar-sessao`.\n"
-            "4. Ao final, o comando pode oferecer publicar o trabalho (git push) e atualizar o Harness Core (upgrade) via markers; conduza essas ofertas se aparecerem.\n"
-        )
-        return (".claude/commands/encerrar-sessao.md", content)
+    def skills_dir(self) -> Optional[str]:
+        # O Claude lê skills de projeto de `.claude/skills/<nome>/SKILL.md`.
+        return ".claude/skills"
+
+    def stale_session_command_paths(self) -> List[str]:
+        # Migração 010/016 → 018: o slash command `.claude/commands/encerrar-sessao.md`
+        # que delegava ao binário foi substituído pela skill versionável. Remove
+        # o órfão (só o arquivo nomeado, não-destrutivo).
+        return [".claude/commands/encerrar-sessao.md"]
 
 
 class GeminiProfile(HarnessProfile):
@@ -182,28 +170,21 @@ class AntigravityProfile(HarnessProfile):
             "`.agents/hooks.json` do projeto: nunca em diretório global do usuário."
         )
 
-    def session_command_artifact(self, command_path: str):
-        # O Antigravity registra um comando de chat ao salvar um arquivo em
-        # `.agents/workflows/<nome>.md`. Usa o caminho ABSOLUTO do wrapper
-        # (resolvido na materialização), espelhando o `<ABS>` dos ganchos — não há
-        # env var de projeto garantida aqui. Se o workflow não executar shell
-        # embutido, o corpo instrui o agente a rodar o comando (D-06).
-        content = (
-            "---\n"
-            "description: Encerra a sessão do Harness: regenera os artefatos derivados, oferece commitar o trabalho pendente e grava o commit de registro do fechamento por cima do último commit de trabalho.\n"
-            "---\n\n"
-            "Conduza o encerramento autônomo da sessão do Harness, nesta ordem (rode da raiz do projeto):\n\n"
-            f"1. Regenerar os artefatos derivados: `cd {command_path} && {command_path}/harness cmd regen`. Se falhar (exit ≠ 0), pare e mostre o erro; não encerre.\n"
-            f"2. Encerrar a sessão: `cd {command_path} && {command_path}/harness cmd encerrar-sessao` — commit de registro por cima do último commit de trabalho (a âncora segue no trabalho).\n"
-            "3. Se a saída trouxer um marker `[HARNESS:COMMIT_PENDENTE …]`, commite o trabalho real por caminho (`git add -- <arquivo>` e `git commit` com mensagem descritiva; nunca `git add -A`) e rode o `harness cmd encerrar-sessao` de novo.\n"
-            "4. Ao final, conduza as ofertas de publicar o trabalho (git push) e atualizar o Harness Core (upgrade) se aparecerem. Mostre a saída ao usuário.\n"
-        )
-        return (".agent/workflows/encerrar-sessao.md", content)
+    def skills_dir(self) -> Optional[str]:
+        # O Antigravity lê skills de projeto de `.agents/skills/<nome>/SKILL.md`
+        # (ativação semântica por contexto). Plural `.agents`, ao contrário do
+        # workflow legado, que vivia em `.agent/workflows` (singular).
+        return ".agents/skills"
 
     def stale_session_command_paths(self) -> List[str]:
-        # Versões anteriores gravavam o workflow em `.agents/workflows/` (plural),
-        # caminho que o Antigravity não reconhece. Limpa o órfão na migração.
-        return [".agents/workflows/encerrar-sessao.md"]
+        # Migração 017 → 018: o workflow `.md` que delegava ao binário foi
+        # substituído pela skill versionável. Remove o órfão do caminho singular
+        # atual (017) E o do plural legado (anterior à 017). Só os arquivos
+        # nomeados, nunca o diretório nem workflows de terceiros (não-destrutivo).
+        return [
+            ".agent/workflows/encerrar-sessao.md",
+            ".agents/workflows/encerrar-sessao.md",
+        ]
 
 
 _PROFILES = {
