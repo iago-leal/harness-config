@@ -7,8 +7,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PROJECT_DIR}/harness cmd resume",
-            "timeout": 12,
-            "statusMessage": "Iniciando sessão do Harness..."
+            "timeout": 12
           }
         ]
       }
@@ -20,8 +19,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PROJECT_DIR}/harness format",
-            "timeout": 30,
-            "statusMessage": "Formatando código com o Harness..."
+            "timeout": 30
           }
         ]
       }
@@ -32,8 +30,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PROJECT_DIR}/harness decisions",
-            "timeout": 10,
-            "statusMessage": "Consolidando decisões..."
+            "timeout": 10
           }
         ]
       }
