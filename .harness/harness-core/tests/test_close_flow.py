@@ -207,3 +207,40 @@ def test_sem_tty_nao_pergunta_no_caminho_pendente():
     )
     assert code == 0
     assert any("[HARNESS:COMMIT_PENDENTE" in o for o in outs)
+
+
+def test_pendente_inclui_decisoes_de_harness_exceto_estado():
+    # Feature 019: decisões e índice de .harness/ entram na oferta; só o
+    # estado-da-sessao.md (que o fechamento versiona) é excluído.
+    fs = MockFileSystem()
+    git = FakeGit(
+        dirty=[".harness/decisoes/MD-0007.md", ".harness/microdecisoes.md", STATE_FILE]
+    )
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    marker = next(o for o in outs if "[HARNESS:COMMIT_PENDENTE" in o)
+    assert ".harness/decisoes/MD-0007.md" in marker
+    assert ".harness/microdecisoes.md" in marker
+    assert STATE_FILE not in marker
+    # Não fechou: nenhum commit do estado e nenhuma oferta.
+    assert git.commit_calls == []
+    assert flow.offers_called == 0
+
+
+def test_apenas_estado_sujo_fecha_sem_oferta():
+    # Feature 019/RF-02: o state_file como único sujo é tratado como árvore limpa.
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[STATE_FILE])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    assert not any("[HARNESS:COMMIT_PENDENTE" in o for o in outs)
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    assert flow.offers_called == 1

@@ -39,3 +39,24 @@ def test_list_dirty_paths_reports_untracked_and_modified(tmp_path):
     dirty = git.list_dirty_paths(str(tmp_path))
     assert "a.txt" in dirty
     assert "novo.txt" in dirty
+
+
+def test_list_dirty_paths_expands_untracked_subdir(tmp_path):
+    # Feature 019: arquivo não rastreado dentro de subdiretório novo deve vir como
+    # caminho de arquivo, não o diretório colapsado (--untracked-files=all). Sem
+    # isso, pending_work_paths não distingue o estado-da-sessao.md do resto de
+    # .harness/, e a oferta de commit pendente ofereceria o diretório inteiro.
+    _init_repo(tmp_path)
+    (tmp_path / "a.txt").write_text("x")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-m", "init")
+
+    sub = tmp_path / ".harness" / "decisoes"
+    sub.mkdir(parents=True)
+    (sub / "MD-1.md").write_text("d")
+
+    git = SubprocessGitAdapter()
+    dirty = git.list_dirty_paths(str(tmp_path))
+    assert ".harness/decisoes/MD-1.md" in dirty
+    assert ".harness" not in dirty
+    assert ".harness/" not in dirty

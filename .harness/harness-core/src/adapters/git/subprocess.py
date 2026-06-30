@@ -175,8 +175,12 @@ class SubprocessGitAdapter(GitPort):
 
     def list_dirty_paths(self, repo_path: str) -> list[str]:
         try:
+            # --untracked-files=all expande diretórios não rastreados em arquivos
+            # individuais; sem isso o porcelain colapsa um subdiretório novo numa
+            # única linha (ex.: ".harness/"), e a oferta de commit pendente (019)
+            # não consegue separar o estado-da-sessao.md do restante de .harness/.
             result = subprocess.run(
-                ["git", "status", "--porcelain"],
+                ["git", "status", "--porcelain", "--untracked-files=all"],
                 cwd=repo_path,
                 capture_output=True,
                 text=True,

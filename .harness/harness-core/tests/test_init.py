@@ -171,13 +171,32 @@ def test_init_success():
     # Verifica se o harness.toml tem os metadados do upstream gravados
     toml_content = fs.read_file("/Users/iagoleal/dev/harness/destino/harness.toml")
     assert 'upstream_path = "/Users/iagoleal/dev/harness"' in toml_content
-    assert 'version = "1.2.55"' in toml_content
+    assert 'version = "1.2.56"' in toml_content
 
     # Verifica se os ganchos git foram instalados e se a venv foi configurada via subprocesso
     assert len(process.commands) >= 1
     # Deve ter rodado python3 -m venv no destino
     venv_cmd = any("venv" in arg for arg, _ in process.commands)
     assert venv_cmd
+
+
+def test_init_gitignore_inclui_core_e_sync_cache():
+    # Feature 019: o init garante no .gitignore do alvo tanto a cópia vendored do
+    # core quanto o cache de sync (runtime), de forma idempotente.
+    fs = InitMockFileSystem()
+    process = MockProcessPort()
+    service = InitializationService(fs, process)
+
+    service.initialize_project(
+        target_path="/Users/iagoleal/dev/harness/destino",
+        active_harness="claude",
+        upstream_path="/Users/iagoleal/dev/harness",
+    )
+
+    gitignore = fs.read_file("/Users/iagoleal/dev/harness/destino/.gitignore")
+    assert ".harness/harness-core/" in gitignore
+    assert ".harness/sync-cache.json" in gitignore
+    assert gitignore.count(".harness/sync-cache.json") == 1
 
 
 def test_upgrade_success():

@@ -18,24 +18,24 @@ from typing import Optional
 
 
 def pending_work_paths(git, repo_path: str, session_file: str) -> list:
-    """Caminhos sujos da working tree FORA do diretório do harness (feature 016).
+    """Caminhos sujos da working tree, EXCETO o arquivo de estado (feature 019).
 
-    Exclui o diretório que contém o ``state_file`` (ex.: ``.harness/``), que o
-    próprio fechamento versiona; o restante é trabalho do usuário a commitar
-    antes de encerrar (RN-03). Read-only — não toca o working tree.
+    Exclui apenas ``session_file`` (ex.: ``.harness/estado-da-sessao.md``), que o
+    próprio commit de fechamento versiona (RN-N31). Todo o restante — inclusive
+    decisões e o índice em ``.harness/`` — é trabalho a commitar antes de encerrar
+    (RN-03). Caches de runtime de ``.harness/`` ficam de fora pelo ``.gitignore``
+    (``git status --porcelain`` omite ignorados). Read-only — não toca o working tree.
     """
-    harness_dir = session_file.split("/", 1)[0] or ".harness"
     dirty = git.list_dirty_paths(repo_path)
-    return [
-        p for p in dirty if not (p == harness_dir or p.startswith(harness_dir + "/"))
-    ]
+    return [p for p in dirty if p != session_file]
 
 
 def render_commit_pendente_marker(paths: list, *, cap: int = 20) -> str:
     """Marker estruturado de trabalho pendente (modo sem TTY).
 
     Contrato consumido pelo agente (ver
-    `_reversa_forward/016-encerrar-sessao-autonomo/interfaces/commit-pendente-marker.md`).
+    `_reversa_forward/019-oferta-commit-cobre-harness/interfaces/commit-pendente-marker.md`,
+    delta de semântica sobre o da feature 016).
     """
     shown = paths[:cap]
     truncado = "" if len(paths) <= cap else f" truncado=true mostrados={len(shown)}"
@@ -60,7 +60,7 @@ def conduct_commit_pendente(paths, *, is_interactive=None, out=print) -> None:
     if not is_interactive:
         out(render_commit_pendente_marker(paths))
         return
-    out("Há trabalho não commitado fora de .harness/ antes de encerrar a sessão:")
+    out("Há trabalho não commitado (exceto o estado de sessão) antes de encerrar:")
     for p in paths:
         out(f"  - {p}")
     out(

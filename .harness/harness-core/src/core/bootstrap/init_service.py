@@ -6,6 +6,7 @@ from src.core.ports.process import ProcessPort
 from src.core.domain.layout import (
     CORE_REL_PATH,
     CORE_GITIGNORE_ENTRY,
+    SYNC_CACHE_GITIGNORE_ENTRY,
     CORE_CONFIG_CANDIDATE_RELPATHS,
 )
 from src.core.install.local_apply import apply_local_materializers
@@ -35,7 +36,7 @@ class InitializationService:
     def __init__(self, fs: FileSystemPort, process: ProcessPort):
         self.fs = fs
         self.process = process
-        self.current_version = "1.2.55"
+        self.current_version = "1.2.56"
 
     def initialize_project(
         self,
@@ -161,6 +162,9 @@ class InitializationService:
         # regenerável via upgrade/init, então não deve poluir o histórico do
         # projeto-alvo. Só no alvo; o repo-fonte versiona o core (D-04).
         self._ensure_gitignore_entry(target_path, CORE_GITIGNORE_ENTRY)
+        # Cache de sync (runtime): ignorado para não ser oferecido pela oferta de
+        # commit pendente, que a partir da 019 cobre o restante de .harness/ (D-02).
+        self._ensure_gitignore_entry(target_path, SYNC_CACHE_GITIGNORE_ENTRY)
 
     def upgrade_project(self, target_path: str, force: bool = False) -> None:
         """Atualiza a instalação do Harness Core no projeto de destino a partir do upstream configurado.
@@ -260,6 +264,8 @@ class InitializationService:
         # 7. Garante (idempotente) a entrada do core no .gitignore do alvo — útil
         # também na migração de instalações antigas para o novo layout (D-04).
         self._ensure_gitignore_entry(target_path, CORE_GITIGNORE_ENTRY)
+        # E o cache de sync (runtime), pelo mesmo motivo da 019 (D-02).
+        self._ensure_gitignore_entry(target_path, SYNC_CACHE_GITIGNORE_ENTRY)
 
     def _ensure_gitignore_entry(self, target_path: str, entry: str) -> None:
         """Garante, de forma idempotente, que `entry` consta no .gitignore do alvo.
