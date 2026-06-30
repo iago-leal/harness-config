@@ -1,0 +1,10 @@
+{"ts":"2026-06-30T22:08:43Z","action":"T001","status":"done","files":["src/core/domain/layout.py"]}
+{"ts":"2026-06-30T22:08:43Z","action":"T002","status":"done","files":["tests/test_close_flow.py"]}
+{"ts":"2026-06-30T22:08:43Z","action":"T003","status":"done","files":["tests/test_init.py"]}
+{"ts":"2026-06-30T22:08:43Z","action":"T004","status":"done","files":["tests/test_init.py"]}
+{"ts":"2026-06-30T22:08:43Z","action":"T005","status":"done","files":["src/core/session/close_flow.py"]}
+{"ts":"2026-06-30T22:08:43Z","action":"T006","status":"done","files":["src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-30T22:08:43Z","action":"T007","status":"done","files":["src/core/domain/config.py","src/core/bootstrap/init_service.py"]}
+{"ts":"2026-06-30T22:08:43Z","action":"T008","status":"done","files":["src/core/session/close_flow.py"]}
+{"ts":"2026-06-30T22:08:43Z","action":"T010","status":"done","files":["src/adapters/git/subprocess.py","tests/test_git_dirty.py"],"note":"descoberta na execucao via smoke real: porcelain colapsa subdir untracked; --untracked-files=all"}
+{"ts":"2026-06-30T22:08:43Z","action":"T009","status":"done","files":["tests/"],"note":"suite 216 passed; smoke real ok (git+gitignore)"}
