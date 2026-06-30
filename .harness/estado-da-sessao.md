@@ -1,7 +1,7 @@
 ---
-commit: 645038d52ffdca6f6d46787dd4cbe3b1b8d567c0
+commit: b4dd820893ff8ce025ef1243ef9976f969d30498
 feature: reversa-forward (roteamento) + brief da feature 015
-start_time: '2026-06-28T12:51:45.785763+00:00'
+start_time: '2026-06-30T22:24:15.028752+00:00'
 status: inactive
 ---
 
