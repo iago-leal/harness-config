@@ -7,3 +7,6 @@
 {"ts":"2026-07-01T17:14:35Z","action":"T003","status":"done","files":["tests/test_shim.py"]}
 {"ts":"2026-07-01T17:14:35Z","action":"T006","status":"done","files":["tests/test_init.py"]}
 {"ts":"2026-07-01T17:14:35Z","action":"T012","status":"done","files":["src/core/bootstrap/init_service.py"]}
+{"ts":"2026-07-01T18:27:09Z","action":"T007","status":"done","files":["tests/test_migrate.py"]}
+{"ts":"2026-07-01T18:27:09Z","action":"T014","status":"done","files":["src/core/migrate/service.py","src/core/ports/fs.py","src/adapters/fs/local.py","tests/helpers.py"]}
+{"ts":"2026-07-01T18:27:09Z","action":"T017","status":"done","files":["src/main.py"]}

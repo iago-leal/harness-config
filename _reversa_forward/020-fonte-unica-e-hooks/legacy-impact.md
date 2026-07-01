@@ -1,35 +1,37 @@
 # Legacy-impact: fonte única + hooks não-destrutivos
 
 > Feature: `020-fonte-unica-e-hooks` · Data: `2026-07-01`
-> **Rodada parcial** — blocos executados: (1) materializadores não-destrutivos (T004/T005/T010/T011) e (2) shim + init fonte única (T001/T002/T003/T006/T012). Faltam: descontinuação de `upgrade`/`sync`/`version` (T008/T009/T013/T015/T016), `migrate` (T007/T014/T017) e verificação (T018/T019/T020).
+> **Rodada parcial** — blocos executados: (1) materializadores não-destrutivos (T004/T005/T010/T011); (2) shim + init fonte única (T001/T002/T003/T006/T012); (3) migração (T007/T014/T017). **Desescopados** (feature própria): descontinuação de `sync`/`upgrade`/oferta‑014 (T008/T009/T013/T015/T016). Falta: verificação final (T018/T019/T020).
 
 ## Arquivos afetados
 
-| Arquivo afetado                                                                                                                        | Componente (`_reversa_sdd/`)                                                 | Tipo            | Severidade | Justificativa                                                                                                                                           |
-| -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/core/bootstrap/init_service.py`                                                                                                   | `initialize_project` — `domain.md#2.9` (RN-N19)                              | regra-alterada  | HIGH       | O `init` deixa de copiar o core e de criar venv; grava o shim, não grava `version`, instala hooks in-process e ignora só o sync-cache (não mais o core) |
-| `src/core/bootstrap/shim.py` (novo)                                                                                                    | Wrapper de execução — `domain.md#2.9` (RN-N19)                               | componente-novo | MEDIUM     | `render_shim()`: fonte única do wrapper que executa o core do upstream com o cwd do projeto e falha barulhento sem upstream                             |
-| `src/core/install/claude_settings.py`                                                                                                  | `materialize_claude_settings` — `domain.md#2.13` (RN-N30), feature 016/RN-05 | regra-alterada  | MEDIUM     | Merge do `.claude/settings.json` passa a ser **por-item** por assinatura no `command`, preservando hooks do usuário no mesmo evento                     |
-| `src/core/bootstrap/service.py`                                                                                                        | `install_hooks` — `domain.md#2.7` (RN-N15)                                   | regra-alterada  | MEDIUM     | Instalação dos hooks git não-destrutiva (cria/atualiza/encadeia por assinatura) e via shim                                                              |
-| `src/core/domain/config.py`                                                                                                            | `load_config`/`HarnessSection` — `domain.md#2.8` (RN-N16)                    | preservada      | LOW        | Já tolerava `harness.toml` com e sem `version`; nenhuma alteração de produção — apenas fixado por teste                                                 |
-| `tests/test_shim.py`, `tests/test_init.py`, `tests/test_config.py`, `tests/test_install_claude_settings.py`, `tests/test_bootstrap.py` | (suíte)                                                                      | —               | LOW        | +smoke do shim, contrato de init fonte única, tolerância a version, merge por-item, hooks não-destrutivos                                               |
+| Arquivo afetado                                     | Componente (`_reversa_sdd/`)                           | Tipo              | Severidade | Justificativa                                                                                                                                            |
+| --------------------------------------------------- | ------------------------------------------------------ | ----------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/core/bootstrap/init_service.py`                | `initialize_project` — `domain.md#2.9` (RN-N19)        | regra-alterada    | HIGH       | `init` fonte única: sem cópia do core nem venv; grava o shim, hooks in-process, `harness.toml` sem `version`                                             |
+| `src/core/bootstrap/shim.py` (novo)                 | Wrapper de execução — `domain.md#2.9` (RN-N19)         | componente-novo   | MEDIUM     | `render_shim()`: executa o core do upstream com o cwd do projeto; falha barulhento sem upstream                                                          |
+| `src/core/migrate/service.py` (novo)                | Migração da base — RN-08 (nova)                        | componente-novo   | HIGH       | `MigrateService`: converte instalações copiadas → fonte única; remove `.harness/harness-core/` (por último), com guarda de nunca tocar o upstream        |
+| `src/core/ports/fs.py` + `src/adapters/fs/local.py` | `FileSystemPort` — porta de infraestrutura             | contrato-alterado | MEDIUM     | Novo método `remove_tree` (rmtree) para a migração apagar a cópia do core                                                                                |
+| `src/main.py`                                       | CLI — driver                                           | contrato-alterado | MEDIUM     | Novo subcomando `migrate` (`--dry-run`, raiz default `~/dev`); correção do `except NotAGitRepositoryError` (import faltante, F821 latente pré-existente) |
+| `src/core/install/claude_settings.py`               | `materialize_claude_settings` — 016/RN-05 (sob RN-N30) | regra-alterada    | MEDIUM     | Merge do `settings.json` por-item, preservando hooks do usuário                                                                                          |
+| `src/core/bootstrap/service.py`                     | `install_hooks` — `domain.md#2.7` (RN-N15)             | regra-alterada    | MEDIUM     | Hooks git não-destrutivos (assinatura + `.local`) e via shim                                                                                             |
+| `tests/*`                                           | (suíte)                                                | —                 | LOW        | +smoke shim, contrato init, tolerância a version, merge por-item, hooks não-destrutivos, migração (238 passed)                                           |
 
 ## Diff conceitual por componente
 
-- **`initialize_project` (cópia física → fonte única).** Antes replicava `harness-core` no alvo (`_copy_tree`), criava `.venv` + `pip install`, copiava o wrapper e rodava bootstrap por subprocesso da venv de destino, além de gravar `version` no `harness.toml` e ignorar a cópia vendored no `.gitignore`. Agora grava o **shim** (`render_shim()`), instala os hooks **in-process** (`BootstrapService(fs).install_hooks`), mantém a árvore `.harness/` e as materializações de IDE, grava o `harness.toml` **sem `version`** e ignora apenas `sync-cache.json`. O core (código + venv) passa a viver exclusivamente no upstream.
-- **`shim.py` (novo).** Contrato de execução do wrapper: `cd` para a raiz do projeto, lê `upstream_path`, executa `python`+`main.py` do upstream repassando os args; upstream ausente → stderr + exit 1. Reutilizável por `init` e (adiante) `migrate`.
-- **`materialize_claude_settings` (por-evento → por-item)** e **`install_hooks` (sobrescrita → não-destrutivo + shim):** ver rodada anterior; comportamento inalterado nesta.
+- **`MigrateService` (novo).** Descobre instalações sob uma raiz (`list_dir` + `harness.toml`), e para cada uma: instala o shim, reescreve os hooks (via `install_hooks`), re-materializa o `settings.json`, remove `version` do toml e **por último** apaga a(s) cópia(s) do core (`.harness/harness-core/` e o legado `harness-core/` do `livro-mfc`). Idempotente; `--dry-run` só relata. **Guardas de segurança:** nunca migra o diretório do upstream (`upstream_self`) nem uma autoreferência; `remove_tree` só aceita alvos cujo basename é `harness-core`; pula instalações cujo core do upstream esteja ausente. Exceção consciente ao footprint zero (RN-N17): atua sobre outros projetos por design.
+- **`FileSystemPort.remove_tree` (novo).** Método de porta implementado em `LocalFileSystemAdapter` (`shutil.rmtree`) e nos três fakes de teste. A validação do alvo cabe ao chamador (`MigrateService._safe_remove_core`).
+- **`initialize_project` / `shim.py` / `materialize_claude_settings` / `install_hooks`:** ver blocos anteriores; comportamento inalterado nesta rodada.
 
 ## Preservadas (regras 🟢 do `domain.md` intactas)
 
-- **RN-N16** (via única tipada de configuração) — `load_config` inalterado; só ganhou testes de tolerância a `version`.
-- **RN-N17** (footprint global zero) — toda escrita do `init` segue sob `target_path`.
-- **RN-N20 / RN-N21** (upgrade físico / checagem passiva de versão) — **ainda intactas** neste corte; serão modificadas/removidas no bloco de descontinuação.
-- **RN-N27 / RN-N28 / RN-N29 / RN-N30** (materializadores Antigravity/skills/local_apply) — a fiação in-process do `init` para materializações foi preservada.
-- **RN-N4** (comportamento barulhento) — shim e materializadores falham barulhento.
+- **RN-N16** (config tipada), **RN-N17** (footprint zero no `init`/materialize — o `migrate` é a exceção declarada), **RN-N4** (barulhento).
+- **RN-N20 / RN-N21** (upgrade físico / checagem passiva) — **ainda intactas**; desescopadas para feature própria.
+- **RN-N27 / RN-N28 / RN-N29 / RN-N30** (materializadores) — fiação in-process preservada.
 
-## Modificadas (regras 🟢 alteradas)
+## Modificadas (regras 🟢 alteradas) / Novas
 
-- **RN-N19** (init replica core + venv, instala hooks por subprocesso) → **fonte única**: instala o shim, sem cópia nem venv, com bootstrap in-process e `harness.toml` sem `version`.
-- **RN-N15** (bootstrap reescreve hooks incondicionalmente) → não-destrutivo por assinatura + via shim.
-- **Materialização do `settings.json` do Claude** (016/RN-05, sob RN-N30) → merge **por-item**.
+- **RN-N19** (init replica core + venv) → **fonte única** (shim, sem cópia/venv, sem `version`).
+- **RN-N15** (bootstrap reescreve hooks) → não-destrutivo + via shim.
+- **Materialização do `settings.json`** (016/RN-05) → merge **por-item**.
+- **RN-08 (nova)** — migração da base instalada via `harness migrate`, com guardas de segurança.
+- **`FileSystemPort` (contrato de porta)** — novo `remove_tree`.
