@@ -11,9 +11,10 @@ from unittest.mock import MagicMock
 
 
 from src.core.domain.config import HarnessConfig
-from src.core.domain.models import SessionState
+from src.core.domain.models import SessionState, SessionNarrative
 from src.core.commands.service import CommandService
 from src.core.ports.git import GitPort
+from src.core.session import serializer
 from src.core.session.close_flow import SessionCloseFlow
 from tests.helpers import MockFileSystem
 
@@ -25,10 +26,13 @@ CLOSING_HEAD = "c" * 40
 class FakeGit(GitPort):
     """Git fake mínimo: HEAD fixo, dirty configurável, commit que avança o HEAD."""
 
-    def __init__(self, head=WORK_HEAD, dirty=None, commit_raises=False):
+    def __init__(
+        self, head=WORK_HEAD, dirty=None, commit_raises=False, baseline_text=None
+    ):
         self._head = head
         self._dirty = dirty or []
         self._commit_raises = commit_raises
+        self._baseline_text = baseline_text
         self.commit_calls = []
 
     def get_head_commit(self, repo_path: str) -> str:
@@ -64,7 +68,7 @@ class FakeGit(GitPort):
         return 0
 
     def get_file_at_ref(self, repo_path: str, ref: str, rel_path: str):
-        return None
+        return self._baseline_text
 
     def is_working_tree_clean(self, repo_path: str) -> bool:
         return not self._dirty
@@ -91,9 +95,20 @@ def _config():
     return HarnessConfig(session={"state_file": STATE_FILE})
 
 
-def _seed_active_session(fs, git):
-    """Grava um estado de sessão ativo e válido sobre WORK_HEAD."""
-    state = SessionState(commit_hash=WORK_HEAD, active_feature="feat-1")
+def _seed_active_session(fs, git, narrative=None):
+    """Grava um estado de sessão ativo e válido sobre WORK_HEAD.
+
+    A narrativa default é NÃO-vazia: o gate de narrativa viva bloqueia o
+    fechamento de uma sessão com narrativa vazia, então os testes que exercitam
+    o caminho de fechamento precisam de uma narrativa preenchida.
+    """
+    state = SessionState(
+        commit_hash=WORK_HEAD,
+        active_feature="feat-1",
+        narrative=narrative
+        if narrative is not None
+        else SessionNarrative(feito=["consolidou o trabalho da sessão"]),
+    )
     CommandService(fs, git).save_session(STATE_FILE, state)
 
 
@@ -244,3 +259,114 @@ def test_apenas_estado_sujo_fecha_sem_oferta():
     assert not any("[HARNESS:COMMIT_PENDENTE" in o for o in outs)
     assert any("Sessão encerrada com sucesso" in o for o in outs)
     assert flow.offers_called == 1
+
+
+# --- Gate de narrativa viva -------------------------------------------------
+# O fechamento não pode carimbar uma âncora nova por cima de uma narrativa vazia
+# ou congelada desde o início da sessão: a narrativa é escrita pelo agente, e o
+# gate a exige de forma barulhenta (marker NARRATIVA_PENDENTE), sem fechar.
+
+
+def _rendered_state(narrative, *, is_active=False):
+    """Texto de um estado-da-sessao (front-matter + narrativa) para servir de baseline."""
+    return serializer.render(
+        SessionState(
+            commit_hash=WORK_HEAD,
+            active_feature="feat-1",
+            is_active=is_active,
+            narrative=narrative,
+        )
+    )
+
+
+def test_narrativa_vazia_emite_marker_e_nao_fecha():
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git, narrative=SessionNarrative())  # vazia
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    assert any("[HARNESS:NARRATIVA_PENDENTE" in o for o in outs)
+    # Não fechou: nenhum commit do estado e nenhuma oferta.
+    assert git.commit_calls == []
+    assert flow.offers_called == 0
+
+
+def test_narrativa_inalterada_vs_ancora_emite_marker_e_nao_fecha():
+    # A narrativa atual é idêntica à do commit-âncora de partida → esquecimento.
+    narrative = SessionNarrative(feito=["fez X"], proximos_passos=["fará Y"])
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[], baseline_text=_rendered_state(narrative))
+    _seed_active_session(fs, git, narrative=narrative)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    assert any("[HARNESS:NARRATIVA_PENDENTE" in o for o in outs)
+    assert git.commit_calls == []
+    assert flow.offers_called == 0
+
+
+def test_narrativa_atualizada_vs_ancora_fecha():
+    # Narrativa mudou desde a âncora → o agente consolidou; pode fechar.
+    baseline = SessionNarrative(feito=["trabalho antigo"])
+    atual = SessionNarrative(feito=["trabalho NOVO desta sessão"])
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[], baseline_text=_rendered_state(baseline))
+    _seed_active_session(fs, git, narrative=atual)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    assert not any("[HARNESS:NARRATIVA_PENDENTE" in o for o in outs)
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    assert git.commit_calls and git.commit_calls[0][1] == [STATE_FILE]
+    assert flow.offers_called == 1
+
+
+def test_primeira_sessao_sem_baseline_fecha_com_narrativa_preenchida():
+    # Sem baseline legível na âncora (1ª sessão): narrativa preenchida basta.
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[], baseline_text=None)
+    _seed_active_session(
+        fs, git, narrative=SessionNarrative(feito=["primeira entrega"])
+    )
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    assert not any("[HARNESS:NARRATIVA_PENDENTE" in o for o in outs)
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    assert flow.offers_called == 1
+
+
+def test_narrativa_pendente_tty_orienta_sem_perguntar():
+    # Com TTY, o gate orienta em texto legível e não lê entrada (não há asker).
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git, narrative=SessionNarrative())  # vazia → dispara
+    flow = SpyFlow(fs, git, MagicMock())
+
+    def asker_proibido(_q):
+        raise AssertionError("o gate de narrativa não deve perguntar")
+
+    outs = []
+    code = flow.run(
+        "repo/",
+        _config(),
+        out=outs.append,
+        err=lambda _m: None,
+        asker=asker_proibido,
+        is_interactive=True,
+    )
+
+    assert code == 0
+    assert any("não foi atualizada nesta sessão" in o for o in outs)
+    assert not any("[HARNESS:NARRATIVA_PENDENTE" in o for o in outs)
+    assert git.commit_calls == []
+    assert flow.offers_called == 0

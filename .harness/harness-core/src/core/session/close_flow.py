@@ -69,6 +69,80 @@ def conduct_commit_pendente(paths, *, is_interactive=None, out=print) -> None:
     )
 
 
+def narrative_is_stale(git, repo_path: str, session_file: str, session) -> bool:
+    """A narrativa da sessão não foi atualizada NESTA sessão? (narrativa viva)
+
+    O ``estado-da-sessao.md`` tem duas metades: o front-matter (âncora/status, que o
+    fechamento mantém) e a narrativa (as 4 seções ``##``, escritas PELO agente). O core
+    nunca inventa a narrativa; mas pode exigir, de forma barulhenta, que ela não fique
+    para trás. Duas condições disparam o gate: (1) narrativa VAZIA — não se encerra sem
+    narrar; (2) narrativa IDÊNTICA à do commit-âncora de partida (``session.commit_hash``,
+    o estado como retomado) — sinal de que o agente esqueceu de consolidar o que fez.
+
+    Fail-OPEN (não bloqueia) apenas quando não há baseline legível na âncora — 1ª sessão
+    ou histórico ausente/malformado — e a narrativa atual já está preenchida: aí o
+    preenchimento basta. Read-only: não toca o working tree.
+    """
+    from src.core.session import serializer
+    from src.core.session.errors import MalformedSessionStateError
+
+    narrative = session.narrative
+    if narrative is None or narrative.is_empty():
+        return True
+
+    baseline_raw = git.get_file_at_ref(repo_path, session.commit_hash, session_file)
+    if not baseline_raw:
+        # Sem baseline na âncora (1ª sessão real): narrativa preenchida já basta.
+        return False
+    try:
+        baseline = serializer.parse(baseline_raw)
+    except MalformedSessionStateError:
+        # Estado histórico ilegível não pode travar o encerramento de hoje.
+        return False
+    if baseline is None or baseline.narrative is None:
+        return False
+    return narrative == baseline.narrative
+
+
+def render_narrativa_pendente_marker(session_file: str) -> str:
+    """Marker estruturado de narrativa não atualizada (modo sem TTY).
+
+    Simétrico ao ``COMMIT_PENDENTE``: o agente reescreve as 4 seções e re-roda o
+    encerramento. Contrato consumido pela skill ``encerrar-sessao``.
+    """
+    return (
+        f'[HARNESS:NARRATIVA_PENDENTE arquivo="{session_file}" '
+        'acao="atualize a narrativa da sessão (as 4 seções: O que foi feito / '
+        "Próximos passos / Pendências / bloqueios / Ponteiros) refletindo o "
+        'trabalho desta sessão; depois rode novamente encerrar-sessao"]'
+    )
+
+
+def conduct_narrativa_pendente(
+    session_file: str, *, is_interactive=None, out=print
+) -> None:
+    """Anuncia narrativa desatualizada antes de encerrar (dualidade TTY × marker).
+
+    Sem TTY, emite o marker para o agente mediar. Com TTY, orienta em texto legível.
+    Em ambos os casos NÃO fecha: consolidar a narrativa cabe ao agente, que então
+    re-roda o comando (mesmo protocolo abortar-e-reexecutar do ``COMMIT_PENDENTE``).
+    """
+    if is_interactive is None:
+        is_interactive = sys.stdin.isatty()
+    if not is_interactive:
+        out(render_narrativa_pendente_marker(session_file))
+        return
+    out(
+        f"A narrativa da sessão em {session_file} não foi atualizada nesta sessão "
+        "(está vazia ou idêntica à do início)."
+    )
+    out(
+        "Reescreva as 4 seções (O que foi feito / Próximos passos / Pendências / "
+        "bloqueios / Ponteiros) refletindo o trabalho desta sessão e rode "
+        "encerrar-sessao novamente."
+    )
+
+
 def render_offer_markers(offers) -> list:
     """Modo sem TTY: linhas-marcador estáveis das ofertas, sem ler entrada.
 
@@ -222,6 +296,15 @@ class SessionCloseFlow:
                 )
                 return 0
 
+            # Gate de narrativa viva: não se encerra com a narrativa vazia ou
+            # congelada desde o início da sessão. Barulhento e não-fechante — o
+            # agente consolida as 4 seções e re-roda (mesmo protocolo do pendente).
+            if narrative_is_stale(self.git, repo_path, session_file, sessao_existente):
+                conduct_narrativa_pendente(
+                    session_file, is_interactive=is_interactive, out=out
+                )
+                return 0
+
         try:
             result_msg = service.execute_command(
                 command="encerrar-sessao",
@@ -307,6 +390,9 @@ __all__ = [
     "pending_work_paths",
     "render_commit_pendente_marker",
     "conduct_commit_pendente",
+    "narrative_is_stale",
+    "render_narrativa_pendente_marker",
+    "conduct_narrativa_pendente",
     "render_offer_markers",
     "conduct_end_session_offers",
     "SessionCloseFlow",
