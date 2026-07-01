@@ -1,4 +1,5 @@
 import os
+import shutil
 from typing import List
 from src.core.ports.fs import FileSystemPort
 
@@ -43,6 +44,10 @@ class LocalFileSystemAdapter(FileSystemPort):
     def remove(self, path: str) -> None:
         if os.path.exists(path):
             os.remove(path)
+
+    def remove_tree(self, path: str) -> None:
+        if os.path.isdir(path):
+            shutil.rmtree(path)
 
     def is_dir(self, path: str) -> bool:
         return os.path.isdir(path)

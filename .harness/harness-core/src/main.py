@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.adapters.fs.local import LocalFileSystemAdapter
 from src.adapters.git.subprocess import SubprocessGitAdapter
 from src.adapters.process.formatter import HostFormatterAdapter
-from src.core.bootstrap.service import BootstrapService
+from src.core.bootstrap.service import BootstrapService, NotAGitRepositoryError
 from src.core.formatting.service import FormattingService
 from src.core.decisions.service import DecisionService
 from src.core.commands.service import CommandService
@@ -180,6 +180,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="(interno) Materializa os artefatos de IDE do projeto atual com o código local",
     )
 
+    # 12. Comando: migrate (feature 020)
+    parser_migrate = subparsers.add_parser(
+        "migrate",
+        help="Converte as instalações sob uma raiz do layout copiado para a fonte única (shim + core do upstream)",
+    )
+    parser_migrate.add_argument(
+        "root",
+        nargs="?",
+        default=os.path.expanduser("~/dev"),
+        help="Raiz que contém as instalações a migrar (padrão: ~/dev)",
+    )
+    parser_migrate.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Apenas relata o que faria (espaço a liberar, ações), sem escrever nem remover",
+    )
+
     return parser
 
 
@@ -198,12 +215,12 @@ def main():
     # escape como traceback antes do ramo. `init`/`upgrade` também não usam esta
     # config (recarregam o que precisam internamente).
     config = None
-    if args.command not in ("init", "upgrade", "agy-hook", "materialize"):
+    if args.command not in ("init", "upgrade", "agy-hook", "materialize", "migrate"):
         config = load_config(fs)
 
     # Alerta de atualização passiva
     if (
-        args.command not in ("init", "upgrade", "agy-hook", "materialize")
+        args.command not in ("init", "upgrade", "agy-hook", "materialize", "migrate")
         and config.harness.upstream_path
     ):
         from src.core.sync.service import SyncService
@@ -463,6 +480,34 @@ def main():
         except Exception as e:
             print(f"Erro ao materializar artefatos de IDE: {e}", file=sys.stderr)
             sys.exit(1)
+
+    elif args.command == "migrate":
+        from src.core.migrate.service import MigrateService
+
+        # O upstream a partir do qual ESTE core roda: 4 níveis acima de main.py
+        # (src → harness-core → .harness → <upstream>). Nunca é migrado (guarda).
+        upstream_self = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        )
+        results = MigrateService(fs).migrate(
+            args.root, dry_run=args.dry_run, upstream_self=upstream_self
+        )
+        prefixo = "[dry-run] " if args.dry_run else ""
+        migrated = 0
+        for r in results:
+            if r["status"] == "migrated":
+                migrated += 1
+                alvo = ", ".join(r["removed"]) or "—"
+                print(f"{prefixo}migrado: {r['project']} (removido: {alvo})")
+            elif r["status"] == "would-migrate":
+                alvo = ", ".join(r["removes"]) or "—"
+                print(f"{prefixo}migraria: {r['project']} (removeria: {alvo})")
+            else:
+                print(f"{prefixo}pulado: {r['project']} — {r.get('reason', '')}")
+        print(
+            f"{prefixo}{len(results)} instalação(ões) avaliada(s); {migrated} migrada(s)."
+        )
+        sys.exit(0)
 
     elif args.command == "agy-hook":
         # Driver de borda do Antigravity. Constrói os mesmos adaptadores concretos

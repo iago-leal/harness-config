@@ -34,6 +34,17 @@ class MockFileSystem(FileSystemPort):
         if path in self.written_files:
             del self.written_files[path]
 
+    def remove_tree(self, path: str) -> None:
+        prefix = path + "/"
+        self.written_files = {
+            p: c
+            for p, c in self.written_files.items()
+            if p != path and not p.startswith(prefix)
+        }
+        self.existing_files = {
+            p for p in self.existing_files if p != path and not p.startswith(prefix)
+        }
+
     def is_dir(self, path: str) -> bool:
         for f in self.written_files:
             if f.startswith(path + "/"):
@@ -109,6 +120,16 @@ class RecordingFileSystem(FileSystemPort):
         self._guard(path)
         self.existing_files.discard(path)
         self.written_files.pop(path, None)
+
+    def remove_tree(self, path: str) -> None:
+        self._guard(path)
+        self.writes.append(path)
+        prefix = path + "/"
+        self.written_files = {
+            p: c
+            for p, c in self.written_files.items()
+            if p != path and not p.startswith(prefix)
+        }
 
     def is_dir(self, path: str) -> bool:
         for f in self.written_files:

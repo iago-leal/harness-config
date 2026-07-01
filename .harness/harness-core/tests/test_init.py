@@ -90,6 +90,16 @@ class InitMockFileSystem(FileSystemPort):
         self.files.pop(path, None)
         self.dirs.discard(path)
 
+    def remove_tree(self, path: str) -> None:
+        path = self._norm(path)
+        prefix = path + "/"
+        self.files = {
+            f: c
+            for f, c in self.files.items()
+            if f != path and not f.startswith(prefix)
+        }
+        self.dirs = {d for d in self.dirs if d != path and not d.startswith(prefix)}
+
     def is_dir(self, path: str) -> bool:
         norm_path = self._norm(path)
         res = False
