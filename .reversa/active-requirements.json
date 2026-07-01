@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/019-oferta-commit-cobre-harness",
-  "feature-id": "019",
-  "short-name": "oferta-commit-cobre-harness",
-  "started-at": "2026-06-30T17:54:07-03:00",
+  "feature-dir": "_reversa_forward/020-fonte-unica-e-hooks",
+  "feature-id": "020",
+  "short-name": "fonte-unica-e-hooks",
+  "started-at": "2026-07-01T11:43:37-03:00",
   "current-stage": "requirements",
   "stages-completed": [],
   "paused-features": []
