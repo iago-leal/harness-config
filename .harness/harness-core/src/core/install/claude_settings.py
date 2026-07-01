@@ -37,16 +37,60 @@ def materialize_claude_settings(fs: FileSystemPort, project_path: str) -> None:
     hooks = existing.get("hooks")
     if not isinstance(hooks, dict):
         hooks = {}
-    # Garante os eventos do harness; preserva eventos de terceiros (ex.: um
-    # PreToolUse do usuário) e demais chaves de topo (model, theme, permissions…).
-    for event, value in harness_hooks.items():
-        hooks[event] = value
+    # Merge POR-ITEM (feature 020, RN-06): para cada evento gerenciado pelo
+    # harness, substitui/insere apenas o ITEM do harness dentro do array,
+    # preservando os itens próprios do usuário no mesmo evento — além dos
+    # eventos de terceiros (ex.: PreToolUse) e das demais chaves de topo
+    # (model, theme, permissions…), já intocados. Antes da 020, `hooks[event] =
+    # value` trocava o array inteiro e descartava hooks do usuário no evento.
+    for event, harness_items in harness_hooks.items():
+        arr = hooks.get(event)
+        if not isinstance(arr, list):
+            arr = []
+        for h_item in harness_items:
+            sig = _item_harness_signature(h_item)
+            for i, existing_item in enumerate(arr):
+                if _item_harness_signature(existing_item) == sig:
+                    arr[i] = h_item
+                    break
+            else:
+                arr.append(h_item)
+        hooks[event] = arr
     existing["hooks"] = hooks
 
     fs.makedirs(claude_dir)
     fs.write_file_atomic(
         settings_path, json.dumps(existing, indent=2, ensure_ascii=False) + "\n"
     )
+
+
+# Assinaturas estáveis que identificam um item de hook como sendo do harness:
+# a substring do subcomando no `command` (resistente ao prefixo
+# ${CLAUDE_PROJECT_DIR}/harness …). Um item alheio não contém nenhuma delas.
+_HARNESS_COMMAND_SIGNATURES = (
+    "harness cmd resume",
+    "harness format",
+    "harness decisions",
+)
+
+
+def _item_harness_signature(item):
+    """Retorna a assinatura do harness contida no `command` do item, ou None.
+
+    Percorre os comandos aninhados em ``item["hooks"][*]["command"]`` e devolve
+    a primeira assinatura conhecida encontrada. Itens do usuário devolvem None,
+    de modo que nunca casam com o item do harness no merge por-item.
+    """
+    if not isinstance(item, dict):
+        return None
+    for hook in item.get("hooks", []):
+        if not isinstance(hook, dict):
+            continue
+        command = hook.get("command", "")
+        for sig in _HARNESS_COMMAND_SIGNATURES:
+            if sig in command:
+                return sig
+    return None
 
 
 def _read_existing(fs: FileSystemPort, settings_path: str) -> dict:
