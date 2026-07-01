@@ -10,6 +10,8 @@ from src.core.domain.layout import (
     CORE_CONFIG_CANDIDATE_RELPATHS,
 )
 from src.core.install.local_apply import apply_local_materializers
+from src.core.bootstrap.shim import render_shim
+from src.core.bootstrap.service import BootstrapService
 
 
 class UpstreamVersionUndeterminedError(Exception):
@@ -44,7 +46,13 @@ class InitializationService:
         active_harness: str = "claude",
         upstream_path: Optional[str] = None,
     ) -> None:
-        """Inicializa um novo repositório de destino com o Harness Core de forma física e isolada."""
+        """Inicializa um projeto-alvo no modo FONTE ÚNICA (feature 020).
+
+        O alvo NÃO recebe mais uma cópia do harness-core nem uma venv própria:
+        recebe apenas o shim ``harness`` (que executa o core do upstream), a
+        árvore de estado ``.harness/``, o ``harness.toml`` (com ``upstream_path``,
+        sem ``version``), os ganchos git e as materializações de IDE.
+        """
         # 1. Valida se o destino é um repositório git válido
         git_dir = os.path.join(target_path, ".git")
         if not self.fs.exists(git_dir):
@@ -66,32 +74,14 @@ class InitializationService:
             )
         upstream_path = os.path.abspath(upstream_path)
 
-        # 3. Copia a pasta harness-core recursivamente (ignora venv, caches, etc.)
-        src_core = os.path.join(upstream_path, CORE_REL_PATH)
-        dst_core = os.path.join(target_path, CORE_REL_PATH)
-
-        # `.harness/` é estado de runtime por-instalação (sessão, microdecisões);
-        # nunca deve viajar do upstream para o alvo no init/upgrade.
-        excludes = [
-            ".venv",
-            ".pytest_cache",
-            ".ruff_cache",
-            "__pycache__",
-            ".DS_Store",
-            ".harness",
-        ]
-        self._copy_tree(src_core, dst_core, excludes)
-
-        # 4. Copia o wrapper harness
-        src_wrapper = os.path.join(upstream_path, "harness")
+        # 3. Grava o SHIM no lugar do wrapper copiado. Sob a fonte única (feature
+        # 020) o core (código + venv) vive no upstream; o alvo não recebe cópia.
+        # O shim executa o core do upstream com o cwd do projeto.
         dst_wrapper = os.path.join(target_path, "harness")
-        if self.fs.exists(src_wrapper):
-            wrapper_content = self.fs.read_file(src_wrapper)
-            self.fs.write_file(dst_wrapper, wrapper_content)
-            # Garante permissão de execução
-            self.process.run_command(["chmod", "+x", dst_wrapper])
+        self.fs.write_file(dst_wrapper, render_shim())
+        self.fs.make_executable(dst_wrapper)
 
-        # 5. Inicializa pasta .harness e arquivos padrão
+        # 4. Inicializa pasta .harness e arquivos padrão
         dot_harness = os.path.join(target_path, ".harness")
         decisions_dir = os.path.join(dot_harness, "decisoes")
         self.fs.makedirs(decisions_dir)
@@ -114,16 +104,13 @@ class InitializationService:
                 "---\ncommit: null\nfeature: null\nstart_time: null\nstatus: null\n---\n# Estado de Sessão\n",
             )
 
-        # 6. Grava ou atualiza harness.toml
+        # 6. Grava ou atualiza harness.toml (sem `version` — a fonte única viva
+        # dispensa a versão local; `upstream_path` é a única âncora, feature 020)
         toml_path = os.path.join(target_path, "harness.toml")
         if self.fs.exists(toml_path):
             toml_content = self.fs.read_file(toml_path)
-            # Atualiza versão e upstream_path
             toml_content = self._update_toml_field(
                 toml_content, "upstream_path", upstream_path
-            )
-            toml_content = self._update_toml_field(
-                toml_content, "version", self.current_version
             )
             toml_content = self._update_toml_field(
                 toml_content, "active_harness", active_harness
@@ -132,23 +119,12 @@ class InitializationService:
         else:
             self.fs.write_file(
                 toml_path,
-                f'[harness]\nactive_harness = "{active_harness}"\nupstream_path = "{upstream_path}"\nversion = "{self.current_version}"\n\n[session]\nstate_file = ".harness/estado-da-sessao.md"\n\n[decisions]\ndir = ".harness/decisoes"\nindex_file = ".harness/microdecisoes.md"\nheader_file = ".harness/decisoes/_cabecalho.md"\n\n# [regen]\n# Comando que regenera os artefatos derivados do projeto antes de encerrar a sessão.\n# command = "python gerar_site.py && python empacotar.py"\n',
+                f'[harness]\nactive_harness = "{active_harness}"\nupstream_path = "{upstream_path}"\n\n[session]\nstate_file = ".harness/estado-da-sessao.md"\n\n[decisions]\ndir = ".harness/decisoes"\nindex_file = ".harness/microdecisoes.md"\nheader_file = ".harness/decisoes/_cabecalho.md"\n\n# [regen]\n# Comando que regenera os artefatos derivados do projeto antes de encerrar a sessão.\n# command = "python gerar_site.py && python empacotar.py"\n',
             )
 
-        # 7. Configura a venv e roda pip install no destino
-        self.process.run_command(["python3", "-m", "venv", ".venv"], cwd=dst_core)
-        self.process.run_command(
-            [".venv/bin/pip", "install", "-r", "requirements.txt"], cwd=dst_core
-        )
-
-        # 8. Executa bootstrap de hooks git no destino
-        dest_python_bin = os.path.join(dst_core, ".venv", "bin", "python3")
-        dest_main_cli = os.path.join(dst_core, "src", "main.py")
-        if self.fs.exists(dest_main_cli):
-            # Executa bootstrap para criar ganchos git pre-commit e post-merge
-            self.process.run_command(
-                [dest_python_bin, dest_main_cli, "bootstrap"], cwd=target_path
-            )
+        # 7. Instala os ganchos git IN-PROCESS: o código em execução já é o do
+        # upstream (fresco), e não há mais venv de destino para um subprocesso.
+        BootstrapService(self.fs).install_hooks(target_path)
 
         # 9. Materializa os artefatos de IDE (slash commands sempre; hooks.json do
         # Antigravity quando aplicável) pela função única compartilhada com o
@@ -158,12 +134,9 @@ class InitializationService:
             self.fs, target_path, os.path.abspath(target_path), active_harness
         )
 
-        # 11. Registra a cópia vendored do core no .gitignore do alvo: ela é
-        # regenerável via upgrade/init, então não deve poluir o histórico do
-        # projeto-alvo. Só no alvo; o repo-fonte versiona o core (D-04).
-        self._ensure_gitignore_entry(target_path, CORE_GITIGNORE_ENTRY)
-        # Cache de sync (runtime): ignorado para não ser oferecido pela oferta de
-        # commit pendente, que a partir da 019 cobre o restante de .harness/ (D-02).
+        # 9. Cache de sync (runtime) no .gitignore do alvo, para não ser oferecido
+        # pela oferta de commit pendente (019). Não há mais core local a ignorar
+        # sob a fonte única (feature 020).
         self._ensure_gitignore_entry(target_path, SYNC_CACHE_GITIGNORE_ENTRY)
 
     def upgrade_project(self, target_path: str, force: bool = False) -> None:

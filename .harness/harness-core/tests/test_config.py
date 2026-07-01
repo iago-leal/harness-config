@@ -27,3 +27,29 @@ def test_load_config_absent_regen_is_none():
     fs.write_file("harness.toml", '[harness]\nactive_harness = "claude"\n')
     cfg = load_config(fs, "harness.toml")
     assert cfg.regen.command is None
+
+
+def test_load_config_tolerates_toml_without_version():
+    # Feature 020: o init deixa de gravar `version`; um harness.toml sem esse
+    # campo deve carregar normalmente (default), sem quebrar o parse.
+    fs = MockFileSystem()
+    fs.write_file(
+        "harness.toml",
+        '[harness]\nactive_harness = "claude"\nupstream_path = "/abs/up"\n',
+    )
+    cfg = load_config(fs, "harness.toml")
+    assert cfg.harness.upstream_path == "/abs/up"
+    assert isinstance(cfg.harness.version, str)  # default aplicado, sem erro
+
+
+def test_load_config_tolerates_toml_with_version():
+    # Compat retroativa: um harness.toml herdado (com `version`) segue parseável.
+    fs = MockFileSystem()
+    fs.write_file(
+        "harness.toml",
+        '[harness]\nactive_harness = "claude"\n'
+        'upstream_path = "/abs/up"\nversion = "1.2.56"\n',
+    )
+    cfg = load_config(fs, "harness.toml")
+    assert cfg.harness.version == "1.2.56"
+    assert cfg.harness.upstream_path == "/abs/up"

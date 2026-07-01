@@ -152,37 +152,37 @@ def test_init_success():
         upstream_path="/Users/iagoleal/dev/harness",
     )
 
-    print("\nCHAVES GRAVADAS:", list(fs.files.keys()))
+    base = "/Users/iagoleal/dev/harness/destino"
 
-    # Verifica se os arquivos foram copiados
-    assert fs.exists(
-        "/Users/iagoleal/dev/harness/destino/.harness/harness-core/src/main.py"
-    )
-    assert fs.exists(
-        "/Users/iagoleal/dev/harness/destino/.harness/harness-core/src/core/bootstrap/init_service.py"
-    )
-    assert fs.exists("/Users/iagoleal/dev/harness/destino/harness")
-    assert fs.exists(
-        "/Users/iagoleal/dev/harness/destino/.harness/decisoes/_cabecalho.md"
-    )
-    assert fs.exists("/Users/iagoleal/dev/harness/destino/.harness/estado-da-sessao.md")
-    assert fs.exists("/Users/iagoleal/dev/harness/destino/harness.toml")
+    # Fonte única (feature 020): o core NÃO é copiado para o alvo, e nenhuma venv
+    # é criada. O alvo recebe apenas o shim, o estado e as materializações.
+    assert not fs.exists(f"{base}/.harness/harness-core/src/main.py")
+    assert not fs.exists(f"{base}/.harness/harness-core")
 
-    # Verifica se o harness.toml tem os metadados do upstream gravados
-    toml_content = fs.read_file("/Users/iagoleal/dev/harness/destino/harness.toml")
+    # O shim é gravado no lugar do wrapper copiado.
+    assert fs.exists(f"{base}/harness")
+    shim = fs.read_file(f"{base}/harness")
+    assert "Shim do Harness" in shim
+    assert "upstream_path" in shim
+
+    # Estado por-projeto criado.
+    assert fs.exists(f"{base}/.harness/decisoes/_cabecalho.md")
+    assert fs.exists(f"{base}/.harness/estado-da-sessao.md")
+    assert fs.exists(f"{base}/harness.toml")
+
+    # harness.toml grava upstream_path e NÃO grava mais version.
+    toml_content = fs.read_file(f"{base}/harness.toml")
     assert 'upstream_path = "/Users/iagoleal/dev/harness"' in toml_content
-    assert 'version = "1.2.56"' in toml_content
+    assert "version" not in toml_content
 
-    # Verifica se os ganchos git foram instalados e se a venv foi configurada via subprocesso
-    assert len(process.commands) >= 1
-    # Deve ter rodado python3 -m venv no destino
-    venv_cmd = any("venv" in arg for arg, _ in process.commands)
-    assert venv_cmd
+    # Ganchos git instalados in-process; nenhum `python3 -m venv` disparado.
+    assert fs.exists(f"{base}/.git/hooks/pre-commit")
+    assert not any("venv" in " ".join(arg) for arg, _ in process.commands)
 
 
-def test_init_gitignore_inclui_core_e_sync_cache():
-    # Feature 019: o init garante no .gitignore do alvo tanto a cópia vendored do
-    # core quanto o cache de sync (runtime), de forma idempotente.
+def test_init_gitignore_inclui_sync_cache_nao_core():
+    # Feature 020: sem core copiado no alvo, o .gitignore não precisa mais da
+    # entrada da cópia vendored; mantém apenas o cache de sync (runtime).
     fs = InitMockFileSystem()
     process = MockProcessPort()
     service = InitializationService(fs, process)
@@ -194,9 +194,9 @@ def test_init_gitignore_inclui_core_e_sync_cache():
     )
 
     gitignore = fs.read_file("/Users/iagoleal/dev/harness/destino/.gitignore")
-    assert ".harness/harness-core/" in gitignore
     assert ".harness/sync-cache.json" in gitignore
     assert gitignore.count(".harness/sync-cache.json") == 1
+    assert ".harness/harness-core/" not in gitignore
 
 
 def test_upgrade_success():
