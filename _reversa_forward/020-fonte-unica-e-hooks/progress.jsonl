@@ -10,3 +10,6 @@
 {"ts":"2026-07-01T18:27:09Z","action":"T007","status":"done","files":["tests/test_migrate.py"]}
 {"ts":"2026-07-01T18:27:09Z","action":"T014","status":"done","files":["src/core/migrate/service.py","src/core/ports/fs.py","src/adapters/fs/local.py","tests/helpers.py"]}
 {"ts":"2026-07-01T18:27:09Z","action":"T017","status":"done","files":["src/main.py"]}
+{"ts":"2026-07-03T12:20:00-03:00","action":"T018","status":"done","files":["/Users/iagoleal/dev/harness/.harness/harness-core/src/core/domain/config.py","/Users/iagoleal/dev/harness/.harness/harness-core/src/core/bootstrap/init_service.py","/Users/iagoleal/dev/harness/.harness/harness-core/src/main.py","/Users/iagoleal/dev/harness/.harness/harness-core/tests/test_init.py"],"note":"CORE_VERSION única (bump 1.3.0->2.0.0); literal preservado p/ regex da 012; 3 testes de lockstep"}
+{"ts":"2026-07-03T12:30:00-03:00","action":"T019","status":"done","files":["/Users/iagoleal/dev/harness/.harness/harness-core/src/main.py"],"note":"residuo aplicavel sob desescopo: help do init corrigido; migrate no doc-gen verificado por introspeccao; textos do upgrade ficam com a 021"}
+{"ts":"2026-07-03T12:45:00-03:00","action":"T020","status":"done","files":["scratchpad/smoke-t020.sh (descartavel)"],"note":"suite 241 passed; smoke A-F git real em sandbox todos OK; achado pre-existente: cmd resume sem HEAD estoura traceback cru"}

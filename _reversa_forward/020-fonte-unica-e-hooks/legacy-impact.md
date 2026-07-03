@@ -1,7 +1,7 @@
 # Legacy-impact: fonte única + hooks não-destrutivos
 
 > Feature: `020-fonte-unica-e-hooks` · Data: `2026-07-01`
-> **Rodada parcial** — blocos executados: (1) materializadores não-destrutivos (T004/T005/T010/T011); (2) shim + init fonte única (T001/T002/T003/T006/T012); (3) migração (T007/T014/T017). **Desescopados** (feature própria): descontinuação de `sync`/`upgrade`/oferta‑014 (T008/T009/T013/T015/T016). Falta: verificação final (T018/T019/T020).
+> **Rodada final da 020 (2026-07-03)** — blocos executados: (1) materializadores não-destrutivos (T004/T005/T010/T011); (2) shim + init fonte única (T001/T002/T003/T006/T012); (3) migração (T007/T014/T017); (4) polimento (T018/T019/T020, suíte 241 + smoke A–F verde). **Desescopados** (feature própria, candidata 021): descontinuação de `sync`/`upgrade`/oferta‑014 (T008/T009/T013/T015/T016).
 
 ## Arquivos afetados
 
@@ -14,12 +14,16 @@
 | `src/main.py`                                       | CLI — driver                                           | contrato-alterado | MEDIUM     | Novo subcomando `migrate` (`--dry-run`, raiz default `~/dev`); correção do `except NotAGitRepositoryError` (import faltante, F821 latente pré-existente) |
 | `src/core/install/claude_settings.py`               | `materialize_claude_settings` — 016/RN-05 (sob RN-N30) | regra-alterada    | MEDIUM     | Merge do `settings.json` por-item, preservando hooks do usuário                                                                                          |
 | `src/core/bootstrap/service.py`                     | `install_hooks` — `domain.md#2.7` (RN-N15)             | regra-alterada    | MEDIUM     | Hooks git não-destrutivos (assinatura + `.local`) e via shim                                                                                             |
-| `tests/*`                                           | (suíte)                                                | —                 | LOW        | +smoke shim, contrato init, tolerância a version, merge por-item, hooks não-destrutivos, migração (238 passed)                                           |
+| `src/core/domain/config.py`                         | Config tipada — `domain.md#2.10` (RN-N16)              | regra-alterada    | MEDIUM     | Bump **1.3.0 → 2.0.0** (contrato de instalação incompatível) + `CORE_VERSION` canônica derivada do literal do campo (literal preservado: regex da 012)   |
+| `src/core/bootstrap/init_service.py`                | `current_version` — dívida da rodada 2                 | regra-alterada    | LOW        | `current_version` deixa de ser literal defasado (`1.2.56`) e referencia `CORE_VERSION` (segue órfão; remoção fica com a 021)                             |
+| `src/main.py` (help)                                | CLI — driver                                           | regra-alterada    | LOW        | Help da CLI usa `CORE_VERSION` (rótulo "v2.0.0" chumbado desde a 011 mentia); help do `init` corrigido ("física e isolada" → fonte única)                |
+| `tests/*`                                           | (suíte)                                                | —                 | LOW        | +smoke shim, contrato init, tolerância a version, merge por-item, hooks não-destrutivos, migração, lockstep de versão (**241 passed**)                   |
 
 ## Diff conceitual por componente
 
 - **`MigrateService` (novo).** Descobre instalações sob uma raiz (`list_dir` + `harness.toml`), e para cada uma: instala o shim, reescreve os hooks (via `install_hooks`), re-materializa o `settings.json`, remove `version` do toml e **por último** apaga a(s) cópia(s) do core (`.harness/harness-core/` e o legado `harness-core/` do `livro-mfc`). Idempotente; `--dry-run` só relata. **Guardas de segurança:** nunca migra o diretório do upstream (`upstream_self`) nem uma autoreferência; `remove_tree` só aceita alvos cujo basename é `harness-core`; pula instalações cujo core do upstream esteja ausente. Exceção consciente ao footprint zero (RN-N17): atua sobre outros projetos por design.
 - **`FileSystemPort.remove_tree` (novo).** Método de porta implementado em `LocalFileSystemAdapter` (`shutil.rmtree`) e nos três fakes de teste. A validação do alvo cabe ao chamador (`MigrateService._safe_remove_core`).
+- **Versão canônica (`CORE_VERSION`).** Três fontes divergentes (campo `version` em `config.py` = 1.3.0; `current_version` no `init_service` = 1.2.56; rótulo "v2.0.0" chumbado no help desde a 011) convergem para uma: o literal do campo `version` (mantido literal porque `_get_upstream_version` da 012 parseia este arquivo por regex) alimenta `CORE_VERSION`, que o help e o `init_service` referenciam. Guarda de teste: o `config.py` **real** é dado ao parser da 012 e deve reportar `CORE_VERSION`. Bump para **2.0.0** pela quebra do contrato de instalação.
 - **`initialize_project` / `shim.py` / `materialize_claude_settings` / `install_hooks`:** ver blocos anteriores; comportamento inalterado nesta rodada.
 
 ## Preservadas (regras 🟢 do `domain.md` intactas)
