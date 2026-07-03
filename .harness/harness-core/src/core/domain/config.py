@@ -8,7 +8,14 @@ from src.core.ports.fs import FileSystemPort
 class HarnessSection(BaseModel):
     active_harness: Literal["claude", "gemini", "antigravity"] = "claude"
     upstream_path: Optional[str] = None
-    version: str = "1.3.0"
+    # Manter o valor como LITERAL nesta linha: `_get_upstream_version` (012,
+    # RN-03) lê a versão do upstream parseando este arquivo por regex.
+    version: str = "2.0.0"
+
+
+# Versão canônica do core, derivada do literal acima — fonte única para o help
+# da CLI e para o init_service (feature 020, T018).
+CORE_VERSION: str = HarnessSection().version
 
 
 class FormattingSection(BaseModel):

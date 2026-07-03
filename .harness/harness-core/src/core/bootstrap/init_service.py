@@ -9,6 +9,7 @@ from src.core.domain.layout import (
     SYNC_CACHE_GITIGNORE_ENTRY,
     CORE_CONFIG_CANDIDATE_RELPATHS,
 )
+from src.core.domain.config import CORE_VERSION
 from src.core.install.local_apply import apply_local_materializers
 from src.core.bootstrap.shim import render_shim
 from src.core.bootstrap.service import BootstrapService
@@ -38,7 +39,7 @@ class InitializationService:
     def __init__(self, fs: FileSystemPort, process: ProcessPort):
         self.fs = fs
         self.process = process
-        self.current_version = "1.2.56"
+        self.current_version = CORE_VERSION
 
     def initialize_project(
         self,

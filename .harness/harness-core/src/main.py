@@ -15,7 +15,7 @@ from src.core.formatting.service import FormattingService
 from src.core.decisions.service import DecisionService
 from src.core.commands.service import CommandService
 from src.core.documentation.service import DocumentationService
-from src.core.domain.config import load_config
+from src.core.domain.config import CORE_VERSION, load_config
 
 # Helpers de orquestração do encerramento vivem no core (feature 018, D-01) e são
 # reexportados aqui: a borda CLI e os scripts finos da skill compartilham a mesma
@@ -74,7 +74,7 @@ def offer_git_init(repo_path: str) -> bool:
 
 def build_parser() -> argparse.ArgumentParser:
     """Configura e retorna o parser de argumentos CLI do Harness Core."""
-    parser = argparse.ArgumentParser(description="Harness Core CLI v2.0.0")
+    parser = argparse.ArgumentParser(description=f"Harness Core CLI v{CORE_VERSION}")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # 1. Comando: bootstrap
@@ -134,7 +134,7 @@ def build_parser() -> argparse.ArgumentParser:
     # 8. Comando: init
     parser_init = subparsers.add_parser(
         "init",
-        help="Inicializa um projeto de destino com o Harness Core de forma física e isolada",
+        help="Inicializa um projeto de destino com o Harness (fonte única: shim que executa o core do upstream)",
     )
     parser_init.add_argument("target_path", help="Caminho do repositório de destino")
     parser_init.add_argument(

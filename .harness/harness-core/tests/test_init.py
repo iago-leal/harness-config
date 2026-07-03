@@ -513,3 +513,43 @@ def test_get_upstream_version_raises_when_no_candidate():
     service = InitializationService(fs, MockProcessPort())
     with pytest.raises(UpstreamVersionUndeterminedError):
         service._get_upstream_version("/Users/iagoleal/dev/harness/origem")
+
+
+def test_current_version_em_lockstep_com_core_version():
+    """Feature 020 (T018): `current_version` deriva de CORE_VERSION — nunca mais
+    um literal defasado esquecido no init_service (estava em 1.2.56 vs 1.3.0).
+    """
+    from src.core.domain.config import CORE_VERSION
+
+    service = InitializationService(InitMockFileSystem(), MockProcessPort())
+    assert service.current_version == CORE_VERSION
+
+
+def test_help_da_cli_em_lockstep_com_core_version():
+    """Feature 020 (T018): o rótulo do help da CLI usa CORE_VERSION — o literal
+    'v2.0.0' chumbado desde a feature 011 mentia a versão real.
+    """
+    from src.core.domain.config import CORE_VERSION
+    from src.main import build_parser
+
+    assert build_parser().description == f"Harness Core CLI v{CORE_VERSION}"
+
+
+def test_get_upstream_version_le_o_config_real_em_lockstep():
+    """Feature 020 (T018): o config.py REAL continua parseável pelo regex de
+    `_get_upstream_version` (contrato da 012/RN-03) e reporta CORE_VERSION —
+    guarda contra trocar o literal do campo por uma referência.
+    """
+    from src.core.domain.config import CORE_VERSION
+
+    real_config = os.path.join(
+        os.path.dirname(__file__), "..", "src", "core", "domain", "config.py"
+    )
+    with open(real_config, encoding="utf-8") as fh:
+        content = fh.read()
+    fs = InitMockFileSystem()
+    fs.write_file(
+        "/up/.harness/harness-core/src/core/domain/config.py", content
+    )
+    service = InitializationService(fs, MockProcessPort())
+    assert service._get_upstream_version("/up") == CORE_VERSION
