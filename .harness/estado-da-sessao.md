@@ -1,32 +1,30 @@
 ---
-commit: 0c561f89aa9075ec21234f8b52bde5da487d9a55
+commit: bebac79119a9ecc0002df17b7c6869fb9f585543
 feature: reversa-forward (roteamento) + brief da feature 015
-start_time: '2026-07-01T14:12:36.864628+00:00'
+start_time: '2026-07-03T20:32:12.171660+00:00'
 status: inactive
 ---
 
 ## O que foi feito
-- **Feature 020 (`fonte-unica-e-hooks`) partida do PCCP e conduzida pelo pipeline forward completo** (clarify → requirements → clarify → plan → to-do → coding em 3 blocos). Origem: queixa de **SSD** — cada `harness init` replicava o core e criava uma `.venv` de ~108 MB por projeto (medição: 17 instalações, ~1,6 GB, ~97% em venvs). Clarificado no PCCP que o gargalo era a **venv**, não os scripts; escolhida a **Opção B (fonte única total)**: o alvo passa a executar o core do **upstream** via shim.
-- **Auditoria RF-08 (pilar de viabilidade):** varredura confirmou que **todos** os comandos resolvem os dados do projeto pelo `cwd` (`os.getcwd`, `load_config("harness.toml")`); os `__file__` apontam só para assets do core → a fonte única **não exige refatorar o core** (é troca de wrapper).
-- **Bloco 1 — materializadores não-destrutivos** (`235cecd`): merge do `.claude/settings.json` por-**item** por assinatura no `command` (preserva hooks próprios do usuário no mesmo evento); `install_hooks` não-destrutivo (cria/atualiza/encadeia via `<hook>.local`) e via shim.
-- **Bloco 2 — shim + init fonte única** (`6451a49`): `render_shim()` (novo `bootstrap/shim.py`); `initialize_project` deixa de copiar o core e de criar venv, grava o shim, instala hooks in-process, `harness.toml` **sem `version`**.
-- **Bloco 3 — `migrate`** (`105905c`): `MigrateService` + subcomando `migrate` (`--dry-run`) que converte a base; `remove_tree` novo no `FileSystemPort`; guardas fortes (nunca o upstream/autoreferência; `remove_tree` só aceita basename `harness-core`; core removido por último). Corrigido de passagem um F821 latente (`except NotAGitRepositoryError` sem import no `main.py`).
-- **Verificação:** suíte do core **238 passed**; smoke real do shim (bash) e do `migrate --dry-run` OK. Meus arquivos novos passam no ruff (o CI roda só `pytest`).
+- **Migração real executada (pendente crítico da sessão anterior quitado):** `./harness migrate ~/dev` rodou sobre 17 projetos. Constatação: a parte **destrutiva já havia ocorrido** entre 01/07 e hoje (nenhum filho tinha mais core/venv; só o upstream retém a única `.venv` de 108 MB) — a passada desta sessão foi a normalização idempotente (shim reescrito, hooks re-encadeados, settings re-mesclados, `version` removido dos tomls). Smoke: shim do `experimento` executa o core do upstream normalmente.
+- **Verificado e confirmado o gap da skill `encerrar-sessao` sob fonte única:** o `_bootstrap.py` (asset da 018, idêntico no filho e no upstream) resolve o core só em `.harness/harness-core` local e não conhece `upstream_path` → em projeto migrado a skill falha (`CoreNotFoundError`) e o desvio é `./harness cmd encerrar-sessao`. Registrado como **feature candidata** (ensinar `resolve_core` a cair no upstream); o usuário optou por fechar a 020 antes (CONTINUAR no roteador).
+- **Feature 020 CONCLUÍDA — bloco polimento (T018/T019/T020)** via `/reversa-coding` (commits `358af6f` código + `bebac79` trilha):
+- **Rastros da 020 fechados:** actions.md 15/20 `[X]` (5 restantes = desescopo da 021), progress.jsonl +3, legacy-impact.md (rodada final), regression-watch.md (**W008** lockstep de versão + 2 observações).
 
 ## Próximos passos
-- **PENDENTE CRÍTICO — rodar a migração real:** `cd ~/dev/harness && ./harness migrate ~/dev` (dry-run confirmou 13 projetos; upstream/raiz/`recicla-library` ficam de fora; `livro-mfc` remove os 2 layouts). Recupera **~1,5 GB**. **NÃO executado** — a salvaguarda de auto-mode bloqueou a destruição em massa fora do repo; o mantenedor deve disparar manualmente.
-- **Feature 021 (descontinuação de `sync`/`upgrade`/oferta-014):** desescopada da 020. A varredura mostrou que `SyncService`/`upgrade_project` sustentam a **oferta de upgrade ao encerrar** (014) via `offers.py`/`close_flow.py`/MCP; removê-los desmancha parte do fluxo de encerramento — merece ciclo próprio. T008/T009/T013/T015/T016 seguem `[ ]`.
-- **T018/T019/T020 da 020:** T018/T019 ficaram parcialmente obsoletos pelo desescopo; resta o **T020 — smoke end-to-end com git real** do `init` fonte única e do `migrate` em sandbox.
-- **Re-extração** (`/reversa`) para reconciliar o `_reversa_sdd/` com a 020 (RN-N15/N17/N19 modificadas; RN-08 nova; `remove_tree` no port).
-- **Dívida pré-existente registrada:** 5 avisos de ruff cosméticos (F401/F841 em `cache.py`, `main.py`, testes) — o CI não roda ruff; `current_version` órfão em `init_service` (sai com a 021).
+- **Feature candidata — `_bootstrap` da skill encerrar-sessao fonte-única:** `resolve_core` cair para `upstream_path` do `harness.toml` quando `.harness/harness-core` local não existe (falha barulhenta se nada existir; teste de unidade sobre `resolve_core`, que é puro). Afeta o asset em `src/core/install/assets/skills/encerrar-sessao/scripts/_bootstrap.py` e as cópias materializadas.
+- **Feature 021 — descontinuação de `sync`/`upgrade`/oferta-014:** T008/T009/T013/T015/T016 esperam lá; `current_version` órfão sai junto.
+- **Re-extração** (`/reversa`) para reconciliar `_reversa_sdd/` com a 020 (RN-N15/N19 modificadas, RN-08 nova, `remove_tree` no port, RN-N16 com CORE_VERSION).
+- **Achado pré-existente a corrigir em ciclo futuro:** `cmd resume` em repo sem nenhum commit estoura traceback cru de `git rev-parse HEAD` (viola RN-N4; anotado no regression-watch da 020).
 
 ## Pendências / bloqueios
-- **Migração real bloqueada pela salvaguarda de auto-mode** — pendente de execução manual pelo mantenedor (comando acima). O disco ainda **não** foi recuperado.
-- Sem bloqueios técnicos no código: 238 verdes, tudo commitado.
+- Sem bloqueios: suíte 241 verde, migração da base concluída, disco recuperado (~1,5 GB), tudo commitado.
+- Dívida pré-existente tolerada: 5 avisos cosméticos de ruff (F401/F841); o CI roda só pytest.
 
 ## Ponteiros
-- Trilha forward da 020: `_reversa_forward/020-fonte-unica-e-hooks/` (requirements, roadmap, investigation, data-delta, onboarding, interfaces, actions, progress.jsonl, legacy-impact, regression-watch).
-- Contratos: `interfaces/shim-execution.md`, `interfaces/claude-settings-merge.md`, `interfaces/git-hooks-merge.md`.
-- Código novo: `src/core/bootstrap/shim.py`, `src/core/migrate/service.py`; `FileSystemPort.remove_tree`.
-- Commits desta sessão: `235cecd`+`da107fd` (materializadores), `6451a49`+`e456eab` (shim+init), `105905c`+`0c561f8` (migrate).
-- Âncora desta sessão: `0c561f8` (último commit de trabalho da 020).
+- Trilha da 020 (completa): `_reversa_forward/020-fonte-unica-e-hooks/` — actions.md com a nota "2026-07-03 — bloco polimento"; regression-watch W001–W008.
+- Versão canônica: `src/core/domain/config.py` (`CORE_VERSION`), testes de lockstep em `tests/test_init.py` (3 últimos).
+- Gap da skill: `_bootstrap.py` em `.claude/skills/encerrar-sessao/scripts/` e no asset do core (`CORE_REL = ".harness/harness-core"`), registrado nas observações do regression-watch da 020.
+- Smoke T020: `scratchpad/smoke-t020.sh` (descartável, fora do repo).
+- Commits desta sessão: `358af6f` (feat, CORE_VERSION/2.0.0) + `bebac79` (docs, trilha do polimento).
+- Âncora desta sessão: `bebac79` (último commit de trabalho).
