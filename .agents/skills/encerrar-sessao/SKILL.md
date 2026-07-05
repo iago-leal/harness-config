@@ -12,7 +12,7 @@ license: MIT
 compatibility: Antigravity, Claude Code, Codex, Cursor, Gemini CLI e demais agentes compatíveis com Agent Skills.
 metadata:
   author: iagoleal
-  version: "1.1.0"
+  version: "1.2.0"
   framework: harness
   role: session
 ---
@@ -50,8 +50,9 @@ fechamento recusa de forma barulhenta (marker `NARRATIVA_PENDENTE`) e não fecha
    python3 scripts/encerrar_sessao.py
    ```
 
-   Ele resolve a raiz do projeto (via git), localiza o Harness Core em
-   `.harness/harness-core`, e conduz, em ordem: regeneração dos artefatos
+   Ele resolve a raiz do projeto (via git) e localiza o Harness Core: primeiro em
+   `.harness/harness-core` local; se ausente (projeto migrado à fonte única), no
+   `upstream_path` do `harness.toml`. Em seguida conduz, em ordem: regeneração dos artefatos
    derivados → pré-check de trabalho pendente → gate de narrativa → fechamento
    (commit de registro por cima do último commit de trabalho, com a âncora
    seguindo apontando para o trabalho) → ofertas de fim de sessão. Se a
@@ -80,4 +81,5 @@ fechamento recusa de forma barulhenta (marker `NARRATIVA_PENDENTE`) e não fecha
 Se o Harness Core não for encontrado ou não puder ser importado, o script falha
 de forma **barulhenta** (exit ≠ 0 com mensagem orientadora), nunca em silêncio.
 Confirme que você está dentro de um projeto com o Harness instalado (existe um
-wrapper `./harness` e o diretório `.harness/harness-core`).
+wrapper `./harness` e, ou o diretório `.harness/harness-core`, ou um
+`upstream_path` no `harness.toml` cujo core esteja acessível).

@@ -1,16 +1,23 @@
-"""Bootstrap fino da skill encerrar-sessao (feature 018).
+"""Bootstrap fino da skill encerrar-sessao (feature 018; fallback à fonte única na 020).
 
-Resolve a raiz do projeto via git, localiza o Harness Core em
-``.harness/harness-core`` e o torna importável sob o venv do core. Não
-reimplementa lógica de domínio: é só a cola de ambiente para o entry point poder
-chamar os serviços do core. Erro barulhento (``CoreNotFoundError``) quando o core
-não existe — nunca falha em silêncio.
+Resolve a raiz do projeto via git, localiza o Harness Core e o torna importável
+sob o venv do core. Não reimplementa lógica de domínio: é só a cola de ambiente
+para o entry point poder chamar os serviços do core. Erro barulhento
+(``CoreNotFoundError``) quando o core não existe — nunca falha em silêncio.
+
+A resolução do core segue a MESMA ordem do shim ``./harness`` (ver
+``src/core/bootstrap/shim.py``): primeiro o core vendorizado em
+``.harness/harness-core``; se ausente — projeto migrado à fonte única (feature
+020), que não copia mais o core —, cai para o core do ``upstream_path`` registrado
+no ``harness.toml``. Sem esse fallback a skill quebrava em todo projeto migrado.
 """
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Caminho do core relativo à raiz do projeto (mesmo de CORE_REL_PATH no core).
 CORE_REL = os.path.join(".harness", "harness-core")
@@ -20,19 +27,57 @@ class CoreNotFoundError(RuntimeError):
     """Harness Core ausente, ou raiz do projeto não resolvível via git."""
 
 
-def resolve_core(root) -> Path:
-    """Devolve o diretório do core sob ``root`` ou levanta ``CoreNotFoundError``.
+def _core_at(base) -> Optional[Path]:
+    """Diretório do core sob ``base`` se ele expõe ``src/main.py``; senão ``None``."""
+    core = Path(base) / CORE_REL
+    return core if (core / "src" / "main.py").exists() else None
 
-    Função PURA (sem git, sem re-exec): é o ponto testável do bootstrap.
+
+def _read_upstream_path(root) -> Optional[str]:
+    """Lê ``upstream_path`` do ``harness.toml`` da raiz, ou ``None`` se ausente.
+
+    Projeto migrado à fonte única não tem core local: o ``harness.toml`` registra o
+    ``upstream_path`` do repositório-fonte, de onde o core roda. A leitura é por
+    regex de linha — o mesmo contrato do ``sed`` do shim (``shim.py``) — para não
+    depender de biblioteca toml antes do re-exec sob o venv do core.
     """
-    core = Path(root) / CORE_REL
-    if not (core / "src" / "main.py").exists():
-        raise CoreNotFoundError(
-            f"Harness Core não encontrado em {core}. Rode a skill encerrar-sessao "
-            "dentro de um projeto com o Harness instalado (reinstale com "
-            "'./harness init' se necessário)."
-        )
-    return core
+    toml = Path(root) / "harness.toml"
+    if not toml.exists():
+        return None
+    for line in toml.read_text(encoding="utf-8").splitlines():
+        match = re.match(r'\s*upstream_path\s*=\s*"(.*)"', line)
+        if match:
+            return match.group(1)
+    return None
+
+
+def resolve_core(root) -> Path:
+    """Devolve o diretório do core a usar sob ``root`` ou levanta ``CoreNotFoundError``.
+
+    Resolve na mesma ordem do shim: core local primeiro; na ausência, o core do
+    ``upstream_path`` do ``harness.toml`` (projeto migrado à fonte única). Erro
+    barulhento quando nenhum dos dois expõe ``src/main.py``. Função sem git nem
+    re-exec: é o ponto testável do bootstrap.
+    """
+    local = _core_at(root)
+    if local is not None:
+        return local
+
+    upstream = _read_upstream_path(root)
+    if upstream:
+        remote = _core_at(upstream)
+        if remote is not None:
+            return remote
+
+    origem = (
+        f"upstream_path={upstream}" if upstream else "sem upstream_path no harness.toml"
+    )
+    raise CoreNotFoundError(
+        f"Harness Core não encontrado: ausente localmente em {Path(root) / CORE_REL} "
+        f"e no upstream ({origem}). Rode a skill encerrar-sessao dentro de um projeto "
+        "com o Harness instalado (reinstale com 'harness init' ou reconcilie o "
+        "'harness migrate' se necessário)."
+    )
 
 
 def _repo_root() -> Path:
