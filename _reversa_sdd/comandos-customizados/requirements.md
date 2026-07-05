@@ -11,6 +11,10 @@
 Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessao`, `handoff`, `clarificar`. Carrega/grava o estado de sessão em `.harness/estado-da-sessao.md`, valida a âncora Git na retomada e reinjeta a narrativa preservada. O serviço não conhece o harness — a seleção do _sink_ fica na borda (`main.py`).
 
 > ✨ **f010 → skill ✨f018 — `encerrar-sessao` exposto como skill de IDE:** além do acionamento por `./harness cmd encerrar-sessao` e pela tool MCP, o `init`/`upgrade` materializa a capacidade direto na IDE do agente. ✨f018 trocou a forma do artefato de slash command/workflow `.md` para uma **skill versionável** (`SKILL.md` + `scripts/` finos) gravada sob `.claude/skills/encerrar-sessao/` (Claude) e `.agents/skills/encerrar-sessao/` (Antigravity, ativação semântica), sempre os dois — `materialize_session_skills` itera os perfis e copia a mesma árvore agnóstica dos assets do core; os órfãos legados (command/workflow) são removidos na migração, preservando terceiros. Os scripts **não reimplementam** o fechamento — consomem o `SessionCloseFlow` do core (RN-N5/RN-N33 preservadas). Ver `_reversa_sdd/domain.md#2.12` (RN-N28/RN-N29) e `#2.15` (RN-N33), e ADR 0018 (que substitui a 0017).
+>
+> ✨ **f019 — Pré-check de pendência restrito ao arquivo de estado (reconciliação 2026-07-05):** `SessionCloseFlow.pending_work_paths` (a orquestração em volta de `encerrar-sessao`, RN-N33) excluía **todo** o diretório `.harness/` da oferta de commit pendente; passou a excluir só o caminho exato de `session_file`. Consequência: decisões (`.harness/decisoes/MD-*.md`) e o índice (`.harness/microdecisoes.md`) sujos agora **entram** na oferta (`COMMIT_PENDENTE` sem TTY, listagem `[s/N]` com TTY) antes de `encerrar-sessao` prosseguir. `RF-02` abaixo passa a exigir esse pré-check limpo como precondição. Ver `domain.md#2.16` (RN-N34/RN-N35), ADR 0019.
+>
+> ✨ **f021 — Apêndice do índice de decisões no `resume` (reconciliação 2026-07-05):** quando `active_harness == "claude"` e `session.inject_decisions_index` (default `True`) estão satisfeitos, o `resume` (RF-01) anexa `.harness/microdecisoes.md` ao texto reinjetado, **depois** da narrativa — função pura `build_decisions_appendix` em `core/session/resume_context.py`, gate calculado em `main.py`. Não-bloqueante: índice ausente → aviso em `stderr`, resume segue só com o estado. Ver `domain.md#2.18` (RN-N41), ADR 0021.
 
 ## Responsabilidades
 
@@ -19,6 +23,8 @@ Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessa
 - `encerrar-sessao`: capturar a âncora (HEAD de trabalho), desativar a sessão e **versionar** o registro num commit isolado (só o `state_file`) por cima do trabalho. 🟢
 - `handoff` / `clarificar`: produzir blocos de texto (handoff com feature+HEAD; clarificar com texto fixo de limite de rodadas). 🟢
 - Distinguir estado **ausente** de **malformado** (falha barulhenta). 🟢
+- **✨f019** Antes de `encerrar-sessao` prosseguir: verificar que não há trabalho pendente (exceto o próprio `session_file`) nem narrativa desatualizada — abortar com marker/prompt caso contrário, sem fechar. 🟢
+- **✨f021** Ao `resume`, quando habilitado, anexar o índice de decisões condensado ao texto reinjetado, para ancorar a busca do agente antes de varreduras amplas. 🟢
 
 ## Regras de Negócio
 
@@ -27,16 +33,22 @@ Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessa
 - **RN-N4 — Ausente ≠ malformado:** arquivo ausente → `None` (sessão nova); malformado → `MalformedSessionStateError`. 🟢
 - **RN-N5 — Core não conhece o harness:** o serviço produz texto puro; a seleção do mecanismo de entrega por `active_harness` vive na borda (`get_sink` + `main.py`). 🟢
 - **Isolamento no fechamento:** `encerrar-sessao` exige sessão ativa (senão erro), captura a âncora com `get_head_commit` **antes** das escritas, `close_session(ancora)`, salva atomicamente e então cria um commit contendo **só** o `state_file` via `GitPort.commit_paths` (nunca `git add -A`); a âncora segue no trabalho, o commit de encerramento por cima. Falha de commit → `SessionCommitError` (barulhento), sem reverter o estado salvo; a saída reporta os dois hashes. ✨f013 (ver `domain.md#2.14`). 🟢
+- **RN-N34 — Pendência restrita ao arquivo de estado (✨f019):** `pending_work_paths` exclui da oferta de commit **apenas** `session_file`, não o diretório `.harness/` inteiro; decisões e índice sujos entram na oferta. 🟢
+- **RN-N35 — Gate de narrativa viva (✨f018, refinado):** `encerrar-sessao` recusa fechar se a narrativa estiver vazia ou idêntica à do commit-âncora de partida — sinal de que o agente esqueceu de consolidar. Fail-open só sem baseline legível na âncora e narrativa já preenchida. 🟢
+- **RN-N41 — Apêndice do índice de decisões no resume (✨f021):** `enabled = active_harness == "claude" and session.inject_decisions_index`; quando `True`, `build_decisions_appendix` anexa `.harness/microdecisoes.md` ao texto do resume, depois do estado. Índice ausente/vazio/gate desligado → string vazia (não-bloqueante). 🟢
 
 ## Requisitos Funcionais
 
-| ID    | Requisito                  | Prioridade | Critério de Aceite                                                                                                                                                                                  |
-| ----- | -------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| RF-01 | Comando `resume`.          | Must       | Sem sessão → cria com HEAD e feature `args[0]` (ou `default_feature`); com sessão → reativa, reinjeta narrativa, alerta se âncora divergir.                                                         |
-| RF-02 | Comando `encerrar-sessao`. | Must       | Exige sessão ativa; grava a âncora via `close_session`; salva atomicamente; **versiona** só o `state_file` num commit por cima do trabalho e reporta os dois hashes (falha → `SessionCommitError`). |
-| RF-03 | Comando `handoff`.         | Should     | Monta bloco Markdown com feature ativa + HEAD.                                                                                                                                                      |
-| RF-04 | Comando `clarificar`.      | Should     | Retorna texto fixo (limite de 2 rodadas de diálogo).                                                                                                                                                |
-| RF-05 | Comando desconhecido.      | Must       | Retorna `"Comando desconhecido: <command>"`.                                                                                                                                                        |
+| ID    | Requisito                                                   | Prioridade | Critério de Aceite                                                                                                                                                                                  |
+| ----- | ----------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RF-01 | Comando `resume`.                                           | Must       | Sem sessão → cria com HEAD e feature `args[0]` (ou `default_feature`); com sessão → reativa, reinjeta narrativa, alerta se âncora divergir.                                                         |
+| RF-02 | Comando `encerrar-sessao`.                                  | Must       | Exige sessão ativa; grava a âncora via `close_session`; salva atomicamente; **versiona** só o `state_file` num commit por cima do trabalho e reporta os dois hashes (falha → `SessionCommitError`). |
+| RF-03 | Comando `handoff`.                                          | Should     | Monta bloco Markdown com feature ativa + HEAD.                                                                                                                                                      |
+| RF-04 | Comando `clarificar`.                                       | Should     | Retorna texto fixo (limite de 2 rodadas de diálogo).                                                                                                                                                |
+| RF-05 | Comando desconhecido.                                       | Must       | Retorna `"Comando desconhecido: <command>"`.                                                                                                                                                        |
+| RF-06 | Pré-check de pendência antes de `encerrar-sessao` (✨f019). | Must       | `pending_work_paths` exclui só `session_file`; se restar trabalho sujo, aborta com marker/prompt sem fechar.                                                                                        |
+| RF-07 | Gate de narrativa viva antes de `encerrar-sessao` (✨f018). | Must       | Narrativa vazia ou idêntica à da âncora de partida → aborta com marker/prompt sem fechar.                                                                                                           |
+| RF-08 | Apêndice do índice de decisões no `resume` (✨f021).        | Should     | Claude + flag ligado + índice presente/não-vazio → texto do resume ganha o apêndice após o estado; caso contrário, resume segue normalmente.                                                        |
 
 ## Requisitos Não Funcionais
 
@@ -64,6 +76,22 @@ Então o commit HEAD é gravado como âncora e a sessão fica inativa.
 Dado um arquivo de estado malformado
 Quando load_session é chamado
 Então um MalformedSessionStateError é levantado (não tratado como sessão nova).
+
+Dado trabalho não commitado em .harness/decisoes/ (exceto o arquivo de estado)
+Quando `./harness cmd encerrar-sessao`
+Então o comando aborta com o marker/prompt de pendência e a sessão permanece ATIVA (✨f019).
+
+Dado uma narrativa vazia ou idêntica à do commit-âncora de partida
+Quando `./harness cmd encerrar-sessao`
+Então o comando aborta com o marker/prompt de narrativa pendente e a sessão permanece ATIVA (✨f018).
+
+Dado active_harness "claude", session.inject_decisions_index true e um índice de decisões não-vazio
+Quando `./harness cmd resume`
+Então o texto reinjetado contém o estado seguido do apêndice do índice de decisões (✨f021).
+
+Dado active_harness "gemini" (ou o índice de decisões ausente)
+Quando `./harness cmd resume`
+Então o texto reinjetado contém só o estado, sem apêndice, e nenhum erro é levantado (✨f021).
 ```
 
 ## Prioridade (MoSCoW)
@@ -74,15 +102,20 @@ Então um MalformedSessionStateError é levantado (não tratado como sessão nov
 | `encerrar-sessao` (RF-02)               | Must   | Fecha a sessão e grava a âncora; sem ele a retomada não tem base. |
 | `handoff` / `clarificar` (RF-03/04)     | Should | Apoios ao fluxo; texto derivado/fixo.                             |
 | Comando desconhecido (RF-05)            | Must   | Falha previsível e legível.                                       |
+| Pré-check de pendência (RF-06)          | Must   | Evita fechar sessão com decisões/índice órfãos de commit.         |
+| Gate de narrativa viva (RF-07)          | Must   | Evita encerrar sem consolidar o que a sessão fez.                 |
+| Apêndice de decisões no resume (RF-08)  | Should | Valor de orientação; não crítico ao fechamento em si.             |
 
 ## Rastreabilidade de Código
 
-| Arquivo                      | Função / Classe                                                                                                                     | Cobertura |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `core/commands/service.py`   | `CommandService.execute_command`, `load_session`, `save_session`                                                                    | 🟢        |
-| `core/session/serializer.py` | `render`, `render_narrative` (consumidos)                                                                                           | 🟢        |
-| `core/domain/models.py`      | `SessionState`, `SessionNarrative`                                                                                                  | 🟢        |
-| `src/main.py`                | Subcomando `cmd`, caminho de sessão lido de `config.session.state_file` (default `.harness/estado-da-sessao.md`), resolução de sink | 🟢        |
+| Arquivo                                    | Função / Classe                                                                                                                     | Cobertura |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `core/commands/service.py`                 | `CommandService.execute_command`, `load_session`, `save_session`                                                                    | 🟢        |
+| `core/session/close_flow.py` (✨f018/f019) | `SessionCloseFlow.run`, `pending_work_paths`, `narrative_is_stale`, `conduct_commit_pendente`, `conduct_narrativa_pendente`         | 🟢        |
+| `core/session/resume_context.py` (✨f021)  | `build_decisions_appendix`                                                                                                          | 🟢        |
+| `core/session/serializer.py`               | `render`, `render_narrative` (consumidos)                                                                                           | 🟢        |
+| `core/domain/models.py`                    | `SessionState`, `SessionNarrative`                                                                                                  | 🟢        |
+| `src/main.py`                              | Subcomando `cmd`, caminho de sessão lido de `config.session.state_file` (default `.harness/estado-da-sessao.md`), resolução de sink | 🟢        |
 
 > ✨ **f013 — Encerramento versionado:** `encerrar-sessao` cria um commit isolado do `state_file` via `GitPort.commit_paths` (porta em `core/ports/git.py`, adapter em `adapters/git/subprocess.py`); falha de commit → `SessionCommitError` (`core/commands/errors.py`). A âncora segue no trabalho e a saída reporta os dois hashes. Ver `domain.md#2.14` (RN-N31/RN-N32).
 

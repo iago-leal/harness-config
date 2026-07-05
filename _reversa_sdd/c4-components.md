@@ -2,15 +2,16 @@
 
 > Regenerado pelo Architect em 2026-06-24 (Re-extração após a feature 009-hooks-antigravity)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO
+> **Re-extração estrutural de 2026-07-05** (este documento estava congelado desde 2026-06-24/feature 009): novos componentes `core/migrate` (f020), `install/session_skills` (f018, substitui `install/session_commands`), `install/claude_settings` (merge por-item, f020), `session/close_flow` (f018) e `session/resume_context` (f021). Todos os caminhos confirmados sob `.harness/harness-core/` (relocação da feature 011, já vigente mas não refletida aqui até agora).
 
-Componentes internos de `src/core/` e `src/adapters/` sob arquitetura hexagonal. **Novo** nesta extração: o **terceiro driver de entrada** `AntigravityHookBridge` (`src/adapters/antigravity/hook_bridge.py` ✨f009), que delega a `FormattingService` e `DecisionService`, mais o materializador `install/antigravity_hooks.py` (`materialize_hooks_json` ✨f009). Persistem das extrações anteriores: os serviços `install` ✨f003 e `session` ✨f004, e a leitura de config tipada (`load_config`) pelos drivers ✨f005.
+Componentes internos de `src/core/` e `src/adapters/` sob arquitetura hexagonal. Persistem da extração anterior: o **terceiro driver de entrada** `AntigravityHookBridge` (`src/adapters/antigravity/hook_bridge.py` ✨f009), que delega a `FormattingService` e `DecisionService`, mais o materializador `install/antigravity_hooks.py` (`materialize_hooks_json` ✨f009); os serviços `install` ✨f003 e `session` ✨f004; e a leitura de config tipada (`load_config`) pelos drivers ✨f005. **Novos nesta reconciliação:** o serviço `core/migrate` (✨f020, converte instalações do layout copiado para a fonte única); os materializadores `install/session_skills` (✨f018, substitui `install/session_commands`) e `install/claude_settings` (merge por-item, ✨f020); e dois módulos novos em `session/` — `close_flow` (✨f018, orquestração do encerramento) e `resume_context` (✨f021, apêndice do índice de decisões).
 
 ---
 
 ```mermaid
 graph TB
     subgraph drivers [Drivers de entrada]
-        CLI["main.py<br/>[CLI argparse v2.0.0]<br/>10 subcomandos · resolve sink · serve HTTP · agy-hook ✨f009"]
+        CLI["main.py<br/>[CLI argparse]<br/>12 subcomandos · resolve sink · serve HTTP · agy-hook ✨f009 · migrate ✨f020"]
         MCP["adapters/mcp/server.py<br/>[FastMCP]<br/>4 tools · T1/T2 resolvidos (cf73980/f006)"]
         AGY["adapters/antigravity/hook_bridge.py ✨f009<br/>[AntigravityHookBridge]<br/>pre/post-tool-use · stop · stdin/stdout JSON · não-bloqueante"]
     end
@@ -18,39 +19,46 @@ graph TB
     subgraph core [Núcleo da Aplicação src/core/]
         subgraph domain [Domínio src/core/domain/]
             Models["models.py<br/>Decision · Relationship<br/>SessionState · SessionNarrative"]
-            Cfg["config.py<br/>HarnessConfig · DecisionsSection · SessionSection ✨f006<br/>load_config()"]
+            Cfg["config.py<br/>HarnessConfig · DecisionsSection · SessionSection (+inject_decisions_index ✨f021)<br/>load_config()"]
             Cache["cache.py<br/>SyncCache"]
         end
 
         subgraph ports [Portas src/core/ports/]
-            FsPort["FileSystemPort [ABC]"]
-            GitPort["GitPort [ABC]"]
+            FsPort["FileSystemPort [ABC]<br/>+ remove_tree ✨f020"]
+            GitPort["GitPort [ABC]<br/>+ commit_paths, list_dirty_paths"]
             ProcPort["ProcessPort [ABC]"]
         end
 
         subgraph services [Serviços de capacidade]
-            BootServ["BootstrapService<br/>install_hooks (pre-commit/post-merge)"]
+            BootServ["BootstrapService<br/>install_hooks (não-destrutivo por assinatura ✨f020)"]
             FormatServ["FormattingService<br/>format_file (blindagens, opt-out)"]
-            SyncServ["SyncService<br/>check_sync (cache TTL)"]
+            SyncServ["SyncService<br/>check_sync (cache TTL) — ainda ATIVO (desescopo f020)"]
             DecServ["DecisionService<br/>load / validate_integrity / compile_index"]
             CmdServ["CommandService<br/>resume / encerrar-sessao / handoff / clarificar"]
             DocServ["DocumentationService<br/>introspecção argparse + regras + state"]
             InstServ["InstallPromptService ✨f003<br/>render (composição de template)"]
+            MigServ["core/migrate ✨f020<br/>MigrateService: shim+hooks+settings → remove core local"]
             SessSer["session/serializer ✨f004<br/>parse / render (round-trip)"]
             SessSink["session/sinks ✨f004<br/>HookContextSink / FileProjectionSink"]
-            InstProf["install/harness_profiles ✨f003<br/>Claude/Gemini/Antigravity Profile · hooks_block real ✨f009"]
+            CloseFlow["session/close_flow ✨f018<br/>SessionCloseFlow: pré-check → fechamento → ofertas"]
+            ResumeCtx["session/resume_context ✨f021<br/>build_decisions_appendix (pura)"]
+            InstProf["install/harness_profiles ✨f003<br/>Claude/Gemini/Antigravity Profile · skills_dir() ✨f018"]
             AgyHooks["install/antigravity_hooks ✨f009<br/>materialize_hooks_json (merge por named-hook)"]
+            SessSkills["install/session_skills ✨f018<br/>materialize_session_skills (substitui session_commands)"]
+            ClaudeSettings["install/claude_settings ✨f020<br/>merge por-item dentro do array de cada evento"]
         end
     end
 
     subgraph adapters [Adaptadores src/adapters/]
-        FsAdap["LocalFileSystemAdapter<br/>write_file_atomic (.tmp + os.replace)"]
-        GitAdap["SubprocessGitAdapter<br/>rev-parse / ls-remote"]
+        FsAdap["LocalFileSystemAdapter<br/>write_file_atomic (.tmp + os.replace) · remove_tree ✨f020"]
+        GitAdap["SubprocessGitAdapter<br/>rev-parse / ls-remote / commit_paths"]
         FormatAdap["HostFormatterAdapter<br/>ruff / prettier / rustfmt"]
     end
 
     %% Drivers -> serviços
-    CLI --> BootServ & FormatServ & DecServ & CmdServ & DocServ & InstServ
+    CLI --> BootServ & FormatServ & DecServ & CmdServ & DocServ & InstServ & MigServ
+    CLI --> CloseFlow
+    CLI --> ResumeCtx
     CLI --> Cfg
     MCP --> FormatServ & SyncServ & DecServ & CmdServ
     MCP -->|load_config tipada (T1 resolvido cf73980)| Cfg
@@ -63,10 +71,19 @@ graph TB
 
     %% Composição interna do domínio
     CmdServ --> SessSer
+    CloseFlow --> CmdServ
+    CloseFlow --> GitPort
+    ResumeCtx --> FsPort
     CLI -->|resolve sink por active_harness| SessSink
     InstServ --> InstProf
     AgyHooks -->|hooks_block canônico| InstProf
     AgyHooks --> FsPort
+    SessSkills --> InstProf
+    SessSkills --> FsPort
+    ClaudeSettings --> FsPort
+    MigServ --> FsPort
+    MigServ --> BootServ
+    MigServ --> ClaudeSettings
     DecServ --> Models
     CmdServ --> Models
     SyncServ --> Cache
@@ -96,23 +113,28 @@ graph TB
 
 ### Portas (fronteira de inversão de dependência) 🟢
 
-- **`FileSystemPort`** — `read_file, write_file, write_file_atomic, exists, list_dir, makedirs, remove`.
-- **`GitPort`** — `get_head_commit, get_remote_commit`.
-- **`ProcessPort`** — `execute_formatter -> (exit, stdout, stderr)`.
+- **`FileSystemPort`** — `read_file, write_file, write_file_atomic, exists, list_dir, makedirs, remove, is_dir` + **`remove_tree` (✨f020, novo — usado só por `MigrateService._safe_remove_core`, com guarda de nome-base)**.
+- **`GitPort`** — `get_head_commit, get_remote_commit` + **`commit_paths` (✨f013) e `list_dirty_paths` (✨f016, usado por `pending_work_paths`)**.
+- **`ProcessPort`** — `execute_formatter -> (exit, stdout, stderr)`, `run_command` (✨f007).
 
 ### Serviços de capacidade 🟢
 
-- **BootstrapService** — grava `pre-commit`(→`format`) e `post-merge`(→`decisions`) idempotentemente; cada script roda só se o interpretador existir.
+- **BootstrapService** — grava `pre-commit`(→`format`) e `post-merge`(→`decisions`); **✨f020: deixou de reescrever incondicionalmente** — hook ausente cria, hook do harness (por assinatura) atualiza, hook alheio sem assinatura é preservado e encadeado.
 - **FormattingService** — `format_file` **sempre retorna 0**; blindagem de `~`/`~/Notas`/`~/.claude`, opt-out por `.no-autoformat`, precedência de binário local, raiz por manifesto (`.git`/`harness.toml`). Consome `[formatting]` (`exclude_paths` com glob/`fnmatch`, `opt_out_file`) dinamicamente do `HarnessConfig` ✨f008 (T4 resolvido). Reusado pela ponte do Antigravity no `PostToolUse` ✨f009.
-- **SyncService** — `check_sync` com cache TTL; resiliente (erro → `True`). Exposto **só via MCP** (não há subcomando `sync`).
+- **SyncService** — `check_sync` com cache TTL; resiliente (erro → `True`). Exposto **só via MCP** (não há subcomando `sync`). **Ainda ATIVO** apesar do plano da f020 prever sua remoção — sustenta a `UpgradeOffer` de `session/close_flow` (ver domain.md, nota de reconciliação).
 - **DecisionService** — `load_decisions`, `validate_integrity` (auto-relação e aresta órfã), `compile_index` (backlinks por verbos inversos). Caminhos vêm por parâmetro ✨f005.
-- **CommandService** — slash commands agnósticos à IDE; âncora Git no `resume`; distingue ausente (`None`) de malformado (`MalformedSessionStateError`). Não conhece harness (RN-N5).
+- **CommandService** — slash commands agnósticos à IDE; âncora Git no `resume`; distingue ausente (`None`) de malformado (`MalformedSessionStateError`). Não conhece harness (RN-N5). **✨f018: consumido por `session/close_flow`**, que orquestra em volta dele (pré-check + ofertas), sem alterar seu contrato.
 - **DocumentationService** — introspecção do argparse + regex sobre `domain.md` + `state.json` → injeta JSON no `template.html`.
 - **InstallPromptService ✨f003** — `render(active_harness, parser)` por composição (4 placeholders no `template.md`); resolve perfil fail-fast.
+- **core/migrate ✨f020 (NOVO)** — `MigrateService.migrate(root, dry_run, upstream_self)`: varre uma raiz por instalações no layout copiado; converte cada uma para a fonte única na ordem shim → hooks (`BootstrapService`) → settings (`ClaudeSettings`) → remoção de `version` → remoção da cópia do core **por último**, via `FileSystemPort.remove_tree` com guarda de nome-base. Exceção consciente ao footprint per-projeto (RN-N17): atua sobre outros projetos por design.
 - **session/serializer ✨f004** — round-trip `parse(render(x)) == x`; 4 seções fixas mapeiam `SessionNarrative`.
 - **session/sinks ✨f004** — `get_sink` por `active_harness`: `HookContextSink` (Claude/Gemini, `additionalContext`, trunca em 10000) ou `FileProjectionSink` (Antigravity). Família por `_FAMILY_BY_HARNESS`; desconhecido → `ValueError`.
-- **install/harness_profiles ✨f003** — Strategy (`ABC`) `ClaudeProfile`/`GeminiProfile`/`AntigravityProfile` com `hooks_block()` + `apply_instructions()`. ✨f009 `AntigravityProfile` deixou de ser placeholder: `hooks_block()` emite o named-hook `harness` em JSON válido (`PreToolUse`/`PostToolUse`/`Stop`, `<ABS>` literal até a materialização) e `apply_instructions()` aponta `.agents/hooks.json`; a nota de escopo por harness migrou do `template.md` para o `apply_instructions()` dos três perfis.
+- **session/close_flow ✨f018 (NOVO)** — `SessionCloseFlow.run(repo_path, config, ...) -> int`: fonte única da orquestração de `encerrar-sessao`, consumida pela CLI e pelos scripts finos da skill. Sequência: pré-check de pendência (`pending_work_paths`, restrito ao `session_file` desde ✨f019) → gate de narrativa viva → `CommandService.execute_command("encerrar-sessao")` → ofertas de fim de sessão (push → upgrade, via `EndSessionOffersService`). I/O injetável (markers sem TTY, `[s/N]` com TTY).
+- **session/resume_context ✨f021 (NOVO)** — `build_decisions_appendix(fs, index_file, enabled) -> str`: função pura que compõe o apêndice do índice de decisões anexado ao `cmd resume`; o gate (`active_harness == "claude" and inject_decisions_index`) é calculado na borda (`main.py`) e passado como parâmetro.
+- **install/harness_profiles ✨f003** — Strategy (`ABC`) `ClaudeProfile`/`GeminiProfile`/`AntigravityProfile` com `hooks_block()` + `apply_instructions()`. ✨f009 `AntigravityProfile` deixou de ser placeholder: `hooks_block()` emite o named-hook `harness` em JSON válido (`PreToolUse`/`PostToolUse`/`Stop`, `<ABS>` literal até a materialização) e `apply_instructions()` aponta `.agents/hooks.json`; a nota de escopo por harness migrou do `template.md` para o `apply_instructions()` dos três perfis. **✨f018:** `session_command_artifact(command_path)` removido; adicionado `skills_dir() -> str | None` (`.claude/skills`, `.agents/skills`, `None` no Gemini).
 - **install/antigravity_hooks ✨f009** — `materialize_hooks_json(fs, project_path, command_path)`: lê o `.agents/hooks.json` existente, substitui o named-hook `harness` pelo bloco canônico do `AntigravityProfile` (com `<ABS>` resolvido para o caminho absoluto) e grava por escrita atômica, preservando chaves de terceiros. Rotina única compartilhada por `init` e `upgrade`. Escreve só sob `project_path` via `FileSystemPort` (RN-N17, footprint zero).
+- **install/session_skills ✨f018 (NOVO, substitui `install/session_commands`)** — `materialize_session_skills(fs, project_path, profiles)`: grava a árvore agnóstica da skill `encerrar-sessao` (`SKILL.md` + `scripts/`, mesmos bytes) sob `<skills_dir>/encerrar-sessao/` de cada perfil, incondicionalmente (Claude + Antigravity, sem gate por `active_harness`). Remove os órfãos legados (`stale_session_command_paths`) preservando terceiros.
+- **install/claude_settings ✨f020 (NOVO)** — materializa `.claude/settings.json` com **merge por-item dentro do array de cada evento** (identifica o item do harness pela assinatura no `command`, substitui/insere, preserva os demais itens do mesmo evento) — corrige o bug anterior de substituição do array inteiro por evento.
 
 ### Driver de borda do Antigravity ✨f009 🟢
 

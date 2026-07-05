@@ -2,6 +2,7 @@
 
 > Gerado pelo Archaeologist em 2026-06-24 (Re-extração após as features 003, 004, 005, 006 e 007)
 > Nível de Documentação: **Completo**
+> **Reconciliação de 2026-07-05** (pós-features 010-021): os 5 fluxos abaixo permanecem válidos sem alteração algorítmica. Adicionados os fluxos **6** (`SessionCloseFlow.run`, feature 018 — o algoritmo novo mais significativo do período) e **7** (`MigrateService.migrate`, feature 020).
 
 Este documento ilustra o fluxo de controle e os algoritmos dos principais sub-serviços do `harness-core`.
 
@@ -15,35 +16,35 @@ O diagrama abaixo descreve o algoritmo de formatação de arquivos, incluindo ve
 graph TD
     Start([Início: format_file]) --> Resolve[Obter caminho absoluto do arquivo]
     Resolve --> CheckHome{Reside em pasta protegida?<br/>$HOME, Notas, .claude}
-    
+
     CheckHome -- Sim --> ExitSuccess([Retorna 0 - Cancelado por Segurança])
     CheckHome -- Não --> SearchRoot[Subir árvore procurando .git ou harness.toml]
-    
+
     SearchRoot --> CheckOptOut{Encontrou .no-autoformat<br/>em qualquer nível?}
     CheckOptOut -- Sim --> ExitSuccess
     CheckOptOut -- Não --> FindExt{Identificar extensão}
-    
+
     FindExt -->|.py| SetRuff[Selecionar Ruff]
     FindExt -->|.js, .ts, .json, .css, .md| SetPrettier[Selecionar Prettier]
     FindExt -->|.rs| SetRustfmt[Selecionar Rustfmt]
     FindExt -->|Outra| ExitSuccess
-    
+
     SetRuff --> CheckLocalRuff{Existe ruff local<br/>na .venv ou venv?}
     CheckLocalRuff -- Sim --> ExecLocalRuff[Executar ruff local]
     CheckLocalRuff -- Não --> ExecGlobalRuff[Executar ruff global]
-    
+
     SetPrettier --> CheckLocalPrettier{Existe prettier local<br/>em node_modules?}
     CheckLocalPrettier -- Sim --> ExecLocalPrettier[Executar prettier local]
     CheckLocalPrettier -- Não --> ExecGlobalPrettier[Executar prettier global]
-    
+
     SetRustfmt --> ExecRustfmt[Executar rustfmt global]
-    
+
     ExecLocalRuff --> Finalize[Encerrar e capturar erro]
     ExecGlobalRuff --> Finalize
     ExecLocalPrettier --> Finalize
     ExecGlobalPrettier --> Finalize
     ExecRustfmt --> Finalize
-    
+
     Finalize --> SafeReturn[Captura exceções e força exit code 0]
     SafeReturn --> End([Fim: Retorna 0])
 ```
@@ -57,24 +58,24 @@ Este diagrama mapeia a lógica de verificação resiliente de sincronia Git do r
 ```mermaid
 graph TD
     Start([Início: check_sync]) --> CheckCache{Existe cache local?}
-    
+
     CheckCache -- Sim --> ParseCache[Ler timestamp e commit_hash]
     ParseCache --> CheckTTL{Timestamp dentro do TTL?<br/>24 horas}
-    
+
     CheckTTL -- Sim --> VerifyHash{HEAD bate com o cache?}
     VerifyHash -- Sim --> ReturnTrue([Retorna True - Sincronizado])
     VerifyHash -- Não --> ReturnTrue
-    
+
     CheckCache -- Não --> GitLS[Executar Git ls-remote remoto]
     CheckTTL -- Não --> GitLS
-    
+
     GitLS --> Compare[Comparar HEAD local com o remote]
     Compare --> WriteCache[Atualizar cache local de forma atômica]
     WriteCache --> ReturnResult{Local == Remote?}
-    
+
     ReturnResult -- Sim --> ReturnTrue
     ReturnResult -- Não --> ReturnFalse([Retorna False - Defasado])
-    
+
     GitLS -. Falha de Rede .-> CatchError[Exibe aviso e prossegue]
     CatchError --> ReturnTrue
 ```
@@ -89,15 +90,15 @@ Este fluxograma ilustra o fluxo de geração do arquivo HTML standalone a partir
 graph TD
     Start([Início: generate_html]) --> CheckTemplate{Existe template.html?}
     CheckTemplate -- Não --> RaiseError[Lança FileNotFoundError]
-    
+
     CheckTemplate -- Sim --> ExtCLI[Introspecção do parser argparse da CLI]
     ExtCLI --> ParseRules[Parsear Regras de Negócio de domain.md via Regex]
     ParseRules --> LoadState[Carregar checkpoints do state.json]
-    
+
     LoadState --> BuildJSON[Consolidar dados em dicionário HARNESS_DOC_DATA]
     BuildJSON --> ReadTemplate[Ler conteúdo do template.html]
     ReadTemplate --> InjectData[Substituir placeholder com o JSON serializado]
-    
+
     InjectData --> WriteAtomic[Escrever harness-docs.html de forma atômica]
     WriteAtomic --> End([Fim: Documentação Gerada])
 ```
@@ -114,15 +115,15 @@ graph TD
     CheckTarget -- Não --> CreateDir[Criar diretório de destino recursivo]
     CheckTarget -- Sim --> CopyCore[Copiar recursivamente harness-core e wrapper]
     CreateDir --> CopyCore
-    
+
     CopyCore --> FilterFiles[Ignorar .git, .venv, .pytest_cache, .ruff_cache, tmp]
     FilterFiles --> WriteConfig[Criar harness.toml com upstream_path e version]
     WriteConfig --> CreateVenv[Executar python3 -m venv .venv no destino]
-    
+
     CreateVenv --> CheckVenv{Sucesso?}
     CheckVenv -- Sim --> InstallHooks[Instalar ganchos Git locais]
     CheckVenv -- Não --> LogWarning[Exibir alerta de dependência host para ação humana]
-    
+
     InstallHooks --> End([Fim: Repositório Inicializado])
     LogWarning --> End
 ```
@@ -137,11 +138,72 @@ Este fluxograma ilustra a atualização de arquivos de código preservando os me
 graph TD
     Start([Início: upgrade_target]) --> UpdateWrapper[Atualizar wrapper harness na raiz do destino]
     UpdateWrapper --> CopyCore[Copiar recursivamente harness-core do upstream]
-    
+
     CopyCore --> FilterDirs[Ignorar .git, .venv e caminhos de dados]
     FilterDirs --> PreservedDirs{Preservar pastas locais?<br/>.reversa/ e .harness/decisoes/}
-    
+
     PreservedDirs -- Sim --> WriteNewCore[Gravar novos arquivos do core no destino]
     WriteNewCore --> UpdateTOML[Atualizar campo de versão no harness.toml local]
     UpdateTOML --> End([Fim: Upgrade Concluído])
+```
+
+---
+
+## 🔄 6. Orquestração de Encerramento (`SessionCloseFlow.run`) — feature 018, NOVO
+
+Fonte única compartilhada por CLI e skill: pré-check de pendências → gate de narrativa → fechamento → ofertas.
+
+```mermaid
+graph TD
+    Start([Início: cmd encerrar-sessao]) --> CheckPending{Há trabalho não commitado<br/>exceto o arquivo de estado?}
+    CheckPending -- Sim --> AbortPending[conduct_commit_pendente:<br/>marker sem TTY / lista com TTY]
+    AbortPending --> EndAbort1([Fim: abortado, sem fechar])
+
+    CheckPending -- Não --> CheckNarrative{Narrativa vazia OU<br/>idêntica à do commit-âncora?}
+    CheckNarrative -- Sim --> AbortNarrative[conduct_narrativa_pendente:<br/>marker sem TTY / texto com TTY]
+    AbortNarrative --> EndAbort2([Fim: abortado, sem fechar])
+
+    CheckNarrative -- Não --> DoClose[CommandService.execute_command<br/>'encerrar-sessao']
+    DoClose --> DetectOffers[EndSessionOffersService.detect:<br/>push? upgrade?]
+    DetectOffers --> HasOffers{has_any?}
+    HasOffers -- Não --> EndDone([Fim: encerrado, sem ofertas])
+    HasOffers -- Sim --> ConductOffers[conduct_end_session_offers:<br/>ordem push -> upgrade]
+    ConductOffers --> EndDone2([Fim: encerrado + ofertas conduzidas])
+```
+
+---
+
+## 🔄 7. Migração para Fonte Única (`MigrateService.migrate`) — feature 020, NOVO
+
+Varre uma raiz por instalações no layout copiado e converte cada uma para shim + core do upstream, na ordem que nunca deixa o projeto sem executor.
+
+```mermaid
+graph TD
+    Start([Início: migrate root]) --> ScanRoot[Varrer subpastas de root<br/>com harness.toml]
+    ScanRoot --> ForEach{Para cada instalação}
+
+    ForEach --> IsSelf{proj == upstream_self?}
+    IsSelf -- Sim --> SkipSelf[skip: upstream fonte do core]
+    SkipSelf --> ForEach
+
+    IsSelf -- Não --> HasUpstream{upstream_path configurado<br/>e não é autoreferência?}
+    HasUpstream -- Não --> SkipNoUpstream[skip: sem upstream_path / autoreferência]
+    SkipNoUpstream --> ForEach
+
+    HasUpstream -- Sim --> UpstreamOK{Core do upstream existe<br/>no caminho declarado?}
+    UpstreamOK -- Não --> SkipMissingCore[skip: core do upstream ausente]
+    SkipMissingCore --> ForEach
+
+    UpstreamOK -- Sim --> DryRun{--dry-run?}
+    DryRun -- Sim --> ReportOnly[Relata would-migrate + diretórios a remover]
+    ReportOnly --> ForEach
+
+    DryRun -- Não --> WriteShim[1. Escrever shim executável ./harness]
+    WriteShim --> InstallHooksM[2. Instalar ganchos Git não-destrutivo]
+    InstallHooksM --> MaterializeSettings[3. Materializar .claude/settings.json por merge<br/>se active_harness == claude]
+    MaterializeSettings --> StripVersion[4. Remover campo version do harness.toml]
+    StripVersion --> RemoveCore[5. Remover cópia(s) do core POR ÚLTIMO<br/>_safe_remove_core: só remove dir 'harness-core']
+    RemoveCore --> ForEach
+
+    ForEach -- fim da varredura --> End([Fim: lista de resultados por instalação])
 ```

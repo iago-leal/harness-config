@@ -3,6 +3,7 @@
 > Regenerado pelo Architect em 2026-06-24 (Re-extração após as features 003, 004 e 005)
 > Atualização cirúrgica em 2026-06-24 após a feature 006 (commit `e894c59`): nova `SESSION_SECTION` na configuração tipada e fechamento da divergência T2 (caminho de sessão por configuração).
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO
+> **Re-extração estrutural de 2026-07-05** (este documento estava congelado desde 2026-06-24/feature 006, sem incorporar nem a feature 008 que já resolvia o T4 aqui descrito como aberto): `SESSION_SECTION` ganha `inject_decisions_index` (✨f021); `HARNESS_SECTION` explicitada com `upstream_path`/`version` (✨f007, ainda vigentes — não removidos pela f020, ver domain.md); T4 corrigido para RESOLVIDO (feature 008); `DECISION` — população cresceu de 5 para 12 fichas, sem mudança de schema; novas estruturas efêmeras `EndSessionOffers`/`PushOffer`/`UpgradeOffer` (✨f014, dataclasses — exceção ao padrão Pydantic do resto do domínio); nota sobre a divergência de nome do `SYNC_CACHE` entre CLI e MCP (T7, dívida técnica nova, ver `architecture.md`).
 
 > 🟢 **Não há banco de dados relacional.** Confirmado em `surface.json` (`database_hints: []`) e na análise de código: nenhum DDL, migration, ORM ou cliente de banco. A "persistência" do `harness-core` é inteiramente baseada em **arquivos versionados** — Markdown com front-matter YAML, JSON e TOML. O ERD abaixo modela as **estruturas de dados de configuração, estado e decisão** (modelos Pydantic v2 do domínio) como entidades lógicas, com as relações de composição reais entre elas. As "PK/FK" são lógicas (identificadores de domínio), não chaves de um SGBD.
 
@@ -39,7 +40,7 @@ erDiagram
         string target_id "regex ^MD-\\d{4}$"
     }
 
-    %% ── Cache de sincronia (.harness/sync_cache.json) ──
+    %% ── Cache de sincronia (dois nomes divergentes — T7) ──
     SYNC_CACHE {
         datetime last_checked_time "ISO 8601"
         string commit_hash "regex SHA1 ^[a-f0-9]{40}$"
@@ -49,9 +50,13 @@ erDiagram
     HARNESS_CONFIG {
         string active_harness "[harness] · claude/gemini/antigravity · default claude"
     }
+    HARNESS_SECTION {
+        string upstream_path "[harness] · opcional (feature 007) · ancora de execucao sob fonte unica (f020)"
+        string version "[harness] · opcional (feature 007) · ainda gravado (remocao planejada foi desescopada)"
+    }
     FORMATTING_SECTION {
-        list exclude_paths "[formatting] · default [] (NAO consumido · T4)"
-        string opt_out_file "[formatting] · default .no-autoformat (NAO consumido · T4)"
+        list exclude_paths "[formatting] · default [] (consumido dinamicamente, feature 008)"
+        string opt_out_file "[formatting] · default .no-autoformat (consumido dinamicamente, feature 008)"
     }
     SYNC_SECTION {
         int cache_ttl_hours "[sync] · default 24"
@@ -64,12 +69,14 @@ erDiagram
     }
     SESSION_SECTION {
         string state_file "[session] · default .harness/estado-da-sessao.md (feature 006)"
+        bool inject_decisions_index "[session] · default true (feature 021, NOVO)"
     }
 
     %% ── Relacoes de composicao reais ──
     SESSION_STATE ||--o| SESSION_NARRATIVE : "contem (value-object)"
     DECISION ||--o{ RELATIONSHIP : "declara arestas no front-matter"
     RELATIONSHIP }o--|| DECISION : "target_id aponta para (validado: sem orfa, sem auto-relacao)"
+    HARNESS_CONFIG ||--|| HARNESS_SECTION : "compoe [harness]"
     HARNESS_CONFIG ||--|| FORMATTING_SECTION : "compoe [formatting]"
     HARNESS_CONFIG ||--|| SYNC_SECTION : "compoe [sync]"
     HARNESS_CONFIG ||--|| DECISIONS_SECTION : "compoe [decisions]"
@@ -93,19 +100,21 @@ erDiagram
 - **Integridade do grafo** (`DecisionService.validate_integrity`): **auto-relação** (`target == id`) e **aresta órfã** (alvo fora do grafo) são erros. O índice `.harness/microdecisoes.md` é **derivado** com backlinks por verbos inversos (não editado à mão).
 - Caminhos (`dir`/`index_file`/`header_file`) vêm de `DECISIONS_SECTION` — **não chumbados** (feature 005).
 
-### 3. Cache de Sincronia — `.harness/sync_cache.json` 🟢
+### 3. Cache de Sincronia — dois arquivos divergentes 🟡
 
 - **`SYNC_CACHE`** (`cache.py:SyncCache`): estrutura **isolada** de controle de infraestrutura; persiste o último check para honrar a janela TTL. Sem relação com as demais entidades.
+- 🟡 **T7 (achado nesta reconciliação, EM ABERTO):** existem **dois arquivos físicos** para a mesma estrutura lógica, com nomes divergentes: a CLI (`main.py`) grava em `.harness/sync-cache.json` (hífen — o que o `.gitignore` do `init` cobre); o servidor MCP (`server.py:42`) grava, chumbado, em `.harness/sync_cache.json` (underscore). Consequência: o cache do MCP não é ignorado pelo git e, desde a feature 019, seria oferecido para commit. Ver `architecture.md` §5.
 
 ### 4. Configuração Tipada — `harness.toml` (`config.py`) 🟢
 
-- **`HARNESS_CONFIG`** compõe as seções `FORMATTING_SECTION`, `SYNC_SECTION`, `DECISIONS_SECTION` (✨ feature 005, chave do desacoplamento dos caminhos de decisão) e `SESSION_SECTION` (✨ feature 006, `state_file` — desacopla o caminho de sessão; fecha T2), além de `active_harness` em `[harness]`. Via única tipada: `load_config(fs)` é o único caminho de configuração; `load_harness_config` (dict legado) foi removido (T5 fechado, feature 006).
-- ⚠️ **T4:** `FORMATTING_SECTION` é declarada no domínio mas **não é consumida** por `FormattingService` (blindagens e opt-out chumbados) — a estrutura existe, mas mudar `harness.toml` não altera o comportamento de formatação.
+- **`HARNESS_CONFIG`** compõe as seções `HARNESS_SECTION` (`active_harness`, `upstream_path`/`version` ✨f007 — ainda vigentes, a remoção planejada pela f020 foi desescopada), `FORMATTING_SECTION`, `SYNC_SECTION`, `DECISIONS_SECTION` (✨ feature 005, chave do desacoplamento dos caminhos de decisão) e `SESSION_SECTION` (✨ feature 006, `state_file`; ✨ feature 021, `inject_decisions_index`). Via única tipada: `load_config(fs)` é o único caminho de configuração; `load_harness_config` (dict legado) foi removido (T5 fechado, feature 006).
+- 🟢 **T4 RESOLVIDO (feature 008):** `FORMATTING_SECTION` passou a ser consumida dinamicamente por `FormattingService` (`exclude_paths` com glob/`fnmatch`, `opt_out_file` configurável) — descrição anterior deste ERD ("não consumido") estava desatualizada desde a feature 008 e não fora corrigida até esta reconciliação.
 
 ### 5. Estruturas efêmeras (não persistidas) 🟢
 
 - **`HARNESS_DOC_DATA`** — payload JSON `{commands, rules, state}` compilado por `DocumentationService` e injetado no `template.html`; não vive em disco como entidade própria (embute-se no HTML).
 - **Bloco de ganchos do `install-prompt`** (feature 003) — saída textual de `InstallPromptService.render` montada por substituição de placeholders; transitória, destinada à colagem manual.
+- **`EndSessionOffers` / `PushOffer` / `UpgradeOffer` (✨f014, NOVO nesta reconciliação)** — `session/offers.py`. Exceção deliberada ao padrão Pydantic: são `@dataclass` puros, montados por `EndSessionOffersService.detect` a cada `encerrar-sessao` e consumidos por `session/close_flow.conduct_end_session_offers`; nunca persistidos. `EndSessionOffers` agrega `push: PushOffer?` e `upgrade: UpgradeOffer?` (ambos opcionais, `None` = sem oferta cabível).
 
 ---
 
@@ -117,3 +126,12 @@ erDiagram
 - **Nova entidade:** `SESSION_SECTION` (`state_file`) na configuração tipada ✨f006 — desacopla o caminho de sessão e fecha a divergência T2 entre CLI e MCP.
 - **Correção de domínio:** `DECISION.status` tem **dois** valores reais (`ativo`/`descartado`); o ERD anterior citava `em-revisao`/`rejeitado`, que **não constam do validador**.
 - **`SYNC_CACHE`:** caminho passou para `.harness/sync_cache.json` (chumbado no MCP).
+
+## 🧭 Mudanças 010-021 (reconciliação 2026-07-05)
+
+- **`HARNESS_SECTION`** explicitada como entidade própria (`upstream_path`/`version`, feature 007) — existia no domínio desde 007 mas não estava modelada neste ERD.
+- **`SESSION_SECTION.inject_decisions_index`** (✨f021, NOVO) — flag de opt-out do apêndice de decisões no resume.
+- **`DECISION`:** população cresceu de 5 para 12 fichas — sem mudança de schema.
+- **Nova estrutura efêmera:** `EndSessionOffers`/`PushOffer`/`UpgradeOffer` (✨f014) — dataclasses, não Pydantic (exceção documentada).
+- **T4 corrigido:** estava descrito como "não consumido"; na verdade resolvido desde a feature 008 (este ERD nunca fora atualizado para refletir isso).
+- **T7 novo (aberto):** divergência de nome do arquivo de cache de sync entre CLI e MCP (`sync-cache.json` vs `sync_cache.json`).

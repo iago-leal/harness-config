@@ -8,6 +8,8 @@ Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As past
 > ⚠️ **Mudança vs versão anterior (feature 007):** Além do bootstrap evolucionário (`init`/`upgrade`), a feature 008 adicionou a compilação travada de dependências a partir do `requirements.in` (gerenciado por `uv`) gerando o `requirements.txt`, e a infraestrutura de integração contínua sob `.github/workflows/ci.yml`.
 >
 > ⚠️ **Mudança vs versão anterior (feature 009):** A feature 009 acrescentou um **terceiro driver de entrada** ao hexágono — `adapters/antigravity/hook_bridge.py` (`AntigravityHookBridge`), irmão da CLI e do servidor MCP —, um materializador de instalação dedicado (`core/install/antigravity_hooks.py`), preencheu o antes-placeholder `AntigravityProfile` e adicionou o subcomando `agy-hook <evento>` à CLI. Nenhuma dependência nova (só stdlib). A unit de spec correspondente é `antigravity-hooks/` (ADR 0016, RN-N26).
+>
+> ⚠️ **Reconciliação de 2026-07-05 (features 018-021):** esta matriz estava congelada desde 2026-06-24/feature 009. Novos arquivos mapeados: `session/close_flow.py` (f018) e `session/resume_context.py` (f021) → `comandos-customizados/` (unit que já cobre a orquestração de `encerrar-sessao`/`resume`, não `session/`, que fica restrita a serializer/sinks/errors); `install/session_skills.py` (f018, substitui `install/session_commands.py`) → `comandos-customizados/`; `install/claude_settings.py` e `bootstrap/shim.py` (f020) → `bootstrap/`; `core/migrate/service.py` (f020) → nova unit **`migrate/`**.
 
 ---
 
@@ -27,20 +29,27 @@ Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As past
 | `core/install/harness_profiles.py`     | `install/` + `antigravity-hooks/` (f009: `AntigravityProfile.hooks_block()`/`apply_instructions()` deixam de ser placeholder) ✨ | 🟢        |
 | `core/install/antigravity_hooks.py` ✨ | `antigravity-hooks/` (`materialize_hooks_json`, merge por named-hook; f009)                                                      | 🟢        |
 | `core/install/template.md`             | `install/`                                                                                                                       | 🟢        |
+| `core/install/session_skills.py` ✨✨  | `comandos-customizados/` (`materialize_session_skills`, substitui `session_commands.py`; f018)                                   | 🟢        |
+| `core/install/claude_settings.py` ✨✨ | `bootstrap/` (merge por-item do `.claude/settings.json`; f020)                                                                   | 🟢        |
 | `core/session/serializer.py`           | `session/`                                                                                                                       | 🟢        |
 | `core/session/sinks.py`                | `session/`                                                                                                                       | 🟢        |
 | `core/session/errors.py`               | `session/`                                                                                                                       | 🟢        |
+| `core/session/close_flow.py` ✨✨      | `comandos-customizados/` (`SessionCloseFlow`, pré-check + gate de narrativa + ofertas; f018/f019)                                | 🟢        |
+| `core/session/resume_context.py` ✨✨  | `comandos-customizados/` (`build_decisions_appendix`; f021)                                                                      | 🟢        |
+| `core/bootstrap/shim.py` ✨✨          | `bootstrap/` (`render_shim`; f020, reusado por `init` e `migrate/`)                                                              | 🟢        |
+| `core/migrate/service.py` ✨✨ (NOVO)  | `migrate/` (`MigrateService`; f020)                                                                                              | 🟢        |
 
 ## 📁 2. Domínio compartilhado (`core/domain/`, `core/ports/`)
 
-| Arquivo do legado       | Unit correspondente                                                                                                                                  | Cobertura |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `core/domain/models.py` | `session/` + `microdecisoes/` (transversal)                                                                                                          | 🟢        |
-| `core/domain/config.py` | `microdecisoes/` (`[decisions]`); `install/` (`active_harness`); `session/` (`[session]`); `bootstrap/` (`upstream_path`, `version`, feature 007) ✨ | 🟢        |
-| `core/domain/cache.py`  | `sync-check/`                                                                                                                                        | 🟢        |
-| `core/ports/fs.py`      | transversal (inclui `is_dir` estendido para `bootstrap/` na feature 007)                                                                             | 🟡        |
-| `core/ports/git.py`     | `sync-check/`, `comandos-customizados/`, `bootstrap/`                                                                                                | 🟡        |
-| `core/ports/process.py` | transversal (inclui `run_command` estendido para `bootstrap/` na feature 007)                                                                        | 🟡        |
+| Arquivo do legado       | Unit correspondente                                                                                                                                                                                                              | Cobertura |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `core/domain/models.py` | `session/` + `microdecisoes/` (transversal)                                                                                                                                                                                      | 🟢        |
+| `core/domain/config.py` | `microdecisoes/` (`[decisions]`); `install/` (`active_harness`); `session/` (`[session]`); `bootstrap/` (`upstream_path`, `version`, feature 007); `comandos-customizados/` (`SessionSection.inject_decisions_index`, f021) ✨✨ | 🟢        |
+| `core/domain/cache.py`  | `sync-check/`                                                                                                                                                                                                                    | 🟢        |
+| `core/domain/layout.py` | `bootstrap/`, `migrate/` (`CORE_REL_PATH`, `CORE_MAIN_REL_PATH`, caminhos-candidato)                                                                                                                                             | 🟢        |
+| `core/ports/fs.py`      | transversal (inclui `is_dir` estendido para `bootstrap/` na feature 007; `remove_tree` novo, usado só por `migrate/`, f020) ✨✨                                                                                                 | 🟡        |
+| `core/ports/git.py`     | `sync-check/`, `comandos-customizados/`, `bootstrap/` (inclui `commit_paths` f013 e `list_dirty_paths` f016, ambos usados por `comandos-customizados/`)                                                                          | 🟡        |
+| `core/ports/process.py` | transversal (inclui `run_command` estendido para `bootstrap/` na feature 007)                                                                                                                                                    | 🟡        |
 
 ## 📁 3. Adaptadores (`.harness/harness-core/src/adapters/`)
 
@@ -54,26 +63,26 @@ Liga cada arquivo do legado (estado ATUAL) à pasta de spec que o cobre. As past
 
 ## 📁 4. Drivers e wrapper
 
-| Arquivo do legado                | Unit correspondente                                                                                                                                                                            | Cobertura |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `src/main.py` (CLI v2.0.0)       | `run-harness-core-local/` (wrapper→CLI) + cada unit pelo seu subcomando; inclui o subcomando fino `agy-hook <evento>` que instancia o `AntigravityHookBridge` → `antigravity-hooks/` (f009) ✨ | 🟢        |
-| `harness` (wrapper Bash de raiz) | `run-harness-core-local/`                                                                                                                                                                      | 🟢        |
+| Arquivo do legado                | Unit correspondente                                                                                                                                                                                                                                                                                                                               | Cobertura |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `src/main.py` (CLI)              | `run-harness-core-local/` (wrapper→CLI) + cada unit pelo seu subcomando; inclui o subcomando fino `agy-hook <evento>` que instancia o `AntigravityHookBridge` → `antigravity-hooks/` (f009); `materialize` (f012) → `bootstrap/`; `migrate` (f020) → `migrate/`; apêndice de decisões no ramo `cmd resume` (f021) → `comandos-customizados/` ✨✨ | 🟢        |
+| `harness` (wrapper Bash de raiz) | `run-harness-core-local/` (fonte única desde f020: agora renderizado por `render_shim`, ver `bootstrap/`) ✨✨                                                                                                                                                                                                                                    | 🟢        |
 
 ## 📁 5. Configuração e artefatos versionados
 
-| Arquivo do legado                             | Unit correspondente                                                                                                                                  | Cobertura |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `.harness/harness-core/harness.toml`                   | `microdecisoes/` (`[decisions]`), `format-on-edit/` (`[formatting]`), `sync-check/` (`[sync]`), `session/` (`[session]`), `bootstrap/` (`[harness]`) | 🟢        |
-| `.harness/harness-core/requirements.in` ✨             | n/a (dependências abstratas; ver `dependencies.md`)                                                                                                  | n/a       |
-| `.harness/harness-core/requirements.txt`               | n/a (manifesto de dependências físicas trancadas; ver `dependencies.md`)                                                                             | n/a       |
-| `.github/workflows/ci.yml` ✨                 | n/a (workflow de integração contínua; ver `dependencies.md`)                                                                                         | n/a       |
-| `.harness/estado-da-sessao.md`                | `session/` + `comandos-customizados/`                                                                                                                | 🟢        |
-| `.harness/decisoes/MD-*.md`                   | `microdecisoes/`                                                                                                                                     | 🟢        |
-| `.harness/decisoes/_cabecalho.md`             | `microdecisoes/`                                                                                                                                     | 🟢        |
-| `.harness/microdecisoes.md` (índice derivado) | `microdecisoes/`                                                                                                                                     | 🟢        |
-| `.claude/settings.json`                       | transversal (hooks `SessionStart`/`PostToolUse`/`Stop`) — `session/`, `format-on-edit/`, `microdecisoes/`, `install/`                                | 🟡        |
-| `.gemini/settings.json`                       | `session/`, `install/` (hook `SessionStart`)                                                                                                         | 🟡        |
-| `harness-docs.html`                           | `documentacao-uso-html/`                                                                                                                             | 🟢        |
+| Arquivo do legado                             | Unit correspondente                                                                                                                                                                                                                  | Cobertura |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| `.harness/harness-core/harness.toml`          | `microdecisoes/` (`[decisions]`), `format-on-edit/` (`[formatting]`), `sync-check/` (`[sync]`), `session/` (`[session].state_file`), `comandos-customizados/` (`[session].inject_decisions_index`, f021), `bootstrap/` (`[harness]`) | 🟢        |
+| `.harness/harness-core/requirements.in` ✨    | n/a (dependências abstratas; ver `dependencies.md`)                                                                                                                                                                                  | n/a       |
+| `.harness/harness-core/requirements.txt`      | n/a (manifesto de dependências físicas trancadas; ver `dependencies.md`)                                                                                                                                                             | n/a       |
+| `.github/workflows/ci.yml` ✨                 | n/a (workflow de integração contínua; ver `dependencies.md`)                                                                                                                                                                         | n/a       |
+| `.harness/estado-da-sessao.md`                | `session/` + `comandos-customizados/`                                                                                                                                                                                                | 🟢        |
+| `.harness/decisoes/MD-*.md`                   | `microdecisoes/`                                                                                                                                                                                                                     | 🟢        |
+| `.harness/decisoes/_cabecalho.md`             | `microdecisoes/`                                                                                                                                                                                                                     | 🟢        |
+| `.harness/microdecisoes.md` (índice derivado) | `microdecisoes/`                                                                                                                                                                                                                     | 🟢        |
+| `.claude/settings.json`                       | transversal (hooks `SessionStart`/`PostToolUse`/`Stop`) — `session/`, `format-on-edit/`, `microdecisoes/`, `install/`                                                                                                                | 🟡        |
+| `.gemini/settings.json`                       | `session/`, `install/` (hook `SessionStart`)                                                                                                                                                                                         | 🟡        |
+| `harness-docs.html`                           | `documentacao-uso-html/`                                                                                                                                                                                                             | 🟢        |
 
 ## 📁 6. Instruções de agente (ativação do Reversa)
 
@@ -93,4 +102,4 @@ Todos os `__init__.py` em `.harness/harness-core/src/**` são marcadores de paco
 
 - **Arquivos de produto com lógica mapeados a uma unit:** todos os `service.py`/módulos de `core/*`, adaptadores físicos, driver MCP, CLI e wrapper → **cobertura completa**.
 - **`n/a` (candidatos a análise adicional / não-produto):** `requirements.in`, `requirements.txt`, `.github/workflows/ci.yml`, `CLAUDE.md`/`GEMINI.md`/`AGENTS.md`, os `__init__.py`, e as duas árvores de skills do Reversa (framework).
-- **Units de spec ativas (10):** `bootstrap/` (estendido na f007 e f009 — materialização de `.agents/hooks.json`), `format-on-edit/`, `sync-check/`, `microdecisoes/`, `comandos-customizados/`, `documentacao-uso-html/`, `run-harness-core-local/`, `install/`, `session/`, `antigravity-hooks/` (nova na f009: `hook_bridge.py`, `antigravity_hooks.py`, `AntigravityProfile`, subcomando `agy-hook`).
+- **Units de spec ativas (11, +1 nesta reconciliação):** `bootstrap/` (estendido na f007, f009 e **f020** — `render_shim`, `claude_settings.py` por-item, ganchos git não-destrutivos), `format-on-edit/`, `sync-check/`, `microdecisoes/`, `comandos-customizados/` (estendido na **f018/f019/f021** — `SessionCloseFlow`, pré-check restrito ao estado, apêndice de decisões no resume), `documentacao-uso-html/`, `run-harness-core-local/`, `install/`, `session/`, `antigravity-hooks/` (nova na f009: `hook_bridge.py`, `antigravity_hooks.py`, `AntigravityProfile`, subcomando `agy-hook`), **`migrate/`** (nova nesta reconciliação — feature **020**: `MigrateService`, subcomando `migrate`).

@@ -29,6 +29,20 @@
 - **`encerrar-sessao` sem sessão ativa:** erro explícito. 🟢
 - **Divergência de âncora:** alerta antecede a narrativa; reativa mesmo assim. 🟢
 
+## Orquestração em volta de `encerrar-sessao` — `SessionCloseFlow` (✨f018, refinado ✨f019)
+
+`main.py` **não** chama `execute_command("encerrar-sessao")` diretamente — delega a `SessionCloseFlow(fs, git, process).run(repo_path, config)`, que envolve o passo 2 do fluxo principal com dois portões de aborto **antes** de chamar `execute_command`:
+
+1. **`pending_work_paths(git, repo_path, session_file)`** — `git.list_dirty_paths(repo_path)` menos `session_file` (✨f019: antes excluía todo `.harness/`). Se restar algo, `conduct_commit_pendente` emite marker/prompt e o fluxo **retorna sem chamar `execute_command`** — a sessão permanece `ATIVA`. 🟢
+2. **`narrative_is_stale(git, repo_path, session_file, session)`** — vazia ou idêntica à narrativa no commit-âncora de partida. Se `True`, `conduct_narrativa_pendente` emite marker/prompt e o fluxo aborta do mesmo jeito. 🟢
+3. Só então `execute_command("encerrar-sessao", ...)` roda (passo 2 do fluxo principal acima, inalterado). Em seguida, `conduct_end_session_offers` (push → upgrade, feature 014) roda incondicionalmente — não é um portão de aborto, roda **depois** do fechamento.
+
+I/O injetável em todo o fluxo (`out`/`err`/`asker`/`is_interactive`): sem TTY, cada portão emite um marker estruturado (`[HARNESS:COMMIT_PENDENTE ...]`, `[HARNESS:NARRATIVA_PENDENTE ...]`) para o agente mediar; com TTY, pergunta em texto. A skill (`.claude/skills/` / `.agents/skills/encerrar-sessao/scripts/encerrar_sessao.py`) compõe o mesmo `SessionCloseFlow` — nenhuma lógica duplicada entre CLI e skill.
+
+## Apêndice de decisões no `resume` — `resume_context.build_decisions_appendix` (✨f021)
+
+Depois que o passo 3 do fluxo principal (`resume`) produz `result_msg`, `main.py` calcula `enabled = active_harness == "claude" and config.session.inject_decisions_index` e concatena `build_decisions_appendix(fs, config.decisions.index_file, enabled)` ao final — **nunca** dentro de `execute_command`, que permanece intocado (fonte compartilhada com o MCP). A função é pura: `enabled=False`, índice ausente ou vazio → `""`; caso contrário, cabeçalho fixo + conteúdo do índice. Aviso em `stderr` (índice ausente) é responsabilidade da borda, não da função.
+
 ## Dependências
 
 - `GitPort` — HEAD para criação/encerramento e validação da âncora.

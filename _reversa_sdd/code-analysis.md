@@ -2,6 +2,7 @@
 
 > Regenerado pelo Archaeologist em 2026-06-24 15:19 (Re-extração após a feature 009-hooks-antigravity; histórico: features 003, 004, 005, 006, 007 e 008). Âncora (HEAD): `e30b9a6`.
 > Projeto: `/Users/iagoleal/dev/harness`. Módulo único: **harness-core** — CLI Python + servidor MCP + **driver de ganchos do Antigravity**, em arquitetura hexagonal (ports & adapters). `doc_level = completo`.
+> **Reconciliação de 2026-07-05** (Archaeologist, pós-features 010-021 — este documento estava congelado desde a 009): nova unidade **13. `core/migrate`** (feature 020); unidade **8. `core/session`** expandida com `close_flow.py` (018, fonte única de orquestração do encerramento) e `resume_context.py` (021, apêndice do índice de decisões no `resume`). Caminhos confirmados sob `.harness/harness-core/` (a relocação em si é da feature 011). `data-dictionary.md` e `modules.json` reconciliados em conjunto — ver notas no rodapé de cada um.
 
 Categoria (Princípio nº 4): **Aplicação** — ferramenta com usuário (o próprio mantenedor), evolui no tempo, organizada em camadas.
 
@@ -15,14 +16,15 @@ Hexágono clássico em três anéis:
 
 Inversão de dependência preservada: os serviços recebem as portas por injeção no construtor; quem as instancia (`main.py`, `server.py`, testes) escolhe a implementação concreta. O driver do Antigravity segue o mesmo padrão: recebe `fs` e os serviços de domínio por injeção, e a CLI (`agy-hook`) faz a instanciação concreta na borda.
 
-São **12 unidades** analisadas: 8 serviços de capacidade (`bootstrap`, `formatting`, `sync`, `decisions`, `commands`, `documentation`, `install`, `session`), o pacote `domain` (modelos + config + cache), o pacote `ports` e o pacote `adapters` (que passa a abrigar o terceiro driver, em `adapters/antigravity/`).
+São **13 unidades** analisadas: 9 serviços de capacidade (`bootstrap`, `formatting`, `sync`, `decisions`, `commands`, `documentation`, `install`, `session`, e o **novo `migrate`**, feature 020), o pacote `domain` (modelos + config + cache), o pacote `ports` e o pacote `adapters` (que abriga o terceiro driver, em `adapters/antigravity/`).
 
 ```mermaid
 graph TD
-    CLI[main.py — CLI v2.0.0] --> Services
+    CLI[main.py — CLI] --> Services
     MCP[adapters/mcp/server.py — FastMCP] --> Services
     AGY[adapters/antigravity/hook_bridge.py — AntigravityHookBridge] --> Services
     CLI -- agy-hook --> AGY
+    CLI -- migrate --> Migrate[core/migrate — feature 020]
     subgraph Services[core/* — serviços de domínio]
         boot[bootstrap]
         fmt[formatting]
@@ -33,8 +35,11 @@ graph TD
         inst[install]
         sess[session]
     end
+    sess --- closeflow[session/close_flow.py — feature 018]
+    sess --- resumectx[session/resume_context.py — feature 021]
     Services --> Ports[core/ports — fs/git/process]
     Ports -.implementadas por.-> Adapters[adapters — fs/git/process]
+    Migrate --> Ports
     cmd --> sess
     CLI --> Config[core/domain/config.load_config]
     MCP --> Config
@@ -188,11 +193,32 @@ Papel: gerar, por **composição**, um prompt Markdown que o usuário cola no ag
 
 ---
 
-## 8. `core/session` — estado de sessão unificado 🟢
+## 8. `core/session` — estado de sessão, encerramento e resume ancorado 🟢
 
-**Arquivos:** `serializer.py` (109), `sinks.py` (77), `errors.py` (7).
+**Arquivos:** `serializer.py` (122), `sinks.py` (77), `errors.py` (7), `offers.py` (96), **`close_flow.py` (399, feature 018)**, **`resume_context.py` (28, feature 021)**.
 
-Papel: persistir e reinjetar o estado da última sessão entre boots do agente. Formato canônico de `.harness/estado-da-sessao.md` = **front-matter YAML** + **corpo Markdown**.
+Papel: persistir e reinjetar o estado da última sessão entre boots do agente. Formato canônico de `.harness/estado-da-sessao.md` = **front-matter YAML** + **corpo Markdown**. Cresceu de 3 para 6 arquivos desde a extração de 2026-06-24 — a unidade que mais mudou no período 010-021.
+
+### `close_flow.py` — orquestração do encerramento, fonte única (feature 018) 🟢
+
+Extraído da borda `main.py` (D-01) para que a CLI (`main.py`, ramo `cmd encerrar-sessao`) e os scripts finos da skill `encerrar-sessao` consumam a **mesma** sequência, sem duplicar lógica (RN-N5, core segue agnóstico ao harness). Todo I/O é injetável (`out`/`err`/`asker`/`is_interactive`), o que permite o mesmo comportamento sob dois regimes: sem TTY (agente, emite _markers_ estruturados) e com TTY (usuário, pergunta `[s/N]`).
+
+Sequência orquestrada por `SessionCloseFlow.run(repo_path, config, ...)`:
+
+1. **Pré-check de trabalho pendente** (`pending_work_paths` — feature 016, estendida na 019 para cobrir `.harness/`): lista os caminhos sujos da working tree, **exceto** o próprio arquivo de estado (que o commit de fechamento versiona). Se houver, `conduct_commit_pendente` aborta o encerramento e orienta (marker `[HARNESS:COMMIT_PENDENTE ...]` sem TTY; lista legível com TTY) — protocolo "abortar e reexecutar": o core nunca faz `git add` do trabalho alheio.
+2. **Gate de narrativa viva** (`narrative_is_stale`): recusa encerrar se a narrativa das 4 seções está vazia OU idêntica à do commit-âncora de partida (sinal de que o agente esqueceu de consolidar). Fail-open só quando não há baseline legível na âncora E a narrativa atual já está preenchida. `conduct_narrativa_pendente` replica a dualidade marker/TTY do passo anterior.
+3. **Fechamento propriamente dito** — delega a `CommandService.execute_command("encerrar-sessao", ...)` (a lógica de domínio de transição de estado permanece lá, inalterada; `close_flow` só decide **quando** chamá-la).
+4. **Ofertas de fim de sessão** (`conduct_end_session_offers`, feature 014, ordem **push → upgrade**, RN-10): cada oferta cabível (`offers.push`/`offers.upgrade`) é anunciada por _marker_ sem TTY ou pergunta `[s/N]` com TTY; a falha de uma ação (rede/push/upgrade) avisa e segue sem abortar a outra nem desfazer o encerramento já concluído (RN-02/RN-09).
+
+🟢 **Sem duplicação CLI↔skill:** `main.py` reexporta `render_offer_markers`, `conduct_end_session_offers`, `pending_work_paths`, `render_commit_pendente_marker`, `conduct_commit_pendente` e `SessionCloseFlow` do core (ver topo do arquivo) — os scripts finos da skill materializada importam os mesmos símbolos, nunca uma cópia paralela.
+
+### `resume_context.py` — apêndice do índice de decisões no resume (feature 021) 🟢
+
+Função pura `build_decisions_appendix(fs, index_file, enabled) -> str`, agnóstica ao harness (RN-N5): não decide o gate, apenas o executa. Retorna `""` (não-bloqueante, RN-N4) se `enabled` for falso, se o índice não existir, ou se estiver vazio; caso contrário, devolve um cabeçalho fixo (`"\n\n---\n## Índice de decisões (consulte antes de buscas amplas)\n\n"`) seguido do conteúdo de `.harness/microdecisoes.md`.
+
+Fiação em `main.py` (ramo `cmd resume`, só após `execute_command` produzir o corpo da narrativa): `enabled = config.harness.active_harness == "claude" and config.session.inject_decisions_index` — o gate por harness (**Claude-first**; Gemini/Antigravity adiados, decisão explícita da feature 021) e o flag de opt-out (`SessionSection.inject_decisions_index`, default `True`, seção `[session]` do `harness.toml`) vivem na borda; a função em si é composição pura. Estado ausente é avisado em `stderr` antes da chamada, não dentro dela. O índice é **anexado depois** do estado da sessão no `result_msg`, de modo que, sob truncamento por teto de tamanho do sink (`HookContextSink`, RN-N8), o estado tem precedência e o índice cede.
+
+**Decisão de escopo (D-02 da feature 021):** injeta o **índice** (`.harness/microdecisoes.md`, ~1,7 KB), nunca a pasta `decisoes/` inteira (~31 KB) — que estouraria o teto de 10 KB do sink. As fichas `MD-NNNN` individuais ficam para aprofundamento sob demanda, seguindo os ponteiros do próprio índice.
 
 ---
 
@@ -239,6 +265,26 @@ As assinaturas `is_dir` e `run_command` foram acrescentadas para viabilizar as r
 **Mapa `stepIdx → TargetFile` (scratch):** `_scratch_path(payload)` resolve `<artifactDirectoryPath>/.harness-agy/pending-format.json` (constantes `_SCRATCH_DIRNAME = ".harness-agy"`, `_SCRATCH_FILENAME = "pending-format.json"`); sem `artifactDirectoryPath` no payload → `None` (sem captura). `_read_map` lê via `fs.read_file` e tolera ausência/JSON inválido (→ dict vazio); `_write_map` cria o diretório (`fs.makedirs`) e grava **atomicamente** (`fs.write_file_atomic`). Persistir o caminho no `PreToolUse` e recuperá-lo no `PostToolUse` é a estratégia D-03 (captura + formatação) que preserva a granularidade por-edição sem parsear o `transcript.jsonl`.
 
 **Não-bloqueio e observabilidade:** `_log(message)` escreve sempre em `stderr` (`[harness agy-hook] ...`), jamais em `stdout` (reservado ao contrato). Toda exceção é capturada em dois anéis — no `_safe` (interno) e no ramo `agy-hook` do `main.py` (borda) —, garantindo que o laço do agente Antigravity nunca seja interrompido por falha do harness.
+
+---
+
+## 13. `core/migrate` — conversão do layout copiado para a fonte única (feature 020, NOVO) 🟢
+
+**Arquivo:** `src/core/migrate/service.py` (139 linhas). Décima terceira unidade, ausente na extração anterior (não existia antes da 020).
+
+`MigrateService.migrate(root, dry_run=False, upstream_self=None) -> list` varre `root` (default `~/dev`) por instalações do harness (qualquer subpasta com `harness.toml`) e converte cada uma do **layout copiado** (cópia local do `harness-core` + `.venv` por projeto — o modelo pré-020) para a **fonte única** (shim `./harness` + `.venv` locais que executam o core do upstream via `upstream_path`). Devolve uma lista de resultados por instalação (`status ∈ {migrated, would-migrate, skipped}`).
+
+**Algoritmo por instalação (`_migrate_one`), ordem deliberadamente segura** — instala o executor novo ANTES de remover o antigo, para o projeto nunca ficar sem `./harness` funcional:
+
+1. Lê `upstream_path`/`active_harness` do `harness.toml` do projeto.
+2. **Guarda 1:** recusa migrar o próprio `upstream_self` (a fonte real do core — nunca se automigra).
+3. **Guarda 2:** recusa migrar se o projeto for uma autoreferência do upstream (upstream aponta para dentro do próprio projeto) ou não tiver `upstream_path` configurado.
+4. **Guarda 3:** recusa se o core do upstream não existir no caminho declarado (o shim ficaria quebrado).
+5. Detecta o(s) diretório(s) do core a remover: `.harness/harness-core` (layout pós-011) e/ou `harness-core` na raiz (layout legado pré-011 — “o `livro-mfc` carrega os dois”, comentário no código).
+6. **Modo `--dry-run`:** só relata `{status: "would-migrate", removes: [...]}`, sem escrever nem remover nada.
+7. **Modo real**, na ordem: (a) escreve o shim (`render_shim()`) e o torna executável; (b) instala os ganchos Git via `BootstrapService` (tolera ausência de repo git); (c) materializa `.claude/settings.json` por merge, se `active_harness == "claude"`; (d) remove o campo `version` do `harness.toml` (deixa de fazer sentido sob fonte única — a versão passa a ser sempre a do upstream); (e) **por último**, remove a(s) cópia(s) do core (`_safe_remove_core`, que recusa remover qualquer diretório cujo nome-base não seja literalmente `harness-core` — guarda contra um `remove_tree` malformado apagar a coisa errada).
+
+**Exceção consciente ao footprint per-projeto (RN-N17, documentada no docstring do módulo):** ao contrário de `init`/`materialize`, o `migrate` **atua sobre outros projetos** por design — é ferramenta de manutenção da base já instalada, não uma operação per-projeto isolada. A guarda inegociável (guardas 1 e 2 acima) é nunca remover o core do upstream em si nem cair numa autorreferência circular.
 
 ---
 

@@ -1,190 +1,757 @@
 {
   "generated_at": "2026-06-24T14:15:30Z",
+  "reconciled_at": "2026-07-05T00:00:00-03:00",
+  "reconciliation_notes": [
+    "Todos os caminhos foram corrigidos de 'harness-core/...' para '.harness/harness-core/...' (a relocação física é da feature 011; este modules.json nunca havia sido atualizado para refleti-la, mesmo em extrações posteriores).",
+    "Novo submódulo 'migrate' (feature 020).",
+    "Submódulo 'session' expandido com close_flow.py (018) e resume_context.py (021).",
+    "Fora do escopo desta reconciliação (Archaeologist é código-fonte, não decisão de negócio): mapeamento fino de business_rules novas de 010-019 não relacionadas a session/migrate — delegado ao Detective."
+  ],
   "modules": [
     {
       "name": "harness-core",
-      "path": "harness-core",
-      "purpose": "CLI Python + servidor MCP em arquitetura hexagonal para harness de agentes (formatação, sincronia Git, microdecisões, sessão, documentação, instalação por prompt e gerenciamento local/ evolução).",
+      "path": ".harness/harness-core",
+      "purpose": "CLI Python + servidor MCP em arquitetura hexagonal para harness de agentes (formatação, sincronia Git, microdecisões, sessão, documentação, instalação por prompt, migração de instalações e evolução local).",
       "primary_files": [
-        "harness-core/src/main.py",
-        "harness-core/src/adapters/mcp/server.py",
-        "harness-core/src/core/domain/config.py"
+        ".harness/harness-core/src/main.py",
+        ".harness/harness-core/src/adapters/mcp/server.py",
+        ".harness/harness-core/src/core/domain/config.py"
       ],
       "complexity": "high",
       "submodules": [
         {
           "name": "bootstrap",
-          "path": "harness-core/src/core/bootstrap",
+          "path": ".harness/harness-core/src/core/bootstrap",
           "purpose": "Instalação idempotente de ganchos Git locais, inicialização (init) e evolução (upgrade) não destrutiva do Harness em diretórios de destino.",
           "primary_files": [
-            "harness-core/src/core/bootstrap/service.py",
-            "harness-core/src/core/bootstrap/init_service.py"
+            ".harness/harness-core/src/core/bootstrap/service.py",
+            ".harness/harness-core/src/core/bootstrap/init_service.py"
           ],
           "functions": [
-            { "name": "install_hooks", "file": "harness-core/src/core/bootstrap/service.py", "params": ["repo_path: str"], "returns": "List[str]", "confidence": "confirmed" },
-            { "name": "init_target", "file": "harness-core/src/core/bootstrap/init_service.py", "params": ["fs: FileSystemPort", "process: ProcessPort", "target_path: str", "active_harness: str", "upstream_path: str", "version: str"], "returns": "None", "confidence": "confirmed" },
-            { "name": "upgrade_target", "file": "harness-core/src/core/bootstrap/init_service.py", "params": ["fs: FileSystemPort", "process: ProcessPort", "target_path: str", "upstream_path: str", "version: str"], "returns": "None", "confidence": "confirmed" }
+            {
+              "name": "install_hooks",
+              "file": ".harness/harness-core/src/core/bootstrap/service.py",
+              "params": ["repo_path: str"],
+              "returns": "List[str]",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "init_target",
+              "file": ".harness/harness-core/src/core/bootstrap/init_service.py",
+              "params": [
+                "fs: FileSystemPort",
+                "process: ProcessPort",
+                "target_path: str",
+                "active_harness: str",
+                "upstream_path: str",
+                "version: str"
+              ],
+              "returns": "None",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "upgrade_target",
+              "file": ".harness/harness-core/src/core/bootstrap/init_service.py",
+              "params": [
+                "fs: FileSystemPort",
+                "process: ProcessPort",
+                "target_path: str",
+                "upstream_path: str",
+                "version: str"
+              ],
+              "returns": "None",
+              "confidence": "confirmed"
+            }
           ],
           "business_rules": [
-            { "description": "Geração idempotente de scripts Bash pre-commit/post-merge com caminhos chumbados", "location": "harness-core/src/core/bootstrap/service.py:12", "confidence": "confirmed" },
-            { "description": "O init realiza cópia física recursiva ignorando diretórios de build (.git, .venv, etc.) e provisiona a venv no destino", "location": "harness-core/src/core/bootstrap/init_service.py:18", "confidence": "confirmed" },
-            { "description": "O upgrade atualiza o core e o wrapper mas preserva a pasta de dados .harness/decisoes/ e .reversa/", "location": "harness-core/src/core/bootstrap/init_service.py:82", "confidence": "confirmed" }
+            {
+              "description": "Geração idempotente de scripts Bash pre-commit/post-merge com caminhos chumbados",
+              "location": ".harness/harness-core/src/core/bootstrap/service.py:12",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "O init realiza cópia física recursiva ignorando diretórios de build (.git, .venv, etc.) e provisiona a venv no destino",
+              "location": ".harness/harness-core/src/core/bootstrap/init_service.py:18",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "O upgrade atualiza o core e o wrapper mas preserva a pasta de dados .harness/decisoes/ e .reversa/",
+              "location": ".harness/harness-core/src/core/bootstrap/init_service.py:82",
+              "confidence": "confirmed"
+            }
           ],
-          "algorithms": ["Cópia recursiva de arquivos com exclusão de lixo local", "Instalação e ganchos Git fail-fast no host de destino"],
+          "algorithms": [
+            "Cópia recursiva de arquivos com exclusão de lixo local",
+            "Instalação e ganchos Git fail-fast no host de destino"
+          ],
           "dependencies": ["ports.fs", "ports.process"],
           "complexity": "medium"
         },
         {
           "name": "formatting",
-          "path": "harness-core/src/core/formatting",
+          "path": ".harness/harness-core/src/core/formatting",
           "purpose": "Formatação de arquivo por linguagem com blindagens de diretório pessoal, opt-out dinâmico e precedência de executável local; sempre não-bloqueante.",
-          "primary_files": ["harness-core/src/core/formatting/service.py"],
+          "primary_files": [
+            ".harness/harness-core/src/core/formatting/service.py"
+          ],
           "functions": [
-            { "name": "format_file", "file": "harness-core/src/core/formatting/service.py", "params": ["file_path: str"], "returns": "int", "confidence": "confirmed" }
+            {
+              "name": "format_file",
+              "file": ".harness/harness-core/src/core/formatting/service.py",
+              "params": ["file_path: str"],
+              "returns": "int",
+              "confidence": "confirmed"
+            }
           ],
           "business_rules": [
-            { "description": "Sempre retorna 0 / não bloqueia (blindagem absoluta de erros)", "location": "harness-core/src/core/formatting/service.py:19", "confidence": "confirmed" },
-            { "description": "Blindagem de ~, ~/Notas e ~/.claude (não formata)", "location": "harness-core/src/core/formatting/service.py:22", "confidence": "confirmed" },
-            { "description": "Opt-out dinâmico via arquivo de configuração (default: .no-autoformat) em qualquer nível acima do arquivo", "location": "harness-core/src/core/formatting/service.py:37", "confidence": "confirmed" },
-            { "description": "Exclusão dinâmica de caminhos/padrões glob configurados no harness.toml", "location": "harness-core/src/core/formatting/service.py:57", "confidence": "confirmed" },
-            { "description": "Precedência de executável local (.venv/bin/ruff, node_modules/.bin/prettier)", "location": "harness-core/src/core/formatting/service.py:89", "confidence": "confirmed" }
+            {
+              "description": "Sempre retorna 0 / não bloqueia (blindagem absoluta de erros)",
+              "location": ".harness/harness-core/src/core/formatting/service.py:19",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Blindagem de ~, ~/Notas e ~/.claude (não formata)",
+              "location": ".harness/harness-core/src/core/formatting/service.py:22",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Opt-out dinâmico via arquivo de configuração (default: .no-autoformat) em qualquer nível acima do arquivo",
+              "location": ".harness/harness-core/src/core/formatting/service.py:37",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Exclusão dinâmica de caminhos/padrões glob configurados no harness.toml",
+              "location": ".harness/harness-core/src/core/formatting/service.py:57",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Precedência de executável local (.venv/bin/ruff, node_modules/.bin/prettier)",
+              "location": ".harness/harness-core/src/core/formatting/service.py:89",
+              "confidence": "confirmed"
+            }
           ],
-          "algorithms": ["Manifest-based recursive root detection (.git ou harness.toml)", "Seleção de formatador por extensão (ruff/prettier/rustfmt)", "Verificação dinâmica de padrões glob de exclusão com fnmatch"],
+          "algorithms": [
+            "Manifest-based recursive root detection (.git ou harness.toml)",
+            "Seleção de formatador por extensão (ruff/prettier/rustfmt)",
+            "Verificação dinâmica de padrões glob de exclusão com fnmatch"
+          ],
           "dependencies": ["ports.fs", "ports.process", "domain.config"],
           "complexity": "medium"
         },
         {
           "name": "sync",
-          "path": "harness-core/src/core/sync",
-          "purpose": "Verificação de sincronia Git local x remoto e checagem de atualizações locais vs upstream.",
-          "primary_files": ["harness-core/src/core/sync/service.py"],
+          "path": ".harness/harness-core/src/core/sync",
+          "purpose": "Verificação de sincronia Git local x remoto e checagem de atualizações locais vs upstream. Mantido intacto pela feature 020 (a mudança de fonte do core não afetou este mecanismo de aviso).",
+          "primary_files": [".harness/harness-core/src/core/sync/service.py"],
           "functions": [
-            { "name": "check_sync", "file": "harness-core/src/core/sync/service.py", "params": ["repo_path: str"], "returns": "bool", "confidence": "confirmed" },
-            { "name": "check_version_update", "file": "harness-core/src/core/sync/service.py", "params": ["fs: FileSystemPort", "local_version: str", "upstream_path: Optional[str]"], "returns": "Optional[str]", "confidence": "confirmed" }
+            {
+              "name": "check_sync",
+              "file": ".harness/harness-core/src/core/sync/service.py",
+              "params": ["repo_path: str"],
+              "returns": "bool",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "check_version_update",
+              "file": ".harness/harness-core/src/core/sync/service.py",
+              "params": [
+                "fs: FileSystemPort",
+                "local_version: str",
+                "upstream_path: Optional[str]"
+              ],
+              "returns": "Optional[str]",
+              "confidence": "confirmed"
+            }
           ],
           "business_rules": [
-            { "description": "Dentro do TTL retorna True sem checar a rede", "location": "harness-core/src/core/sync/service.py:24", "confidence": "confirmed" },
-            { "description": "Falha de rede/git retorna True (não bloqueia, resiliência offline)", "location": "harness-core/src/core/sync/service.py:65", "confidence": "confirmed" },
-            { "description": "Checagem de versão passiva lê arquivo de configuração local do upstream sem subprocessos de rede", "location": "harness-core/src/core/sync/service.py:72", "confidence": "confirmed" }
+            {
+              "description": "Dentro do TTL retorna True sem checar a rede",
+              "location": ".harness/harness-core/src/core/sync/service.py:24",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Falha de rede/git retorna True (não bloqueia, resiliência offline)",
+              "location": ".harness/harness-core/src/core/sync/service.py:65",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Checagem de versão passiva lê arquivo de configuração local do upstream sem subprocessos de rede",
+              "location": ".harness/harness-core/src/core/sync/service.py:72",
+              "confidence": "confirmed"
+            }
           ],
           "entities": ["SyncCache"],
-          "algorithms": ["Cache local com TTL de horas", "ls-remote para comparar HEAD local vs remoto", "Comparação semântica simples de strings de versão"],
+          "algorithms": [
+            "Cache local com TTL de horas",
+            "ls-remote para comparar HEAD local vs remoto",
+            "Comparação semântica simples de strings de versão"
+          ],
           "dependencies": ["ports.fs", "ports.git", "domain.cache"],
           "complexity": "medium"
         },
         {
           "name": "decisions",
-          "path": "harness-core/src/core/decisions",
-          "purpose": "Carga, validação de integridade do grafo e compilação do índice de microdecisões com backlinks.",
-          "primary_files": ["harness-core/src/core/decisions/service.py"],
+          "path": ".harness/harness-core/src/core/decisions",
+          "purpose": "Carga, validação de integridade do grafo e compilação do índice de microdecisões com backlinks. Desde a feature 021, o índice compilado aqui é também lido em runtime por session.resume_context.",
+          "primary_files": [
+            ".harness/harness-core/src/core/decisions/service.py"
+          ],
           "functions": [
-            { "name": "load_decisions", "file": "harness-core/src/core/decisions/service.py", "params": ["directory: str"], "returns": "List[Decision]", "confidence": "confirmed" },
-            { "name": "validate_integrity", "file": "harness-core/src/core/decisions/service.py", "params": ["decisions: List[Decision]"], "returns": "List[str]", "confidence": "confirmed" },
-            { "name": "compile_index", "file": "harness-core/src/core/decisions/service.py", "params": ["decisions: List[Decision]", "output_filepath: str", "header_filepath: Optional[str]"], "returns": "None", "confidence": "confirmed" }
+            {
+              "name": "load_decisions",
+              "file": ".harness/harness-core/src/core/decisions/service.py",
+              "params": ["directory: str"],
+              "returns": "List[Decision]",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "validate_integrity",
+              "file": ".harness/harness-core/src/core/decisions/service.py",
+              "params": ["decisions: List[Decision]"],
+              "returns": "List[str]",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "compile_index",
+              "file": ".harness/harness-core/src/core/decisions/service.py",
+              "params": [
+                "decisions: List[Decision]",
+                "output_filepath: str",
+                "header_filepath: Optional[str]"
+              ],
+              "returns": "None",
+              "confidence": "confirmed"
+            }
           ],
           "business_rules": [
-            { "description": "Auto-relação (target == id) é erro de integridade", "location": "harness-core/src/core/decisions/service.py:74", "confidence": "confirmed" },
-            { "description": "Aresta órfã (target inexistente) é erro de integridade", "location": "harness-core/src/core/decisions/service.py:77", "confidence": "confirmed" }
+            {
+              "description": "Auto-relação (target == id) é erro de integridade",
+              "location": ".harness/harness-core/src/core/decisions/service.py:74",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Aresta órfã (target inexistente) é erro de integridade",
+              "location": ".harness/harness-core/src/core/decisions/service.py:77",
+              "confidence": "confirmed"
+            }
           ],
           "entities": ["Decision", "Relationship"],
-          "algorithms": ["Graph inversion / backlink compilation determinística por ID", "Parse de front-matter YAML por split em '---'"],
+          "algorithms": [
+            "Graph inversion / backlink compilation determinística por ID",
+            "Parse de front-matter YAML por split em '---'"
+          ],
           "dependencies": ["ports.fs", "domain.models"],
           "complexity": "high"
         },
         {
           "name": "commands",
-          "path": "harness-core/src/core/commands",
-          "purpose": "Slash commands de sessão agnósticos à IDE (encerrar-sessao, resume, handoff, clarificar) com âncora Git.",
-          "primary_files": ["harness-core/src/core/commands/service.py"],
+          "path": ".harness/harness-core/src/core/commands",
+          "purpose": "Slash commands de sessão agnósticos à IDE (encerrar-sessao, resume, handoff, clarificar) com âncora Git. execute_command é compartilhado com o MCP e permaneceu intocado pela extração de close_flow.py (018) — a orquestração de mais alto nível do encerramento vive em session/close_flow.py, que chama execute_command('encerrar-sessao') no meio da sequência.",
+          "primary_files": [
+            ".harness/harness-core/src/core/commands/service.py"
+          ],
           "functions": [
-            { "name": "execute_command", "file": "harness-core/src/core/commands/service.py", "params": ["command: str", "args: List[str]", "repo_path: str", "session_filepath: str"], "returns": "str", "confidence": "confirmed" },
-            { "name": "load_session", "file": "harness-core/src/core/commands/service.py", "params": ["filepath: str"], "returns": "Optional[SessionState]", "confidence": "confirmed" },
-            { "name": "save_session", "file": "harness-core/src/core/commands/service.py", "params": ["filepath: str", "state: SessionState"], "returns": "None", "confidence": "confirmed" }
+            {
+              "name": "execute_command",
+              "file": ".harness/harness-core/src/core/commands/service.py",
+              "params": [
+                "command: str",
+                "args: List[str]",
+                "repo_path: str",
+                "session_filepath: str"
+              ],
+              "returns": "str",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "load_session",
+              "file": ".harness/harness-core/src/core/commands/service.py",
+              "params": ["filepath: str"],
+              "returns": "Optional[SessionState]",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "save_session",
+              "file": ".harness/harness-core/src/core/commands/service.py",
+              "params": ["filepath: str", "state: SessionState"],
+              "returns": "None",
+              "confidence": "confirmed"
+            }
           ],
           "business_rules": [
-            { "description": "resume alerta se HEAD diverge do commit-âncora da sessão", "location": "harness-core/src/core/commands/service.py:63", "confidence": "confirmed" },
-            { "description": "resume preserva a narrativa escrita pelo agente", "location": "harness-core/src/core/commands/service.py:67", "confidence": "confirmed" },
-            { "description": "Arquivo ausente = sessão nova; malformado = MalformedSessionStateError (RN-N4)", "location": "harness-core/src/core/commands/service.py:20", "confidence": "confirmed" }
+            {
+              "description": "resume alerta se HEAD diverge do commit-âncora da sessão",
+              "location": ".harness/harness-core/src/core/commands/service.py:107",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "resume preserva a narrativa escrita pelo agente",
+              "location": ".harness/harness-core/src/core/commands/service.py:110",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Arquivo ausente = sessão nova; malformado = MalformedSessionStateError (RN-N4)",
+              "location": ".harness/harness-core/src/core/commands/service.py:22",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "encerrar-sessao com sessão inativa reativa preservando a narrativa antes de fechar no mesmo passo (feature 016)",
+              "location": ".harness/harness-core/src/core/commands/service.py:56",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Falha ao commitar o encerramento levanta SessionCommitError, nunca falso-sucesso",
+              "location": ".harness/harness-core/src/core/commands/service.py:74",
+              "confidence": "confirmed"
+            }
           ],
           "entities": ["SessionState", "SessionNarrative"],
-          "dependencies": ["ports.fs", "ports.git", "domain.models", "session.serializer"],
+          "dependencies": [
+            "ports.fs",
+            "ports.git",
+            "domain.models",
+            "session.serializer"
+          ],
           "complexity": "high"
         },
         {
           "name": "documentation",
-          "path": "harness-core/src/core/documentation",
+          "path": ".harness/harness-core/src/core/documentation",
           "purpose": "Geração de HTML standalone por introspecção do argparse + regras do domain.md + state.json; servidor HTTP local.",
-          "primary_files": ["harness-core/src/core/documentation/service.py", "harness-core/src/core/documentation/template.html"],
+          "primary_files": [
+            ".harness/harness-core/src/core/documentation/service.py",
+            ".harness/harness-core/src/core/documentation/template.html"
+          ],
           "functions": [
-            { "name": "extract_commands", "file": "harness-core/src/core/documentation/service.py", "params": ["parser"], "returns": "List[Dict]", "confidence": "confirmed" },
-            { "name": "parse_markdown_rules", "file": "harness-core/src/core/documentation/service.py", "params": ["domain_filepath: str"], "returns": "List[Dict]", "confidence": "confirmed" },
-            { "name": "generate_html", "file": "harness-core/src/core/documentation/service.py", "params": ["parser", "template_path: str", "domain_path: str", "state_path: str", "output_path: str"], "returns": "None", "confidence": "confirmed" }
+            {
+              "name": "extract_commands",
+              "file": ".harness/harness-core/src/core/documentation/service.py",
+              "params": ["parser"],
+              "returns": "List[Dict]",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "parse_markdown_rules",
+              "file": ".harness/harness-core/src/core/documentation/service.py",
+              "params": ["domain_filepath: str"],
+              "returns": "List[Dict]",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "generate_html",
+              "file": ".harness/harness-core/src/core/documentation/service.py",
+              "params": [
+                "parser",
+                "template_path: str",
+                "domain_path: str",
+                "state_path: str",
+                "output_path: str"
+              ],
+              "returns": "None",
+              "confidence": "confirmed"
+            }
           ],
           "entities": ["HARNESS_DOC_DATA"],
-          "algorithms": ["CLI parser introspection do argparse", "Injeção de JSON em placeholder do template HTML"],
+          "algorithms": [
+            "CLI parser introspection do argparse",
+            "Injeção de JSON em placeholder do template HTML"
+          ],
           "dependencies": ["ports.fs"],
           "complexity": "medium"
         },
         {
           "name": "install",
-          "path": "harness-core/src/core/install",
-          "purpose": "Render do prompt de instalação colável por composição (template + perfil do harness + introspecção da CLI).",
-          "primary_files": ["harness-core/src/core/install/service.py", "harness-core/src/core/install/harness_profiles.py", "harness-core/src/core/install/template.md"],
+          "path": ".harness/harness-core/src/core/install",
+          "purpose": "Render do prompt de instalação colável por composição (template + perfil do harness + introspecção da CLI) e materialização de artefatos de IDE (hooks.json do Antigravity, settings.json do Claude).",
+          "primary_files": [
+            ".harness/harness-core/src/core/install/service.py",
+            ".harness/harness-core/src/core/install/harness_profiles.py",
+            ".harness/harness-core/src/core/install/template.md"
+          ],
           "functions": [
-            { "name": "render", "file": "harness-core/src/core/install/service.py", "params": ["active_harness: str", "parser: ArgumentParser"], "returns": "str", "confidence": "confirmed" },
-            { "name": "get_profile", "file": "harness-core/src/core/install/harness_profiles.py", "params": ["active_harness: str"], "returns": "HarnessProfile", "confidence": "confirmed" }
+            {
+              "name": "render",
+              "file": ".harness/harness-core/src/core/install/service.py",
+              "params": ["active_harness: str", "parser: ArgumentParser"],
+              "returns": "str",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "get_profile",
+              "file": ".harness/harness-core/src/core/install/harness_profiles.py",
+              "params": ["active_harness: str"],
+              "returns": "HarnessProfile",
+              "confidence": "confirmed"
+            }
           ],
           "business_rules": [
-            { "description": "Resolve o perfil antes de qualquer I/O; harness inválido falha barulhento (fail-fast)", "location": "harness-core/src/core/install/service.py:21", "confidence": "confirmed" }
+            {
+              "description": "Resolve o perfil antes de qualquer I/O; harness inválido falha barulhento (fail-fast)",
+              "location": ".harness/harness-core/src/core/install/service.py:21",
+              "confidence": "confirmed"
+            }
           ],
-          "entities": ["HarnessProfile", "ClaudeProfile", "GeminiProfile", "AntigravityProfile"],
-          "algorithms": ["Strategy por harness (OOP)", "Substituição de 4 placeholders no template.md", "Introspecção do argparse para listar comandos"],
+          "entities": [
+            "HarnessProfile",
+            "ClaudeProfile",
+            "GeminiProfile",
+            "AntigravityProfile"
+          ],
+          "algorithms": [
+            "Strategy por harness (OOP)",
+            "Substituição de 4 placeholders no template.md",
+            "Introspecção do argparse para listar comandos"
+          ],
           "dependencies": ["ports.fs"],
           "complexity": "medium"
         },
         {
           "name": "session",
-          "path": "harness-core/src/core/session",
-          "purpose": "Estado de sessão unificado: round-trip front-matter YAML + corpo Markdown, e entrega do estado ao contexto do agente por sink.",
-          "primary_files": ["harness-core/src/core/session/serializer.py", "harness-core/src/core/session/sinks.py", "harness-core/src/core/session/errors.py"],
+          "path": ".harness/harness-core/src/core/session",
+          "purpose": "Estado de sessão unificado: round-trip front-matter YAML + corpo Markdown, entrega ao contexto do agente por sink, orquestração de encerramento (fonte única CLI+skill) e apêndice de índice de decisões no resume. Cresceu de 3 para 6 arquivos desde a extração anterior (feature 009) — unidade mais ativa do período 010-021.",
+          "primary_files": [
+            ".harness/harness-core/src/core/session/serializer.py",
+            ".harness/harness-core/src/core/session/sinks.py",
+            ".harness/harness-core/src/core/session/errors.py",
+            ".harness/harness-core/src/core/session/offers.py",
+            ".harness/harness-core/src/core/session/close_flow.py",
+            ".harness/harness-core/src/core/session/resume_context.py"
+          ],
           "functions": [
-            { "name": "parse", "file": "harness-core/src/core/session/serializer.py", "params": ["text: str"], "returns": "SessionState", "confidence": "confirmed" },
-            { "name": "render", "file": "harness-core/src/core/session/serializer.py", "params": ["state: SessionState"], "returns": "str", "confidence": "confirmed" },
-            { "name": "render_narrative", "file": "harness-core/src/core/session/serializer.py", "params": ["narrative: SessionNarrative"], "returns": "str", "confidence": "confirmed" },
-            { "name": "get_sink", "file": "harness-core/src/core/session/sinks.py", "params": ["active_harness: str", "fs: FileSystemPort"], "returns": "SessionSink", "confidence": "confirmed" }
+            {
+              "name": "parse",
+              "file": ".harness/harness-core/src/core/session/serializer.py",
+              "params": ["text: str"],
+              "returns": "SessionState",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "render",
+              "file": ".harness/harness-core/src/core/session/serializer.py",
+              "params": ["state: SessionState"],
+              "returns": "str",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "render_narrative",
+              "file": ".harness/harness-core/src/core/session/serializer.py",
+              "params": ["narrative: SessionNarrative"],
+              "returns": "str",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "get_sink",
+              "file": ".harness/harness-core/src/core/session/sinks.py",
+              "params": ["active_harness: str", "fs: FileSystemPort"],
+              "returns": "SessionSink",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "pending_work_paths",
+              "file": ".harness/harness-core/src/core/session/close_flow.py",
+              "params": ["git: GitPort", "repo_path: str", "session_file: str"],
+              "returns": "list",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "conduct_commit_pendente",
+              "file": ".harness/harness-core/src/core/session/close_flow.py",
+              "params": [
+                "paths: list",
+                "is_interactive: Optional[bool]",
+                "out: Callable"
+              ],
+              "returns": "None",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "narrative_is_stale",
+              "file": ".harness/harness-core/src/core/session/close_flow.py",
+              "params": [
+                "git: GitPort",
+                "repo_path: str",
+                "session_file: str",
+                "session: SessionState"
+              ],
+              "returns": "bool",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "conduct_narrativa_pendente",
+              "file": ".harness/harness-core/src/core/session/close_flow.py",
+              "params": [
+                "session_file: str",
+                "is_interactive: Optional[bool]",
+                "out: Callable"
+              ],
+              "returns": "None",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "render_offer_markers",
+              "file": ".harness/harness-core/src/core/session/close_flow.py",
+              "params": ["offers: EndSessionOffers"],
+              "returns": "List[str]",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "conduct_end_session_offers",
+              "file": ".harness/harness-core/src/core/session/close_flow.py",
+              "params": [
+                "offers: EndSessionOffers",
+                "repo_path: str",
+                "git: GitPort",
+                "run_upgrade: Callable",
+                "is_interactive: Optional[bool]",
+                "asker: Callable",
+                "out: Callable",
+                "err: Optional[Callable]"
+              ],
+              "returns": "None",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "SessionCloseFlow.run",
+              "file": ".harness/harness-core/src/core/session/close_flow.py",
+              "params": ["repo_path: str", "config: HarnessConfig"],
+              "returns": "int (exit code)",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "build_decisions_appendix",
+              "file": ".harness/harness-core/src/core/session/resume_context.py",
+              "params": [
+                "fs: FileSystemPort",
+                "index_file: str",
+                "enabled: bool"
+              ],
+              "returns": "str",
+              "confidence": "confirmed"
+            }
           ],
           "business_rules": [
-            { "description": "Invariante round-trip parse(render(x)) == x", "location": "harness-core/src/core/session/serializer.py:5", "confidence": "confirmed" },
-            { "description": "Front-matter sem campos obrigatorios (commit/feature/start_time/status) -> MalformedSessionStateError", "location": "harness-core/src/core/session/serializer.py:45", "confidence": "confirmed" },
-            { "description": "HookContextSink trunca o contexto em 10000 chars (teto do Claude)", "location": "harness-core/src/core/session/sinks.py:28", "confidence": "confirmed" },
-            { "description": "Core nao conhece harness; selecao por active_harness vive no sink (RN-N5)", "location": "harness-core/src/core/session/sinks.py:9", "confidence": "confirmed" }
+            {
+              "description": "Invariante round-trip parse(render(x)) == x",
+              "location": ".harness/harness-core/src/core/session/serializer.py:5",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Front-matter sem campos obrigatorios (commit/feature/start_time/status) -> MalformedSessionStateError",
+              "location": ".harness/harness-core/src/core/session/serializer.py:45",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "HookContextSink trunca o contexto em 10000 chars (teto do Claude)",
+              "location": ".harness/harness-core/src/core/session/sinks.py:28",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Core nao conhece harness; selecao por active_harness vive no sink (RN-N5)",
+              "location": ".harness/harness-core/src/core/session/sinks.py:9",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Encerramento aborta com marker/prompt se houver trabalho não commitado (exceto o próprio arquivo de estado), feature 016 estendida na 019 para cobrir .harness/",
+              "location": ".harness/harness-core/src/core/session/close_flow.py:20",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Encerramento aborta se a narrativa estiver vazia ou idêntica à do commit-âncora de partida (gate de narrativa viva)",
+              "location": ".harness/harness-core/src/core/session/close_flow.py:72",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Ofertas de fim de sessão na ordem push -> upgrade; falha de uma não aborta a outra nem desfaz o encerramento (RN-02/RN-09)",
+              "location": ".harness/harness-core/src/core/session/close_flow.py:176",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Apêndice do índice de decisões só ativo quando active_harness == claude e inject_decisions_index == True; ausência de índice é não-bloqueante (retorna string vazia)",
+              "location": ".harness/harness-core/src/core/session/resume_context.py:13",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Índice de decisões é anexado DEPOIS do estado da sessão, cedendo sob truncamento do sink (RN-N8)",
+              "location": ".harness/harness-core/src/core/session/resume_context.py:19",
+              "confidence": "confirmed"
+            }
           ],
-          "entities": ["SessionSink", "HookContextSink", "FileProjectionSink", "MalformedSessionStateError"],
-          "algorithms": ["Round-trip serialização YAML front-matter + corpo Markdown por seções", "Strategy de sink por família de harness (hook x file)"],
-          "dependencies": ["ports.fs", "domain.models"],
+          "entities": [
+            "SessionSink",
+            "HookContextSink",
+            "FileProjectionSink",
+            "MalformedSessionStateError",
+            "EndSessionOffers",
+            "PushOffer",
+            "UpgradeOffer",
+            "SessionCloseFlow"
+          ],
+          "algorithms": [
+            "Round-trip serialização YAML front-matter + corpo Markdown por seções",
+            "Strategy de sink por família de harness (hook x file)",
+            "Orquestração sequencial com I/O injetável (dualidade TTY x marker estruturado)",
+            "Composição pura de apêndice de contexto (build_decisions_appendix)"
+          ],
+          "dependencies": [
+            "ports.fs",
+            "ports.git",
+            "domain.models",
+            "commands.service (via CommandService.execute_command)",
+            "sync.service (via EndSessionOffersService)"
+          ],
           "complexity": "high"
         },
         {
-          "name": "domain",
-          "path": "harness-core/src/core/domain",
-          "purpose": "Modelos Pydantic (Decision, Relationship, SessionState, SessionNarrative), config tipada (HarnessConfig) e cache (SyncCache).",
-          "primary_files": ["harness-core/src/core/domain/models.py", "harness-core/src/core/domain/config.py", "harness-core/src/core/domain/cache.py"],
-          "functions": [
-            { "name": "load_config", "file": "harness-core/src/core/domain/config.py", "params": ["fs: FileSystemPort", "config_path: str = 'harness.toml'"], "returns": "HarnessConfig", "confidence": "confirmed" },
-            { "name": "validate_integrity", "file": "harness-core/src/core/domain/models.py", "params": [], "returns": "List[str]", "confidence": "confirmed" }
+          "name": "migrate",
+          "path": ".harness/harness-core/src/core/migrate",
+          "purpose": "Converte instalações no layout copiado (core vendored por projeto, pré-020) para a fonte única (shim ./harness + core executado a partir do upstream). Ferramenta de manutenção da base instalada, não uma operação per-projeto isolada — exceção consciente ao footprint zero (RN-N17).",
+          "primary_files": [
+            ".harness/harness-core/src/core/migrate/service.py"
           ],
-          "entities": ["Decision", "Relationship", "SessionState", "SessionNarrative", "HarnessConfig", "DecisionsSection", "SyncCache", "HarnessSection", "SessionSection"],
+          "functions": [
+            {
+              "name": "MigrateService.migrate",
+              "file": ".harness/harness-core/src/core/migrate/service.py",
+              "params": [
+                "root: str",
+                "dry_run: bool = False",
+                "upstream_self: Optional[str] = None"
+              ],
+              "returns": "list",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "MigrateService._migrate_one",
+              "file": ".harness/harness-core/src/core/migrate/service.py",
+              "params": [
+                "proj: str",
+                "toml_path: str",
+                "dry_run: bool",
+                "self_abs: Optional[str]"
+              ],
+              "returns": "dict",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "MigrateService._safe_remove_core",
+              "file": ".harness/harness-core/src/core/migrate/service.py",
+              "params": ["path: str"],
+              "returns": "None",
+              "confidence": "confirmed"
+            }
+          ],
+          "business_rules": [
+            {
+              "description": "Nunca migra o próprio upstream (guarda 1)",
+              "location": ".harness/harness-core/src/core/migrate/service.py:59",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Nunca migra uma autoreferência (upstream apontando para dentro do próprio projeto) nem projeto sem upstream_path (guarda 2)",
+              "location": ".harness/harness-core/src/core/migrate/service.py:63",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Recusa migrar se o core do upstream não existir no caminho declarado (guarda 3)",
+              "location": ".harness/harness-core/src/core/migrate/service.py:72",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Ordem segura: shim + hooks + settings instalados ANTES de remover a cópia antiga do core, para o projeto nunca ficar sem executor",
+              "location": ".harness/harness-core/src/core/migrate/service.py:88",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "_safe_remove_core recusa remover qualquer diretório cujo nome-base não seja literalmente 'harness-core' (guarda contra remove_tree malformado)",
+              "location": ".harness/harness-core/src/core/migrate/service.py:113",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "--dry-run só relata (espaço a liberar / ações), nunca escreve nem remove",
+              "location": ".harness/harness-core/src/core/migrate/service.py:85",
+              "confidence": "confirmed"
+            }
+          ],
+          "algorithms": [
+            "Varredura de subpastas com harness.toml sob uma raiz",
+            "Detecção de layout legado (pré-011, harness-core na raiz) vs pós-011 (.harness/harness-core)",
+            "Reescrita regex de campo TOML (upstream_path/active_harness/version)"
+          ],
+          "dependencies": [
+            "ports.fs",
+            "bootstrap.service (BootstrapService)",
+            "bootstrap.shim (render_shim)",
+            "install.claude_settings (materialize_claude_settings)",
+            "domain.layout (CORE_REL_PATH, CORE_MAIN_REL_PATH)"
+          ],
+          "complexity": "medium"
+        },
+        {
+          "name": "domain",
+          "path": ".harness/harness-core/src/core/domain",
+          "purpose": "Modelos Pydantic (Decision, Relationship, SessionState, SessionNarrative), config tipada (HarnessConfig) e cache (SyncCache).",
+          "primary_files": [
+            ".harness/harness-core/src/core/domain/models.py",
+            ".harness/harness-core/src/core/domain/config.py",
+            ".harness/harness-core/src/core/domain/cache.py"
+          ],
+          "functions": [
+            {
+              "name": "load_config",
+              "file": ".harness/harness-core/src/core/domain/config.py",
+              "params": [
+                "fs: FileSystemPort",
+                "config_path: str = 'harness.toml'"
+              ],
+              "returns": "HarnessConfig",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "validate_integrity",
+              "file": ".harness/harness-core/src/core/domain/models.py",
+              "params": [],
+              "returns": "List[str]",
+              "confidence": "confirmed"
+            }
+          ],
+          "entities": [
+            "Decision",
+            "Relationship",
+            "SessionState",
+            "SessionNarrative",
+            "HarnessConfig",
+            "DecisionsSection",
+            "SyncCache",
+            "HarnessSection",
+            "SessionSection (agora com inject_decisions_index, feature 021)"
+          ],
           "dependencies": ["ports.fs"],
           "complexity": "medium"
         },
         {
           "name": "ports",
-          "path": "harness-core/src/core/ports",
+          "path": ".harness/harness-core/src/core/ports",
           "purpose": "Contratos abstratos (ABC) FileSystemPort, GitPort, ProcessPort — fronteira de inversão de dependência.",
-          "primary_files": ["harness-core/src/core/ports/fs.py", "harness-core/src/core/ports/git.py", "harness-core/src/core/ports/process.py"],
+          "primary_files": [
+            ".harness/harness-core/src/core/ports/fs.py",
+            ".harness/harness-core/src/core/ports/git.py",
+            ".harness/harness-core/src/core/ports/process.py"
+          ],
           "functions": [
-            { "name": "is_dir", "file": "harness-core/src/core/ports/fs.py", "params": ["path: str"], "returns": "bool", "confidence": "confirmed" },
-            { "name": "run_command", "file": "harness-core/src/core/ports/process.py", "params": ["args: List[str]", "cwd: Optional[str]"], "returns": "CompletedProcess", "confidence": "confirmed" }
+            {
+              "name": "is_dir",
+              "file": ".harness/harness-core/src/core/ports/fs.py",
+              "params": ["path: str"],
+              "returns": "bool",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "run_command",
+              "file": ".harness/harness-core/src/core/ports/process.py",
+              "params": ["args: List[str]", "cwd: Optional[str]"],
+              "returns": "CompletedProcess",
+              "confidence": "confirmed"
+            }
           ],
           "entities": ["FileSystemPort", "GitPort", "ProcessPort"],
           "dependencies": [],
@@ -192,18 +759,69 @@
         },
         {
           "name": "adapters",
-          "path": "harness-core/src/adapters",
-          "purpose": "Implementações físicas (fs/git/process) e drivers de entrada (CLI main.py, servidor MCP FastMCP).",
-          "primary_files": ["harness-core/src/adapters/fs/local.py", "harness-core/src/adapters/git/subprocess.py", "harness-core/src/adapters/process/formatter.py", "harness-core/src/adapters/mcp/server.py", "harness-core/src/main.py"],
-          "functions": [
-            { "name": "write_file_atomic", "file": "harness-core/src/adapters/fs/local.py", "params": ["path: str", "content: str"], "returns": "None", "confidence": "confirmed" },
-            { "name": "get_remote_commit", "file": "harness-core/src/adapters/git/subprocess.py", "params": ["repo_path: str", "remote_name: str = 'origin'", "branch_name: str = 'main'"], "returns": "str", "confidence": "confirmed" },
-            { "name": "process_decisions", "file": "harness-core/src/adapters/mcp/server.py", "params": ["decisoes_dir: Optional[str]", "output_file: Optional[str]"], "returns": "str", "confidence": "confirmed" },
-            { "name": "session_command", "file": "harness-core/src/adapters/mcp/server.py", "params": ["cmd_name: str", "active_feature: Optional[str]"], "returns": "str", "confidence": "confirmed" }
+          "path": ".harness/harness-core/src/adapters",
+          "purpose": "Implementações físicas (fs/git/process) e drivers de entrada (CLI main.py, servidor MCP FastMCP, driver de ganchos do Antigravity).",
+          "primary_files": [
+            ".harness/harness-core/src/adapters/fs/local.py",
+            ".harness/harness-core/src/adapters/git/subprocess.py",
+            ".harness/harness-core/src/adapters/process/formatter.py",
+            ".harness/harness-core/src/adapters/mcp/server.py",
+            ".harness/harness-core/src/main.py"
           ],
-          "entities": ["LocalFileSystemAdapter", "SubprocessGitAdapter", "HostFormatterAdapter"],
-          "algorithms": ["Escrita atômica via .tmp + os.replace", "FastMCP expondo 4 tools com checagem passiva de versão"],
-          "dependencies": ["ports.fs", "ports.git", "ports.process", "core.*", "domain.config"],
+          "functions": [
+            {
+              "name": "write_file_atomic",
+              "file": ".harness/harness-core/src/adapters/fs/local.py",
+              "params": ["path: str", "content: str"],
+              "returns": "None",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "get_remote_commit",
+              "file": ".harness/harness-core/src/adapters/git/subprocess.py",
+              "params": [
+                "repo_path: str",
+                "remote_name: str = 'origin'",
+                "branch_name: str = 'main'"
+              ],
+              "returns": "str",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "process_decisions",
+              "file": ".harness/harness-core/src/adapters/mcp/server.py",
+              "params": [
+                "decisoes_dir: Optional[str]",
+                "output_file: Optional[str]"
+              ],
+              "returns": "str",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "session_command",
+              "file": ".harness/harness-core/src/adapters/mcp/server.py",
+              "params": ["cmd_name: str", "active_feature: Optional[str]"],
+              "returns": "str",
+              "confidence": "confirmed"
+            }
+          ],
+          "entities": [
+            "LocalFileSystemAdapter",
+            "SubprocessGitAdapter",
+            "HostFormatterAdapter",
+            "AntigravityHookBridge"
+          ],
+          "algorithms": [
+            "Escrita atômica via .tmp + os.replace",
+            "FastMCP expondo tools com checagem passiva de versão"
+          ],
+          "dependencies": [
+            "ports.fs",
+            "ports.git",
+            "ports.process",
+            "core.*",
+            "domain.config"
+          ],
           "complexity": "high"
         }
       ]

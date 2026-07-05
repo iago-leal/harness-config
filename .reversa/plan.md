@@ -44,7 +44,25 @@
 
 > Execute estes agentes quando os recursos estiverem disponíveis — podem rodar in-place em qualquer fase.
 
-- [ ] **Visor** — Análise de interface via screenshots
-- [ ] **Data Master** — Análise completa do banco de dados
-- [ ] **Design System** — Extração de tokens de design
-- [ ] **Tracer** — Análise dinâmica (requer sistema acessível)
+- [N/A] **Visor** — Análise de interface via screenshots — sem interface (CLI puro, sem telas)
+- [N/A] **Data Master** — Análise completa do banco de dados — sem banco de dados no projeto
+- [N/A] **Design System** — Extração de tokens de design — sem CSS/tema (o único `style.css` do repo é da documentação gerada pelo próprio Reversa, não da aplicação)
+- [N/A] **Tracer** — Análise dinâmica (requer sistema acessível) — harness é uma CLI stateless invocada por agentes, sem processo de longa duração para instrumentar
+
+_Reavaliado em 2026-07-05: nenhum recurso aplicável neste projeto; agentes marcados N/A em vez de pendentes._
+
+## Re-extração 2026-07-05 (reconciliação pós-features 019-021 + defasagem estrutural 009)
+
+> Escopo: Scout/Archaeologist/Architect fazem re-extração estrutural ampla (inventory.md, code-analysis.md,
+> c4-components.md, spec-impact-matrix.md estavam congelados desde a feature 009). Detective/Writer fazem
+> reconciliação incremental para as features 019 (smoke real de git), 020 (fonte única / `harness migrate`)
+> e 021 (hook de busca ancorada nas microdecisões). Reviewer atualiza o relatório de confiança. Encerra com
+> regression-check (step-04) contra os regression-watch das três features.
+
+- [x] **Scout** — re-extração estrutural (inventory, dependencies, surface.json)
+- [x] **Archaeologist** — re-extração estrutural (code-analysis, data-dictionary, modules.json)
+- [x] **Detective** — reconciliação incremental (domain, state-machines, permissions, ADRs 019-021)
+- [x] **Architect** — re-extração estrutural (architecture, c4-\*, erd-complete, spec-impact-matrix)
+- [x] **Writer** — reconciliação incremental (specs SDD por componente, code-spec-matrix)
+- [x] **Reviewer** — atualização do relatório de confiança
+- [x] **Regression-check** — veredito dos watch items de 019/020/021 (+ verificação completa das 21 features)

@@ -20,7 +20,16 @@
 
 ## Histórico de re-extrações
 
-> (vazio — preenchido pelo agente reverso na próxima execução de `/reversa`)
+### Re-extração 2026-07-05 17:00
+
+> **Primeira verificação dos watch da 015** (nunca fora checada em rodadas anteriores). A feature 016, que veio logo em seguida, **revisou deliberadamente** parte da regra de W001/W003: sessão inativa deixou de ser condição de falha (reativa e fecha, exit 0) e a exceção `NoActiveSessionError` foi **removida** — o próprio código documenta isso (`core/commands/errors.py`, comentário "NOTA (feature 016)"). Não é regressão acidental da reconciliação atual; é uma decisão de produto já tomada há tempo, só nunca antes registrada neste watch.
+
+| ID   | Veredito   | Observação                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ---- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟡 amarelo | **Parcialmente superado pela feature 016.** O sub-caso "estado malformado/hash curto" segue `exit ≠ 0` com mensagem nomeada (confirmado em `main.py`, ramo `except MalformedSessionStateError`, branch não-`resume` → exit 1). O sub-caso "sessão inativa" **não é mais falha**: `CommandService` reativa e fecha com sucesso (exit 0, mensagem anuncia a reativação) — mudança deliberada da 016 (D1/D3), não regressão.                                 |
+| W002 | 🟢 verde   | `resume`/boot tolera estado malformado: confirmado em `main.py` — `MalformedSessionStateError` no ramo `resume` imprime aviso em `stderr` e `sys.exit(0)`, não trava o `SessionStart`.                                                                                                                                                                                                                                                                    |
+| W003 | 🟡 amarelo | **Parcialmente superado pela feature 016.** `NoActiveSessionError` foi **removida** (`core/commands/errors.py` confirma via comentário explícito) — sessão ausente é hoje um no-op sem exceção, não um erro nomeado. `MalformedSessionStateError`/`SessionCommitError` seguem vivas e o princípio geral (a borda `cmd` decide exit code/canal, o serviço não chama `sys.exit`) permanece verdadeiro — só o exemplo específico citado ficou desatualizado. |
+| W004 | 🟢 verde   | Caminho feliz do `encerrar-sessao` intocado: âncora = HEAD de trabalho capturado antes da escrita, `commit_paths` versiona só `session_filepath` (nunca `git add -A`), commit de encerramento por cima — `core/commands/service.py` confirmado sem alteração de RN-N31.                                                                                                                                                                                   |
 
 ## Arquivadas
 

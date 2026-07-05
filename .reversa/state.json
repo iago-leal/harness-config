@@ -21,7 +21,7 @@
   "pending": [],
   "checkpoints": {
     "scout": {
-      "completed_at": "2026-06-24T15:20:00-03:00",
+      "completed_at": "2026-07-05T17:00:00-03:00",
       "files": [
         "_reversa_sdd/inventory.md",
         "_reversa_sdd/dependencies.md",
@@ -29,12 +29,18 @@
       ]
     },
     "archaeologist": {
-      "completed_at": "2026-06-24T15:30:00-03:00",
-      "modules_analyzed": ["harness-core", "antigravity-hooks"],
+      "completed_at": "2026-07-05T17:00:00-03:00",
+      "modules_analyzed": [
+        "harness-core",
+        "antigravity-hooks",
+        "migrate",
+        "session-close-flow",
+        "resume-context"
+      ],
       "modules_pending": []
     },
     "detective": {
-      "completed_at": "2026-06-24T15:45:00-03:00",
+      "completed_at": "2026-07-05T17:00:00-03:00",
       "files": [
         "_reversa_sdd/domain.md",
         "_reversa_sdd/state-machines.md",
@@ -47,11 +53,15 @@
         "_reversa_sdd/adrs/0014-bootstrap-e-evolucao-do-tooling.md",
         "_reversa_sdd/adrs/0015-reprodutibilidade-e-configuracoes-dinamicas-de-formatacao.md",
         "_reversa_sdd/adrs/0016-ganchos-antigravity-driver-de-borda.md",
-        "_reversa_sdd/adrs/0017-comandos-ide-materializados-no-init.md"
+        "_reversa_sdd/adrs/0017-comandos-ide-materializados-no-init.md",
+        "_reversa_sdd/adrs/0018-encerrar-sessao-como-skill-adaptador.md",
+        "_reversa_sdd/adrs/0019-precheck-pendencia-restrito-ao-estado.md",
+        "_reversa_sdd/adrs/0020-fonte-unica-execucao-e-migrate.md",
+        "_reversa_sdd/adrs/0021-resume-ancorado-indice-decisoes.md"
       ]
     },
     "architect": {
-      "completed_at": "2026-06-24T15:55:00-03:00",
+      "completed_at": "2026-07-05T17:00:00-03:00",
       "files": [
         "_reversa_sdd/architecture.md",
         "_reversa_sdd/c4-context.md",
@@ -62,7 +72,7 @@
       ]
     },
     "writer": {
-      "completed_at": "2026-06-24T14:18:00Z",
+      "completed_at": "2026-07-05T17:00:00-03:00",
       "files": [
         "_reversa_sdd/install/{requirements,design,tasks}.md",
         "_reversa_sdd/session/{requirements,design,tasks}.md",
@@ -71,11 +81,12 @@
         "_reversa_sdd/format-on-edit/{requirements,design,tasks,contracts}.md",
         "_reversa_sdd/sync-check/{requirements,design,tasks,contracts}.md",
         "_reversa_sdd/comandos-customizados/{requirements,design,tasks}.md",
+        "_reversa_sdd/migrate/{requirements,design,tasks}.md",
         "_reversa_sdd/traceability/code-spec-matrix.md"
       ]
     },
     "reviewer": {
-      "completed_at": "2026-06-24T11:12:34-03:00",
+      "completed_at": "2026-07-05T17:00:00-03:00",
       "files": [
         "_reversa_sdd/confidence-report.md",
         "_reversa_sdd/gaps.md",
@@ -90,34 +101,38 @@
     "traceability/code-spec-matrix.md"
   ],
   "last_reextraction": {
-    "scope": "reconciliação + regressão pós-feature 018 (encerrar-sessao como skill versionável; mecanismo de 010/017 substituído; fluxo extraído p/ SessionCloseFlow)",
-    "type": "reconciliacao-e-regressao",
-    "started_at": "2026-06-28T09:30:00-03:00",
-    "completed_at": "2026-06-28T09:45:00-03:00",
-    "method": "reconciliação do _reversa_sdd/ (domain.md#2.12 RN-N28/N29 reescritas command→skill, #2.13 RN-N30, nova #2.15 RN-N33 SessionCloseFlow; architecture.md; comandos-customizados/requirements.md#f010; ADR 0017 marcada Substituída + ADR 0018 nova) + step-04 sobre 018/017/016/014/013/012/010 por verificação factual: suíte 212 passed, smoke real de `materialize` (skill nos dois skills_dir; 3 órfãos removidos; terceiros deploy-de-terceiro.md/SPEC.md preservados)",
-    "user_scope_choice": "Re-extração da 018 (reconciliar _reversa_sdd/ + regression-check), escolhida via menu",
+    "scope": "re-extração estrutural ampla (Scout/Archaeologist/Architect) da defasagem pré-existente congelada desde a feature 009 + reconciliação incremental (Detective/Writer) das features 019-021 + regression-check completo das 21 features do _reversa_forward/",
+    "type": "reconciliacao-estrutural-e-regressao",
+    "started_at": "2026-07-05T16:00:00-03:00",
+    "completed_at": "2026-07-05T17:00:00-03:00",
+    "method": "Scout: inventory.md/dependencies.md/surface.json (paths .harness/harness-core/ corrigidos, dependência fastmcp, 90 arquivos Python). Archaeologist: code-analysis.md/data-dictionary.md/modules.json (nova unidade core/migrate; core/session expandido com close_flow.py/resume_context.py). Detective: domain.md §2.16-2.18 (RN-N34..N41), state-machines.md, permissions.md + ADRs 0019/0020/0021 novas. Architect: architecture.md/c4-context/c4-containers/c4-components/erd-complete/spec-impact-matrix (c4-containers redesenhado com split shim/upstream; achado T7 documentado). Writer: nova unit migrate/{requirements,design,tasks}.md; comandos-customizados/ estendida (RN-N34/N35/N41); code-spec-matrix.md reconciliado. Reviewer: confidence-report/gaps/questions atualizados (G-04 fechado, G-12/G-13 novos). Regression-check: 21 features, 99 watch items.",
+    "user_scope_choice": "Usuário confirmou CONTINUAR e pediu autonomia total (sem parar em gates de CONTINUAR); execução sequencial completa dos 6 agentes + regression-check sem pausas intermediárias",
+    "achado_novo": "T7 — cache de sincronia com nomes divergentes entre CLI (.harness/sync-cache.json, hífen) e MCP server (.harness/sync_cache.json, underscore); o cache do MCP escapa do .gitignore e seria ofertado para commit desde a feature 019. Dívida técnica real, em aberto, fix trivial não executado (documentar ≠ corrigir código). Ver architecture.md §5, erd-complete.md §3, gaps.md#G-12.",
+    "desescopo_confirmado": "O plano da feature 020 previa remover upgrade_project/SyncService/version (tornando upgrade um no-op) — NÃO executado, desescopado deliberadamente em 2026-07-01 porque ambos sustentam a UpgradeOffer do encerramento (feature 014). RN-N19 revisada/substituída por RN-N36; RN-N20/RN-N21 permanecem ativas. Não é lacuna, é decisão documentada (ADR 0020, domain.md).",
     "regression_check": {
-      "features_checked": 7,
-      "watch_items": 41,
-      "green": 35,
-      "yellow": 6,
+      "features_checked": 21,
+      "watch_items": 99,
+      "green": 90,
+      "yellow": 9,
       "red": 0,
       "yellow_items": [
-        "017/W001",
-        "017/W002",
-        "013/W006",
+        "009/W009",
         "010/W001",
         "010/W002",
-        "010/W005"
+        "010/W005",
+        "013/W006",
+        "015/W001",
+        "015/W003",
+        "017/W001",
+        "017/W002"
       ],
       "promotions": [],
       "notes": [
-        "018 (W001-W005) verde: skill materializada nos dois harnesses, 3 órfãos removidos preservando terceiros, SessionCloseFlow fonte única (CLI + skill), scripts finos barulhentos (re-exec sob venv por sys.prefix)",
-        "Amarelos = mecanismo superado DELIBERADAMENTE pela 018 (command/workflow → skill; session_command_artifact removido; frontmatter sem name → SKILL.md com name); NÃO são regressões acidentais. Candidatos a arquivar quando a 018 estabilizar",
-        "016/014/013 verdes: pré-check/ofertas/commit movidos para SessionCloseFlow e scripts, comportamento preservado (helpers reexportados por src.main, suíte 212)",
-        "012 verde: mecanismo de upgrade resiliente intacto; só o conteúdo de apply_local_materializers mudou (materialize_session_commands → materialize_session_skills)",
-        "DEFASAGEM PRÉ-EXISTENTE (fora do escopo da 018): inventory.md, code-analysis.md, c4-components.md, traceability/spec-impact-matrix.md são snapshot da feature 009 e não incorporam 010-018 — exigem re-extração estrutural ampla (Scout/Archaeologist/Architect) à parte",
-        "001-009, 011, 015 não re-verificadas: a 018 é cirúrgica no encerramento/materialização e não as toca; última verificação permanece válida"
+        "019/020/021 (16 watch items): 100% verdes, verificados por leitura direta do código atual (pending_work_paths, list_dirty_paths, SYNC_CACHE_GITIGNORE_ENTRY, install_hooks não-destrutivo, render_shim, MigrateService, remove_tree, CORE_VERSION, build_decisions_appendix, SessionSection.inject_decisions_index)",
+        "015 verificada pela primeira vez nesta sessão (histórico estava vazio): W001/W003 amarelos — parcialmente superados pela feature 016 (sessão inativa deixou de ser erro; NoActiveSessionError removida, confirmado por comentário explícito em core/commands/errors.py); W002/W004 verdes",
+        "001-009, 011: reconfirmados válidos via extração de tabelas + spot-check (nenhuma mudança desde a verificação de 2026-06-25)",
+        "010, 012, 013, 014, 016, 017, 018: reconfirmados válidos (verificação de 2026-06-28 permanece correta; amarelos são supersessões deliberadas já documentadas, não regressões novas)",
+        "Zero vermelhos em todas as 21 features — nenhuma regressão de código detectada nesta reconciliação"
       ]
     }
   },

@@ -18,7 +18,15 @@
 
 ## Histórico de re-extrações
 
-<!-- Preenchido pelo agente reverso ao rodar /reversa novamente. -->
+### Re-extração 2026-07-05 17:00
+
+| ID   | Veredito | Observação                                                                                                                                                                                                     |
+| ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | `close_flow.py:pending_work_paths` confirmado: `return [p for p in dirty if p != session_file]` — exclui só o arquivo de estado, não `.harness/` inteiro. Reconciliado em `domain.md#2.16` (RN-N34), ADR 0019. |
+| W002 | 🟢 verde | `adapters/git/subprocess.py:list_dirty_paths` usa `["git", "status", "--porcelain", "--untracked-files=all"]` (linha 183), com comentário explícito citando a feature 019.                                     |
+| W003 | 🟢 verde | `init_service.py` chama `_ensure_gitignore_entry(target_path, SYNC_CACHE_GITIGNORE_ENTRY)` em `initialize_project` (linha 141) e em `upgrade_project` (linha 242).                                             |
+
+> Nota da re-extração: a divergência de nome do cache de sync entre CLI (`sync-cache.json`, hífen) e MCP (`sync_cache.json`, underscore) — já apontada na "Observações" deste arquivo desde a criação — foi promovida a dívida técnica rastreada formalmente (**T7**) em `architecture.md`, `erd-complete.md` e `gaps.md#G-12` nesta reconciliação. Não afeta o veredito de W003 (que cobre o nome com hífen, correto).
 
 ## Arquivadas
 

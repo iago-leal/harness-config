@@ -2,6 +2,7 @@
 
 > Regenerado pelo Revisor em 2026-06-24 (Re-extração pós-feature 008-reprodutibilidade-e-config)
 > Responda cada pergunta (preencha o campo **Resposta**) e me avise quando terminar — basta digitar `reversa`.
+> **Reconciliação de 2026-07-05:** nenhuma pergunta nova. Todo o conteúdo das features 019-021 foi confirmado por leitura direta do código-fonte atual e cruzado contra `requirements.md`/`actions.md` dos próprios forwards — não há ponto que dependa de uma decisão do mantenedor ainda em aberto. O achado T7 (cache de sync com nomes divergentes) é um bug com fix óbvio, não uma questão de escopo; ver `gaps.md#G-12`.
 
 A re-extração tem confiança alta (≈87%) e cobertura completa do código de produto. As perguntas abaixo foram todas resolvidas e fechadas pós-feature 008.
 

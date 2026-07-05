@@ -21,7 +21,15 @@
 
 ## Histórico de re-extrações
 
-_(vazio — preenchido pelo agente reverso ao rodar `/reversa` novamente)_
+### Re-extração 2026-07-05 17:00
+
+| ID   | Veredito | Observação                                                                                                                                                                                         |
+| ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | `main.py` (ramo `cmd resume`) confirmado: `result_msg += build_decisions_appendix(fs, config.decisions.index_file, enabled)` antes de `sink.emit(result_msg)`, quando `enabled` é `True`.          |
+| W002 | 🟢 verde | `enabled = config.harness.active_harness == "claude" and config.session.inject_decisions_index` — gate na borda, `build_decisions_appendix` em si não decide nada, só executa (função pura).       |
+| W003 | 🟢 verde | Índice ausente → aviso em `stderr` antes da chamada; `build_decisions_appendix` retorna `""` (índice ausente/vazio/gate off); `sys.exit(0)` ao final do ramo `resume`.                             |
+| W004 | 🟢 verde | `HookContextSink.emit` (MAX_CHARS=10000) trunca `context_text` recebido — que já é o estado + apêndice concatenados por `main.py` antes de `sink.emit()` — não há truncamento separado por partes. |
+| W005 | 🟢 verde | `SessionSection.inject_decisions_index: bool = True` confirmado em `domain/config.py`; comentário no código cita a feature 021 e o comportamento de default para tomls sem a chave.                |
 
 ## Arquivadas
 

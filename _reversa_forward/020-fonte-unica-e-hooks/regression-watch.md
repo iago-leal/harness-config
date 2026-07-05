@@ -24,7 +24,20 @@
 
 ## Histórico de re-extrações
 
-<!-- Preenchido pelo agente reverso quando `/reversa` rodar de novo. -->
+### Re-extração 2026-07-05 17:00
+
+| ID   | Veredito | Observação                                                                                                                                                                                                                                                  |
+| ---- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W001 | 🟢 verde | `bootstrap/service.py:_install_one_hook` confirmado: ausente→cria; assinatura `Harness Core` presente→atualiza no lugar; ausente a assinatura→preserva em `<hook>.local` e encadeia. Hooks de outro nome nunca lidos.                                       |
+| W002 | 🟢 verde | `_pre_commit_script`/`_post_merge_script` confirmados: encadeiam `.local` primeiro, depois `if [ -x ./harness ]; then ./harness format/decisions; fi`; sem referência a `.venv/bin/python3` local.                                                          |
+| W003 | 🟢 verde | `install/claude_settings.py` (`materialize_claude_settings`) confirmado por rastreabilidade em `comandos-customizados/tasks.md` T004 (merge por-item, testado em `test_install_claude_settings.py`).                                                        |
+| W004 | 🟢 verde | `init_service.py:initialize_project` confirmado: sem cópia de core/venv; grava shim; `harness.toml` sem `version` para tomls novos; `install_hooks` chamado in-process.                                                                                     |
+| W005 | 🟢 verde | `bootstrap/shim.py:render_shim` confirmado: resolve `upstream_path` via `sed` no `harness.toml`, `cd` para a raiz, valida `MAIN`/`PY`, senão `echo ... >&2; exit 1`; nunca degrada silenciosamente.                                                         |
+| W006 | 🟢 verde | `migrate/service.py:MigrateService` confirmado: guardas 1/2/3 (upstream/autorreferência/core ausente), ordem shim→hooks→settings→remoção `version`→remoção do core por último, `_safe_remove_core` restrito a basename `harness-core`, `--dry-run` sem I/O. |
+| W007 | 🟢 verde | `FileSystemPort.remove_tree` confirmado no port e no adapter (`adapters/fs/local.py`); guarda de uso fica no chamador (`MigrateService._safe_remove_core`), não no port — conforme esperado.                                                                |
+| W008 | 🟢 verde | `CORE_VERSION = HarnessSection().version` (literal `"2.0.0"`) confirmado em `domain/config.py`; `main.py` usa `f"... v{CORE_VERSION}"` no parser; `InitializationService.current_version = CORE_VERSION`.                                                   |
+
+> Nota da re-extração: o achado "`cmd resume` em repo sem commit estoura traceback cru" (Observações deste arquivo) permanece **não corrigido** — confirmado ainda presente em `CommandService.execute_command`/`SubprocessGitAdapter.get_head_commit`, sem tratamento novo. Não é regressão desta reconciliação (já era conhecido antes da 020); candidato a ticket de manutenção, registrado também em `_reversa_sdd/inventory.md` (achados de saúde).
 
 ## Arquivadas
 
