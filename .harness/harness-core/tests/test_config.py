@@ -53,3 +53,29 @@ def test_load_config_tolerates_toml_with_version():
     cfg = load_config(fs, "harness.toml")
     assert cfg.harness.version == "1.2.56"
     assert cfg.harness.upstream_path == "/abs/up"
+
+
+def test_session_inject_decisions_index_default_true():
+    # Feature 021: sem harness.toml, o flag nasce True (habilitado por padrão).
+    cfg = HarnessConfig()
+    assert cfg.session.inject_decisions_index is True
+
+
+def test_load_config_parses_inject_decisions_index_false():
+    # [session].inject_decisions_index = false → desliga o anexo de decisões.
+    fs = MockFileSystem()
+    fs.write_file(
+        "harness.toml",
+        '[harness]\nactive_harness = "claude"\n\n'
+        "[session]\ninject_decisions_index = false\n",
+    )
+    cfg = load_config(fs, "harness.toml")
+    assert cfg.session.inject_decisions_index is False
+
+
+def test_load_config_absent_session_flag_defaults_true():
+    # Retrocompatível: [session] ausente inteiro → default True.
+    fs = MockFileSystem()
+    fs.write_file("harness.toml", '[harness]\nactive_harness = "claude"\n')
+    cfg = load_config(fs, "harness.toml")
+    assert cfg.session.inject_decisions_index is True

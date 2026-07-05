@@ -103,7 +103,10 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Executa um slash command de sessão. `resume` reinjeta o estado de "
             ".harness/estado-da-sessao.md no contexto do harness ativo (JSON no "
-            "stdout para Claude/Gemini; arquivo para Antigravity)."
+            "stdout para Claude/Gemini; arquivo para Antigravity). No Claude, o "
+            "resume também anexa o índice de decisões (.harness/microdecisoes.md) "
+            "para ancorar a busca do agente, desativável por "
+            "session.inject_decisions_index."
         ),
     )
     parser_cmd.add_argument(
@@ -301,6 +304,7 @@ def main():
     elif args.command == "cmd":
         from src.core.session.sinks import get_sink
         from src.core.session.errors import MalformedSessionStateError
+        from src.core.session.resume_context import build_decisions_appendix
 
         service = CommandService(fs, git)
         session_file = config.session.state_file
@@ -351,6 +355,23 @@ def main():
         # Só o `resume` alimenta o SessionStart: entrega via sink do harness ativo.
         # Os demais comandos (handoff, clarificar) imprimem normal.
         if cmd_name_norm == "resume":
+            # Feature 021: no Claude, ancora a busca do agente anexando o índice de
+            # decisões ao estado reinjetado (uma injeção por sessão). O gate por
+            # harness vive na borda (RN-N5); a composição é pura. Não-bloqueante:
+            # índice ausente → aviso em stderr e segue só com o estado.
+            enabled = (
+                config.harness.active_harness == "claude"
+                and config.session.inject_decisions_index
+            )
+            if enabled and not fs.exists(config.decisions.index_file):
+                print(
+                    f"Aviso: índice de decisões ausente em "
+                    f"{config.decisions.index_file}; reinjetando só o estado.",
+                    file=sys.stderr,
+                )
+            result_msg += build_decisions_appendix(
+                fs, config.decisions.index_file, enabled
+            )
             sink = get_sink(config.harness.active_harness, fs)
             sink.emit(result_msg)
         else:

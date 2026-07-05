@@ -1,3 +1,4 @@
+import json
 import subprocess
 import os
 from unittest import mock
@@ -530,3 +531,86 @@ def test_resume_sobre_estado_malformado_nao_bloqueia(tmp_path):
     )
 
     assert result.returncode == 0
+
+
+# --- Resume ancora no índice de decisões (feature 021) --------------------
+
+
+def _seed_resume_repo(tmp_path, harness_toml):
+    """Repo git com HEAD real (commit), estado de sessão válido e harness.toml
+    fornecido. HEAD real evita que `git rev-parse HEAD` falhe no resume."""
+    _seed_session_repo(tmp_path, "a" * 40, "active")
+    (tmp_path / "harness.toml").write_text(harness_toml)
+    subprocess.run(["git", "add", "-A"], cwd=str(tmp_path), capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "seed"], cwd=str(tmp_path), capture_output=True
+    )
+
+
+def _resume_context(tmp_path):
+    main_path, python_bin = _harness_cli_paths()
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "resume"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+    return result
+
+
+def test_resume_anexa_indice_no_claude(tmp_path):
+    # Claude + flag padrão (on): o additionalContext traz o índice de decisões.
+    _seed_resume_repo(tmp_path, '[harness]\nactive_harness = "claude"\n')
+    (tmp_path / ".harness" / "microdecisoes.md").write_text(
+        "- **MD-0001** — Decisão de teste\n"
+    )
+
+    result = _resume_context(tmp_path)
+    assert result.returncode == 0
+    ctx = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "MD-0001" in ctx
+    assert "Índice de decisões" in ctx
+
+
+def test_resume_flag_off_suprime_indice(tmp_path):
+    # inject_decisions_index = false: só o estado, sem o índice.
+    _seed_resume_repo(
+        tmp_path,
+        '[harness]\nactive_harness = "claude"\n\n'
+        "[session]\ninject_decisions_index = false\n",
+    )
+    (tmp_path / ".harness" / "microdecisoes.md").write_text(
+        "- **MD-0001** — Decisão de teste\n"
+    )
+
+    result = _resume_context(tmp_path)
+    assert result.returncode == 0
+    ctx = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "MD-0001" not in ctx
+
+
+def test_resume_gemini_nao_anexa_indice(tmp_path):
+    # Corte Claude-first (gate D-04): Gemini usa o mesmo sink, mas não recebe o
+    # apêndice nesta iteração.
+    _seed_resume_repo(tmp_path, '[harness]\nactive_harness = "gemini"\n')
+    (tmp_path / ".harness" / "microdecisoes.md").write_text(
+        "- **MD-0001** — Decisão de teste\n"
+    )
+
+    result = _resume_context(tmp_path)
+    assert result.returncode == 0
+    ctx = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "MD-0001" not in ctx
+
+
+def test_resume_indice_ausente_nao_trava(tmp_path):
+    # Não-bloqueio (RN-03/RN-N4): índice ausente → aviso em stderr, resume segue
+    # com o estado e exit 0.
+    _seed_resume_repo(tmp_path, '[harness]\nactive_harness = "claude"\n')
+    # Sem .harness/microdecisoes.md.
+
+    result = _resume_context(tmp_path)
+    assert result.returncode == 0
+    assert "microdecisoes" in result.stderr
+    ctx = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "Sessão retomada" in ctx

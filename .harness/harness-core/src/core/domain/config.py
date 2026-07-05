@@ -36,6 +36,10 @@ class DecisionsSection(BaseModel):
 
 class SessionSection(BaseModel):
     state_file: str = ".harness/estado-da-sessao.md"
+    # Feature 021: quando True, o `cmd resume` anexa o índice de decisões
+    # (`decisions.index_file`) ao contexto reinjetado no SessionStart. Habilitado
+    # por padrão; desativável por projeto. Tomls sem o campo herdam True.
+    inject_decisions_index: bool = True
 
 
 class RegenSection(BaseModel):
