@@ -1,28 +1,27 @@
 ---
-commit: edaf8bb3798ebbf68ed28629f55ff3b415925daa
+commit: 83d12bf190b1f6b6ee053ddc09d1d7e04117aea3
 feature: saneamento do T7 (cache de sync com fonte única em layout.py)
-start_time: '2026-07-05T20:59:58.363426+00:00'
+start_time: '2026-07-05T21:21:05.817121+00:00'
 status: inactive
 ---
 
 ## O que foi feito
-- **T7 saneado (MD-0013), pelo rito de correção leve TDD-direto** (fora do pipeline forward): o servidor MCP (`adapters/mcp/server.py:42`) gravava o cache de sincronia em `.harness/sync_cache.json` (underscore), enquanto CLI e `close_flow` usavam `.harness/sync-cache.json` (hífen) — o único nome coberto pelo `.gitignore` que o `init` grava. Desde a feature 019, o cache do MCP seria ofertado para commit por engano.
-- **Fix por fonte única, não por alinhamento de literal:** nova constante `SYNC_CACHE_REL_PATH` em `core/domain/layout.py`, da qual `SYNC_CACHE_GITIGNORE_ENTRY` passa a derivar; os três consumidores (`main.py`, `core/session/close_flow.py`, `adapters/mcp/server.py`) leem a constante. Elimina a classe do erro, não só a instância.
-- **TDD:** `test_mcp_check_repository_sync_usa_cache_canonico` (em `tests/test_mcp.py`) escrito antes do fix — vermelho por `ImportError` da constante, verde após. Suíte completa: **257 passed**. Ruff limpo nos arquivos tocados (resta só o F841 pré-existente de `main.py:96`, dívida tolerada).
-- **Bump 2.0.0 → 2.0.1** em `config.py` para que os projetos vendorados percebam o fix pelo alerta passivo de versão.
-- **Artefatos do Reversa reconciliados no mesmo passo** — todos os que afirmavam T7 "EM ABERTO" agora registram RESOLVIDO (2026-07-05, MD-0013): `architecture.md` §5 (tabela T1-T7 toda verde), `gaps.md#G-12`, `erd-complete.md` §3, `confidence-report.md`, `data-dictionary.md` §3, `c4-containers.md` (nós do cache unificados no diagrama e na tabela), `traceability/spec-impact-matrix.md`, unit `sync-check/` (requirements, design, tasks, contracts). Registros históricos (`_reversa_forward/019`, `state.json#last_reextraction`, HTML gerado do mini-site) preservados como fotografias datadas.
-- **MD-0013** gravada em `.harness/decisoes/` (relaciona MD-0012) e índice `microdecisoes.md` regenerado via `./harness decisions` (grafo validado, zero erros).
+- **G-05 fechada** (commit `83d12bf`): os ADRs 0002 e 0003 receberam nota de superação no padrão já usado nos pares 0001→0012 e 0004→0010 — status atualizado + blockquote datado distinguindo a decisão de fundo (que permanece) do mecanismo shell (superado).
+- **ADR 0002** agora aponta o `FormattingService` (`src/core/formatting/service.py`), invocado por `harness format` a partir do JSON do hook PostToolUse (e, no Antigravity, pelo adaptador de borda em `.agents/`, ADR 0016); salvaguardas e opt-out migrados do `.no-autoformat` para exclusões no `harness.toml` (ADR 0015, feature 008).
+- **ADR 0003** agora aponta o `SyncService` (`src/core/sync/service.py`), acionado no `resume`: mantém `ls-remote` read-only com TTL de 24h, mas com cache por projeto em `.harness/sync-cache.json` (fonte única `SYNC_CACHE_REL_PATH` de `layout.py`, MD-0013) em vez do `$STATE_DIR` global; registra também a absorção da checagem passiva de versão do upstream (`check_version_update`/`check_version_update_remote`, features 012 e 014).
+- **`gaps.md` reconciliado no mesmo passo:** G-05 marcada RESOLVIDO (2026-07-05) na tabela e na síntese; das inconsistências entre artefatos resta apenas G-11 (migração não auditada, dívida consciente). As notas foram escritas após leitura direta de `service.py` — descrevem o comportamento real, não o suposto.
+- Nenhum outro artefato registrava G-05 como aberta (verificado por grep em `_reversa_sdd/` e `.harness/`); a menção no estado-da-sessão anterior é substituída por esta narrativa.
 
 ## Próximos passos
-- **G-05 pendente:** ADRs 0002/0003 ainda sem nota de superação apontando para os serviços Python que substituíram os scripts shell.
 - **Descontinuação de `sync`/`upgrade`/oferta-014:** segue como feature futura, ainda não numerada (022+) — não reabrir sem necessidade concreta.
-- **`harness migrate` real:** ainda não executado nos ~17 projetos com layout copiado; ação separada e deliberada do mantenedor.
-- **Mini-site (`.reversa/documentation/`):** as páginas de `sync-check` ainda citam o literal antigo; regenerar via `/reversa-docs` quando houver próxima rodada de documentação visual (não vale rodada própria só para isso).
+- **`harness migrate` real:** ainda não executado nos ~17 projetos com layout copiado; ação separada e deliberada do mantenedor, com execução manual (`!`), pois o auto-mode bloqueia destruição em massa fora do repo.
+- **Mini-site (`.reversa/documentation/`):** as páginas de `sync-check` ainda citam o literal antigo do cache; regenerar via `/reversa-docs` quando houver próxima rodada de documentação visual (não vale rodada própria só para isso).
+- **G-11:** artefatos de `_reversa_sdd/migration/` seguem não auditados — auditar apenas se o Time de Migração voltar a ser usado.
 
 ## Pendências / bloqueios
-- Sem bloqueios. Caches `sync_cache.json` órfãos que o MCP possa ter criado em projetos são efêmeros e inócuos — decisão explícita de não varrê-los (MD-0013, descarte 3).
+- Sem bloqueios. O repositório `~/.claude` tinha 1 alteração não-commitada apontada pelo sync-check desta sessão; tratar lá, não aqui.
 
 ## Ponteiros
-- Ficha da decisão: `.harness/decisoes/MD-0013.md` (D · PORQUÊ · DESCARTADO · ESTADO completos).
-- Fix: `.harness/harness-core/src/core/domain/layout.py` (constante), `src/adapters/mcp/server.py`, `src/main.py`, `src/core/session/close_flow.py`, `src/core/domain/config.py` (bump), `tests/test_mcp.py` (teste novo).
-- T7 fechado nos artefatos: `_reversa_sdd/architecture.md` §5, `_reversa_sdd/gaps.md#G-12`.
+- Notas de superação: `_reversa_sdd/adrs/0002-formatacao-automatica-post-tool-use.md` e `_reversa_sdd/adrs/0003-sincronizacao-nao-bloqueante-session-start.md` (blockquotes de 2026-07-05).
+- Lacuna fechada: `_reversa_sdd/gaps.md#G-05` (tabela §Moderado e §Resumo).
+- Serviços citados: `.harness/harness-core/src/core/formatting/service.py` e `src/core/sync/service.py`; constante do cache em `src/core/domain/layout.py:24`.
