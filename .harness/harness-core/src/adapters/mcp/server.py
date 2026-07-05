@@ -10,6 +10,7 @@ from src.core.sync.service import SyncService
 from src.core.decisions.service import DecisionService
 from src.core.commands.service import CommandService
 from src.core.domain.config import load_config
+from src.core.domain.layout import SYNC_CACHE_REL_PATH
 
 # Criação do Servidor FastMCP
 mcp = FastMCP("Harness")
@@ -38,8 +39,7 @@ def format_file(file_path: str) -> str:
 )
 def check_repository_sync(repo_path: Optional[str] = None) -> str:
     path = repo_path or os.getcwd()
-    # Carrega configurações para ler o cache_file
-    cache_filepath = ".harness/sync_cache.json"
+    cache_filepath = SYNC_CACHE_REL_PATH
     cache_ttl = 24
 
     service = SyncService(

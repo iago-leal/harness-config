@@ -9,13 +9,13 @@
 
 ## 🔌 1. Tool MCP `check_repository_sync` 🟢
 
-| Aspecto | Valor |
-|---|---|
-| Transporte | Model Context Protocol (JSON-RPC sobre stdin/stdout), servidor FastMCP "Harness". |
-| Entrada | `repo_path` (caminho do repositório a verificar). |
-| Cache | `.harness/sync_cache.json` (chumbado na tool). |
-| TTL | 24 horas (chumbado na tool). |
-| Saída | `bool` — `True` = em sincronia (ou degradação por TTL/falha); `False` = divergente. |
+| Aspecto    | Valor                                                                               |
+| ---------- | ----------------------------------------------------------------------------------- |
+| Transporte | Model Context Protocol (JSON-RPC sobre stdin/stdout), servidor FastMCP "Harness".   |
+| Entrada    | `repo_path` (caminho do repositório a verificar).                                   |
+| Cache      | `.harness/sync-cache.json` (fonte única `layout.py:SYNC_CACHE_REL_PATH`, MD-0013).  |
+| TTL        | 24 horas (chumbado na tool).                                                        |
+| Saída      | `bool` — `True` = em sincronia (ou degradação por TTL/falha); `False` = divergente. |
 
 ---
 
@@ -30,18 +30,18 @@ JSON persistido em `cache_filepath`:
 }
 ```
 
-| Campo | Tipo | Validação |
-|---|---|---|
-| `last_checked_time` | datetime (ISO) | naive → coerção UTC |
-| `commit_hash` | str | regex SHA1 `^[a-f0-9]{40}$` |
+| Campo               | Tipo           | Validação                   |
+| ------------------- | -------------- | --------------------------- |
+| `last_checked_time` | datetime (ISO) | naive → coerção UTC         |
+| `commit_hash`       | str            | regex SHA1 `^[a-f0-9]{40}$` |
 
 ---
 
 ## 🔁 3. Contrato com o `GitPort` 🟢
 
-| Método | Comando subjacente |
-|---|---|
-| `get_head_commit(repo_path)` | `git rev-parse HEAD` |
+| Método                         | Comando subjacente          |
+| ------------------------------ | --------------------------- |
+| `get_head_commit(repo_path)`   | `git rev-parse HEAD`        |
 | `get_remote_commit(repo_path)` | `git ls-remote origin main` |
 
 `CalledProcessError` no adaptador → `RuntimeError` com stderr; o `SyncService` captura e degrada para `True` (RN-02).

@@ -100,10 +100,10 @@ erDiagram
 - **Integridade do grafo** (`DecisionService.validate_integrity`): **auto-relação** (`target == id`) e **aresta órfã** (alvo fora do grafo) são erros. O índice `.harness/microdecisoes.md` é **derivado** com backlinks por verbos inversos (não editado à mão).
 - Caminhos (`dir`/`index_file`/`header_file`) vêm de `DECISIONS_SECTION` — **não chumbados** (feature 005).
 
-### 3. Cache de Sincronia — dois arquivos divergentes 🟡
+### 3. Cache de Sincronia — arquivo único canônico 🟢
 
 - **`SYNC_CACHE`** (`cache.py:SyncCache`): estrutura **isolada** de controle de infraestrutura; persiste o último check para honrar a janela TTL. Sem relação com as demais entidades.
-- 🟡 **T7 (achado nesta reconciliação, EM ABERTO):** existem **dois arquivos físicos** para a mesma estrutura lógica, com nomes divergentes: a CLI (`main.py`) grava em `.harness/sync-cache.json` (hífen — o que o `.gitignore` do `init` cobre); o servidor MCP (`server.py:42`) grava, chumbado, em `.harness/sync_cache.json` (underscore). Consequência: o cache do MCP não é ignorado pelo git e, desde a feature 019, seria oferecido para commit. Ver `architecture.md` §5.
+- 🟢 **T7 (achado na reconciliação de 2026-07-05, RESOLVIDO no mesmo dia — MD-0013):** existiam **dois arquivos físicos** para a mesma estrutura lógica: a CLI gravava em `.harness/sync-cache.json` (hífen — o que o `.gitignore` do `init` cobre) e o servidor MCP, chumbado, em `.harness/sync_cache.json` (underscore), que escapava do git e, desde a feature 019, seria oferecido para commit. O caminho agora tem fonte única em `layout.py:SYNC_CACHE_REL_PATH`, consumida por `main.py`, `close_flow.py` e `server.py`. Ver `architecture.md` §5.
 
 ### 4. Configuração Tipada — `harness.toml` (`config.py`) 🟢
 
@@ -134,4 +134,4 @@ erDiagram
 - **`DECISION`:** população cresceu de 5 para 12 fichas — sem mudança de schema.
 - **Nova estrutura efêmera:** `EndSessionOffers`/`PushOffer`/`UpgradeOffer` (✨f014) — dataclasses, não Pydantic (exceção documentada).
 - **T4 corrigido:** estava descrito como "não consumido"; na verdade resolvido desde a feature 008 (este ERD nunca fora atualizado para refletir isso).
-- **T7 novo (aberto):** divergência de nome do arquivo de cache de sync entre CLI e MCP (`sync-cache.json` vs `sync_cache.json`).
+- **T7 novo:** divergência de nome do arquivo de cache de sync entre CLI e MCP (`sync-cache.json` vs `sync_cache.json`) — **resolvido no mesmo dia** (MD-0013): fonte única em `layout.py:SYNC_CACHE_REL_PATH`.

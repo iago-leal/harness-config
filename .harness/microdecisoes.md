@@ -26,4 +26,6 @@
 - **MD-0011** — Slash command de encerrar-sessao resolve a raiz via git (robusto a cwd)
   ↳ relacionado-com MD-0012
 - **MD-0012** — `encerrar-sessao` resolve o core do upstream quando não há core local (fonte única)
-  ↳ relaciona MD-0011
+  ↳ relaciona MD-0011 · relacionado-com MD-0013
+- **MD-0013** — Caminho do cache de sync centralizado em `layout.py` (saneamento do T7)
+  ↳ relaciona MD-0012

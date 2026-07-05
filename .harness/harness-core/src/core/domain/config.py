@@ -10,7 +10,7 @@ class HarnessSection(BaseModel):
     upstream_path: Optional[str] = None
     # Manter o valor como LITERAL nesta linha: `_get_upstream_version` (012,
     # RN-03) lê a versão do upstream parseando este arquivo por regex.
-    version: str = "2.0.0"
+    version: str = "2.0.1"
 
 
 # Versão canônica do core, derivada do literal acima — fonte única para o help

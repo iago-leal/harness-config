@@ -35,7 +35,7 @@
 
 - [ ] T-05, Expor a tool MCP `check_repository_sync`
   - Origem no legado: `adapters/mcp/server.py`
-  - Critério de pronto: instancia o serviço, usa cache `.harness/sync_cache.json` e TTL 24.
+  - Critério de pronto: instancia o serviço, usa o cache canônico `layout.py:SYNC_CACHE_REL_PATH` (`.harness/sync-cache.json`) e TTL 24.
   - Confiança: 🟢
 
 ## Tarefas de Teste

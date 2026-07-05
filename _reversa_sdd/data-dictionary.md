@@ -46,7 +46,7 @@ Cada item da lista corresponde a uma linha `- <item>` sob a seção. Helper `is_
 ## 3. `SyncCache` — cache de sincronia Git 🟢
 
 **Modelo:** `src/core/domain/cache.py:SyncCache`.
-**Persistência:** JSON em `cache_filepath` — no MCP, chumbado em `.harness/sync_cache.json` (`server.py:40`). Evita chamadas `ls-remote` redundantes dentro do TTL.
+**Persistência:** JSON em `cache_filepath` — caminho canônico único `.harness/sync-cache.json` (`layout.py:SYNC_CACHE_REL_PATH`, consumido por CLI, close_flow e MCP desde o saneamento do T7, MD-0013). Evita chamadas `ls-remote` redundantes dentro do TTL.
 
 | Campo               | Tipo     | Obrigatório | Validação                                  | Exemplo                     |
 | ------------------- | -------- | ----------- | ------------------------------------------ | --------------------------- |

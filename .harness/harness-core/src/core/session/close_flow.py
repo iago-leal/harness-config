@@ -348,10 +348,11 @@ class SessionCloseFlow:
     ) -> None:
         """Detecta e conduz as ofertas push/upgrade sob try/except não-bloqueante."""
         try:
+            from src.core.domain.layout import SYNC_CACHE_REL_PATH
             from src.core.sync.service import SyncService
             from src.core.session.offers import EndSessionOffersService
 
-            sync_service = SyncService(self.fs, self.git, ".harness/sync-cache.json")
+            sync_service = SyncService(self.fs, self.git, SYNC_CACHE_REL_PATH)
             offers = EndSessionOffersService(self.git, sync_service).detect(
                 repo_path, config
             )

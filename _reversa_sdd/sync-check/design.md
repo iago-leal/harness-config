@@ -5,10 +5,10 @@
 
 ## Interface
 
-| Símbolo | Assinatura | Retorno | Observação |
-|---------|-----------|---------|------------|
-| `SyncService.check_sync` | `(repo_path: str)` | `bool` | `True` = em sincronia (ou degradação por falha/TTL); `False` = divergente. |
-| `SyncCache` | `(last_checked_time: datetime, commit_hash: constr(SHA1))` | — | Modelo Pydantic do cache JSON. |
+| Símbolo                  | Assinatura                                                 | Retorno | Observação                                                                 |
+| ------------------------ | ---------------------------------------------------------- | ------- | -------------------------------------------------------------------------- |
+| `SyncService.check_sync` | `(repo_path: str)`                                         | `bool`  | `True` = em sincronia (ou degradação por falha/TTL); `False` = divergente. |
+| `SyncCache`              | `(last_checked_time: datetime, commit_hash: constr(SHA1))` | —       | Modelo Pydantic do cache JSON.                                             |
 
 ## Fluxo Principal
 
@@ -31,16 +31,16 @@
 
 ## Decisões de Design Identificadas
 
-| Decisão | Evidência no código | Confiança |
-|---------|---------------------|-----------|
-| Degradar para `True` em falha (não-bloqueio) | `service.py` (`try/except` → `True`) | 🟢 |
-| Dentro do TTL retorna `True` mesmo divergindo (evita rede) | `service.py` | 🟢 |
-| Cache validado por Pydantic (regex SHA1) e gravado atomicamente | `cache.py` + `write_file_atomic` | 🟢 |
-| Exposição exclusiva via MCP (sem subcomando CLI) | ausência em `main.py`, presença em `server.py` | 🟢 |
+| Decisão                                                         | Evidência no código                            | Confiança |
+| --------------------------------------------------------------- | ---------------------------------------------- | --------- |
+| Degradar para `True` em falha (não-bloqueio)                    | `service.py` (`try/except` → `True`)           | 🟢        |
+| Dentro do TTL retorna `True` mesmo divergindo (evita rede)      | `service.py`                                   | 🟢        |
+| Cache validado por Pydantic (regex SHA1) e gravado atomicamente | `cache.py` + `write_file_atomic`               | 🟢        |
+| Exposição exclusiva via MCP (sem subcomando CLI)                | ausência em `main.py`, presença em `server.py` | 🟢        |
 
 ## Estado Interno
 
-O estado persistente é o arquivo de cache JSON (`.harness/sync_cache.json` no MCP), com `last_checked_time` e `commit_hash`. Sem estado em memória entre chamadas.
+O estado persistente é o arquivo de cache JSON (`.harness/sync-cache.json`, fonte única `layout.py:SYNC_CACHE_REL_PATH`), com `last_checked_time` e `commit_hash`. Sem estado em memória entre chamadas.
 
 ## Observabilidade
 
@@ -49,5 +49,5 @@ O estado persistente é o arquivo de cache JSON (`.harness/sync_cache.json` no M
 
 ## Riscos e Lacunas
 
-- 🟡 O caminho do cache e o TTL são **chumbados na tool MCP** (`.harness/sync_cache.json`, 24), embora `[sync]` exista no domínio — config declarada parcialmente sem efeito na borda.
+- 🟡 O TTL segue **chumbado na tool MCP** (24), embora `[sync]` exista no domínio — config declarada parcialmente sem efeito na borda. O caminho do cache deixou de ser chumbado: vem de `layout.py:SYNC_CACHE_REL_PATH` (T7 saneado, MD-0013).
 - 🟡 Sem verificação de trabalho local (ahead/dirty) — comportamento presente no legado, ausente no core atual.

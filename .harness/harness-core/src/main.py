@@ -226,9 +226,10 @@ def main():
         args.command not in ("init", "upgrade", "agy-hook", "materialize", "migrate")
         and config.harness.upstream_path
     ):
+        from src.core.domain.layout import SYNC_CACHE_REL_PATH
         from src.core.sync.service import SyncService
 
-        sync_service = SyncService(fs, git, ".harness/sync-cache.json")
+        sync_service = SyncService(fs, git, SYNC_CACHE_REL_PATH)
         new_ver = sync_service.check_version_update(
             config.harness.version, config.harness.upstream_path
         )

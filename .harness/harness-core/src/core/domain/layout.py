@@ -18,11 +18,16 @@ CORE_VENV_PYTHON_REL_PATH = f"{CORE_REL_PATH}/.venv/bin/python3"
 # Entrada de .gitignore que oculta a cópia vendored do core nos projetos-alvo.
 CORE_GITIGNORE_ENTRY = f"{CORE_REL_PATH}/"
 
-# Entrada de .gitignore para o cache de sync (runtime, não versionável). A partir
-# da feature 019 a oferta de commit pendente deixa de mascarar todo o diretório
-# .harness/, então este cache precisa ser ignorado explicitamente para não ser
-# oferecido nos consumidores (a oferta confia no .gitignore, sem denylist no core).
-SYNC_CACHE_GITIGNORE_ENTRY = ".harness/sync-cache.json"
+# Caminho do cache de sync (runtime, não versionável), relativo à raiz do
+# projeto. Fonte única para CLI, close_flow e servidor MCP: um literal divergente
+# num consumidor grava um cache fora do .gitignore e o expõe à oferta de commit.
+SYNC_CACHE_REL_PATH = ".harness/sync-cache.json"
+
+# Entrada de .gitignore para o cache de sync. A partir da feature 019 a oferta de
+# commit pendente deixa de mascarar todo o diretório .harness/, então este cache
+# precisa ser ignorado explicitamente para não ser oferecido nos consumidores
+# (a oferta confia no .gitignore, sem denylist no core).
+SYNC_CACHE_GITIGNORE_ENTRY = SYNC_CACHE_REL_PATH
 
 # Caminho do config.py (fonte da versão do core), relativo à raiz do projeto.
 CORE_CONFIG_REL_PATH = f"{CORE_REL_PATH}/src/core/domain/config.py"
