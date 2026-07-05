@@ -1,0 +1,17 @@
+# Configuração do gitleaks para o repositório harness-config.
+# Estende o conjunto de regras padrão e registra os falsos positivos conhecidos,
+# para que uma varredura (ou um job de CI) permaneça verde sem mascarar segredos
+# reais. Rode: `gitleaks detect --source .` (varre todo o histórico por padrão).
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = """
+files-manifest.json do Reversa mapeia caminho -> hash SHA-256 de conteúdo
+(64 hex). A regra generic-api-key dispara por entropia quando o caminho contém
+'api' (ex.: .../references/api-core.md). São hashes de arquivo, não segredos.
+"""
+paths = [
+  '''\.reversa/_config/files-manifest\.json''',
+]
