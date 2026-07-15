@@ -1,0 +1,9 @@
+{"ts": "2026-07-15T21:28:26+00:00", "action": "T001", "status": "done", "files": [".harness/harness-core/tests/test_decision_gate.py"], "note": "red confirmado (ImportError compute_lembrete_fingerprint)"}
+{"ts": "2026-07-15T21:28:26+00:00", "action": "T002", "status": "done", "files": [".harness/harness-core/tests/test_cli.py"], "note": "red nos 2 testes centrais (teste-queixa rearma; identidade fina persistida); formato_antigo pina RF-05"}
+{"ts": "2026-07-15T21:28:26+00:00", "action": "T003", "status": "done", "files": [".harness/harness-core/tests/test_close_flow.py"], "note": "guard verde: portao rearma com HEAD novo"}
+{"ts": "2026-07-15T21:29:55+00:00", "action": "T004", "status": "done", "files": [".harness/harness-core/src/core/decisions/gate.py"]}
+{"ts": "2026-07-15T21:29:55+00:00", "action": "T005", "status": "done", "files": [".harness/harness-core/src/main.py"]}
+{"ts": "2026-07-15T21:29:55+00:00", "action": "T006", "status": "done", "files": [".harness/harness-core/tests/"], "note": "suite completa: 300 passed"}
+{"ts": "2026-07-15T21:30:41+00:00", "action": "T007", "status": "done", "files": ["scratchpad/smoke-023.sh"], "note": "smoke real A-E: 9/9 PASS em repos git descart\u00e1veis"}
+{"ts": "2026-07-15T21:32:25+00:00", "action": "T008", "status": "done", "files": [".harness/harness-core/src/core/domain/config.py"], "note": "2.1.0 -> 2.1.1; materializadores conferidos: hook command identico, nada a regenerar"}
+{"ts": "2026-07-15T21:32:25+00:00", "action": "T009", "status": "done", "files": [".harness/decisoes/MD-0016.md", ".harness/microdecisoes.md"], "note": "ficha registrada, grafo validado, indice regenerado"}

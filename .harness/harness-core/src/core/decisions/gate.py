@@ -23,13 +23,20 @@ _FICHA_RE = re.compile(r"^MD-.*\.md$")
 
 
 class GateVerdict(BaseModel):
-    """Resultado da avaliação. Não é persistido — só o fingerprint sobrevive,
-    nos campos de anti-loop do ``SessionState``."""
+    """Resultado da avaliação. Não é persistido — só os fingerprints sobrevivem,
+    nos campos de anti-loop do ``SessionState``.
+
+    Dupla identidade (feature 023): ``fingerprint`` é a identidade FINA
+    (âncora + HEAD + sujos), consumida pelo portão do encerramento — lá,
+    trabalho novo deve rearmar a garantia. ``fingerprint_lembrete`` é a
+    identidade GROSSA (só a âncora), consumida pelo lembrete do fim de turno —
+    estável na sessão, o lembrete dispara no máximo uma vez."""
 
     pendente: bool
     mudancas: List[str] = Field(default_factory=list)
     fichas_tocadas: List[str] = Field(default_factory=list)
     fingerprint: str = ""
+    fingerprint_lembrete: str = ""
     aviso: Optional[str] = None
 
 
@@ -41,6 +48,16 @@ def compute_fingerprint(anchor: str, head: str, dirty: list) -> str:
     """
     payload = "\n".join([anchor or "", head or "", *sorted(dirty or [])])
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()
+
+
+def compute_lembrete_fingerprint(anchor: str) -> str:
+    """Identidade grossa do lembrete (023/D-02): ``sha1(âncora)``.
+
+    A âncora é estável do início ao encerramento da sessão, então o lembrete
+    do fim de turno dispara no máximo uma vez por sessão — nem arquivo tocado
+    nem commit novo o rearmam. A finura de ``compute_fingerprint`` fica
+    reservada ao portão do encerramento, onde trabalho novo DEVE rearmar."""
+    return hashlib.sha1((anchor or "").encode("utf-8")).hexdigest()
 
 
 def evaluate_registration_gate(git, repo_path: str, session, config) -> GateVerdict:
@@ -82,4 +99,5 @@ def evaluate_registration_gate(git, repo_path: str, session, config) -> GateVerd
         mudancas=mudancas,
         fichas_tocadas=fichas,
         fingerprint=fingerprint,
+        fingerprint_lembrete=compute_lembrete_fingerprint(anchor),
     )

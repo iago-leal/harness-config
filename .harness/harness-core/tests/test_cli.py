@@ -1,3 +1,4 @@
+import hashlib
 import json
 import subprocess
 import os
@@ -746,6 +747,56 @@ def test_decisions_gate_desligado_por_config(tmp_path):
 
     assert result.returncode == 0
     assert result.stdout.strip() == ""
+
+
+def test_decisions_gate_arquivo_novo_nao_rearma_lembrete(tmp_path):
+    # Teste-queixa da 023: antes, cada arquivo tocado mudava o fingerprint fino
+    # e rearmava o soft-block; a identidade do lembrete agora é a âncora.
+    _gate_repo(tmp_path)
+    (tmp_path / "um.md").write_text("mudança")
+    primeiro = _run_decisions(tmp_path, "--gate")
+    assert json.loads(primeiro.stdout)["decision"] == "block"
+
+    (tmp_path / "dois.md").write_text("outra mudança")
+    segundo = _run_decisions(tmp_path, "--gate")
+    assert segundo.returncode == 0
+    assert segundo.stdout.strip() == ""
+
+    (tmp_path / "tres.md").write_text("mais uma")
+    terceiro = _run_decisions(tmp_path, "--gate")
+    assert terceiro.stdout.strip() == ""
+
+
+def test_decisions_gate_persiste_identidade_grossa(tmp_path):
+    # D-02 da 023: o valor gravado é sha1(âncora), uniforme com o campo irmão.
+    anchor = _gate_repo(tmp_path)
+    (tmp_path / "um.md").write_text("mudança")
+
+    _run_decisions(tmp_path, "--gate")
+
+    estado = (tmp_path / ".harness" / "estado-da-sessao.md").read_text()
+    esperado = hashlib.sha1(anchor.encode("utf-8")).hexdigest()
+    assert esperado in estado
+
+
+def test_decisions_gate_formato_antigo_transiciona_com_um_lembrete(tmp_path):
+    # RF-05 da 023: valor fino da 022 gravado no estado → exatamente 1 bloqueio
+    # pós-atualização (transição autoresolvente), depois silêncio.
+    _gate_repo(tmp_path)
+    estado_path = tmp_path / ".harness" / "estado-da-sessao.md"
+    estado_path.write_text(
+        estado_path.read_text().replace(
+            "status: active\n",
+            "status: active\ngate_lembrete_fingerprint: " + "e" * 40 + "\n",
+        )
+    )
+    (tmp_path / "um.md").write_text("mudança")
+
+    primeiro = _run_decisions(tmp_path, "--gate")
+    assert json.loads(primeiro.stdout)["decision"] == "block"
+
+    segundo = _run_decisions(tmp_path, "--gate")
+    assert segundo.stdout.strip() == ""
 
 
 def test_decisions_sem_gate_preserva_saida_humana(tmp_path):

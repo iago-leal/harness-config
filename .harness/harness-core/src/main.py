@@ -339,8 +339,9 @@ def main():
                 sys.exit(1)
 
         # Gate de registro (022, D-04): lembrete como soft-block JSON, no máximo
-        # UM por estado de pendência (fingerprint persistido no estado de
-        # sessão). Qualquer falha interna avisa em stderr e libera o turno.
+        # UM por sessão (023: identidade grossa — a âncora — persistida no
+        # estado; a identidade fina fica com o portão do encerramento).
+        # Qualquer falha interna avisa em stderr e libera o turno.
         try:
             from src.core.decisions.gate import evaluate_registration_gate
 
@@ -358,9 +359,10 @@ def main():
                     print(f"Aviso: {verdict.aviso}", file=sys.stderr)
                 if (
                     verdict.pendente
-                    and session.gate_lembrete_fingerprint != verdict.fingerprint
+                    and session.gate_lembrete_fingerprint
+                    != verdict.fingerprint_lembrete
                 ):
-                    session.gate_lembrete_fingerprint = verdict.fingerprint
+                    session.gate_lembrete_fingerprint = verdict.fingerprint_lembrete
                     cmd_service.save_session(config.session.state_file, session)
                     reason = (
                         render_decisao_pendente_marker(verdict.mudancas)

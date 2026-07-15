@@ -478,6 +478,29 @@ def test_gate_anti_loop_segunda_tentativa_fecha_com_aviso():
     assert any("pendência" in e.lower() for e in errs2)
 
 
+def test_gate_portao_rearma_com_trabalho_novo_apos_bloqueio():
+    # Guarda da 023 (D-06): o PORTÃO mantém a identidade fina — trabalho novo
+    # sem ficha (commitado pelo pré-check → HEAD novo) rearma a garantia dura,
+    # ao contrário do lembrete do Stop, que passa à identidade grossa.
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[], changed_since=["docs/novo-contrato.md"])
+    _seed_active_session(fs, git)
+    _code1, outs1, _ = _run(SpyFlow(fs, git, MagicMock()))
+    assert any("[HARNESS:DECISAO_PENDENTE" in o for o in outs1)
+
+    # Trabalho novo commitado: HEAD avançou e o diff da âncora cresceu.
+    git2 = FakeGit(
+        head="d" * 40,
+        dirty=[],
+        changed_since=["docs/novo-contrato.md", "docs/outro.md"],
+    )
+    code2, outs2, _ = _run(SpyFlow(fs, git2, MagicMock()))
+
+    assert code2 == 0
+    assert any("[HARNESS:DECISAO_PENDENTE" in o for o in outs2)
+    assert not any("Sessão encerrada com sucesso" in o for o in outs2)
+
+
 def test_gate_desligado_por_config_nao_dispara():
     fs = MockFileSystem()
     git = FakeGit(dirty=[], changed_since=["docs/x.md"])

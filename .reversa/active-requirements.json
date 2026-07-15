@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/022-hook-registro-decisoes",
-  "feature-id": "022",
-  "short-name": "hook-registro-decisoes",
-  "started-at": "2026-07-15T09:51:34-03:00",
+  "feature-dir": "_reversa_forward/023-granularidade-lembrete-gate",
+  "feature-id": "023",
+  "short-name": "granularidade-lembrete-gate",
+  "started-at": "2026-07-15T17:56:43-03:00",
   "current-stage": "requirements",
   "stages-completed": [],
   "paused-features": []

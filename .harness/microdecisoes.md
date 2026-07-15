@@ -32,4 +32,6 @@
 - **MD-0014** — Aposentar o gatilho `PostToolUse` (format-on-edit) no perfil Claude
   ↳ relacionado-com MD-0015
 - **MD-0015** — Gate de registro de microdecisões: fingerprint no estado e soft-block único no Stop
-  ↳ relaciona MD-0014, estende MD-0005
+  ↳ relaciona MD-0014, estende MD-0005 · estendido-por MD-0016
+- **MD-0016** — Lembrete do gate com identidade grossa: um soft-block por sessão, âncora como fingerprint
+  ↳ estende MD-0015

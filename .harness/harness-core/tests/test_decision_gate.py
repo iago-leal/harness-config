@@ -6,7 +6,11 @@ registrada. Puro e agnóstico ao harness (RN-N5): não conhece `active_harness`
 nem decide COMO interceptar — isso é da borda.
 """
 
-from src.core.decisions.gate import compute_fingerprint, evaluate_registration_gate
+from src.core.decisions.gate import (
+    compute_fingerprint,
+    compute_lembrete_fingerprint,
+    evaluate_registration_gate,
+)
 from src.core.domain.config import HarnessConfig
 from src.core.domain.models import SessionState
 
@@ -107,3 +111,32 @@ def test_verdict_carrega_fingerprint_do_estado_avaliado():
     git = GateGit(changed=["src/app.py"], dirty=["novo.md"])
     verdict = _evaluate(git)
     assert verdict.fingerprint == compute_fingerprint(ANCHOR, HEAD, ["novo.md"])
+
+
+# ---------------------------------------------------------------------------
+# Identidade grossa do lembrete (feature 023): só a âncora da sessão importa.
+# O fingerprint fino acima continua existindo para o portão do encerramento.
+
+
+def test_lembrete_fingerprint_deterministico_e_sensivel_so_a_ancora():
+    fp = compute_lembrete_fingerprint(ANCHOR)
+    assert fp == compute_lembrete_fingerprint(ANCHOR)
+    assert fp != compute_lembrete_fingerprint("c" * 40)
+
+
+def test_lembrete_fingerprint_ancora_vazia_e_constante():
+    # Fail-open coerente: sessão sem âncora ainda tem identidade estável.
+    assert compute_lembrete_fingerprint("") == compute_lembrete_fingerprint(None)
+
+
+def test_verdict_identidade_grossa_estavel_sob_trabalho_novo():
+    # A queixa da 023: nem arquivos sujos novos nem HEAD novo mudam a
+    # identidade do lembrete — dentro da sessão, ela é constante.
+    v1 = _evaluate(GateGit(changed=["src/app.py"], dirty=["a.md"]))
+    v2 = _evaluate(
+        GateGit(changed=["src/app.py"], dirty=["a.md", "b.md"], head="d" * 40)
+    )
+    assert v1.fingerprint_lembrete == v2.fingerprint_lembrete
+    assert v1.fingerprint_lembrete == compute_lembrete_fingerprint(ANCHOR)
+    # Dupla identidade: a fina (portão) e a grossa (lembrete) não coincidem.
+    assert v1.fingerprint_lembrete != v1.fingerprint
