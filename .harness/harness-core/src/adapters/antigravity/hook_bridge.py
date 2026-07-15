@@ -43,6 +43,7 @@ class AntigravityHookBridge:
         decisions_dir: str,
         decisions_index_file: str,
         decisions_header_file: str,
+        gate_evaluator=None,
     ):
         self.fs = fs
         self.formatting_service = formatting_service
@@ -50,6 +51,11 @@ class AntigravityHookBridge:
         self.decisions_dir = decisions_dir
         self.decisions_index_file = decisions_index_file
         self.decisions_header_file = decisions_header_file
+        # Feature 022 (advisory): callable sem argumentos, montado na borda, que
+        # devolve um GateVerdict (ou None quando o gate não se aplica). O bridge
+        # não conhece git/config — só consome o veredito para AVISAR em stderr;
+        # o contrato do Stop (RN-N26: nunca bloquear) permanece intocado.
+        self.gate_evaluator = gate_evaluator
 
     # -- API pública -------------------------------------------------------- #
 
@@ -118,6 +124,23 @@ class AntigravityHookBridge:
         self.decision_service.compile_index(
             decisions, self.decisions_index_file, self.decisions_header_file
         )
+
+        # Advisory do gate de registro (022): pendência vira aviso em stderr,
+        # nunca bloqueio nem reentrada no laço (RN-N26). Falha do avaliador é
+        # capturada aqui para não descartar a reindexação já feita acima.
+        if self.gate_evaluator is not None:
+            try:
+                verdict = self.gate_evaluator()
+                if verdict is not None and verdict.pendente:
+                    self._log(
+                        "gate de registro: decisão pendente de registro — "
+                        f"{len(verdict.mudancas)} mudança(s) sem ficha MD-NNNN; "
+                        "registre em .harness/decisoes/ ou encerre a sessão com "
+                        "--sem-decisao (advisory, nunca bloqueia)"
+                    )
+            except Exception as exc:  # noqa: BLE001 — advisory jamais bloqueia
+                self._log(f"gate de registro (advisory) falhou: {exc}")
+
         return {}
 
     # -- Scratch (mapa stepIdx → TargetFile) -------------------------------- #

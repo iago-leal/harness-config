@@ -62,6 +62,9 @@ class FakeGit(GitPort):
     def list_dirty_paths(self, repo_path: str) -> list[str]:
         return []
 
+    def list_changed_paths_since(self, repo_path: str, ref: str) -> list[str]:
+        return []
+
     def merge_ff_only(self, repo_path: str, ref: str) -> bool:
         return True
 

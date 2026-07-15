@@ -12,7 +12,7 @@ license: MIT
 compatibility: Antigravity, Claude Code, Codex, Cursor, Gemini CLI e demais agentes compatíveis com Agent Skills.
 metadata:
   author: iagoleal
-  version: "1.2.0"
+  version: "1.3.0"
   framework: harness
   role: session
 ---
@@ -53,11 +53,11 @@ fechamento recusa de forma barulhenta (marker `NARRATIVA_PENDENTE`) e não fecha
    Ele resolve a raiz do projeto (via git) e localiza o Harness Core: primeiro em
    `.harness/harness-core` local; se ausente (projeto migrado à fonte única), no
    `upstream_path` do `harness.toml`. Em seguida conduz, em ordem: regeneração dos artefatos
-   derivados → pré-check de trabalho pendente → gate de narrativa → fechamento
-   (commit de registro por cima do último commit de trabalho, com a âncora
-   seguindo apontando para o trabalho) → ofertas de fim de sessão. Se a
-   regeneração falhar (exit ≠ 0), o script **para** antes de fechar e mostra o
-   erro.
+   derivados → pré-check de trabalho pendente → gate de narrativa → gate de
+   registro de decisões → fechamento (commit de registro por cima do último
+   commit de trabalho, com a âncora seguindo apontando para o trabalho) →
+   ofertas de fim de sessão. Se a regeneração falhar (exit ≠ 0), o script
+   **para** antes de fechar e mostra o erro.
 
 3. **Se a saída trouxer um marker `[HARNESS:COMMIT_PENDENTE …]`**, há trabalho
    não commitado fora de `.harness/`: commite apenas o que for trabalho real,
@@ -71,7 +71,29 @@ fechamento recusa de forma barulhenta (marker `NARRATIVA_PENDENTE`) e não fecha
    seções e rode o script novamente. O fechamento só prossegue quando a narrativa
    muda.
 
-5. **Ofertas finais.** Ao encerrar com sucesso, o script pode emitir markers
+5. **Se a saída trouxer um marker `[HARNESS:DECISAO_PENDENTE …]`**, houve
+   trabalho substantivo nesta sessão (código, documento, contrato — qualquer
+   mudança versionável) sem nenhuma microdecisão registrada. Duas saídas, e a
+   escolha é uma decisão consciente — não escolha o escape por preguiça:
+
+   - **Houve decisão não óbvia?** Registre-a como ficha
+     `.harness/decisoes/MD-NNNN.md` (front-matter `id`/`gancho`/`estado`/
+     `relacoes` + seções `D / PORQUÊ / DESCARTADO / ESTADO`), commite a ficha e
+     rode o script novamente.
+   - **Realmente não houve?** Rode o script com o escape auditável:
+
+     ```bash
+     python3 scripts/encerrar_sessao.py --sem-decisao
+     ```
+
+     A declaração fica registrada na narrativa do estado de sessão ("O que foi
+     feito"), visível na retomada seguinte.
+
+   O gate nunca re-bloqueia o mesmo estado de pendência duas vezes: se você
+   re-rodar sem mudar nada, o fechamento prossegue com um aviso de pendência
+   não sanada em stderr.
+
+6. **Ofertas finais.** Ao encerrar com sucesso, o script pode emitir markers
    oferecendo publicar o trabalho (`[HARNESS:PUSH_DISPONIVEL …]` → `git push`) e
    atualizar o Harness Core (`[HARNESS:UPGRADE_DISPONIVEL …]` → `./harness upgrade`).
    Conduza essas ofertas se aparecerem. Mostre a saída ao usuário.

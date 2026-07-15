@@ -143,6 +143,50 @@ def conduct_narrativa_pendente(
     )
 
 
+def render_decisao_pendente_marker(paths: list, *, cap: int = 20) -> str:
+    """Marker estruturado de decisão não registrada (modo sem TTY, feature 022).
+
+    Terceiro da família COMMIT/NARRATIVA_PENDENTE, mesmo protocolo
+    abortar-e-reexecutar. Contrato consumido pelo agente (ver
+    `_reversa_forward/022-hook-registro-decisoes/interfaces/decisao-pendente-marker.md`).
+    """
+    shown = paths[:cap]
+    truncado = "" if len(paths) <= cap else f" truncado=true mostrados={len(shown)}"
+    arquivos = ",".join(shown)
+    return (
+        f'[HARNESS:DECISAO_PENDENTE mudancas="{arquivos}" total={len(paths)}{truncado} '
+        'acao="registre a(s) decisão(ões) não óbvia(s) desta sessão como ficha '
+        ".harness/decisoes/MD-NNNN.md (front-matter id/gancho/estado/relacoes + "
+        "seções D/PORQUÊ/DESCARTADO/ESTADO), commite e rode novamente "
+        "encerrar-sessao; se não houve decisão não óbvia, rode encerrar-sessao "
+        '--sem-decisao"]'
+    )
+
+
+def conduct_decisao_pendente(paths, *, is_interactive=None, out=print) -> None:
+    """Anuncia decisão não registrada antes de encerrar (dualidade TTY × marker).
+
+    Sem TTY, emite o marker para o agente mediar. Com TTY, orienta em texto
+    legível. Em ambos os casos NÃO fecha nem cria a ficha: registrar (ou
+    declarar a ausência com ``--sem-decisao``) cabe ao agente/usuário, que então
+    re-roda o comando (protocolo abortar-e-reexecutar).
+    """
+    if is_interactive is None:
+        is_interactive = sys.stdin.isatty()
+    if not is_interactive:
+        out(render_decisao_pendente_marker(paths))
+        return
+    out("Há trabalho substantivo nesta sessão sem microdecisão registrada:")
+    for p in paths:
+        out(f"  - {p}")
+    out(
+        "Registre a(s) decisão(ões) não óbvia(s) como ficha "
+        ".harness/decisoes/MD-NNNN.md (seções D/PORQUÊ/DESCARTADO/ESTADO) e rode "
+        "encerrar-sessao novamente; se não houve decisão não óbvia, use "
+        "encerrar-sessao --sem-decisao."
+    )
+
+
 def render_offer_markers(offers) -> list:
     """Modo sem TTY: linhas-marcador estáveis das ofertas, sem ler entrada.
 
@@ -260,6 +304,7 @@ class SessionCloseFlow:
         err=None,
         asker=_ask_yes,
         is_interactive: Optional[bool] = None,
+        sem_decisao: bool = False,
     ) -> int:
         """Executa o encerramento e devolve o código de saída (0 sucesso, ≠0 falha).
 
@@ -304,6 +349,48 @@ class SessionCloseFlow:
                     session_file, is_interactive=is_interactive, out=out
                 )
                 return 0
+
+            # 3º portão (feature 022): registro obrigatório de microdecisões.
+            # Roda por último — o pré-check já forçou o commit do trabalho, então
+            # o diff da âncora enxerga a sessão inteira. Fail-open barulhento em
+            # erro interno; anti-loop por fingerprint (RF-04): o mesmo estado de
+            # pendência nunca bloqueia duas vezes.
+            if config.decisions.require_registration:
+                from src.core.decisions.gate import evaluate_registration_gate
+
+                verdict = evaluate_registration_gate(
+                    self.git, repo_path, sessao_existente, config
+                )
+                if verdict.aviso:
+                    err(f"Aviso: {verdict.aviso}")
+                if verdict.pendente and sem_decisao:
+                    # Escape auditável (RN-03): a declaração explícita vira
+                    # registro na narrativa — não é o core inventando narrativa
+                    # (RN-N3), é o rastro de um ato deliberado do agente/usuário.
+                    sessao_existente.narrative.feito.append(
+                        "Declarado: sem decisão não óbvia nesta sessão "
+                        "(gate de registro)."
+                    )
+                    service.save_session(session_file, sessao_existente)
+                elif verdict.pendente:
+                    if (
+                        sessao_existente.gate_encerramento_fingerprint
+                        == verdict.fingerprint
+                    ):
+                        err(
+                            "Aviso: pendência de registro de decisão não sanada "
+                            "(o gate já bloqueou uma vez para este estado); "
+                            "encerrando mesmo assim."
+                        )
+                    else:
+                        sessao_existente.gate_encerramento_fingerprint = (
+                            verdict.fingerprint
+                        )
+                        service.save_session(session_file, sessao_existente)
+                        conduct_decisao_pendente(
+                            verdict.mudancas, is_interactive=is_interactive, out=out
+                        )
+                        return 0
 
         try:
             result_msg = service.execute_command(
@@ -394,6 +481,8 @@ __all__ = [
     "narrative_is_stale",
     "render_narrativa_pendente_marker",
     "conduct_narrativa_pendente",
+    "render_decisao_pendente_marker",
+    "conduct_decisao_pendente",
     "render_offer_markers",
     "conduct_end_session_offers",
     "SessionCloseFlow",

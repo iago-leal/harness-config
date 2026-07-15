@@ -69,6 +69,8 @@ def materialize_claude_settings(fs: FileSystemPort, project_path: str) -> None:
 # ${CLAUDE_PROJECT_DIR}/harness …). Um item alheio não contém nenhuma delas.
 # `harness format` (PostToolUse) foi aposentado: o formatador on-edit deixou de
 # ser materializado no Claude (mantido só o pre-commit e o perfil Antigravity).
+# "harness decisions" casa a forma com e sem `--gate` (022): a instalação
+# pré-022 é SUBSTITUÍDA pelo item novo no merge por-item, sem duplicar.
 _HARNESS_COMMAND_SIGNATURES = (
     "harness cmd resume",
     "harness decisions",

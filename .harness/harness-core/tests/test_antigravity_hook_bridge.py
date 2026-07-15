@@ -116,7 +116,7 @@ def _stop_payload():
     )
 
 
-def _make_bridge(fs=None, formatting=None, decisions=None):
+def _make_bridge(fs=None, formatting=None, decisions=None, gate_evaluator=None):
     return AntigravityHookBridge(
         fs=fs or MockFileSystem(),
         formatting_service=formatting or SpyFormattingService(),
@@ -124,6 +124,7 @@ def _make_bridge(fs=None, formatting=None, decisions=None):
         decisions_dir=".reversa/decisoes",
         decisions_index_file=".reversa/microdecisoes.md",
         decisions_header_file=".reversa/decisoes/_cabecalho.md",
+        gate_evaluator=gate_evaluator,
     )
 
 
@@ -251,6 +252,53 @@ def test_stop_nunca_emite_continue():
 
     assert parsed.get("decision") != "continue"
     assert parsed == {}
+
+
+# --------------------------------------------------------------------------- #
+# stop — advisory do gate de registro (feature 022, RN-N26 preservada)
+# --------------------------------------------------------------------------- #
+
+
+def _verdict(pendente, mudancas=None):
+    from src.core.decisions.gate import GateVerdict
+
+    return GateVerdict(
+        pendente=pendente,
+        mudancas=mudancas or [],
+        fichas_tocadas=[],
+        fingerprint="f" * 40,
+    )
+
+
+def test_stop_com_pendencia_avisa_em_stderr_e_emite_vazio(capsys):
+    bridge = _make_bridge(gate_evaluator=lambda: _verdict(True, ["contrato.md"]))
+
+    out = bridge.handle("stop", _stop_payload())
+
+    assert json.loads(out) == {}  # advisory: stdout intocado, nunca bloqueia
+    captured = capsys.readouterr()
+    assert "pendente" in captured.err
+
+
+def test_stop_sem_pendencia_nao_avisa(capsys):
+    bridge = _make_bridge(gate_evaluator=lambda: _verdict(False))
+
+    out = bridge.handle("stop", _stop_payload())
+
+    assert json.loads(out) == {}
+    assert capsys.readouterr().err == ""
+
+
+def test_stop_avaliador_explodindo_nao_bloqueia(capsys):
+    def boom():
+        raise RuntimeError("git indisponível")
+
+    bridge = _make_bridge(gate_evaluator=boom)
+
+    out = bridge.handle("stop", _stop_payload())
+
+    assert json.loads(out) == {}
+    assert capsys.readouterr().err
 
 
 # --------------------------------------------------------------------------- #

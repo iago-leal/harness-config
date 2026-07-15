@@ -8,6 +8,7 @@ fluxo da borda CLI ``cmd encerrar-sessao``). Falha barulhenta se o core não for
 encontrado/importável.
 """
 
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -18,6 +19,18 @@ from _bootstrap import bootstrap_core, CoreNotFoundError  # noqa: E402
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Encerra a sessão do Harness.")
+    parser.add_argument(
+        "--sem-decisao",
+        action="store_true",
+        dest="sem_decisao",
+        help=(
+            "Declara que não houve decisão não óbvia nesta sessão (satisfaz o "
+            "gate de registro; a declaração fica registrada na narrativa)."
+        ),
+    )
+    args = parser.parse_args()
+
     try:
         root = bootstrap_core()
     except CoreNotFoundError as exc:
@@ -46,8 +59,11 @@ def main() -> int:
         print(message, file=sys.stderr)
         return code
 
-    # 2. Encerra a sessão: pré-check de pendência → fechamento → ofertas.
-    return SessionCloseFlow(fs, git, process).run(os.getcwd(), config)
+    # 2. Encerra a sessão: pré-check de pendência → gate de narrativa → gate de
+    #    registro de decisões (022) → fechamento → ofertas.
+    return SessionCloseFlow(fs, git, process).run(
+        os.getcwd(), config, sem_decisao=args.sem_decisao
+    )
 
 
 if __name__ == "__main__":

@@ -111,6 +111,13 @@ class SessionState(BaseModel):
     start_time: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     is_active: bool = True
     narrative: SessionNarrative = Field(default_factory=SessionNarrative)
+    # Feature 022: anti-loop do gate de registro de decisões. Guardam o último
+    # estado de pendência (fingerprint) já lembrado no Stop e já bloqueado no
+    # encerrar-sessao; o mesmo estado nunca dispara o gate duas vezes. Persistem
+    # no front-matter (o estado de sessão é a exceção consagrada do pré-check de
+    # pendência) e são zerados no fechamento.
+    gate_lembrete_fingerprint: Optional[str] = None
+    gate_encerramento_fingerprint: Optional[str] = None
 
     @field_validator("commit_hash")
     @classmethod
@@ -130,6 +137,9 @@ class SessionState(BaseModel):
     def close_session(self, commit_hash: str):
         self.commit_hash = commit_hash
         self.is_active = False
+        # Fingerprints do gate não vazam para a próxima sessão (feature 022).
+        self.gate_lembrete_fingerprint = None
+        self.gate_encerramento_fingerprint = None
 
     def update_active_feature(self, feature_name: str):
         if not self.is_active:

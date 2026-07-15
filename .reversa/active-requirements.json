@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/021-hook-busca-ancorada",
-  "feature-id": "021",
-  "short-name": "hook-busca-ancorada",
-  "started-at": "2026-07-05T16:22:10-03:00",
+  "feature-dir": "_reversa_forward/022-hook-registro-decisoes",
+  "feature-id": "022",
+  "short-name": "hook-registro-decisoes",
+  "started-at": "2026-07-15T09:51:34-03:00",
   "current-stage": "requirements",
   "stages-completed": [],
   "paused-features": []

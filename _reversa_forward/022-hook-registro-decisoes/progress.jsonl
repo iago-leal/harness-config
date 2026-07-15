@@ -1,0 +1,23 @@
+{"ts":"2026-07-15T10:05:00-03:00","action":"T001","status":"done","files":["commit 9c9d52f: 9 arquivos da MD-0014"]}
+{"ts":"2026-07-15T10:12:00-03:00","action":"T002","status":"done","files":["src/core/domain/config.py","src/core/domain/models.py","src/core/ports/git.py","src/adapters/git/subprocess.py","tests/test_close_flow.py","tests/test_commands.py"]}
+{"ts":"2026-07-15T10:12:00-03:00","action":"T003","status":"done","files":["src/core/domain/config.py","src/core/domain/models.py","src/core/ports/git.py","src/adapters/git/subprocess.py","tests/test_close_flow.py","tests/test_commands.py"]}
+{"ts":"2026-07-15T10:12:00-03:00","action":"T004","status":"done","files":["src/core/domain/config.py","src/core/domain/models.py","src/core/ports/git.py","src/adapters/git/subprocess.py","tests/test_close_flow.py","tests/test_commands.py"]}
+{"ts":"2026-07-15T10:35:00-03:00","action":"T005","status":"done","files":["tests (red): test_config, test_session, test_decision_gate (novo), test_git_dirty, test_close_flow, test_cli, test_harness_profiles, test_install_claude_settings, test_antigravity_hook_bridge"]}
+{"ts":"2026-07-15T10:35:00-03:00","action":"T006","status":"done","files":["tests (red): test_config, test_session, test_decision_gate (novo), test_git_dirty, test_close_flow, test_cli, test_harness_profiles, test_install_claude_settings, test_antigravity_hook_bridge"]}
+{"ts":"2026-07-15T10:35:00-03:00","action":"T007","status":"done","files":["tests (red): test_config, test_session, test_decision_gate (novo), test_git_dirty, test_close_flow, test_cli, test_harness_profiles, test_install_claude_settings, test_antigravity_hook_bridge"]}
+{"ts":"2026-07-15T10:35:00-03:00","action":"T008","status":"done","files":["tests (red): test_config, test_session, test_decision_gate (novo), test_git_dirty, test_close_flow, test_cli, test_harness_profiles, test_install_claude_settings, test_antigravity_hook_bridge"]}
+{"ts":"2026-07-15T10:35:00-03:00","action":"T009","status":"done","files":["tests (red): test_config, test_session, test_decision_gate (novo), test_git_dirty, test_close_flow, test_cli, test_harness_profiles, test_install_claude_settings, test_antigravity_hook_bridge"]}
+{"ts":"2026-07-15T10:35:00-03:00","action":"T010","status":"done","files":["tests (red): test_config, test_session, test_decision_gate (novo), test_git_dirty, test_close_flow, test_cli, test_harness_profiles, test_install_claude_settings, test_antigravity_hook_bridge"]}
+{"ts":"2026-07-15T10:35:00-03:00","action":"T011","status":"done","files":["tests (red): test_config, test_session, test_decision_gate (novo), test_git_dirty, test_close_flow, test_cli, test_harness_profiles, test_install_claude_settings, test_antigravity_hook_bridge"]}
+{"ts":"2026-07-15T10:35:00-03:00","action":"T012","status":"done","files":["tests (red): test_config, test_session, test_decision_gate (novo), test_git_dirty, test_close_flow, test_cli, test_harness_profiles, test_install_claude_settings, test_antigravity_hook_bridge"]}
+{"ts":"2026-07-15T10:50:00-03:00","action":"T013","status":"done","files":["src/core/decisions/gate.py"]}
+{"ts":"2026-07-15T10:50:00-03:00","action":"T014","status":"done","files":["src/core/session/serializer.py"]}
+{"ts":"2026-07-15T10:50:00-03:00","action":"T015","status":"done","files":["src/core/session/close_flow.py"]}
+{"ts":"2026-07-15T11:20:00-03:00","action":"T016","status":"done","files":["src/main.py"]}
+{"ts":"2026-07-15T11:20:00-03:00","action":"T017","status":"done","files":["src/main.py"]}
+{"ts":"2026-07-15T11:20:00-03:00","action":"T018","status":"done","files":["src/core/install/harness_profiles.py","src/core/install/claude_settings.py"]}
+{"ts":"2026-07-15T11:20:00-03:00","action":"T019","status":"done","files":["src/adapters/antigravity/hook_bridge.py","src/main.py"]}
+{"ts":"2026-07-15T11:20:00-03:00","action":"T020","status":"done","files":["src/core/install/assets/skills/encerrar-sessao/SKILL.md","scripts/encerrar_sessao.py"]}
+{"ts":"2026-07-15T11:20:00-03:00","action":"T021","status":"done","files":[".claude/settings.json",".reversa/settings.json.snippet",".claude/skills/encerrar-sessao/","harness-docs.html"]}
+{"ts":"2026-07-15T11:20:00-03:00","action":"T022","status":"done","files":["src/main.py","harness-docs.html"]}
+{"ts":"2026-07-15T11:20:00-03:00","action":"T023","status":"done","files":["src/core/domain/config.py (2.1.0)","suite 293 passed","smoke A-F real"]}

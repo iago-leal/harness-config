@@ -92,6 +92,17 @@ class GitPort(ABC):
         pass
 
     @abstractmethod
+    def list_changed_paths_since(self, repo_path: str, ref: str) -> list[str]:
+        """Caminhos alterados entre ``ref`` e o HEAD (``git diff --name-only <ref> HEAD``).
+
+        Enxerga o trabalho já COMMITADO na sessão (o diff da âncora), complemento
+        de ``list_dirty_paths`` (trabalho ainda não commitado) — feature 022.
+        Read-only; ref inválida ou falha real de execução levanta ``RuntimeError``
+        (RN-N4), cabendo à borda tratar como ausência de baseline.
+        """
+        pass
+
+    @abstractmethod
     def merge_ff_only(self, repo_path: str, ref: str) -> bool:
         """Avança o branch corrente até ``ref`` apenas por fast-forward.
 

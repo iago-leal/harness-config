@@ -201,6 +201,21 @@ class SubprocessGitAdapter(GitPort):
                 paths.append(path)
         return paths
 
+    def list_changed_paths_since(self, repo_path: str, ref: str) -> list[str]:
+        try:
+            result = subprocess.run(
+                ["git", "diff", "--name-only", ref, "HEAD"],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(
+                f"Falha ao listar mudanças desde {ref}: {e.stderr.strip()}"
+            )
+        return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
     def merge_ff_only(self, repo_path: str, ref: str) -> bool:
         # Não-fast-forward (working tree sujo ou divergência) não é falha fatal:
         # devolve False sem sobrescrever nada, deixando a borda abortar o upgrade.

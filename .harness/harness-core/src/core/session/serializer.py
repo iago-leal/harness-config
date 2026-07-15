@@ -69,6 +69,10 @@ def parse(text: str) -> Optional[SessionState]:
             start_time=start_time,
             is_active=str(meta["status"]).strip().lower() == "active",
             narrative=_parse_body(body),
+            # Anti-loop do gate de registro (022): opcionais — estados pré-022
+            # (sem as chaves) herdam None, preservando a retrocompatibilidade.
+            gate_lembrete_fingerprint=meta.get("gate_lembrete_fingerprint"),
+            gate_encerramento_fingerprint=meta.get("gate_encerramento_fingerprint"),
         )
     except ValueError as exc:
         raise MalformedSessionStateError(f"Campos de estado inválidos: {exc}") from exc
@@ -82,6 +86,12 @@ def render(state: SessionState) -> str:
         "start_time": state.start_time.isoformat(),
         "status": "active" if state.is_active else "inactive",
     }
+    # Chaves do gate (022) só quando preenchidas: sem gate acionado, o arquivo
+    # permanece byte-compatível com o formato pré-022.
+    if state.gate_lembrete_fingerprint:
+        meta["gate_lembrete_fingerprint"] = state.gate_lembrete_fingerprint
+    if state.gate_encerramento_fingerprint:
+        meta["gate_encerramento_fingerprint"] = state.gate_encerramento_fingerprint
     front = yaml.safe_dump(meta, sort_keys=False, allow_unicode=True).strip()
     body = render_narrative(state.narrative or SessionNarrative())
     return f"---\n{front}\n---\n\n{body}"

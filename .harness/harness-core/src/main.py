@@ -26,6 +26,8 @@ from src.core.session.close_flow import (  # noqa: F401
     pending_work_paths,
     render_commit_pendente_marker,
     conduct_commit_pendente,
+    render_decisao_pendente_marker,
+    conduct_decisao_pendente,
     SessionCloseFlow,
 )
 
@@ -94,7 +96,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     # 3. Comando: decisions
     parser_decisions = subparsers.add_parser(
-        "decisions", help="Valida e indexa microdecisões Markdown"
+        "decisions",
+        help=(
+            "Valida e indexa microdecisões Markdown. Com --gate (hook Stop do "
+            "Claude), também avalia pendência de registro: trabalho substantivo "
+            "sem ficha MD-NNNN gera um soft-block JSON único por estado de "
+            "pendência (desativável por decisions.require_registration)."
+        ),
+    )
+    parser_decisions.add_argument(
+        "--gate",
+        action="store_true",
+        help=(
+            "Modo hook Stop: informativos vão para stderr e o stdout fica "
+            "reservado ao JSON do lembrete de registro (exit 0 sempre)."
+        ),
     )
 
     # 4. Comando: cmd
@@ -115,6 +131,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser_cmd.add_argument(
         "cmd_args", nargs="*", help="Argumentos opcionais do comando"
+    )
+    parser_cmd.add_argument(
+        "--sem-decisao",
+        action="store_true",
+        dest="sem_decisao",
+        help=(
+            "Só para encerrar-sessao: declara que não houve decisão não óbvia "
+            "nesta sessão (satisfaz o gate de registro; a declaração fica "
+            "registrada na narrativa do estado de sessão)."
+        ),
     )
 
     # 5. Comando: doc-gen
@@ -282,25 +308,78 @@ def main():
         output_file = config.decisions.index_file
         header_file = config.decisions.header_file
 
+        # Sob --gate (hook Stop do Claude, feature 022/D-09), o stdout é
+        # reservado ao JSON do hook: informativos migram para stderr e o exit é
+        # sempre 0 (padrão não-bloqueante dos ganchos). Sem a flag, o
+        # comportamento permanece byte-idêntico (uso manual e git post-merge,
+        # MD-0006).
+        gate_mode = args.gate
+        info = (lambda m: print(m, file=sys.stderr)) if gate_mode else print
+
         try:
             decisions = service.load_decisions(decisoes_dir)
             errors = service.validate_integrity(decisions)
 
             if errors:
-                print("Erros de integridade encontrados no grafo de decisões:")
+                info("Erros de integridade encontrados no grafo de decisões:")
                 for err in errors:
-                    print(f" - {err}")
-                sys.exit(1)
+                    info(f" - {err}")
+                if not gate_mode:
+                    sys.exit(1)
             else:
-                print("Grafo de microdecisões validado com sucesso (zero erros).")
-
-            # Compila o índice consolidado
-            service.compile_index(decisions, output_file, header_file)
-            print(f"Índice de decisões compilado com sucesso em '{output_file}'.")
-            sys.exit(0)
+                info("Grafo de microdecisões validado com sucesso (zero erros).")
+                # Compila o índice consolidado
+                service.compile_index(decisions, output_file, header_file)
+                info(f"Índice de decisões compilado com sucesso em '{output_file}'.")
+            if not gate_mode:
+                sys.exit(0)
         except Exception as e:
-            print(f"Erro ao processar microdecisões: {e}")
-            sys.exit(1)
+            info(f"Erro ao processar microdecisões: {e}")
+            if not gate_mode:
+                sys.exit(1)
+
+        # Gate de registro (022, D-04): lembrete como soft-block JSON, no máximo
+        # UM por estado de pendência (fingerprint persistido no estado de
+        # sessão). Qualquer falha interna avisa em stderr e libera o turno.
+        try:
+            from src.core.decisions.gate import evaluate_registration_gate
+
+            cmd_service = CommandService(fs, git)
+            session = cmd_service.load_session(config.session.state_file)
+            if (
+                config.decisions.require_registration
+                and session is not None
+                and session.is_active
+            ):
+                verdict = evaluate_registration_gate(
+                    git, os.getcwd(), session, config
+                )
+                if verdict.aviso:
+                    print(f"Aviso: {verdict.aviso}", file=sys.stderr)
+                if (
+                    verdict.pendente
+                    and session.gate_lembrete_fingerprint != verdict.fingerprint
+                ):
+                    session.gate_lembrete_fingerprint = verdict.fingerprint
+                    cmd_service.save_session(config.session.state_file, session)
+                    reason = (
+                        render_decisao_pendente_marker(verdict.mudancas)
+                        + " Registre a decisão como ficha MD-NNNN em "
+                        + f"{decisoes_dir}/ (ou declare a ausência ao encerrar "
+                        "com --sem-decisao) e conclua o turno."
+                    )
+                    print(
+                        json.dumps(
+                            {"decision": "block", "reason": reason},
+                            ensure_ascii=False,
+                        )
+                    )
+        except Exception as e:
+            print(
+                f"Aviso: gate de registro (não-bloqueante) falhou: {e}",
+                file=sys.stderr,
+            )
+        sys.exit(0)
 
     elif args.command == "cmd":
         from src.core.session.sinks import get_sink
@@ -326,7 +405,11 @@ def main():
         # também alimenta os scripts finos da skill — fonte única, sem duplicar a
         # orquestração (pré-check de pendência → fechamento → ofertas).
         if cmd_name_norm == "encerrar-sessao":
-            sys.exit(SessionCloseFlow(fs, git, process).run(os.getcwd(), config))
+            sys.exit(
+                SessionCloseFlow(fs, git, process).run(
+                    os.getcwd(), config, sem_decisao=args.sem_decisao
+                )
+            )
 
         # Demais comandos de sessão (resume, handoff, clarificar).
         try:
@@ -549,6 +632,24 @@ def main():
             agy_config = load_config(fs)
             formatting_service = FormattingService(fs, process, agy_config)
             decision_service = DecisionService(fs)
+
+            def gate_evaluator():
+                # Advisory do gate de registro (022): montado na borda para o
+                # bridge permanecer sem git/config. Sem sessão ativa ou com o
+                # gate desligado, não há veredito (None → silêncio).
+                from src.core.decisions.gate import evaluate_registration_gate
+
+                if not agy_config.decisions.require_registration:
+                    return None
+                session = CommandService(fs, git).load_session(
+                    agy_config.session.state_file
+                )
+                if session is None or not session.is_active:
+                    return None
+                return evaluate_registration_gate(
+                    git, os.getcwd(), session, agy_config
+                )
+
             bridge = AntigravityHookBridge(
                 fs=fs,
                 formatting_service=formatting_service,
@@ -556,6 +657,7 @@ def main():
                 decisions_dir=agy_config.decisions.dir,
                 decisions_index_file=agy_config.decisions.index_file,
                 decisions_header_file=agy_config.decisions.header_file,
+                gate_evaluator=gate_evaluator,
             )
 
             stdin_text = "" if sys.stdin.isatty() else sys.stdin.read()

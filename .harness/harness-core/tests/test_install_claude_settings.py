@@ -107,6 +107,53 @@ def test_second_run_does_not_duplicate_harness_item_in_array():
     assert any("meu-notificador.sh" in json.dumps(i) for i in stop)  # alheio preservado
 
 
+def test_materialized_stop_item_uses_gate_flag():
+    # Feature 022: o item Stop materializado invoca `harness decisions --gate`.
+    fs = MockFileSystem()
+    materialize_claude_settings(fs, "proj")
+
+    blob = json.dumps(json.loads(fs.written_files[SETTINGS])["hooks"]["Stop"])
+    assert "harness decisions --gate" in blob
+
+
+def test_replaces_legacy_decisions_item_with_gate_variant():
+    # Instalação pré-022 tem Stop → "harness decisions" (sem flag). O merge
+    # por-item SUBSTITUI pelo item novo (mesma assinatura), sem duplicar e
+    # preservando o item alheio no mesmo evento (RN-N39).
+    fs = MockFileSystem()
+    fs.write_file(
+        SETTINGS,
+        json.dumps(
+            {
+                "hooks": {
+                    "Stop": [
+                        {
+                            "hooks": [
+                                {
+                                    "type": "command",
+                                    "command": "${CLAUDE_PROJECT_DIR}/harness decisions",
+                                    "timeout": 10,
+                                }
+                            ]
+                        },
+                        {
+                            "hooks": [{"type": "command", "command": "meu-notificador.sh"}],
+                        },
+                    ]
+                }
+            }
+        ),
+    )
+    materialize_claude_settings(fs, "proj")
+
+    stop = json.loads(fs.written_files[SETTINGS])["hooks"]["Stop"]
+    blob = json.dumps(stop)
+    assert "harness decisions --gate" in blob
+    harness_items = [i for i in stop if "harness decisions" in json.dumps(i)]
+    assert len(harness_items) == 1  # substituiu, não duplicou
+    assert "meu-notificador.sh" in blob  # alheio preservado
+
+
 def test_absent_creates_single_item_per_harness_event():
     # Sem settings prévio: cada evento do harness nasce com exatamente um item.
     fs = MockFileSystem()

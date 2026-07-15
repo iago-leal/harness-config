@@ -614,3 +614,147 @@ def test_resume_indice_ausente_nao_trava(tmp_path):
     assert "microdecisoes" in result.stderr
     ctx = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
     assert "Sessão retomada" in ctx
+
+
+# ---------------------------------------------------------------------------
+# `decisions --gate` (feature 022): lembrete de registro no Stop do Claude.
+# Contrato: interfaces/stop-gate-lembrete.md — stdout reservado ao JSON do hook.
+
+
+def _gate_paths():
+    main_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../src/main.py")
+    )
+    python_bin = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../.venv/bin/python3")
+    )
+    return python_bin, main_path
+
+
+def _gate_repo(tmp_path, *, with_session=True, require_registration=True):
+    """Repo git real com âncora, harness.toml e (opcional) sessão ativa."""
+
+    def g(*args):
+        subprocess.run(
+            ["git", *args], cwd=str(tmp_path), capture_output=True, check=True
+        )
+
+    g("init")
+    g("config", "user.email", "t@t.t")
+    g("config", "user.name", "t")
+    (tmp_path / "base.txt").write_text("x")
+    toml = '[harness]\nactive_harness = "claude"\n'
+    if not require_registration:
+        toml += "\n[decisions]\nrequire_registration = false\n"
+    # harness.toml entra no commit-âncora (como numa instalação real, em que o
+    # init o versiona): não deve contar como mudança da sessão.
+    (tmp_path / "harness.toml").write_text(toml)
+    g("add", "-A")
+    g("commit", "-m", "ancora")
+    anchor = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=str(tmp_path),
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+
+    if with_session:
+        harness_dir = tmp_path / ".harness"
+        harness_dir.mkdir()
+        (harness_dir / "estado-da-sessao.md").write_text(
+            f"---\ncommit: {anchor}\nfeature: feat-teste\n"
+            "start_time: 2026-07-15T10:00:00+00:00\nstatus: active\n---\n\n"
+            "## O que foi feito\n- trabalhou\n\n## Próximos passos\n\n"
+            "## Pendências / bloqueios\n\n## Ponteiros\n"
+        )
+    return anchor
+
+
+def _run_decisions(tmp_path, *extra):
+    python_bin, main_path = _gate_paths()
+    return subprocess.run(
+        [python_bin, main_path, "decisions", *extra],
+        input="",
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+
+def test_decisions_gate_pendencia_emite_json_de_bloqueio_uma_vez(tmp_path):
+    _gate_repo(tmp_path)
+    (tmp_path / "notas-contrato.md").write_text("mudança substantiva")
+
+    result = _run_decisions(tmp_path, "--gate")
+
+    assert result.returncode == 0
+    payload = json.loads(result.stdout)  # stdout é SÓ o JSON do hook
+    assert payload["decision"] == "block"
+    assert "DECISAO_PENDENTE" in payload["reason"]
+    # O fingerprint do lembrete ficou persistido no estado de sessão.
+    estado = (tmp_path / ".harness" / "estado-da-sessao.md").read_text()
+    assert "gate_lembrete_fingerprint" in estado
+
+    # Mesmo estado de pendência → nunca lembra duas vezes (anti-loop, D-04).
+    de_novo = _run_decisions(tmp_path, "--gate")
+    assert de_novo.returncode == 0
+    assert de_novo.stdout.strip() == ""
+
+
+def test_decisions_gate_sem_pendencia_stdout_vazio(tmp_path):
+    _gate_repo(tmp_path)  # árvore limpa além dos artefatos do harness
+
+    result = _run_decisions(tmp_path, "--gate")
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == ""
+
+
+def test_decisions_gate_ficha_junto_nao_bloqueia(tmp_path):
+    _gate_repo(tmp_path)
+    (tmp_path / "notas-contrato.md").write_text("mudança substantiva")
+    decisoes = tmp_path / ".harness" / "decisoes"
+    decisoes.mkdir(parents=True)
+    (decisoes / "MD-0001.md").write_text(
+        "---\nid: MD-0001\ngancho: g\nestado: ativo\nrelacoes: []\n---\n\n"
+        "# MD-0001 — t\n\n- **D:** d\n- **PORQUÊ:** p\n"
+        "- **DESCARTADO:** x\n- **ESTADO:** ativo\n"
+    )
+
+    result = _run_decisions(tmp_path, "--gate")
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == ""
+
+
+def test_decisions_gate_sem_sessao_e_nao_bloqueante(tmp_path):
+    _gate_repo(tmp_path, with_session=False)
+    (tmp_path / "notas.md").write_text("mudança")
+
+    result = _run_decisions(tmp_path, "--gate")
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == ""
+
+
+def test_decisions_gate_desligado_por_config(tmp_path):
+    _gate_repo(tmp_path, require_registration=False)
+    (tmp_path / "notas.md").write_text("mudança")
+
+    result = _run_decisions(tmp_path, "--gate")
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == ""
+
+
+def test_decisions_sem_gate_preserva_saida_humana(tmp_path):
+    # Contrato do uso manual e do git post-merge (MD-0006): sem --gate, nada muda.
+    _gate_repo(tmp_path)
+    (tmp_path / "notas.md").write_text("mudança")
+
+    result = _run_decisions(tmp_path)
+
+    assert result.returncode == 0
+    assert "Grafo de microdecisões validado" in result.stdout
+    assert "decision" not in result.stdout

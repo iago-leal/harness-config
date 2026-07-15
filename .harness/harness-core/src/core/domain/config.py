@@ -10,7 +10,7 @@ class HarnessSection(BaseModel):
     upstream_path: Optional[str] = None
     # Manter o valor como LITERAL nesta linha: `_get_upstream_version` (012,
     # RN-03) lê a versão do upstream parseando este arquivo por regex.
-    version: str = "2.0.1"
+    version: str = "2.1.0"
 
 
 # Versão canônica do core, derivada do literal acima — fonte única para o help
@@ -32,6 +32,10 @@ class DecisionsSection(BaseModel):
     dir: str = ".harness/decisoes"
     index_file: str = ".harness/microdecisoes.md"
     header_file: str = ".harness/decisoes/_cabecalho.md"
+    # Feature 022: liga o gate de registro de microdecisões (bloqueio no
+    # encerrar-sessao, lembrete no Stop do Claude, advisory no Antigravity).
+    # Habilitado por padrão; desativável por projeto. Tomls sem o campo herdam True.
+    require_registration: bool = True
 
 
 class SessionSection(BaseModel):

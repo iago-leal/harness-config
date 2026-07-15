@@ -78,3 +78,32 @@ def test_parse_nulo_parcial_ainda_malformado():
     bad = "---\ncommit: null\nfeature: null\nstart_time: null\nstatus: active\n---\n\n"
     with pytest.raises(MalformedSessionStateError):
         serializer.parse(bad)
+
+
+def test_round_trip_com_fingerprints_do_gate():
+    # Feature 022: os fingerprints do gate sobrevivem ao round-trip (RN-N2).
+    s = _state(
+        gate_lembrete_fingerprint="1" * 40,
+        gate_encerramento_fingerprint="2" * 40,
+    )
+    parsed = serializer.parse(serializer.render(s))
+    assert parsed.gate_lembrete_fingerprint == "1" * 40
+    assert parsed.gate_encerramento_fingerprint == "2" * 40
+
+
+def test_parse_estado_pre_022_sem_fingerprints_vira_none():
+    # Retrocompatível: estado gravado antes da 022 (sem os campos) → None.
+    texto = (
+        "---\ncommit: " + "a" * 40 + "\nfeature: f\n"
+        "start_time: 2026-06-23T18:00:00+00:00\nstatus: active\n---\n\n"
+    )
+    parsed = serializer.parse(texto)
+    assert parsed.gate_lembrete_fingerprint is None
+    assert parsed.gate_encerramento_fingerprint is None
+
+
+def test_render_sem_fingerprints_nao_emite_campos():
+    # Sem gate acionado, o arquivo permanece idêntico ao formato pré-022.
+    texto = serializer.render(_state())
+    assert "gate_lembrete_fingerprint" not in texto
+    assert "gate_encerramento_fingerprint" not in texto

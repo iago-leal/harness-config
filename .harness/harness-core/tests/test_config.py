@@ -79,3 +79,33 @@ def test_load_config_absent_session_flag_defaults_true():
     fs.write_file("harness.toml", '[harness]\nactive_harness = "claude"\n')
     cfg = load_config(fs, "harness.toml")
     assert cfg.session.inject_decisions_index is True
+
+
+def test_decisions_require_registration_default_true():
+    # Feature 022: sem harness.toml, o gate de registro nasce ligado.
+    cfg = HarnessConfig()
+    assert cfg.decisions.require_registration is True
+
+
+def test_load_config_parses_require_registration_false():
+    # [decisions].require_registration = false → desliga o gate por projeto.
+    fs = MockFileSystem()
+    fs.write_file(
+        "harness.toml",
+        '[harness]\nactive_harness = "claude"\n\n'
+        "[decisions]\nrequire_registration = false\n",
+    )
+    cfg = load_config(fs, "harness.toml")
+    assert cfg.decisions.require_registration is False
+
+
+def test_load_config_absent_decisions_flag_defaults_true():
+    # Retrocompatível: [decisions] presente sem o campo novo → default True.
+    fs = MockFileSystem()
+    fs.write_file(
+        "harness.toml",
+        '[harness]\nactive_harness = "claude"\n\n'
+        '[decisions]\ndir = ".harness/decisoes"\n',
+    )
+    cfg = load_config(fs, "harness.toml")
+    assert cfg.decisions.require_registration is True

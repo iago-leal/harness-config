@@ -12,7 +12,7 @@
 - **MD-0004** — Remoção da sincronização cross-harness Claude↔Gemini
   ↳ relaciona MD-0002 · refinado-por MD-0005
 - **MD-0005** — harness-core como módulo per-projeto, não substituto da config global
-  ↳ refina MD-0004 · relacionado-com MD-0006 · relacionado-com MD-0010
+  ↳ refina MD-0004 · relacionado-com MD-0006 · relacionado-com MD-0010 · estendido-por MD-0015
 - **MD-0006** — hook post-merge não repassa o argumento do git ao `decisions`
   ↳ relaciona MD-0005 · relacionado-com MD-0007
 - **MD-0007** — bootstrap recusa-se a instalar fora de um repositório git e oferece `git init`
@@ -30,3 +30,6 @@
 - **MD-0013** — Caminho do cache de sync centralizado em `layout.py` (saneamento do T7)
   ↳ relaciona MD-0012
 - **MD-0014** — Aposentar o gatilho `PostToolUse` (format-on-edit) no perfil Claude
+  ↳ relacionado-com MD-0015
+- **MD-0015** — Gate de registro de microdecisões: fingerprint no estado e soft-block único no Stop
+  ↳ relaciona MD-0014, estende MD-0005

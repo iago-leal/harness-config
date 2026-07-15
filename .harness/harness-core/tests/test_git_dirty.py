@@ -1,6 +1,12 @@
-"""GitPort.list_dirty_paths — listagem da working tree suja (feature 016)."""
+"""GitPort.list_dirty_paths — listagem da working tree suja (feature 016).
+
+Feature 022 acrescenta list_changed_paths_since (diff da âncora), testado aqui
+com git REAL: mock de porcelain/diff já mascarou comportamento antes (lição 019).
+"""
 
 import subprocess
+
+import pytest
 
 from src.adapters.git.subprocess import SubprocessGitAdapter
 
@@ -60,3 +66,46 @@ def test_list_dirty_paths_expands_untracked_subdir(tmp_path):
     assert ".harness/decisoes/MD-1.md" in dirty
     assert ".harness" not in dirty
     assert ".harness/" not in dirty
+
+
+def _head(tmp_path) -> str:
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=str(tmp_path),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
+def test_list_changed_paths_since_ve_commits_apos_ancora(tmp_path):
+    # Feature 022: o gate de registro enxerga trabalho já COMMITADO na sessão
+    # pelo diff da âncora — list_dirty_paths sozinho é cego a isso.
+    _init_repo(tmp_path)
+    (tmp_path / "a.txt").write_text("x")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-m", "ancora")
+    ancora = _head(tmp_path)
+
+    (tmp_path / "contrato.md").write_text("cláusula nova")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-m", "trabalho da sessão")
+
+    git = SubprocessGitAdapter()
+    assert git.list_changed_paths_since(str(tmp_path), ancora) == ["contrato.md"]
+    # Âncora == HEAD → sem mudanças.
+    assert git.list_changed_paths_since(str(tmp_path), _head(tmp_path)) == []
+
+
+def test_list_changed_paths_since_ref_invalida_levanta(tmp_path):
+    # RN-N4: falha real de execução é barulhenta (RuntimeError), nunca lista vazia
+    # silenciosa — cabe à borda do gate tratar como ausência de baseline.
+    _init_repo(tmp_path)
+    (tmp_path / "a.txt").write_text("x")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-m", "init")
+
+    git = SubprocessGitAdapter()
+    with pytest.raises(RuntimeError):
+        git.list_changed_paths_since(str(tmp_path), "deadbeef" * 5)

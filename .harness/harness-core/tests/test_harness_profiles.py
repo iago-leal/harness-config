@@ -50,3 +50,12 @@ def test_get_profile_resolves_known_harnesses():
     assert isinstance(get_profile("claude"), ClaudeProfile)
     assert isinstance(get_profile("antigravity"), AntigravityProfile)
     assert isinstance(get_profile("gemini"), GeminiProfile)
+
+
+def test_claude_hooks_block_emits_stop_gate():
+    # Feature 022 (D-08): a emissão na FONTE leva o gate de registro ao Stop;
+    # init/upgrade/migrate propagam sem reintroduzir a forma antiga.
+    block = ClaudeProfile().hooks_block()
+    assert "harness decisions --gate" in block
+    assert "PostToolUse" not in block  # MD-0014 preservada
+    assert "harness cmd resume" in block  # SessionStart intocado

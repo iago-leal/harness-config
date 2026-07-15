@@ -27,12 +27,18 @@ class FakeGit(GitPort):
     """Git fake mínimo: HEAD fixo, dirty configurável, commit que avança o HEAD."""
 
     def __init__(
-        self, head=WORK_HEAD, dirty=None, commit_raises=False, baseline_text=None
+        self,
+        head=WORK_HEAD,
+        dirty=None,
+        commit_raises=False,
+        baseline_text=None,
+        changed_since=None,
     ):
         self._head = head
         self._dirty = dirty or []
         self._commit_raises = commit_raises
         self._baseline_text = baseline_text
+        self._changed_since = changed_since or []
         self.commit_calls = []
 
     def get_head_commit(self, repo_path: str) -> str:
@@ -47,6 +53,9 @@ class FakeGit(GitPort):
 
     def list_dirty_paths(self, repo_path: str) -> list:
         return list(self._dirty)
+
+    def list_changed_paths_since(self, repo_path: str, ref: str) -> list:
+        return list(self._changed_since)
 
     # Demais membros do contrato: defaults inócuos (o fluxo feliz não os usa).
     def get_remote_commit(self, repo_path, remote_name="origin", branch_name="main"):
@@ -370,3 +379,140 @@ def test_narrativa_pendente_tty_orienta_sem_perguntar():
     assert not any("[HARNESS:NARRATIVA_PENDENTE" in o for o in outs)
     assert git.commit_calls == []
     assert flow.offers_called == 0
+
+
+# ---------------------------------------------------------------------------
+# Gate de registro de decisões (feature 022): 3º portão do encerramento.
+# Protocolo abortar-e-reexecutar, na família do COMMIT/NARRATIVA_PENDENTE.
+
+
+def test_gate_decisao_pendente_emite_marker_e_nao_fecha():
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[], changed_since=["Empresas/contrato-clausula7.md"])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    marker = next(o for o in outs if "[HARNESS:DECISAO_PENDENTE" in o)
+    assert "Empresas/contrato-clausula7.md" in marker
+    assert "MD-NNNN" in marker
+    assert "--sem-decisao" in marker
+    assert git.commit_calls == []
+    assert flow.offers_called == 0
+    # Anti-loop: o fingerprint do bloqueio ficou persistido no estado.
+    persisted = serializer.parse(fs.read_file(STATE_FILE))
+    assert persisted.gate_encerramento_fingerprint
+
+
+def test_gate_ficha_tocada_libera_fechamento():
+    fs = MockFileSystem()
+    git = FakeGit(
+        dirty=[],
+        changed_since=["Empresas/contrato.md", ".harness/decisoes/MD-0015.md"],
+    )
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    assert not any("DECISAO_PENDENTE" in o for o in outs)
+    assert flow.offers_called == 1
+
+
+def test_gate_so_artefatos_do_harness_nao_dispara():
+    fs = MockFileSystem()
+    git = FakeGit(changed_since=[STATE_FILE, ".harness/microdecisoes.md"])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    assert not any("DECISAO_PENDENTE" in o for o in outs)
+
+
+def test_gate_escape_sem_decisao_registra_na_narrativa_e_fecha():
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[], changed_since=["docs/novo-contrato.md"])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    outs = []
+    code = flow.run(
+        "repo/",
+        _config(),
+        out=outs.append,
+        err=lambda _m: None,
+        is_interactive=False,
+        sem_decisao=True,
+    )
+
+    assert code == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    assert not any("DECISAO_PENDENTE" in o for o in outs)
+    # Rastro auditável no estado da sessão (escolha 5a de 2026-07-15).
+    persisted = serializer.parse(fs.read_file(STATE_FILE))
+    assert any("sem decisão não óbvia" in item for item in persisted.narrative.feito)
+
+
+def test_gate_anti_loop_segunda_tentativa_fecha_com_aviso():
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[], changed_since=["docs/novo-contrato.md"])
+    _seed_active_session(fs, git)
+
+    flow1 = SpyFlow(fs, git, MagicMock())
+    _code1, outs1, _ = _run(flow1)
+    assert any("[HARNESS:DECISAO_PENDENTE" in o for o in outs1)
+
+    # Nada mudou (mesmo fingerprint): a 2ª tentativa nunca re-bloqueia (RF-04).
+    flow2 = SpyFlow(fs, git, MagicMock())
+    code2, outs2, errs2 = _run(flow2)
+
+    assert code2 == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs2)
+    assert any("pendência" in e.lower() for e in errs2)
+
+
+def test_gate_desligado_por_config_nao_dispara():
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[], changed_since=["docs/x.md"])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    config = HarnessConfig(
+        session={"state_file": STATE_FILE},
+        decisions={"require_registration": False},
+    )
+    outs = []
+    code = flow.run(
+        "repo/", config, out=outs.append, err=lambda _m: None, is_interactive=False
+    )
+
+    assert code == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    assert not any("DECISAO_PENDENTE" in o for o in outs)
+
+
+def test_gate_fingerprints_zerados_no_fechamento():
+    fs = MockFileSystem()
+    git = FakeGit(
+        dirty=[], changed_since=["docs/x.md", ".harness/decisoes/MD-0015.md"]
+    )
+    _seed_active_session(fs, git)
+    # Estado herdado com fingerprint de lembrete (Stop) preenchido.
+    state = serializer.parse(fs.read_file(STATE_FILE))
+    state.gate_lembrete_fingerprint = "f" * 40
+    CommandService(fs, git).save_session(STATE_FILE, state)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    _code, outs, _ = _run(flow)
+
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    persisted = serializer.parse(fs.read_file(STATE_FILE))
+    assert persisted.gate_lembrete_fingerprint is None
+    assert persisted.gate_encerramento_fingerprint is None

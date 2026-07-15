@@ -56,7 +56,7 @@ class ClaudeProfile(HarnessProfile):
             "    ],\n"
             '    "Stop": [\n'
             '      { "hooks": [\n'
-            '        { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/harness decisions", "timeout": 10 } ] }\n'
+            '        { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/harness decisions --gate", "timeout": 10 } ] }\n'
             "    ]\n"
             "  }\n"
             "}"
