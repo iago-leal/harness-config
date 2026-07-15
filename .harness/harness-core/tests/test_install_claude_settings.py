@@ -54,18 +54,17 @@ def test_preserves_third_party_keys_and_hooks():
 
 def test_preserves_user_item_in_same_harness_event():
     # Feature 020 (RN-06): o merge é POR-ITEM. Um hook próprio do usuário no
-    # MESMO evento gerenciado pelo harness (PostToolUse) deve sobreviver ao lado
-    # do item do harness — não ser descartado pela substituição do array inteiro.
+    # MESMO evento gerenciado pelo harness (Stop) deve sobreviver ao lado do item
+    # do harness — não ser descartado pela substituição do array inteiro.
     fs = MockFileSystem()
     fs.write_file(
         SETTINGS,
         json.dumps(
             {
                 "hooks": {
-                    "PostToolUse": [
+                    "Stop": [
                         {
-                            "matcher": "Write",
-                            "hooks": [{"type": "command", "command": "meu-linter.sh"}],
+                            "hooks": [{"type": "command", "command": "meu-notificador.sh"}],
                         }
                     ]
                 }
@@ -74,11 +73,11 @@ def test_preserves_user_item_in_same_harness_event():
     )
     materialize_claude_settings(fs, "proj")
 
-    post = json.loads(fs.written_files[SETTINGS])["hooks"]["PostToolUse"]
-    blob = json.dumps(post)
-    assert "meu-linter.sh" in blob  # item alheio preservado
-    assert "harness format" in blob  # item do harness inserido no mesmo array
-    assert len(post) == 2  # os dois convivem, sem clobber
+    stop = json.loads(fs.written_files[SETTINGS])["hooks"]["Stop"]
+    blob = json.dumps(stop)
+    assert "meu-notificador.sh" in blob  # item alheio preservado
+    assert "harness decisions" in blob  # item do harness inserido no mesmo array
+    assert len(stop) == 2  # os dois convivem, sem clobber
 
 
 def test_second_run_does_not_duplicate_harness_item_in_array():
@@ -90,10 +89,9 @@ def test_second_run_does_not_duplicate_harness_item_in_array():
         json.dumps(
             {
                 "hooks": {
-                    "PostToolUse": [
+                    "Stop": [
                         {
-                            "matcher": "Write",
-                            "hooks": [{"type": "command", "command": "meu-linter.sh"}],
+                            "hooks": [{"type": "command", "command": "meu-notificador.sh"}],
                         }
                     ]
                 }
@@ -103,10 +101,10 @@ def test_second_run_does_not_duplicate_harness_item_in_array():
     materialize_claude_settings(fs, "proj")
     materialize_claude_settings(fs, "proj")
 
-    post = json.loads(fs.written_files[SETTINGS])["hooks"]["PostToolUse"]
-    harness_items = [i for i in post if "harness format" in json.dumps(i)]
+    stop = json.loads(fs.written_files[SETTINGS])["hooks"]["Stop"]
+    harness_items = [i for i in stop if "harness decisions" in json.dumps(i)]
     assert len(harness_items) == 1  # não duplicou
-    assert any("meu-linter.sh" in json.dumps(i) for i in post)  # alheio preservado
+    assert any("meu-notificador.sh" in json.dumps(i) for i in stop)  # alheio preservado
 
 
 def test_absent_creates_single_item_per_harness_event():
@@ -115,5 +113,7 @@ def test_absent_creates_single_item_per_harness_event():
     materialize_claude_settings(fs, "proj")
 
     hooks = json.loads(fs.written_files[SETTINGS])["hooks"]
-    for event in ("SessionStart", "PostToolUse", "Stop"):
+    for event in ("SessionStart", "Stop"):
         assert len(hooks[event]) == 1
+    # PostToolUse (format-on-edit) não é mais materializado.
+    assert "PostToolUse" not in hooks

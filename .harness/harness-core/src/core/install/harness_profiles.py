@@ -54,10 +54,6 @@ class ClaudeProfile(HarnessProfile):
             '      { "matcher": "startup|resume|clear", "hooks": [\n'
             '        { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/harness cmd resume", "timeout": 12 } ] }\n'
             "    ],\n"
-            '    "PostToolUse": [\n'
-            '      { "matcher": "Write|Edit", "hooks": [\n'
-            '        { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/harness format", "timeout": 30 } ] }\n'
-            "    ],\n"
             '    "Stop": [\n'
             '      { "hooks": [\n'
             '        { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/harness decisions", "timeout": 10 } ] }\n'

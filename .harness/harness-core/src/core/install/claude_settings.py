@@ -2,8 +2,8 @@
 
 Rotina única, compartilhada por `init` e `upgrade`, que GARANTE de forma
 idempotente a presença dos ganchos do harness (`SessionStart → cmd resume`,
-`PostToolUse → format`, `Stop → decisions`) no `settings.json` do projeto-alvo,
-preservando as demais chaves de topo e eventos de hook de terceiros. O conteúdo
+`Stop → decisions`) no `settings.json` do projeto-alvo, preservando as demais
+chaves de topo e eventos de hook de terceiros. O conteúdo
 canônico vem do `ClaudeProfile` (`hooks_block()`). Toda escrita ocorre sob
 `project_path` (footprint global zero, RN-N17). Espelha o molde de
 `antigravity_hooks.materialize_hooks_json`.
@@ -67,9 +67,10 @@ def materialize_claude_settings(fs: FileSystemPort, project_path: str) -> None:
 # Assinaturas estáveis que identificam um item de hook como sendo do harness:
 # a substring do subcomando no `command` (resistente ao prefixo
 # ${CLAUDE_PROJECT_DIR}/harness …). Um item alheio não contém nenhuma delas.
+# `harness format` (PostToolUse) foi aposentado: o formatador on-edit deixou de
+# ser materializado no Claude (mantido só o pre-commit e o perfil Antigravity).
 _HARNESS_COMMAND_SIGNATURES = (
     "harness cmd resume",
-    "harness format",
     "harness decisions",
 )
 

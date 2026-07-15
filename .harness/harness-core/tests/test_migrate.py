@@ -153,10 +153,12 @@ def test_migrate_installs_shim_and_removes_core():
         fs.read_file("/dev/projA/.git/hooks/pre-commit.local")
         == "#!/bin/bash\necho meu-hook\n"
     )
-    # settings mesclado por-item (hook alheio preservado + item do harness).
+    # settings mesclado por-item: o hook alheio no PostToolUse (evento não mais
+    # gerenciado pelo harness) é preservado intacto, e os ganchos do harness
+    # (SessionStart/Stop) são inseridos ao lado.
     settings = fs.read_file("/dev/projA/.claude/settings.json")
     assert "meu-linter.sh" in settings
-    assert "harness format" in settings
+    assert "harness cmd resume" in settings
 
 
 def test_migrate_never_touches_the_upstream():

@@ -29,3 +29,4 @@
   ↳ relaciona MD-0011 · relacionado-com MD-0013
 - **MD-0013** — Caminho do cache de sync centralizado em `layout.py` (saneamento do T7)
   ↳ relaciona MD-0012
+- **MD-0014** — Aposentar o gatilho `PostToolUse` (format-on-edit) no perfil Claude

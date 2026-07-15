@@ -1,11 +1,13 @@
 # ADR 0002: Formatação Automática Pós-Edição de Código
 
-- **Status:** Aceito (mecanismo shell superado — ver nota)
+- **Status:** Parcialmente revertido (gatilho `PostToolUse` aposentado no perfil Claude — ver nota de 2026-07-07)
 - **Data:** 2026-06-21
 - **Contexto Técnico:** Módulo `hooks` (`format-on-edit.sh`)
 - **Escala de Confiança:** 🟢 CONFIRMADO
 
 > ⚠️ **Atualização (2026-07-05, fechamento do G-05):** a decisão de fundo **permanece** (formatação automática no `PostToolUse`, não-bloqueante, com preferência por binários locais e opt-out por projeto). O que foi superado é o mecanismo: o roteador shell `hooks/format-on-edit.sh` deu lugar ao `FormattingService` (`src/core/formatting/service.py`), invocado pelo comando `harness format` — que continua alimentado pelo JSON do hook `PostToolUse` via stdin (`tool_input.file_path`) e, no Antigravity, por um adaptador de borda em `.agents/` (ADR 0016). As salvaguardas e o opt-out passaram do arquivo `.no-autoformat` para exclusões configuradas no `harness.toml` (ADR 0015, feature 008). Porta shell→Python sob a arquitetura hexagonal do ADR 0006.
+>
+> ⛔ **Atualização (2026-07-07) — gatilho `PostToolUse` aposentado no perfil Claude:** a formatação *on-edit* deixou de ser materializada no `.claude/settings.json`. O `ClaudeProfile.hooks_block()` não emite mais o item `PostToolUse → harness format`, e a assinatura `"harness format"` saiu de `_HARNESS_COMMAND_SIGNATURES` (`src/core/install/claude_settings.py`). Motivo: em máquina com dezenas de projetos, o hook — herdado inclusive pelo `.claude/settings.json` da pasta-mãe `~/dev` — reescrevia arquivos (notadamente `.md` via prettier) a cada edição, em diretórios onde o usuário não pediu formatação, repetindo o incômodo que a descontinuação do `format-on-edit.sh` global já havia tratado. **Preservados:** (1) o `harness format` no **git pre-commit** (`bootstrap/service.py`), gatilho deliberado no commit; (2) o `PostToolUse` do **perfil Antigravity** (`agy-hook`), mecanismo à parte. Reintrodução é **opt-in manual** por diretório. O comando `harness format` e o `FormattingService` seguem intactos para uso sob demanda e para o pre-commit.
 
 ## Contexto e Problema
 
