@@ -2,7 +2,8 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 005)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
-> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/decisions/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/decisions/service.py); fichas em [`.harness/decisoes/`](file:///Users/iagoleal/dev/harness/.harness/decisoes/); índice [`.harness/microdecisoes.md`](file:///Users/iagoleal/dev/harness/.harness/microdecisoes.md). Drivers: `src/main.py` (subcomando `decisions`, hook `Stop`) e `adapters/mcp/server.py` (`process_decisions`).
+> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/decisions/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/decisions/service.py) e [`gate.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/decisions/gate.py); fichas em [`.harness/decisoes/`](file:///Users/iagoleal/dev/harness/.harness/decisoes/); índice [`.harness/microdecisoes.md`](file:///Users/iagoleal/dev/harness/.harness/microdecisoes.md). Drivers: `src/main.py` (subcomando `decisions [--gate]`, hook `Stop`) e `adapters/mcp/server.py` (`process_decisions`).
+> **Reconciliação de 2026-07-15 (features 022-023):** a unit ganhou o **gate de registro** (`gate.py`) — avaliação pura de pendência de registro de microdecisão, com dupla identidade anti-loop. RN-N43..N47 e RF-05..RF-07 abaixo; ressalva T1 da RN-N11 removida (resolvida em `cf73980`, estava stale).
 
 > ⚠️ **Reescrita vs versão anterior:** a implementação **deixou de ser** o script shell `bin/gerar-index-decisoes.sh` em `harness-config/` (purgado, commit `5624f78`) e passou a ser o `DecisionService` Python em `harness-core`. As fichas migraram de `decisoes/` (raiz) para `.harness/decisoes/` e o índice de `microdecisoes.md` (raiz) para `.harness/microdecisoes.md` (feature 005). Os caminhos não são mais chumbados: vêm de `[decisions]` no `harness.toml`.
 
@@ -19,11 +20,15 @@ Gerencia o grafo de microdecisões arquiteturais — fichas `MD-NNNN.md` com fro
 
 ## Regras de Negócio
 
-- **RN-N11 — Caminhos desacoplados via config:** `dir`, `index_file`, `header_file` vêm de `[decisions]` no `harness.toml`; o `DecisionService` recebe tudo por parâmetro. Default: `.harness/decisoes`, `.harness/microdecisoes.md`, `.harness/decisoes/_cabecalho.md`. (watch item **W001**) 🟢 — 🟡 Ressalva (T1): via MCP a chamada `load_config` quebra por import ausente; o caminho configurável só é exercido pela CLI.
+- **RN-N11 — Caminhos desacoplados via config:** `dir`, `index_file`, `header_file` vêm de `[decisions]` no `harness.toml`; o `DecisionService` recebe tudo por parâmetro. Default: `.harness/decisoes`, `.harness/microdecisoes.md`, `.harness/decisoes/_cabecalho.md`. (watch item **W001**) 🟢
 - **RN-N12 — Índice derivado, não editado à mão:** `.harness/microdecisoes.md` é DERIVADO pelo `./harness decisions`; o cabeçalho declara "Não edite à mão". Backlinks ordenados por ID de origem (determinismo). 🟢
 - **RN-N13 — Integridade do grafo:** `validate_integrity` agrega erros — validação de cada ficha, **auto-relação** (`target == self.id`) e **aresta órfã** (alvo fora do grafo). Lista vazia = grafo válido. 🟢
 - **RN-N14 — Front-matter obrigatório:** cada `MD-*.md` exige front-matter YAML; diretório ausente → lista vazia; front-matter ausente/YAML inválido → `ValueError`. Cada relação é `"<verbo> MD-XXXX"` (dois tokens), verbo num conjunto fechado de seis, alvo `^MD-\d{4}$`. 🟢
 - **Integridade de conteúdo da ficha:** H1 `# MD-XXXX` + as 4 seções obrigatórias `D / PORQUÊ / DESCARTADO / ESTADO` (regex case-insensitive). 🟢
+- **RN-N43 — Pendência de registro por sinal físico (feature 022):** universo = diff da âncora (`list_changed_paths_since`) ∪ sujos (`list_dirty_paths`), menos estado/índice/cabeçalho; fichas = `^MD-.*\.md$` sob `decisions.dir`; `pendente = mudanças ∧ ¬fichas`. Sem filtro por tipo de arquivo. Fail-open barulhento (âncora ilegível → `pendente=False` + `aviso`). 🟢
+- **RN-N44 — Enforcement híbrido:** o mesmo veredito alimenta o 3º portão do `encerrar-sessao` (bloqueio, escape `--sem-decisao`), o hook Stop do Claude (`decisions --gate`, soft-block JSON, exit 0 sempre) e o Antigravity (advisory em stderr, nunca bloqueia). Ligado por `decisions.require_registration` (default `True`). 🟢
+- **RN-N45 — Anti-loop por fingerprint no estado de sessão:** o mesmo estado de pendência nunca dispara o gate duas vezes; campos opcionais no front-matter, zerados no fechamento. 🟢
+- **RN-N47 — Dupla identidade (feature 023):** lembrete usa `sha1(âncora)` (grossa — máx. 1 soft-block/sessão); portão usa `sha1(âncora+HEAD+sujos)` (fina — trabalho novo rearma, pinado por teste-guarda). 🟢
 
 ## Requisitos Funcionais
 
@@ -33,6 +38,9 @@ Gerencia o grafo de microdecisões arquiteturais — fichas `MD-NNNN.md` com fro
 | RF-02 | Validar integridade do grafo.       | Must       | `validate_integrity` detecta auto-relação, aresta órfã e ficha sem seção obrigatória; grafo válido → lista vazia.             |
 | RF-03 | Compilar o índice com backlinks.    | Must       | `compile_index` grava `.harness/microdecisoes.md` com sub-linhas `↳ <saídas> · <entradas>`, deterministicamente.              |
 | RF-04 | Caminhos por configuração.          | Must       | `./harness decisions` lê `dir`/`index_file`/`header_file` de `load_config().decisions`; nenhum literal de caminho no serviço. |
+| RF-05 | Avaliar pendência de registro (022). | Must      | `evaluate_registration_gate` devolve `GateVerdict` com `pendente`, `mudancas`, `fichas_tocadas`, fingerprints e `aviso` opcional; nunca levanta para a borda. |
+| RF-06 | Soft-block único no Stop do Claude (022/023). | Must | `decisions --gate`: pendência com identidade grossa inédita → JSON `{"decision":"block","reason":...}` no stdout e persistência do fingerprint; mesma sessão não re-emite; exit 0 sempre. |
+| RF-07 | Escape auditável no encerramento (022). | Must   | `encerrar-sessao --sem-decisao` grava a declaração na narrativa e satisfaz o gate. |
 
 ## Requisitos Não Funcionais
 
@@ -61,6 +69,18 @@ Então o serviço lê as fichas do diretório configurado, sem caminho chumbado.
 Dado uma ficha MD-*.md sem front-matter YAML
 Quando load_decisions roda
 Então um ValueError barulhento é levantado.
+
+Dado trabalho substantivo na sessão (commit desde a âncora ou working tree sujo) sem ficha MD-*.md tocada
+Quando `./harness decisions --gate` roda pela primeira vez na sessão
+Então o stdout recebe {"decision":"block","reason":"[HARNESS:DECISAO_PENDENTE ...]"} e o fingerprint grosso é persistido no estado.
+
+Dado que o lembrete já disparou nesta sessão (fingerprint grosso persistido)
+Quando novos arquivos são tocados e `decisions --gate` roda de novo
+Então nenhum novo bloqueio é emitido (máx. 1 soft-block por sessão — feature 023).
+
+Dado o portão do encerramento já bloqueado uma vez para o estado de pendência atual
+Quando um NOVO commit sem ficha entra e `encerrar-sessao` roda
+Então o portão REARMA e bloqueia de novo (identidade fina; teste-guarda da 023).
 ```
 
 ## Prioridade (MoSCoW)
@@ -77,6 +97,7 @@ Então um ValueError barulhento é levantado.
 | Arquivo                     | Função / Classe                                                               | Cobertura |
 | --------------------------- | ----------------------------------------------------------------------------- | --------- |
 | `core/decisions/service.py` | `DecisionService.load_decisions`, `validate_integrity`, `compile_index`       | 🟢        |
+| `core/decisions/gate.py`    | `evaluate_registration_gate`, `compute_fingerprint`, `compute_lembrete_fingerprint`, `GateVerdict` (022/023) | 🟢        |
 | `core/domain/models.py`     | `Decision`, `Relationship`                                                    | 🟢        |
 | `core/domain/config.py`     | `DecisionsSection`, `load_config`                                             | 🟢        |
 | `src/main.py`               | Subcomando `decisions` (deriva caminhos de `load_config`)                     | 🟢        |

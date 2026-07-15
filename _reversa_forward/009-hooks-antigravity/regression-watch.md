@@ -18,6 +18,22 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-07-15 19:22
+
+> Re-verificação dirigida pós-feature 022: o delta tocou `hook_bridge.py` (parâmetro `gate_evaluator` no construtor + advisory no `stop`). Contratos por evento re-lidos no diff — stdout por evento e não-bloqueio intactos.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `pre-tool-use` inalterado: `{"decision": "allow"}`, nunca deny. |
+| W002 | 🟢 verde | `post-tool-use` inalterado: formata via `FormattingService`, stdout `{}`. |
+| W003 | 🟢 verde | `stop` reindexa e mantém stdout `{}`; o advisory do gate (022) vai só para stderr via `_log`, com `try/except` que preserva a reindexação (RN-N26). |
+| W004 | 🟢 verde | `_safe` e o fallback pré-computado no `main.py` intocados; exit 0 sempre. |
+| W005 | 🟢 verde | Scratch `stepIdx → TargetFile` inalterado. |
+| W006 | 🟢 verde | `materialize_hooks_json` (merge por named-hook) intocado pelo delta. |
+| W007 | 🟢 verde | Round-trip Pre→Post coberto pela suíte (testes do bridge estendidos na 022 sem alterar os casos originais). |
+| W008 | 🟢 verde | Core segue sem conhecer o harness: o `gate_evaluator` é montado na borda e injetado; o bridge não ganhou git/config. |
+| W009 | 🟡 amarelo | Premissa de runtime do Antigravity (estabilidade do `stepIdx`, `artifactDirectoryPath`) segue não testável localmente — inalterado desde 2026-06-24. |
+
 ### Re-extração 2026-06-25 14:32
 
 | ID   | Veredito   | Observação                                                                                                                                       |

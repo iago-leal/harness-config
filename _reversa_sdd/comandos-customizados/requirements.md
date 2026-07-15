@@ -15,6 +15,8 @@ Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessa
 > ✨ **f019 — Pré-check de pendência restrito ao arquivo de estado (reconciliação 2026-07-05):** `SessionCloseFlow.pending_work_paths` (a orquestração em volta de `encerrar-sessao`, RN-N33) excluía **todo** o diretório `.harness/` da oferta de commit pendente; passou a excluir só o caminho exato de `session_file`. Consequência: decisões (`.harness/decisoes/MD-*.md`) e o índice (`.harness/microdecisoes.md`) sujos agora **entram** na oferta (`COMMIT_PENDENTE` sem TTY, listagem `[s/N]` com TTY) antes de `encerrar-sessao` prosseguir. `RF-02` abaixo passa a exigir esse pré-check limpo como precondição. Ver `domain.md#2.16` (RN-N34/RN-N35), ADR 0019.
 >
 > ✨ **f021 — Apêndice do índice de decisões no `resume` (reconciliação 2026-07-05):** quando `active_harness == "claude"` e `session.inject_decisions_index` (default `True`) estão satisfeitos, o `resume` (RF-01) anexa `.harness/microdecisoes.md` ao texto reinjetado, **depois** da narrativa — função pura `build_decisions_appendix` em `core/session/resume_context.py`, gate calculado em `main.py`. Não-bloqueante: índice ausente → aviso em `stderr`, resume segue só com o estado. Ver `domain.md#2.18` (RN-N41), ADR 0021.
+>
+> ✨ **f022/f023 — 3º portão: registro obrigatório de microdecisões (reconciliação 2026-07-15):** `SessionCloseFlow.run(..., sem_decisao=False)` ganhou, depois do pré-check e do gate de narrativa, o portão de registro (`evaluate_registration_gate`, unit `microdecisoes/`): trabalho substantivo desde a âncora sem ficha `MD-*.md` tocada → aborta com marker `[HARNESS:DECISAO_PENDENTE ...]` (protocolo abortar-e-reexecutar) e persiste o fingerprint **fino** no estado; a reexecução com o mesmo estado avisa "não sanada" e libera (anti-loop); trabalho novo **rearma** (teste-guarda da f023); `--sem-decisao` (novo flag do `cmd`) satisfaz o gate gravando a declaração na narrativa (rastro auditável, RN-N3 preservada). Desativável por `decisions.require_registration`. Ver `domain.md#2.20-2.21` (RN-N43..N47), ADRs 0022/0023.
 
 ## Responsabilidades
 
@@ -24,6 +26,7 @@ Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessa
 - `handoff` / `clarificar`: produzir blocos de texto (handoff com feature+HEAD; clarificar com texto fixo de limite de rodadas). 🟢
 - Distinguir estado **ausente** de **malformado** (falha barulhenta). 🟢
 - **✨f019** Antes de `encerrar-sessao` prosseguir: verificar que não há trabalho pendente (exceto o próprio `session_file`) nem narrativa desatualizada — abortar com marker/prompt caso contrário, sem fechar. 🟢
+- **✨f022** Terceiro portão: verificar que a sessão registrou microdecisão (ou recebeu `--sem-decisao`) antes de fechar — abortar com marker `DECISAO_PENDENTE` caso contrário, com anti-loop por fingerprint fino. 🟢
 - **✨f021** Ao `resume`, quando habilitado, anexar o índice de decisões condensado ao texto reinjetado, para ancorar a busca do agente antes de varreduras amplas. 🟢
 
 ## Regras de Negócio
@@ -111,7 +114,7 @@ Então o texto reinjetado contém só o estado, sem apêndice, e nenhum erro é 
 | Arquivo                                    | Função / Classe                                                                                                                     | Cobertura |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | --------- |
 | `core/commands/service.py`                 | `CommandService.execute_command`, `load_session`, `save_session`                                                                    | 🟢        |
-| `core/session/close_flow.py` (✨f018/f019) | `SessionCloseFlow.run`, `pending_work_paths`, `narrative_is_stale`, `conduct_commit_pendente`, `conduct_narrativa_pendente`         | 🟢        |
+| `core/session/close_flow.py` (✨f018/f019/f022) | `SessionCloseFlow.run` (com `sem_decisao`), `pending_work_paths`, `narrative_is_stale`, `conduct_commit_pendente`, `conduct_narrativa_pendente`, `render_decisao_pendente_marker`, `conduct_decisao_pendente` | 🟢        |
 | `core/session/resume_context.py` (✨f021)  | `build_decisions_appendix`                                                                                                          | 🟢        |
 | `core/session/serializer.py`               | `render`, `render_narrative` (consumidos)                                                                                           | 🟢        |
 | `core/domain/models.py`                    | `SessionState`, `SessionNarrative`                                                                                                  | 🟢        |

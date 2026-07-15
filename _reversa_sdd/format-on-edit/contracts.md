@@ -3,7 +3,8 @@
 > Regenerado pelo Writer em 2026-06-24 (Re-extração pós-feature 008-reprodutibilidade-e-config)
 > Interface de dados consumida/produzida pela unit no estado ATUAL (core Python). Escala: 🟢 / 🟡 / 🔴
 
-> ⚠️ **Reescrita vs versão anterior:** no estado atual a formatação roda pela CLI Python (`./harness format`). O hook `PostToolUse` do Claude entrega o caminho do arquivo via stdin (JSON). **T3 (resolvido):** o parsing do stdin em `main.py` usa `json.loads` com `import json` presente (corrigido no commit `cf73980`). Ambos os caminhos — via stdin e por argumento posicional (`./harness format <arquivo>`) — funcionam sem falha.
+> ⚠️ **Reescrita vs versão anterior:** no estado atual a formatação roda pela CLI Python (`./harness format`). **T3 (resolvido):** o parsing do stdin em `main.py` usa `json.loads` com `import json` presente (corrigido no commit `cf73980`). Ambos os caminhos — via stdin e por argumento posicional (`./harness format <arquivo>`) — funcionam sem falha.
+> ⛔ **MD-0014 (2026-07-15):** o hook `PostToolUse` do Claude **não é mais materializado** — o contrato de stdin da §1.2 permanece válido no código (o comando ainda aceita o payload), mas o gatilho vigente no Claude é o git pre-commit/uso manual; on-edit só no Antigravity.
 
 ---
 
@@ -17,9 +18,9 @@
 
 O serviço `FormattingService.format_file(file_path)` recebe o caminho e formata.
 
-### 1.2 Por stdin (hook `PostToolUse`) 🟢
+### 1.2 Por stdin (hook `PostToolUse` — aposentado no Claude por MD-0014; contrato preservado no código) 🟢
 
-Payload JSON entregue pelo Claude Code no evento `PostToolUse` (matchers `Write|Edit`):
+Payload JSON no formato do evento `PostToolUse` do Claude Code (matchers `Write|Edit`) — ainda aceito pelo comando, embora o perfil Claude não materialize mais este hook:
 
 ```json
 {

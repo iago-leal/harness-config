@@ -1,7 +1,8 @@
 {
   "generated_at": "2026-06-24T14:15:30Z",
-  "reconciled_at": "2026-07-05T00:00:00-03:00",
+  "reconciled_at": "2026-07-15T00:00:00-03:00",
   "reconciliation_notes": [
+    "RECONCILIAÇÃO 2026-07-15 (pós-MD-0014 e features 022-023): submódulo 'decisions' expandido com gate.py (gate de registro de microdecisões — evaluate_registration_gate, compute_fingerprint fina, compute_lembrete_fingerprint grossa, GateVerdict); GitPort/SubprocessGitAdapter ganharam list_changed_paths_since; close_flow.py ganhou o 3º portão (render_decisao_pendente_marker/conduct_decisao_pendente + parâmetro sem_decisao); main.py ganhou 'decisions --gate' e 'cmd --sem-decisao'; AntigravityHookBridge ganhou gate_evaluator (advisory); ClaudeProfile/claude_settings deixaram de materializar o PostToolUse format-on-edit (MD-0014) e o Stop passou a 'decisions --gate'. Core 2.1.1.",
     "Todos os caminhos foram corrigidos de 'harness-core/...' para '.harness/harness-core/...' (a relocação física é da feature 011; este modules.json nunca havia sido atualizado para refleti-la, mesmo em extrações posteriores).",
     "Novo submódulo 'migrate' (feature 020).",
     "Submódulo 'session' expandido com close_flow.py (018) e resume_context.py (021).",
@@ -192,9 +193,10 @@
         {
           "name": "decisions",
           "path": ".harness/harness-core/src/core/decisions",
-          "purpose": "Carga, validação de integridade do grafo e compilação do índice de microdecisões com backlinks. Desde a feature 021, o índice compilado aqui é também lido em runtime por session.resume_context.",
+          "purpose": "Carga, validação de integridade do grafo e compilação do índice de microdecisões com backlinks. Desde a feature 021, o índice compilado aqui é também lido em runtime por session.resume_context. Desde a 022, abriga também o gate de registro (gate.py): avaliação pura de pendência de registro de decisão, consumida por três bordas (portão do encerramento, hook Stop do Claude, advisory do Antigravity).",
           "primary_files": [
-            ".harness/harness-core/src/core/decisions/service.py"
+            ".harness/harness-core/src/core/decisions/service.py",
+            ".harness/harness-core/src/core/decisions/gate.py"
           ],
           "functions": [
             {
@@ -221,6 +223,27 @@
               ],
               "returns": "None",
               "confidence": "confirmed"
+            },
+            {
+              "name": "evaluate_registration_gate",
+              "file": ".harness/harness-core/src/core/decisions/gate.py",
+              "params": ["git", "repo_path: str", "session", "config"],
+              "returns": "GateVerdict",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "compute_fingerprint",
+              "file": ".harness/harness-core/src/core/decisions/gate.py",
+              "params": ["anchor: str", "head: str", "dirty: list"],
+              "returns": "str",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "compute_lembrete_fingerprint",
+              "file": ".harness/harness-core/src/core/decisions/gate.py",
+              "params": ["anchor: str"],
+              "returns": "str",
+              "confidence": "confirmed"
             }
           ],
           "business_rules": [
@@ -233,12 +256,23 @@
               "description": "Aresta órfã (target inexistente) é erro de integridade",
               "location": ".harness/harness-core/src/core/decisions/service.py:77",
               "confidence": "confirmed"
+            },
+            {
+              "description": "Gate de registro (022): trabalho substantivo (diff da âncora ∪ sujos, sem filtro por tipo de arquivo, excluídos estado/índice/cabecalho) sem ficha MD-*.md tocada => pendente. Fail-open barulhento em erro de git (pendente=False + aviso).",
+              "location": ".harness/harness-core/src/core/decisions/gate.py:63",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Dupla identidade anti-loop (023): lembrete do Stop usa sha1(âncora) — máx. 1 soft-block por sessão; portão do encerramento usa sha1(âncora+HEAD+sujos) — trabalho novo rearma.",
+              "location": ".harness/harness-core/src/core/decisions/gate.py:43",
+              "confidence": "confirmed"
             }
           ],
-          "entities": ["Decision", "Relationship"],
+          "entities": ["Decision", "Relationship", "GateVerdict"],
           "algorithms": [
             "Graph inversion / backlink compilation determinística por ID",
-            "Parse de front-matter YAML por split em '---'"
+            "Parse de front-matter YAML por split em '---'",
+            "Fingerprint sha1 determinístico do estado de pendência (fino e grosso, sem relógio)"
           ],
           "dependencies": ["ports.fs", "domain.models"],
           "complexity": "high"
@@ -511,9 +545,27 @@
               "confidence": "confirmed"
             },
             {
+              "name": "render_decisao_pendente_marker",
+              "file": ".harness/harness-core/src/core/session/close_flow.py",
+              "params": ["paths: list", "cap: int = 20"],
+              "returns": "str",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "conduct_decisao_pendente",
+              "file": ".harness/harness-core/src/core/session/close_flow.py",
+              "params": [
+                "paths: list",
+                "is_interactive: Optional[bool]",
+                "out: Callable"
+              ],
+              "returns": "None",
+              "confidence": "confirmed"
+            },
+            {
               "name": "SessionCloseFlow.run",
               "file": ".harness/harness-core/src/core/session/close_flow.py",
-              "params": ["repo_path: str", "config: HarnessConfig"],
+              "params": ["repo_path: str", "config: HarnessConfig", "sem_decisao: bool = False"],
               "returns": "int (exit code)",
               "confidence": "confirmed"
             },

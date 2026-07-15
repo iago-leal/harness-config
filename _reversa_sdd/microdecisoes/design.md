@@ -10,8 +10,11 @@
 | `DecisionService.load_decisions`     | `(directory: str)`            | `List[Decision]` | Lista ordenada de `MD-*.md`; diretório ausente → `[]`; front-matter ausente/inválido → `ValueError`. |
 | `DecisionService.validate_integrity` | `(decisions: List[Decision])` | `List[str]`      | Lista de erros; vazia = grafo válido.                                                                |
 | `DecisionService.compile_index`      | `(decisions, output, header)` | —                | Deriva backlinks e grava o índice atomicamente.                                                      |
+| `evaluate_registration_gate` (022)   | `(git, repo_path, session, config)` | `GateVerdict` | Avaliação pura de pendência de registro; fail-open barulhento (nunca levanta).                       |
+| `compute_fingerprint` (022)          | `(anchor, head, dirty)`       | `str`            | Identidade fina `sha1(âncora+HEAD+sujos ordenados)` — portão do encerramento.                        |
+| `compute_lembrete_fingerprint` (023) | `(anchor)`                    | `str`            | Identidade grossa `sha1(âncora)` — lembrete do Stop, máx. 1 por sessão.                              |
 
-Driver CLI (`main.py`, subcomando `decisions`): `config = load_config(fs)` → `decisoes_dir = config.decisions.dir`, `output_file = config.decisions.index_file`, `header_file = config.decisions.header_file`. Sem literais.
+Driver CLI (`main.py`, subcomando `decisions [--gate]`): `config = load_config(fs)` → `decisoes_dir = config.decisions.dir`, `output_file = config.decisions.index_file`, `header_file = config.decisions.header_file`. Sem literais. Sob `--gate` (hook Stop do Claude): informativos em stderr, stdout reservado ao JSON do hook, exit 0 sempre; após indexar, avalia o gate e emite o soft-block quando a identidade grossa é inédita, persistindo-a no estado via `CommandService.save_session`.
 
 ## Fluxo Principal
 
@@ -24,12 +27,17 @@ Driver CLI (`main.py`, subcomando `decisions`): `config = load_config(fs)` → `
    - Sub-linha `↳ <saídas> · <entradas>` montada por composição.
    - Cabeçalho opcional concatenado no topo. Gravação **atômica** via `write_file_atomic`. 🟢
 
+4. **evaluate_registration_gate(git, repo_path, session, config) (022):** âncora = `session.commit_hash`; coleta `head`/`dirty`/`changed` via `GitPort` (falha → `GateVerdict(pendente=False, aviso=...)`); universo ordenado = `changed ∪ dirty`; exclui `{state_file, index_file, header_file}`; fichas = prefixo `decisions.dir` + regex `^MD-.*\.md$`; `pendente = bool(mudancas) and not fichas`; preenche os dois fingerprints. 🟢
+
 ## Fluxos Alternativos
 
 - **Diretório de decisões ausente:** `load_decisions` retorna `[]` (não erro). 🟢
 - **Relação malformada** (≠ dois tokens, verbo fora do conjunto, alvo fora do padrão): `ValueError` no parse (`Relationship`). 🟢
 - **Grafo inconsistente:** `validate_integrity` devolve a lista de erros; o driver decide (o índice não deve ser compilado a partir de grafo inválido). 🟡 INFERIDO (política do driver).
 - **Verbo de relação sem inverso conhecido:** backlink genérico `inverso-de-<verbo>`. 🟢
+- **Gate sob `--gate` com grafo inválido (022):** erros de integridade vão para stderr e o turno NÃO é derrubado (sem a flag: exit 1, byte-idêntico ao comportamento pré-022). 🟢
+- **Gate com sessão ausente/inativa ou `require_registration=False`:** silêncio — nenhum veredito é avaliado. 🟢
+- **Falha interna do gate no `--gate`:** aviso em stderr, exit 0 — o gate nunca trava o agente (RN-N4/fail-open). 🟢
 
 ## Dependências
 
@@ -46,6 +54,8 @@ Driver CLI (`main.py`, subcomando `decisions`): `config = load_config(fs)` → `
 | Caminhos por configuração (`[decisions]`), sem literais       | `service.py` (parâmetros) + `config.py` (`DecisionsSection`) | 🟢 (ADR 0012 / MD-0004) |
 | Backlinks por tabela de verbos inversos, ordenados por ID     | `compile_index`                                              | 🟢                      |
 | Gravação atômica do índice                                    | `write_file_atomic` (`adapters/fs/local.py`)                 | 🟢                      |
+| Gate como avaliação pura, política nas bordas (022)           | `gate.py` (sem `active_harness`), 3 bordas distintas         | 🟢 (ADR 0022 / MD-0015) |
+| Dupla identidade fina/grossa por consumidor (023)             | `compute_fingerprint` × `compute_lembrete_fingerprint`       | 🟢 (ADR 0023 / MD-0016) |
 
 ## Estado Interno
 

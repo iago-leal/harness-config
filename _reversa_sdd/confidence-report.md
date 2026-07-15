@@ -3,6 +3,7 @@
 > Regenerado pelo Revisor em 2026-06-24 (Re-extração após a feature 008-reprodutibilidade-e-config)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
 > **Reconciliação de 2026-07-05** (Reviewer, pós-features 010-021): Scout, Archaeologist, Detective, Architect e Writer reconciliaram nesta sessão os artefatos que estavam congelados desde a feature 009 (`inventory.md`, `dependencies.md`, `surface.json`, `code-analysis.md`, `data-dictionary.md`, `modules.json`, `c4-components.md`, `erd-complete.md`, `traceability/spec-impact-matrix.md`) e incorporaram as features 019-021 em `domain.md`/`state-machines.md`/`permissions.md`/ADRs/`architecture.md`/specs SDD. Ver seção "Reconciliação 2026-07-05" abaixo para o detalhe do que mudou desde o relatório de 2026-06-24.
+> **Reconciliação de 2026-07-15** (Reviewer, pós-MD-0014 e features 022-023): reconciliação incremental do gate de registro de microdecisões (022: `gate.py`, 3º portão, `decisions --gate`, advisory Antigravity) e da dupla identidade do lembrete (023), mais a aposentadoria do format-on-edit no perfil Claude (MD-0014). Ver seção "Reconciliação 2026-07-15" abaixo.
 
 Sintetiza a avaliação de confiança da **re-extração** do ecossistema `harness` após a implementação do motor de bootstrap evolucionário (feature 007) e da reprodutibilidade e configurações dinâmicas de formatação (feature 008). Substitui integralmente o relatório anterior de 2026-06-24; a reconciliação de 2026-07-05 estende (não substitui) este relatório para as features 010-021.
 
@@ -76,6 +77,19 @@ _(Cálculo: (275 + 50 × 0.5) / 343 = 87.46%)_
 | `traceability/code-spec-matrix.md`           | 🟢 forte | Atualizado com os novos arquivos (`requirements.in` e `.github/workflows/ci.yml`).                                                      |
 | `inventory.md`, `dependencies.md`            | 🟢 forte | Atualizados; estatísticas gerais refletem a introdução do lock file com `uv` e da matriz de integração contínua (CI).                   |
 
+## Resumo Geral (reconciliação 2026-07-15 — MD-0014 + features 022-023)
+
+> Mesmo protocolo da rodada anterior: avalia-se a confiança do **delta** reconciliado, não a base histórica.
+
+| Nível             | Quantidade (estimativa do delta) | Percentual do delta |
+| :---------------- | :------------------------------: | :-----------------: |
+| 🟢 CONFIRMADO     |               ~46                |         96%         |
+| 🟡 INFERIDO       |                ~2                |         4%          |
+| 🔴 LACUNA         |                0                 |         0%          |
+| **Total (delta)** |              **~48**             |      **100%**       |
+
+**Confiança do delta reconciliado (MD-0014 + 022-023):** **~98%** 🟢 — a mais alta de qualquer rodada, por três razões: (1) todo o conteúdo foi lido diretamente do código as-built (`gate.py` integral, diffs de `main.py`/`close_flow.py`/`serializer.py`/`models.py`/`config.py`/`hook_bridge.py`/`claude_settings.py`/`harness_profiles.py`); (2) as features 022/023 nasceram por TDD com specs forward completas (requirements com esclarecimentos, roadmap, actions 9/9), cruzadas nesta reconciliação; (3) a suíte de 300 testes e os smokes reais (A–F da 022, A–E 9/9 da 023) foram relatados nos fechamentos das sessões e as fichas MD-0015/MD-0016 documentam decisão e descartes. Os ~2 🟡 são: a contagem de 300 testes (relato de sessão, não recontada por execução nesta rodada) e o efeito colateral da remoção da assinatura `"harness format"` (itens legados preservados como de terceiros — comportamento deduzido do merge por-item + teste `test_migrate.py`, não smoke-testado em projeto-alvo real nesta rodada).
+
 ### Reconciliação 2026-07-05 — artefatos estruturais (Scout/Archaeologist/Architect)
 
 | Artefato                                                                    | Veredito | Observação                                                                                                                                                                                                                                                     |
@@ -85,6 +99,17 @@ _(Cálculo: (275 + 50 × 0.5) / 343 = 87.46%)_
 | `c4-components.md`, `erd-complete.md`, `traceability/spec-impact-matrix.md` | 🟢 forte | Congelados desde 009 — os mais defasados do conjunto (nem a relocação de 011 estava refletida). Reconciliados integralmente nesta rodada; novo achado T7 documentado no `erd-complete.md` e `architecture.md`.                                                 |
 | `architecture.md`, `c4-context.md`, `c4-containers.md`                      | 🟢 forte | `architecture.md` já cobria até a feature 018 no corpo (mas não no cabeçalho/ADRs, corrigido); `c4-containers.md` estava mais defasado que `c4-components.md` (não incluía nem o driver do Antigravity, f009) — redesenhado com o split shim/upstream da f020. |
 | `domain.md`, `state-machines.md`, `permissions.md`, ADRs 0019-0021          | 🟢 forte | `domain.md` já estava atualizado até a f018 (§2.15) pela reconciliação de 2026-06-28; esta rodada acrescentou §2.16-2.18 (019-021) e revisou RN-N19/20/21 para refletir o desescopo da 020 (ver abaixo).                                                       |
+
+### Reconciliação 2026-07-15 — delta MD-0014 + features 022-023
+
+| Artefato                                                                     | Veredito | Observação                                                                                                                                                                                                                                       |
+| :--------------------------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `inventory.md`, `surface.json`                                               | 🟢 forte | Contagens atualizadas (92 Python, 34 test\_\*.py, 16 fichas, suíte 300, core 2.1.1); hooks do Claude corrigidos (sem `PostToolUse`, Stop com `--gate`).                                                                                            |
+| `code-analysis.md`, `data-dictionary.md`, `modules.json`                     | 🟢 forte | Nova subseção `gate.py` (§4), 3º portão (§8), `--gate`/`--sem-decisao` na borda (§11), advisory (§12); `GateVerdict` (§9 do dicionário) e campos anti-loop do `SessionState` (§1).                                                                 |
+| `domain.md`, `state-machines.md`, `permissions.md`, ADRs 0022-0023           | 🟢 forte | §2.19-2.21 novas (RN-N42..N47); máquina de estado da sessão com 3 portões e fingerprints zerados no fechamento; ADR 0002 já estava emendado ("parcialmente revertido") pela sessão da MD-0014.                                                     |
+| `architecture.md`, `c4-context/containers/components.md`, `erd-complete.md`  | 🟢 forte | Diagrama com `decisions/gate.py`; ganchos do Claude atualizados; ERD com os dois campos novos, `require_registration` e `GATE_VERDICT`.                                                                                                            |
+| specs SDD (`microdecisoes/`, `session/`, `format-on-edit/`, `comandos-customizados/`) + `code-spec-matrix.md` | 🟢 forte | Gate especificado na unit de decisões (RF-05..07 + gherkin do soft-block único e do rearme do portão); ressalva T1 stale removida da RN-N11; `format-on-edit/` com o gatilho revisto (MD-0014) sem tocar as RNs do serviço, que permanecem válidas. |
+| `spec-impact-matrix.md`                                                      | 🟢 forte | Nova linha `decisions/gate` (HIGH) + item 9 de impacto crítico; corrigidas duas menções stale de "T7 aberto" que contradiziam o próprio rodapé do arquivo.                                                                                          |
 
 ---
 
@@ -108,5 +133,8 @@ _(Cálculo: (275 + 50 × 0.5) / 343 = 87.46%)_
 |       🟡       |       🟢        | `inventory.md`: `core/ports/` descrito como "Protocols" | **G-04 fechado nesta rodada** — corrigido para `ABC`/`abstractmethod`, coerente com `code-analysis.md`/`modules.json` e com o código (`from abc import ABC, abstractmethod`).                                |
 |       —        |    🔴 (novo)    | T7 — cache de sync com nomes divergentes CLI×MCP        | Achado nesta reconciliação (não existia como afirmação nos relatórios anteriores porque `c4-containers.md`/`erd-complete.md` nunca haviam sido atualizados para cruzar os dois literais). Ver Lacunas acima. |
 | 🟡 (histórica) | 🟢 (confirmado) | RN-N19 (`init` copia o core e cria venv)                | Reclassificada como **histórica/substituída** por RN-N36 (fonte única, f020) — o comportamento descrito pela RN-N19 original só se aplica hoje a instalações ainda não convertidas por `migrate`.            |
+|   🟡 (stale)   | 🟢 (corrigido)  | RN-N11: "via MCP `load_config` quebra (T1)"             | **2026-07-15:** a ressalva em `microdecisoes/requirements.md` estava stale — T1 foi resolvido em `cf73980` e todos os demais artefatos já o diziam; removida.                                                |
+|   🟢 (stale)   | 🟢 (corrigido)  | ADR 0002 / hooks do Claude com `PostToolUse`            | **2026-07-15:** MD-0014 aposentou o gatilho; `c4-context.md`, `permissions.md`, `architecture.md` §4/§6, `format-on-edit/` e `code-spec-matrix.md` atualizados (o ADR 0002 em si já fora emendado em 07/07). |
+|       —        |    🟢 (novo)    | Gate de registro (022) e dupla identidade (023)         | **2026-07-15:** ~48 afirmações novas, 96% confirmadas por leitura direta do código as-built + specs forward + fichas MD-0015/MD-0016.                                                                        |
 
 `doc_level = completo` e o plugin do Codex **não está disponível** nesta sessão (não há ferramentas `codex:*`). A etapa de revisão cruzada foi pulada conforme o protocolo.

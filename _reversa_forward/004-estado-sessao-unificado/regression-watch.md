@@ -20,6 +20,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-07-15 19:22
+
+> Re-verificação dirigida pós-features 022/023: o delta tocou `serializer.py` e `models.py` (campos anti-loop do gate). Round-trip e contrato de erros re-lidos no diff as-built — mudança **aditiva e opcional**, formato pré-022 permanece parseável e byte-compatível quando o gate não é acionado.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | Round-trip preservado; os dois campos novos entram no round-trip só quando preenchidos (testes de `test_session.py` estendidos na 022). |
+| W002 | 🟢 verde | `_REQUIRED_META` inalterado (`commit/feature/start_time/status`); os campos do gate são opcionais, ausência não é malformação. |
+| W003 | 🟢 verde | Narrativa preservada; o único append programático novo (escape `--sem-decisao`) é rastro de ato deliberado do usuário/agente, documentado como exceção compatível com RN-N3 (ADR 0022). |
+| W004 | 🟢 verde | Sinks intocados pelo delta; famílias hook/arquivo e teto de 10000 chars inalterados. |
+
 ### Re-extração 2026-06-26 11:02
 
 > Pós-feature 013. A 013 estende o `encerrar-sessao` (versiona o estado) mas **não** toca o `resume`, o local do estado nem o stdout do hook. Verificação factual (greps + suíte 153 passed).

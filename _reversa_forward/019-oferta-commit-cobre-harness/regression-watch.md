@@ -18,6 +18,16 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-07-15 19:22
+
+> Re-verificação dirigida pós-feature 022: `close_flow.py` mudou (3º portão), mas `pending_work_paths` está intocado — confirmado por leitura direta (`return [p for p in dirty if p != session_file]`, close_flow.py:30).
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | Pré-check exclui apenas o `state_file`; decisões e índice de `.harness/` seguem entrando na oferta. O gate da 022 reforça o arranjo: seu anti-loop vive no próprio estado justamente porque o pré-check não mascara mais `.harness/` (MD-0015). |
+| W002 | 🟢 verde | `SYNC_CACHE_GITIGNORE_ENTRY` deriva de `SYNC_CACHE_REL_PATH` (`layout.py`, MD-0013), inalterado. |
+| W003 | 🟢 verde | Smoke com git real segue na suíte (`test_git_dirty.py` estendido na 022 com `list_changed_paths_since`, sem alterar os casos do porcelain). |
+
 ### Re-extração 2026-07-05 17:00
 
 | ID   | Veredito | Observação                                                                                                                                                                                                     |

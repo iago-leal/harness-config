@@ -21,7 +21,18 @@
 
 ## Histórico de re-extrações
 
-_(vazio — preenchido pelo agente reverso na próxima execução de `/reversa`)_
+### Re-extração 2026-07-15 19:22
+
+> Primeira verificação da 023, na re-extração de reconciliação pós-022/023. A dupla identidade foi incorporada aos artefatos de uma vez (não houve extração intermediária "só-022") — o cenário de defasagem que W001–W003 vigiavam não se materializou.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `compute_lembrete_fingerprint(anchor) = sha1(anchor or "")` presente em `gate.py`; `GateVerdict.fingerprint_lembrete` preenchido por `evaluate_registration_gate`. Refletido em `domain.md#2.21` (RN-N47) e `data-dictionary.md` §9. |
+| W002 | 🟢 verde | Ramo `--gate` do `main.py` compara `session.gate_lembrete_fingerprint != verdict.fingerprint_lembrete` e persiste a grossa (`main.py:362-365`) — máx. 1 soft-block por sessão. |
+| W003 | 🟢 verde | 3º portão compara `verdict.fingerprint` (fino) em `close_flow.py`; teste-guarda `test_gate_portao_rearma_com_trabalho_novo_apos_bloqueio` presente (`test_close_flow.py:481`). |
+| W004 | 🟢 verde | Contrato do stdout sob `--gate` byte-idêntico à 022: `json.dumps({"decision": "block", "reason": ...}, ensure_ascii=False)` único; avisos em stderr; `sys.exit(0)` sempre. |
+| W005 | 🟢 verde | Nenhum campo novo no `SessionState` (o lembrete reusa `gate_lembrete_fingerprint`); nenhum código de migração — transição por desigualdade, documentada como autoresolvente (ADR 0023). |
+| W006 | 🟢 verde | `DecisionsSection` tem apenas `dir`/`index_file`/`header_file`/`require_registration`; nenhuma chave de política de lembrete. |
 
 ## Arquivadas
 

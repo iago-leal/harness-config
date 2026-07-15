@@ -52,6 +52,6 @@ Sem estado em memória. O efeito é o arquivo formatado no disco (via subprocess
 
 ## Riscos e Lacunas
 
-- 🟢 **T3 (resolvido):** o caminho do hook (`PostToolUse` via stdin) fazia `json.loads` sem `import json` → `NameError` capturado, e o autoformat por hook não ocorria; corrigido no commit `cf73980` (`import json` em `main.py:5`). O autoformat por hook voltou a operar.
+- 🟢 **T3 (resolvido):** o caminho do hook (`PostToolUse` via stdin) fazia `json.loads` sem `import json` → `NameError` capturado, e o autoformat por hook não ocorria; corrigido no commit `cf73980` (`import json` em `main.py:5`). O autoformat por hook voltou a operar — e foi depois **aposentado no perfil Claude** (MD-0014, 2026-07-07): o gatilho on-edit sobrevive só no Antigravity; no Claude restam pre-commit e uso manual.
 - 🟢 **T4 (resolvido):** o `[formatting]` do `harness.toml` agora alimenta o serviço de formatação (`FormattingService`), permitindo exclusão dinâmica de diretórios por glob pattern e definição de opt-out dinâmico.
 - 🟢 **T6 (resolvido):** o build e a instalação agora são reprodutíveis com dependências trancadas pelo `requirements.txt` gerado com `uv` e testado continuamente via GitHub Actions.

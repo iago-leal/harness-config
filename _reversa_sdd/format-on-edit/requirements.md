@@ -2,13 +2,14 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração pós-feature 008-reprodutibilidade-e-config)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
-> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/formatting/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/formatting/service.py); adaptador `adapters/process/formatter.py`. Driver: `src/main.py` (subcomando `format`, hook `PostToolUse`).
+> Rastreabilidade ao Legado: [`.harness/harness-core/src/core/formatting/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/formatting/service.py); adaptador `adapters/process/formatter.py`. Driver: `src/main.py` (subcomando `format`).
 
 > ⚠️ **Reescrita vs versão anterior:** a implementação é o `FormattingService` Python em `harness-core`. Ele consome ativamente o `HarnessConfig` para aplicar de forma dinâmica regras de exclusão de caminhos (glob) e customizar o nome do arquivo de opt-out (feature 008).
+> ⛔ **Gatilho revisto (MD-0014, reconciliação 2026-07-15):** o hook `PostToolUse → harness format` foi **aposentado no perfil Claude** — `ClaudeProfile.hooks_block()` não o emite mais e `claude_settings.py` não gerencia mais o evento (assinatura `"harness format"` removida; itens legados em projetos-alvo ficam preservados como de terceiros). O nome desta unit ("format-on-edit") permanece por rastreabilidade histórica, mas os gatilhos vigentes são: **git pre-commit** (bootstrap), **`PostToolUse` do Antigravity** (`agy-hook post-tool-use`) e **uso manual** (`harness format`). Reintrodução no Claude é opt-in manual por diretório. Ver RN-N42 (domain.md §2.19) e ADR 0002 (parcialmente revertido). O `FormattingService` em si está **intacto** — todas as RNs abaixo permanecem válidas.
 
 ## Visão Geral
 
-Formata um arquivo após edição do agente, por linguagem, sempre de modo **não-bloqueante** (retorna sempre 0). Blinda diretórios pessoais, respeita exclusões dinâmicas e arquivos de opt-out por projeto, descobre a raiz por manifesto e prioriza executáveis locais.
+Formata um arquivo por linguagem, sempre de modo **não-bloqueante** (retorna sempre 0). Blinda diretórios pessoais, respeita exclusões dinâmicas e arquivos de opt-out por projeto, descobre a raiz por manifesto e prioriza executáveis locais. Desde MD-0014, o disparo automático por edição existe só no Antigravity; no Claude, o serviço é acionado pelo git pre-commit ou manualmente.
 
 ## Responsabilidades
 

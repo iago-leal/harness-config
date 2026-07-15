@@ -4,6 +4,7 @@
 > Atualização cirúrgica em 2026-06-24 após a feature 006 (commit `e894c59`): nova `SESSION_SECTION` na configuração tipada e fechamento da divergência T2 (caminho de sessão por configuração).
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO
 > **Re-extração estrutural de 2026-07-05** (este documento estava congelado desde 2026-06-24/feature 006, sem incorporar nem a feature 008 que já resolvia o T4 aqui descrito como aberto): `SESSION_SECTION` ganha `inject_decisions_index` (✨f021); `HARNESS_SECTION` explicitada com `upstream_path`/`version` (✨f007, ainda vigentes — não removidos pela f020, ver domain.md); T4 corrigido para RESOLVIDO (feature 008); `DECISION` — população cresceu de 5 para 12 fichas, sem mudança de schema; novas estruturas efêmeras `EndSessionOffers`/`PushOffer`/`UpgradeOffer` (✨f014, dataclasses — exceção ao padrão Pydantic do resto do domínio); nota sobre a divergência de nome do `SYNC_CACHE` entre CLI e MCP (T7, dívida técnica nova, ver `architecture.md`).
+> **Reconciliação de 2026-07-15** (pós-features 022-023): `SESSION_STATE` ganha os campos anti-loop opcionais `gate_lembrete_fingerprint`/`gate_encerramento_fingerprint` (✨f022, primeira mudança de schema da entidade); `DECISIONS_SECTION` ganha `require_registration` (✨f022, default true); nova estrutura efêmera `GATE_VERDICT` (✨f022/f023, Pydantic, não persistida); população de `DECISION` 12 → 16 fichas.
 
 > 🟢 **Não há banco de dados relacional.** Confirmado em `surface.json` (`database_hints: []`) e na análise de código: nenhum DDL, migration, ORM ou cliente de banco. A "persistência" do `harness-core` é inteiramente baseada em **arquivos versionados** — Markdown com front-matter YAML, JSON e TOML. O ERD abaixo modela as **estruturas de dados de configuração, estado e decisão** (modelos Pydantic v2 do domínio) como entidades lógicas, com as relações de composição reais entre elas. As "PK/FK" são lógicas (identificadores de domínio), não chaves de um SGBD.
 
@@ -19,6 +20,8 @@ erDiagram
         string active_feature "front-matter feature · kebab-case"
         datetime start_time "front-matter start_time · ISO, naive->UTC"
         bool is_active "front-matter status (active/inactive)"
+        string gate_lembrete_fingerprint "opcional (f022) · sha1 grosso · omitido se vazio"
+        string gate_encerramento_fingerprint "opcional (f022) · sha1 fino · omitido se vazio"
     }
     SESSION_NARRATIVE {
         list feito "corpo: ## O que foi feito"
@@ -66,6 +69,7 @@ erDiagram
         string dir "[decisions] · default .harness/decisoes"
         string index_file "[decisions] · default .harness/microdecisoes.md"
         string header_file "[decisions] · default .harness/decisoes/_cabecalho.md"
+        bool require_registration "[decisions] · default true (feature 022, NOVO)"
     }
     SESSION_SECTION {
         string state_file "[session] · default .harness/estado-da-sessao.md (feature 006)"
@@ -92,6 +96,7 @@ erDiagram
 - **`SESSION_STATE`** (`models.py:SessionState`): persistido como front-matter YAML + corpo Markdown; round-trip por `session/serializer.py` com invariante `parse(render(x)) == x`. Campos obrigatórios no front-matter: `commit`, `feature`, `start_time`, `status` — ausência → `MalformedSessionStateError` (RN-N4).
 - **`SESSION_NARRATIVE`** (`models.py:SessionNarrative`): value-object **aninhado** em `SessionState.narrative`, materializado nas 4 seções `##` do corpo. Escrito pelo agente, reinjetado pela CLI, nunca inventado. Cardinalidade **1:1 opcional** (default vazio).
 - 🟢 **T2 resolvido (feature 006):** o caminho do estado de sessão passou a vir de `SESSION_SECTION` (`config.session.state_file`); CLI e MCP convergem para `.harness/estado-da-sessao.md`. Não há mais a instância paralela `ESTADO-DA-SESSAO.md` (raiz) que o MCP operava — a estrutura é uma só.
+- 🟢 **Campos anti-loop do gate (✨f022/f023):** `gate_lembrete_fingerprint` (identidade grossa, `sha1(âncora)`) e `gate_encerramento_fingerprint` (identidade fina, `sha1(âncora+HEAD+sujos)`) — opcionais, gravados no front-matter **só quando preenchidos** (arquivo byte-compatível com o formato pré-022 enquanto o gate não é acionado), tolerados como ausentes no parse e **zerados por `close_session`**. Primeira mudança de schema de `SESSION_STATE` desde a criação; retrocompatível nos dois sentidos.
 
 ### 2. Grafo de Microdecisões — `.harness/decisoes/MD-*.md` (feature 005) 🟢
 
@@ -115,6 +120,7 @@ erDiagram
 - **`HARNESS_DOC_DATA`** — payload JSON `{commands, rules, state}` compilado por `DocumentationService` e injetado no `template.html`; não vive em disco como entidade própria (embute-se no HTML).
 - **Bloco de ganchos do `install-prompt`** (feature 003) — saída textual de `InstallPromptService.render` montada por substituição de placeholders; transitória, destinada à colagem manual.
 - **`EndSessionOffers` / `PushOffer` / `UpgradeOffer` (✨f014, NOVO nesta reconciliação)** — `session/offers.py`. Exceção deliberada ao padrão Pydantic: são `@dataclass` puros, montados por `EndSessionOffersService.detect` a cada `encerrar-sessao` e consumidos por `session/close_flow.conduct_end_session_offers`; nunca persistidos. `EndSessionOffers` agrega `push: PushOffer?` e `upgrade: UpgradeOffer?` (ambos opcionais, `None` = sem oferta cabível).
+- **`GATE_VERDICT` (✨f022/f023, NOVO)** — `decisions/gate.py:GateVerdict` (Pydantic): `pendente`, `mudancas`, `fichas_tocadas`, `fingerprint` (fino), `fingerprint_lembrete` (grosso), `aviso?`. Montado por `evaluate_registration_gate` a cada avaliação e descartado; **só os fingerprints sobrevivem**, copiados para os campos anti-loop de `SESSION_STATE` pelas bordas que interceptam. Ver `data-dictionary.md` §9.
 
 ---
 
@@ -135,3 +141,10 @@ erDiagram
 - **Nova estrutura efêmera:** `EndSessionOffers`/`PushOffer`/`UpgradeOffer` (✨f014) — dataclasses, não Pydantic (exceção documentada).
 - **T4 corrigido:** estava descrito como "não consumido"; na verdade resolvido desde a feature 008 (este ERD nunca fora atualizado para refletir isso).
 - **T7 novo:** divergência de nome do arquivo de cache de sync entre CLI e MCP (`sync-cache.json` vs `sync_cache.json`) — **resolvido no mesmo dia** (MD-0013): fonte única em `layout.py:SYNC_CACHE_REL_PATH`.
+
+## 🧭 Mudanças 022-023 (reconciliação 2026-07-15)
+
+- **`SESSION_STATE`:** + `gate_lembrete_fingerprint`/`gate_encerramento_fingerprint` (opcionais, anti-loop do gate, zerados no fechamento) — primeira mudança de schema da entidade.
+- **`DECISIONS_SECTION.require_registration`** (✨f022, NOVO) — liga o gate de registro; default `true`.
+- **Nova estrutura efêmera:** `GATE_VERDICT` (✨f022/f023) — Pydantic, não persistida.
+- **`DECISION`:** população cresceu de 12 para 16 fichas (MD-0013..MD-0016) — sem mudança de schema.

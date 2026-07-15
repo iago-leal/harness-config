@@ -24,6 +24,21 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-07-15 19:22
+
+> Re-verificação dirigida pós-MD-0014 e feature 022: o delta tocou `claude_settings.py` (assinaturas) e `harness_profiles.py` (`hooks_block` do Claude). O merge por-item e os ganchos git não-destrutivos permanecem; a mudança de assinaturas é deliberada (MD-0014/022), não regressão.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `init` fonte única (shim, sem cópia de core/venv) inalterado. |
+| W002 | 🟢 verde | Ganchos git seguem invocando `./harness format`/`./harness decisions` com guarda `[ -x ./harness ]`; `bootstrap/service.py` intocado pelo delta. |
+| W003 | 🟢 verde | Merge por-item preservado; itens do usuário no mesmo evento sobrevivem (teste com `meu-notificador.sh` no Stop). Nota deliberada: itens `harness format` legados passam a ser tratados como de terceiros (preservados) — decisão MD-0014, registrada em gaps.md#G-15. |
+| W004 | 🟢 verde | Guardas do `migrate` intocadas (upstream/autorreferência/`_safe_remove_core`). |
+| W005 | 🟢 verde | `remove_tree` restrito ao migrate, inalterado. |
+| W006 | 🟢 verde | `upgrade`/`SyncService` seguem ativos (desescopo documentado, ADR 0020/G-13), inalterado. |
+| W007 | 🟢 verde | `CORE_VERSION` segue derivado do literal único (`2.1.1` após a 023 — bump legítimo, o mecanismo é o vigiado). |
+| W008 | 🟢 verde | Footprint de escrita per-projeto preservado (`test_footprint.py` na suíte verde). |
+
 ### Re-extração 2026-07-05 17:00
 
 | ID   | Veredito | Observação                                                                                                                                                                                                                                                  |

@@ -66,3 +66,24 @@ _Reavaliado em 2026-07-05: nenhum recurso aplicável neste projeto; agentes marc
 - [x] **Writer** — reconciliação incremental (specs SDD por componente, code-spec-matrix)
 - [x] **Reviewer** — atualização do relatório de confiança
 - [x] **Regression-check** — veredito dos watch items de 019/020/021 (+ verificação completa das 21 features)
+
+## Re-extração 2026-07-15 (reconciliação pós-MD-0014 e features 022-023 — gate de microdecisões)
+
+> Escopo: reconciliação incremental do delta desde 2026-07-05. MD-0014 aposentou o gatilho
+> PostToolUse (format-on-edit) no perfil Claude; a feature 022 introduziu o gate de registro
+> obrigatório de microdecisões (novo módulo `core/decisions/gate.py`, 3º portão no
+> `close_flow.py`, ramo `decisions --gate` no `main.py`, fingerprint persistido no estado);
+> a feature 023 calibrou o lembrete com dupla identidade (grossa no Stop, fina no portão).
+> Scout/Archaeologist atualizam os estruturais no delta (gate.py, main.py, close_flow.py);
+> Detective/Writer reconciliam regras, ADRs e specs (unit `microdecisoes`, `format-on-edit`,
+> `session`); Architect atualiza c4/erd/spec-impact; Reviewer fecha o relatório de confiança.
+> Encerra com regression-check (step-04) — primeira verificação de 022 (W001-W010) e
+> 023 (W001-W006) + varredura completa das 23 features.
+
+- [x] **Scout** — atualização estrutural no delta (inventory, dependencies, surface.json)
+- [x] **Archaeologist** — atualização estrutural no delta (code-analysis, data-dictionary, modules.json)
+- [x] **Detective** — reconciliação incremental (domain, state-machines, permissions, ADRs 022-023 + MD-0014)
+- [x] **Architect** — atualização estrutural (architecture, c4-\*, erd-complete, spec-impact-matrix)
+- [x] **Writer** — reconciliação incremental (units `microdecisoes`, `format-on-edit`, `session`, `comandos-customizados`; code-spec-matrix)
+- [x] **Reviewer** — atualização do relatório de confiança
+- [x] **Regression-check** — primeira verificação de 022/023 + varredura completa das 23 features

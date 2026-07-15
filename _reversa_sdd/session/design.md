@@ -23,6 +23,8 @@
 | `feature`    | `active_feature`     | —                                      |
 | `start_time` | `start_time`         | ISO, naive→UTC                         |
 | `status`     | `is_active`          | `=="active"` (case-insensitive) → True |
+| `gate_lembrete_fingerprint` ✨f022 | `gate_lembrete_fingerprint` | opcional (`meta.get`); render só quando preenchido |
+| `gate_encerramento_fingerprint` ✨f022 | `gate_encerramento_fingerprint` | opcional (`meta.get`); render só quando preenchido |
 
 **Mapa seção ↔ narrativa** (`_SECTIONS`): "O que foi feito"→`feito`, "Próximos passos"→`proximos_passos`, "Pendências / bloqueios"→`pendencias`, "Ponteiros"→`ponteiros`.
 
@@ -57,6 +59,8 @@
 | Sink como Strategy escolhida na borda (core agnóstico a harness)                | `sinks.py` (`get_sink`, `_FAMILY_BY_HARNESS`)         | 🟢        |
 | Duas famílias de entrega (hook vs arquivo) por limitação de cada agente         | `sinks.py` (`HookContextSink` × `FileProjectionSink`) | 🟢        |
 | Teto de 10000 chars no envelope do Claude                                       | `sinks.py` (`MAX_CHARS`)                              | 🟢        |
+| Campos do gate opcionais e omitidos quando vazios (byte-compat pré-022) ✨f022  | `serializer.py` (`parse`/`render`), MD-0015           | 🟢        |
+| Fingerprints zerados no fechamento (não vazam entre sessões) ✨f022             | `models.py` (`close_session`)                         | 🟢        |
 
 ## Estado Interno
 

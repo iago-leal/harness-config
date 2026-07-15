@@ -3,6 +3,7 @@
 > Regenerado pelo Writer em 2026-06-24 (Re-extração; feature 004)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
 > Rastreabilidade ao Legado: [`.harness/harness-core/src/core/session/`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/session/) — `serializer.py`, `sinks.py`, `errors.py`; modelos em `core/domain/models.py` (`SessionState`, `SessionNarrative`). Consumidor: `core/commands/service.py`. Drivers: `src/main.py:169` (CLI) e `src/adapters/mcp/server.py:94` (MCP), ambos lendo o caminho de `config.session.state_file` (`SessionSection` em `core/domain/config.py`, feature 006).
+> **Reconciliação de 2026-07-15 (features 022-023):** `SessionState`/serializer ganharam os campos anti-loop do gate de registro (`gate_lembrete_fingerprint`/`gate_encerramento_fingerprint`) — primeira mudança de schema da entidade; o encerramento (`close_flow.py`) ganhou o **3º portão** (registro de microdecisões). RN-N45 parcial e RF-06/RF-07 abaixo; o gate em si está especificado na unit `microdecisoes/`.
 
 ## Visão Geral
 
@@ -25,6 +26,7 @@ Esta unit persiste e reinjeta o estado da última sessão do agente entre boots.
 - **RN-N6 — Reinjeção multi-harness por família:** _hook_ (Claude/Gemini, `hookSpecificOutput.additionalContext`) e _arquivo_ (Antigravity, `.agents/rules/estado-sessao.md`). Harness desconhecido → `ValueError`. 🟢
 - **RN-N8 — Teto de contexto (Claude):** `HookContextSink` trunca o `additionalContext` em `MAX_CHARS = 10000`, anexando aviso. 🟢
 - **RN-07 — Âncora Git:** ao retomar, HEAD ≠ `commit_hash` gravado → alerta `⚠️` que antecede a narrativa; reativa mesmo assim. 🟢 (regra exercida em `core/commands`, ver unit `comandos-customizados`).
+- **RN-N45 (parcial, feature 022) — Fingerprints do gate no estado:** os campos opcionais `gate_lembrete_fingerprint`/`gate_encerramento_fingerprint` persistem no front-matter **só quando preenchidos** (byte-compat pré-022), toleram ausência no parse e são **zerados por `close_session`** — não vazam para a próxima sessão. O estado de sessão é a exceção consagrada do pré-check de pendência (RN-N34), por isso hospeda o anti-loop. 🟢
 
 ## Requisitos Funcionais
 
@@ -35,6 +37,8 @@ Esta unit persiste e reinjeta o estado da última sessão do agente entre boots.
 | RF-03 | Render da narrativa em 4 seções.     | Must       | `render_narrative` emite `## O que foi feito`, `## Próximos passos`, `## Pendências / bloqueios`, `## Ponteiros`. |
 | RF-04 | Sink por família de harness.         | Must       | `claude`/`gemini` → `HookContextSink`; `antigravity` → `FileProjectionSink`; desconhecido → `ValueError`.         |
 | RF-05 | Truncamento no sink de hook.         | Should     | Contexto acima de 10000 chars é truncado com sufixo de aviso.                                                     |
+| RF-06 | Round-trip com campos do gate (022). | Must       | Estado com fingerprints preenchidos preserva-os no round-trip; estado sem eles permanece byte-idêntico ao formato pré-022. |
+| RF-07 | 3º portão no encerramento (022/023). | Must       | `SessionCloseFlow.run(..., sem_decisao)` bloqueia pendência inédita (marker `DECISAO_PENDENTE`), libera com aviso na repetição do mesmo fingerprint fino, rearma com trabalho novo, e aceita o escape `--sem-decisao` com rastro na narrativa. |
 
 ## Requisitos Não Funcionais
 
@@ -81,6 +85,7 @@ Então o texto é truncado a 10000 chars com aviso anexado.
 | `core/session/serializer.py`                           | `parse`, `render`, `render_narrative`, `_coerce_datetime`                                      | 🟢        |
 | `core/session/sinks.py`                                | `HookContextSink`, `FileProjectionSink`, `get_sink`, `_FAMILY_BY_HARNESS`                      | 🟢        |
 | `core/session/errors.py`                               | `MalformedSessionStateError`                                                                   | 🟢        |
+| `core/session/close_flow.py`                           | `SessionCloseFlow.run` (3 portões), `render_decisao_pendente_marker`, `conduct_decisao_pendente` ✨f022 | 🟢        |
 | `core/domain/models.py`                                | `SessionState`, `SessionNarrative`                                                             | 🟢        |
 | `core/domain/config.py`                                | `SessionSection.state_file` (caminho do estado, default `.harness/estado-da-sessao.md`) ✨f006 | 🟢        |
 | `src/main.py`                                          | resolve sink, caminho lido de `config.session.state_file` (`main.py:169`)                      | 🟢        |

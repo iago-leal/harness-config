@@ -24,7 +24,22 @@
 
 ## Histórico de re-extrações
 
-_(vazio — preenchido pelo agente reverso na próxima rodada do `/reversa`)_
+### Re-extração 2026-07-15 19:22
+
+> Primeira verificação da 022, na re-extração de reconciliação pós-022/023. Vereditos por leitura direta do código as-built (gate.py integral; diffs de close_flow/main/serializer/models/config/hook_bridge/claude_settings/harness_profiles; greps dirigidos na skill e nos testes) cruzada com os artefatos recém-gerados (`domain.md` §2.20, `state-machines.md`, `code-analysis.md` §4/§8/§11/§12, `data-dictionary.md` §1/§9). Suíte 300 verde relatada no fechamento da 023 (não recontada nesta rodada).
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | Três portões na ordem (pré-check → narrativa → registro) confirmados em `SessionCloseFlow.run`; 3º portão emite `conduct_decisao_pendente` (marker sem TTY) e `return 0`. Refletido em `state-machines.md` (nota dos gates) e `domain.md#2.20` (RN-N44). |
+| W002 | 🟢 verde | `evaluate_registration_gate` puro: universo `changed ∪ dirty`, exclusões exatamente `{state_file, index_file, header_file}` + fichas por regex; sem filtro por tipo de arquivo (docstring explicita); fail-open com `aviso`. RN-N43. |
+| W003 | 🟢 verde | Escape grava `"Declarado: sem decisão não óbvia nesta sessão (gate de registro)."` em `narrative.feito` e prossegue; fingerprint fino idêntico → aviso "não sanada" e encerra (nunca re-bloqueia). RN-N46/RN-N45. |
+| W004 | 🟢 verde | Campos opcionais no `parse` (`meta.get`), `render` só quando preenchidos (byte-compat pré-022), `close_session` os zera. `data-dictionary.md` §1 e `erd-complete.md` atualizados. |
+| W005 | 🟢 verde | Sob `--gate`: `info` → stderr, stdout reservado ao JSON, `sys.exit(0)` incondicional no fim do ramo; um bloqueio por fingerprint (grosso, 023). Sem a flag: fluxo original com exits 0/1 intactos (MD-0006). |
+| W006 | 🟢 verde | `ClaudeProfile.hooks_block()` = `SessionStart` + `Stop → harness decisions --gate`, sem `PostToolUse`; `_HARNESS_COMMAND_SIGNATURES = ("harness cmd resume", "harness decisions")` casa com e sem flag (teste `test_absent_creates_single_item_per_harness_event` + caso de substituição sem duplicar). |
+| W007 | 🟢 verde | `_handle_stop`: advisory via `self._log` (stderr), `return {}` intocado; `try/except` em volta do `gate_evaluator` preserva a reindexação. RN-N26. |
+| W008 | 🟢 verde | `list_changed_paths_since` = `git diff --name-only <ref> HEAD` com `check=True`; `CalledProcessError` → `RuntimeError` barulhento (nunca `[]` silencioso). Port documentado em `c4-components.md`. |
+| W009 | 🟢 verde | `DecisionsSection.require_registration: bool = True`; consultado nas três bordas (close_flow, ramo `--gate`, `gate_evaluator` devolve `None` se desligado). |
+| W010 | 🟢 verde | `SKILL.md` v1.3.0 documenta o marker `DECISAO_PENDENTE` (passo 5) e o escape; `scripts/encerrar_sessao.py` declara `--sem-decisao` e repassa `sem_decisao=args.sem_decisao` ao `SessionCloseFlow.run`. |
 
 ## Arquivadas
 

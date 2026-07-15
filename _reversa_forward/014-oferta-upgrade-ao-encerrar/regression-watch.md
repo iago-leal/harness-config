@@ -31,6 +31,22 @@ os watch items cobrem os **novos invariantes** e a **preservação** do fechamen
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-07-15 19:22
+
+> Re-verificação dirigida pós-feature 022: o delta inseriu o 3º portão em `SessionCloseFlow.run` ANTES do fechamento — quando o portão aborta, o fechamento não ocorre e as ofertas não rodam, o que preserva (e reforça) W002. `offers.py`/`sync` intocados.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `CommandService.execute_command('encerrar-sessao')` inalterado. |
+| W002 | 🟢 verde | Ofertas só após sucesso: o 3º portão aborta antes do fechamento (return 0 sem ofertas); ordem pré-check → narrativa → registro → fechamento → ofertas. |
+| W003 | 🟢 verde | Não-bloqueio das ofertas inalterado. |
+| W004 | 🟢 verde | `offers.py` intocado. |
+| W005 | 🟢 verde | `push` sem `--force`: adapter inalterado nesse ponto (delta só adicionou `list_changed_paths_since`). |
+| W006 | 🟢 verde | `check_version_update_remote` inalterado. |
+| W007 | 🟢 verde | `merge_ff_only` e o fluxo de upgrade inalterados. |
+| W008 | 🟢 verde | Detecção só pela porta `GitPort` (RN-N5); nenhum subprocess novo no serviço de ofertas. |
+| W009 | 🟢 verde | Ordem push → upgrade preservada. |
+
 ### Re-extração 2026-06-28 09:45
 
 > Primeira verificação dos watch da 014. A feature 018 **moveu** a condução das ofertas (e os helpers `render_offer_markers`/`conduct_end_session_offers`/`run_upgrade`) de `main.py` para `SessionCloseFlow` (`close_flow.py`), reexportados por `src.main` — comportamento **preservado**, testes da 014 verdes na suíte 212. `offers.py`/`sync` intactos. Verificação factual: suíte 212 passed.

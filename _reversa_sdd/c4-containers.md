@@ -32,7 +32,7 @@ graph TB
         subgraph HarnessDir [.harness/ — estado e decisões versionados, per-projeto]
             SessionFile["estado-da-sessao.md<br/>[Markdown front-matter YAML + corpo]<br/>Âncora Git + narrativa de retomada (f004)."]
             DecisionsDir["decisoes/MD-NNNN.md + _cabecalho.md<br/>[Markdown front-matter]<br/>12 fichas do grafo de decisões (f005; cresceu de 5)."]
-            IndexFile["microdecisoes.md<br/>[Markdown DERIVADO]<br/>Índice com backlinks (hook Stop); lido também pelo resume (f021)."]
+            IndexFile["microdecisoes.md<br/>[Markdown DERIVADO]<br/>Índice com backlinks (hook Stop, decisions --gate f022); lido também pelo resume (f021)."]
             CacheFile["sync-cache.json<br/>[JSON]<br/>Cache TTL único (layout.py:SYNC_CACHE_REL_PATH); CLI, close_flow e MCP; coberto pelo .gitignore do init (T7 saneado, MD-0013)."]
         end
 

@@ -21,6 +21,18 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-07-15 19:22
+
+> Re-verificação dirigida pós-features 022/023: `main.py` mudou (ramo `decisions --gate` e flag `--sem-decisao` no `cmd`), mas o ramo `cmd resume` está intocado — fiação do apêndice confirmada por grep (`main.py:389/458`).
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `result_msg += build_decisions_appendix(...)` segue no ramo `cmd resume`, após o corpo da narrativa. |
+| W002 | 🟢 verde | Gate na borda (`active_harness == "claude" and inject_decisions_index`) inalterado. |
+| W003 | 🟢 verde | `build_decisions_appendix` pura, não-bloqueante (índice ausente → ""), inalterada. |
+| W004 | 🟢 verde | Apêndice depois do estado (estado tem precedência sob truncamento), inalterado. |
+| W005 | 🟢 verde | `SessionSection.inject_decisions_index` default True, inalterado (delta de config foi só `require_registration`, seção `[decisions]`). |
+
 ### Re-extração 2026-07-05 17:00
 
 | ID   | Veredito | Observação                                                                                                                                                                                         |

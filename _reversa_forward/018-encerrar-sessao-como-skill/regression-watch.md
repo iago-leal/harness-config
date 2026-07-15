@@ -24,6 +24,18 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-07-15 19:22
+
+> Re-verificação dirigida pós-feature 022: o delta atualizou os assets da skill (v1.2.x → 1.3.0: passo 5 do marker `DECISAO_PENDENTE` + flag `--sem-decisao` no script). A propriedade central — scripts finos consumindo o core, sem reimplementação — permanece.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | Skill materializada nos dois harnesses; árvore agnóstica única (assets), inalterado. |
+| W002 | 🟢 verde | `scripts/encerrar_sessao.py` segue compondo `RegenService` → `SessionCloseFlow` do core; a novidade (repassar `sem_decisao=args.sem_decisao`) é fiação, não lógica duplicada (RN-N33). |
+| W003 | 🟢 verde | `_bootstrap.py` inalterado (resolução da raiz via git + core importável, falha barulhenta). |
+| W004 | 🟢 verde | Órfãos legados (command/workflow) seguem removidos por `stale_session_command_paths`, inalterado. |
+| W005 | 🟢 verde | `skills_dir()` por perfil inalterado (`.claude/skills`, `.agents/skills`, `None` no Gemini). |
+
 ### Re-extração 2026-06-28 09:45
 
 | ID   | Veredito | Observação                                                                                                                                                                                                                                                                                                                                                                        |

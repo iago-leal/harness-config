@@ -26,7 +26,7 @@ graph TB
     %% Atores -> Sistema
     User -->|Executa subcomandos via wrapper ./harness| HarnessCore
     User -->|Edita .harness/ decisoes, estado, harness.toml| HarnessCore
-    Claude -->|Hooks SessionStart / PostToolUse / Stop| HarnessCore
+    Claude -->|Hooks SessionStart / Stop --gate| HarnessCore
     Claude -->|Consome 4 tools via servidor MCP| HarnessCore
     Gemini -->|Hook SessionStart cmd resume| HarnessCore
     Antigravity -->|Relê estado projetado em arquivo a cada boot| HarnessCore
@@ -42,7 +42,7 @@ graph TB
 
 1. **Atores:**
    - **Humano (Iago):** mantenedor único. Roda a CLI via wrapper `./harness` e edita os artefatos versionados em `.harness/` (decisões, estado de sessão) e configurações (`harness.toml`, `settings.json`). 🟢
-   - **Agente Claude:** dispara os ganchos de ciclo de vida `SessionStart` (→ `cmd resume`, reinjeta o estado), `PostToolUse` em Write|Edit (→ `format`) e `Stop` (→ `decisions`); também pode consumir as **4 tools** do servidor MCP. 🟢
+   - **Agente Claude:** dispara os ganchos de ciclo de vida `SessionStart` (→ `cmd resume`, reinjeta o estado + índice de decisões ✨f021) e `Stop` (→ `decisions --gate` ✨f022: reindexa e emite o lembrete único do gate de registro); o `PostToolUse` de format-on-edit foi **aposentado** (MD-0014). Também pode consumir as **4 tools** do servidor MCP. 🟢
    - **Agente Gemini:** dispara `SessionStart` (→ `cmd resume`); compartilha com o Claude a família de _sink_ por hook (`additionalContext`). 🟢
    - **Agente Antigravity:** não recebe contexto por stdout; o estado é **projetado num arquivo** (`.agents/rules/estado-sessao.md`) relido a cada boot (`FileProjectionSink`). 🟡 (mecanismo declarado, instalação ainda não confirmada — `AntigravityProfile`).
 2. **Bordas de infraestrutura:**

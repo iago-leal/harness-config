@@ -1,10 +1,10 @@
 {
   "generated_at": "2026-06-24T11:35:46-03:00",
-  "reconciled_at": "2026-07-05T00:00:00-03:00",
+  "reconciled_at": "2026-07-15T00:00:00-03:00",
   "project_root": "/Users/iagoleal/dev/harness",
   "languages": [
-    { "name": "Python", "extensions": [".py"], "file_count": 90 },
-    { "name": "Markdown", "extensions": [".md"], "file_count": 18 },
+    { "name": "Python", "extensions": [".py"], "file_count": 92 },
+    { "name": "Markdown", "extensions": [".md"], "file_count": 22 },
     { "name": "Shell", "extensions": [".sh"], "file_count": 1 },
     { "name": "HTML", "extensions": [".html"], "file_count": 2 },
     { "name": "TOML", "extensions": [".toml"], "file_count": 1 },
@@ -55,7 +55,7 @@
   "ci_cd": [".github/workflows/ci.yml"],
   "database_hints": [],
   "test_framework": "pytest",
-  "test_file_count": 33,
+  "test_file_count": 34,
   "modules": [
     ".harness/harness-core/src/core/bootstrap",
     ".harness/harness-core/src/core/formatting",
@@ -70,7 +70,7 @@
     ".harness/harness-core/src/core/ports",
     ".harness/harness-core/src/adapters"
   ],
-  "total_files": 116,
+  "total_files": 122,
   "notes": [
     "Re-extração 2026-06-24: módulo legado `claude-config/` foi PURGADO (commit 5624f78); decisões agora vivem em `.harness/decisoes/` e o índice em `.harness/microdecisoes.md` (feature 005).",
     "Os caminhos de decisão deixaram de ser literais chumbados: `main.py` e `server.py` leem `load_config().decisions` (dir/index_file/header_file da seção `[decisions]` do harness.toml).",
@@ -78,7 +78,8 @@
     "A feature 007 adicionou suporte a `./harness init <destino>` e `./harness upgrade` para bootstrap local de novos repositórios de destino de forma não destrutiva, incluindo checagem passiva e rápida de atualizações no boot.",
     "A feature 008 adicionou gerenciamento determinístico de dependências via uv (requirements.in/txt), pipeline de CI no GitHub Actions e ativou dinamicamente a configuração de formatação (opt-out e exclude_paths) no FormattingService.",
     "RECONCILIAÇÃO 2026-07-05 (pós-features 010-021, este arquivo estava congelado desde 2026-06-24 e não incorporava sequer a relocação de caminhos da feature 011): todos os caminhos `harness-core/...` foram corrigidos para `.harness/harness-core/...` (a relocação em si é da feature 011, mas este surface.json nunca foi atualizado para refleti-la). Módulo `core/migrate` (020) adicionado à lista `modules`. Dependência de MCP corrigida de `mcp` para `fastmcp` (o pacote direto no requirements.in). `test_file_count` de 15 para 33 arquivos `test_*.py` (sem contar `helpers.py`). `total_files` recalculado por amostragem (90 Python + ~18 Markdown + 2 HTML + 1 wrapper + 1 TOML + 2 JSON + 1 YAML, com alguma imprecisão residual esperada de uma contagem heurística, não de auditoria exaustiva arquivo-a-arquivo).",
-    "Não incorporado nesta reconciliação (fora do escopo do Scout, delegado ao Archaeologist/Detective/Architect): semântica detalhada de `core/migrate`, `core/session/close_flow.py` e `core/session/resume_context.py`; reconciliação de `domain.md`/ADRs com as decisões de 019-021; regeneração de `c4-components.md` e `spec-impact-matrix.md` (também congelados desde a feature 009)."
+    "Não incorporado nesta reconciliação (fora do escopo do Scout, delegado ao Archaeologist/Detective/Architect): semântica detalhada de `core/migrate`, `core/session/close_flow.py` e `core/session/resume_context.py`; reconciliação de `domain.md`/ADRs com as decisões de 019-021; regeneração de `c4-components.md` e `spec-impact-matrix.md` (também congelados desde a feature 009).",
+    "RECONCILIAÇÃO 2026-07-15 (pós-MD-0014 e features 022-023): novo módulo `core/decisions/gate.py` (GateVerdict, compute_fingerprint fina para o 3º portão do encerrar-sessao, compute_lembrete_fingerprint grossa para o lembrete do Stop — MD-0015/MD-0016); novo teste `test_decision_gate.py` (test_file_count 33 → 34; Python 90 → 92). O hook PostToolUse (format-on-edit) foi aposentado no perfil Claude (MD-0014) e o evento Stop passou a invocar `harness decisions --gate`. Fichas de decisão: 12 → 16 (MD-0013..MD-0016). Suíte em 300 testes; core 2.1.1."
   ],
   "organization_suggestion": {
     "granularity": "feature",
@@ -110,7 +111,8 @@
       "reprodutibilidade-e-config",
       "session-close-flow-as-skill",
       "fonte-unica-e-migrate",
-      "resume-ancorado-em-decisoes"
+      "resume-ancorado-em-decisoes",
+      "gate-registro-microdecisoes"
     ]
   }
 }

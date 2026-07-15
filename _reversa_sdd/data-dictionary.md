@@ -3,6 +3,7 @@
 > Regenerado pelo Archaeologist em 2026-06-24 (re-extração pós-feature 008-reprodutibilidade-e-config).
 > Nível de documentação: **completo**. Fonte: `.harness/harness-core/src/core/domain/{models.py,config.py,cache.py}` e os serviços que consomem/persistem essas estruturas.
 > **Reconciliação de 2026-07-05** (pós-features 010-021): novo campo `[session].inject_decisions_index` (§6, feature 021); novo agregado de valor `EndSessionOffers`/`PushOffer`/`UpgradeOffer` (§8, feature 014, `session/offers.py` — dataclasses, não Pydantic, exceção deliberada pois são apenas DTOs de decisão da borda); `.harness/decisoes/` cresceu de 5 para 12 fichas (§4).
+> **Reconciliação de 2026-07-15** (pós-MD-0014 e features 022-023): `SessionState` ganhou os campos anti-loop `gate_lembrete_fingerprint`/`gate_encerramento_fingerprint` (§1); `[decisions]` ganhou `require_registration` (§6); novo value-object não persistido `GateVerdict` (§9, `decisions/gate.py`); fichas de 12 para 16 (§4).
 
 Estruturas de dados e modelos de domínio do harness-core. Todos os modelos são Pydantic v2.
 
@@ -20,10 +21,14 @@ Estruturas de dados e modelos de domínio do harness-core. Todos os modelos são
 | `start_time`     | `start_time`          | datetime           | sim         | default `datetime.now(utc)`; coerção ISO, naive→UTC | `2026-06-24T00:02:09+00:00` |
 | `is_active`      | `status`              | bool               | sim         | `status=="active"`→True; senão False                | `active` / `inactive`       |
 | `narrative`      | corpo `##`            | `SessionNarrative` | não         | default vazio                                       | (ver §2)                    |
+| `gate_lembrete_fingerprint` (022) | `gate_lembrete_fingerprint` | str? | não | default `None`; gravado só quando preenchido | sha1 hex (identidade grossa) |
+| `gate_encerramento_fingerprint` (022) | `gate_encerramento_fingerprint` | str? | não | default `None`; gravado só quando preenchido | sha1 hex (identidade fina) |
 
 Campos obrigatórios no front-matter (`serializer._REQUIRED_META`): `commit`, `feature`, `start_time`, `status`. Ausência de qualquer um → `MalformedSessionStateError`.
 
 Métodos de domínio: `start_session(feature, commit)`, `close_session(commit)`, `update_active_feature(feature)` (levanta `ValueError` se sessão inativa).
+
+> 🟢 **Campos anti-loop do gate (022/023):** guardam o último estado de pendência já **lembrado** no Stop (`gate_lembrete_fingerprint`, identidade grossa = `sha1(âncora)`) e já **bloqueado** no encerramento (`gate_encerramento_fingerprint`, identidade fina = `sha1(âncora+HEAD+sujos)`) — o mesmo estado nunca dispara o gate duas vezes. Opcionais e omitidos quando vazios: estados pré-022 permanecem parseáveis e o arquivo fica byte-compatível com o formato anterior enquanto o gate não for acionado. `close_session` os **zera** (não vazam para a próxima sessão). O estado de sessão persiste esses campos por ser a exceção consagrada do pré-check de pendência.
 
 ---
 
@@ -58,7 +63,7 @@ Cada item da lista corresponde a uma linha `- <item>` sob a seção. Helper `is_
 ## 4. `Decision` — microdecisão (ficha do grafo) 🟢
 
 **Modelo:** `src/core/domain/models.py:Decision`. Mapeia o front-matter YAML de cada `MD-*.md`.
-**Persistência:** fichas em `.harness/decisoes/MD-0001..MD-0012.md` (cresceu de 5 para 12 desde a extração anterior). Caminho lido de `[decisions].dir` no `harness.toml`.
+**Persistência:** fichas em `.harness/decisoes/MD-0001..MD-0016.md` (12 → 16 na reconciliação de 2026-07-15). Caminho lido de `[decisions].dir` no `harness.toml`.
 
 | Campo (modelo)  | Chave no front-matter | Tipo                 | Obrigatório | Validação / Default                    |
 | --------------- | --------------------- | -------------------- | ----------- | -------------------------------------- |
@@ -107,11 +112,13 @@ Cada item da lista corresponde a uma linha `- <item>` sob a seção. Helper `is_
 | `[decisions]`  | `dir`                                           | str                                      | `.harness/decisoes`               |
 | `[decisions]`  | `index_file`                                    | str                                      | `.harness/microdecisoes.md`       |
 | `[decisions]`  | `header_file`                                   | str                                      | `.harness/decisoes/_cabecalho.md` |
+| `[decisions]`  | `require_registration` (novo 🟢, feature 022)   | bool                                     | `True`                            |
 | `[session]`    | `state_file`                                    | str                                      | `.harness/estado-da-sessao.md`    |
 | `[session]`    | `inject_decisions_index` (novo 🟢, feature 021) | bool                                     | `True`                            |
 
 > 🟢 **`upstream_path`** e **`version`** foram adicionados na feature 007 à seção `[harness]` para permitir que instalações físicas locais em repositórios de destino retenham metadados que conectam a cópia ao seu core upstream original e acompanhem as atualizações físicas.
 > 🟢 **`inject_decisions_index`** (feature 021): opt-out do apêndice do índice de decisões anexado ao `cmd resume` — só tem efeito quando `active_harness == "claude"` (gate por harness fixado no código, não configurável). Retrocompatível: harness.toml sem a chave assume `True`.
+> 🟢 **`require_registration`** (feature 022): liga o gate de registro de microdecisões (bloqueio no `encerrar-sessao`, lembrete no Stop do Claude, advisory no Antigravity). Habilitado por padrão; desativável por projeto; tomls sem o campo herdam `True`. A granularidade do lembrete (uma vez por sessão) é política fixa no core, sem flag (YAGNI, MD-0016).
 
 ---
 
@@ -148,6 +155,21 @@ Estrutura JSON compilada por `DocumentationService.generate_html` e injetada no 
 
 ---
 
+## 9. `GateVerdict` — veredito do gate de registro (features 022/023, NOVO) 🟢
+
+**Modelo:** `src/core/decisions/gate.py:GateVerdict` (Pydantic). **Não persistido** — vive só durante a avaliação; apenas os dois fingerprints sobrevivem, copiados para os campos anti-loop do `SessionState` (§1) pelas bordas que decidem interceptar.
+
+| Campo                  | Tipo      | Obrigatório | Default | Notas                                                                     |
+| ---------------------- | --------- | ----------- | ------- | ------------------------------------------------------------------------- |
+| `pendente`             | bool      | sim         | —       | `bool(mudancas) and not fichas_tocadas`                                    |
+| `mudancas`             | List[str] | não         | `[]`    | universo (diff da âncora ∪ sujos) menos exclusões e fichas                 |
+| `fichas_tocadas`       | List[str] | não         | `[]`    | caminhos sob `decisions.dir` casando `^MD-.*\.md$`                         |
+| `fingerprint`          | str       | não         | `""`    | identidade **fina**: `sha1(âncora+HEAD+sujos ordenados)` — portão          |
+| `fingerprint_lembrete` | str       | não         | `""`    | identidade **grossa** (023): `sha1(âncora)` — lembrete do Stop             |
+| `aviso`                | str?      | não         | `None`  | preenchido no fail-open (âncora ilegível etc.); a borda ecoa em stderr     |
+
+---
+
 ## Mudanças vs extração anterior (feature 007)
 
 - **`HarnessConfig`** (Consumo Ativo de Configurações): As chaves de formatação (`exclude_paths` e `opt_out_file`) do `HarnessConfig` agora são consumidas dinamicamente pelo `FormattingService`. O suporte à exclusão dinâmica inclui casamento de padrões glob (wildcards como `*` e `?`) via `fnmatch`.
@@ -159,3 +181,11 @@ Estrutura JSON compilada por `DocumentationService.generate_html` e injetada no 
 - **`EndSessionOffers`/`PushOffer`/`UpgradeOffer`** (014): agregado de valor novo, não coberto na extração anterior porque a feature 014 é posterior a ela; documentado agora por ainda estar em uso ativo (consumido por `close_flow.py`, ver code-analysis.md §8).
 - **`Decision`**: mesma forma de dados, mas a população de fichas cresceu de 5 para 12 — sem mudança de schema, só de volume.
 - Nenhuma mudança de schema em `SessionState`/`SessionNarrative`/`SyncCache`/`HARNESS_DOC_DATA` foi identificada no período.
+
+## Mudanças vs extração anterior (MD-0014 + features 022-023, reconciliação 2026-07-15)
+
+- **`SessionState`**: primeira mudança de schema desde a criação — dois campos opcionais anti-loop (`gate_lembrete_fingerprint`, `gate_encerramento_fingerprint`), retrocompatíveis nos dois sentidos (parse tolera ausência; render omite quando vazios).
+- **`DecisionsSection.require_registration`** (022): novo booleano, default `True`.
+- **`GateVerdict`** (022/023): novo value-object transitório (§9).
+- **`HarnessSection.version`**: literal `2.0.1` → `2.1.1`.
+- **`Decision`**: sem mudança de schema; população 12 → 16 fichas (MD-0013..MD-0016).

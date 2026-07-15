@@ -3,6 +3,7 @@
 > Regenerado pelo Archaeologist em 2026-06-24 15:19 (Re-extração após a feature 009-hooks-antigravity; histórico: features 003, 004, 005, 006, 007 e 008). Âncora (HEAD): `e30b9a6`.
 > Projeto: `/Users/iagoleal/dev/harness`. Módulo único: **harness-core** — CLI Python + servidor MCP + **driver de ganchos do Antigravity**, em arquitetura hexagonal (ports & adapters). `doc_level = completo`.
 > **Reconciliação de 2026-07-05** (Archaeologist, pós-features 010-021 — este documento estava congelado desde a 009): nova unidade **13. `core/migrate`** (feature 020); unidade **8. `core/session`** expandida com `close_flow.py` (018, fonte única de orquestração do encerramento) e `resume_context.py` (021, apêndice do índice de decisões no `resume`). Caminhos confirmados sob `.harness/harness-core/` (a relocação em si é da feature 011). `data-dictionary.md` e `modules.json` reconciliados em conjunto — ver notas no rodapé de cada um.
+> **Reconciliação de 2026-07-15** (Archaeologist, pós-MD-0014 e features 022-023): unidade **4. `core/decisions`** ganhou o módulo `gate.py` (gate de registro de microdecisões — avaliação pura, dupla identidade fina/grossa); **8. `core/session`** ganhou o 3º portão no `close_flow.py` e os campos anti-loop no `serializer.py`; **borda** `main.py` ganhou `decisions --gate` (hook Stop) e `cmd encerrar-sessao --sem-decisao`; `GitPort`/`SubprocessGitAdapter` ganharam `list_changed_paths_since`; o `AntigravityHookBridge` ganhou o advisory via `gate_evaluator` injetado; **o PostToolUse (format-on-edit) foi aposentado no perfil Claude** (MD-0014) — `ClaudeProfile.hooks_block()` e `claude_settings.py` não o materializam mais. Core 2.0.1 → **2.1.1**.
 
 Categoria (Princípio nº 4): **Aplicação** — ferramenta com usuário (o próprio mantenedor), evolui no tempo, organizada em camadas.
 
@@ -37,6 +38,7 @@ graph TD
     end
     sess --- closeflow[session/close_flow.py — feature 018]
     sess --- resumectx[session/resume_context.py — feature 021]
+    dec --- gate[decisions/gate.py — features 022/023]
     Services --> Ports[core/ports — fs/git/process]
     Ports -.implementadas por.-> Adapters[adapters — fs/git/process]
     Migrate --> Ports
@@ -140,6 +142,17 @@ A feature 007 introduziu `check_version_update(fs, local_version, upstream_path)
 - Sub-linha `↳ <saídas> · <entradas>` montada por composição.
 - Cabeçalho opcional concatenado no topo. Gravação **atômica**.
 
+### `gate.py` — gate de registro de microdecisões (features 022/023, NOVO) 🟢
+
+**Arquivo:** `src/core/decisions/gate.py` (103 linhas). Avaliação **pura** de pendência de registro: houve trabalho substantivo na sessão sem nenhuma ficha `MD-*.md` nova ou modificada? Agnóstico ao harness (RN-N5): não conhece `active_harness` nem decide COMO interceptar — bloqueio, lembrete ou advisory são escolhas da borda.
+
+- **`evaluate_registration_gate(git, repo_path, session, config) -> GateVerdict`**: universo = `git.list_changed_paths_since(âncora)` ∪ `git.list_dirty_paths()` (trabalho commitado + sujo). Excluem-se o arquivo de estado (`config.session.state_file`), o índice e o cabeçalho de decisões; fichas são os caminhos sob `config.decisions.dir` que casam `^MD-.*\.md$`. `pendente = bool(mudancas) and not fichas`. **Sem filtro por tipo de arquivo** (esclarecimento 2026-07-15: repositórios documentais contam tanto quanto código). **Fail-open barulhento** (RN-05): âncora ilegível/repo sem commit → `pendente=False` + `aviso` preenchido; a borda ecoa em stderr.
+- **`compute_fingerprint(anchor, head, dirty)`** — identidade **fina**, `sha1(âncora + HEAD + sujos ordenados)`: trabalho novo muda o fingerprint e **rearma** o portão do encerramento. Sem relógio (D-03 da 022).
+- **`compute_lembrete_fingerprint(anchor)`** — identidade **grossa** (023/D-02), `sha1(âncora)`: estável do início ao fim da sessão → o lembrete do Stop dispara **no máximo uma vez por sessão**; nem arquivo tocado nem commit novo o rearmam.
+- **`GateVerdict`** (Pydantic, não persistido): `pendente`, `mudancas`, `fichas_tocadas`, `fingerprint` (fina), `fingerprint_lembrete` (grossa), `aviso`. Só os fingerprints sobrevivem, nos campos anti-loop do `SessionState`.
+
+**Três bordas consomem o veredito** (cada uma com sua política): o 3º portão do `SessionCloseFlow` (bloqueio com escape `--sem-decisao`, identidade fina — §8), o ramo `decisions --gate` do `main.py` (soft-block JSON no hook Stop do Claude, identidade grossa — §11) e o `AntigravityHookBridge` (advisory em stderr, nunca bloqueia — §12). Liga/desliga por `decisions.require_registration` (default `True`).
+
 ---
 
 ## 5. `core/commands` — slash commands de sessão agnósticos à IDE 🟢
@@ -179,7 +192,7 @@ Papel: gerar, por **composição**, um prompt Markdown que o usuário cola no ag
 
 `HarnessProfile` (ABC) define `hooks_block()` e `apply_instructions()`; três concretas registradas em `_PROFILES`, resolvidas por `get_profile(name)` (fail-fast em nome desconhecido). O escopo por harness (onde aplicar os ganchos, nunca em diretório global) migrou para `apply_instructions()` dos três perfis — antes estava chumbado no `template.md`.
 
-- **`ClaudeProfile`**: bloco JSON `hooks` real (`SessionStart`→`harness cmd resume`; `PostToolUse` `Write|Edit`→`harness format`; `Stop`→`harness decisions`), com `${CLAUDE_PROJECT_DIR}` e timeouts. `apply_instructions()` aponta o `.claude/settings.json` do projeto.
+- **`ClaudeProfile`**: bloco JSON `hooks` real (`SessionStart`→`harness cmd resume`; `Stop`→`harness decisions --gate`, desde a 022), com `${CLAUDE_PROJECT_DIR}` e timeouts. **O item `PostToolUse → harness format` foi aposentado** (MD-0014): o format-on-edit deixou de ser materializado no Claude (mantidos o pre-commit e o perfil Antigravity). Em `claude_settings.py`, a assinatura `"harness format"` saiu de `_HARNESS_COMMAND_SIGNATURES` e `"harness decisions"` casa a forma com e sem `--gate` — instalações pré-022 são **substituídas** pelo item novo no merge por-item, sem duplicar. `apply_instructions()` aponta o `.claude/settings.json` do projeto.
 - **`GeminiProfile`**: orienta a ponte `context.*` do `settings.json` do Gemini do projeto.
 - **`AntigravityProfile` (deixou de ser placeholder):** `hooks_block()` agora emite, via `json.dumps`, o named-hook `harness` do esquema `hooks.json` do Antigravity — `PreToolUse`/`PostToolUse` com `matcher = WRITE_MATCHER` (`write_to_file|replace_file_content|multi_replace_file_content`) e `Stop` sem matcher, cada um apontando `<ABS>/harness agy-hook {pre-tool-use|post-tool-use|stop}` com timeouts 10/30/10. O literal `ABS_PLACEHOLDER = "<ABS>"` permanece no JSON colável; é resolvido na materialização. `apply_instructions()` aponta o `.agents/hooks.json` do projeto e registra que o `init` já o materializa por merge.
 
@@ -210,7 +223,11 @@ Sequência orquestrada por `SessionCloseFlow.run(repo_path, config, ...)`:
 3. **Fechamento propriamente dito** — delega a `CommandService.execute_command("encerrar-sessao", ...)` (a lógica de domínio de transição de estado permanece lá, inalterada; `close_flow` só decide **quando** chamá-la).
 4. **Ofertas de fim de sessão** (`conduct_end_session_offers`, feature 014, ordem **push → upgrade**, RN-10): cada oferta cabível (`offers.push`/`offers.upgrade`) é anunciada por _marker_ sem TTY ou pergunta `[s/N]` com TTY; a falha de uma ação (rede/push/upgrade) avisa e segue sem abortar a outra nem desfazer o encerramento já concluído (RN-02/RN-09).
 
-🟢 **Sem duplicação CLI↔skill:** `main.py` reexporta `render_offer_markers`, `conduct_end_session_offers`, `pending_work_paths`, `render_commit_pendente_marker`, `conduct_commit_pendente` e `SessionCloseFlow` do core (ver topo do arquivo) — os scripts finos da skill materializada importam os mesmos símbolos, nunca uma cópia paralela.
+**3º portão (feature 022), entre o gate de narrativa e o fechamento:** com `decisions.require_registration` ligado, `evaluate_registration_gate` avalia a pendência de registro — o pré-check já forçou o commit do trabalho, então o diff da âncora enxerga a sessão inteira. Quatro desfechos: (a) `aviso` do veredito ecoa em `err` (fail-open barulhento); (b) pendente + `sem_decisao=True` → o escape auditável (RN-03) grava `"Declarado: sem decisão não óbvia nesta sessão (gate de registro)."` na narrativa (`feito`) e segue — não é o core inventando narrativa (RN-N3), é rastro de ato deliberado; (c) pendente + fingerprint **fino** já bloqueado antes (`gate_encerramento_fingerprint == verdict.fingerprint`) → avisa "pendência não sanada" e **encerra mesmo assim** (anti-loop, RF-04); (d) pendente inédito → persiste o fingerprint no estado, emite `conduct_decisao_pendente` (marker `[HARNESS:DECISAO_PENDENTE mudancas=... total=N acao=...]` sem TTY, cap de 20 caminhos; texto legível com TTY) e **aborta com exit 0** — protocolo abortar-e-reexecutar, o core nunca cria a ficha pelo usuário. A identidade fina garante que trabalho novo após o bloqueio **rearma** o portão (pinado por teste-guarda, 023).
+
+🟢 **Sem duplicação CLI↔skill:** `main.py` reexporta `render_offer_markers`, `conduct_end_session_offers`, `pending_work_paths`, `render_commit_pendente_marker`, `conduct_commit_pendente`, **`render_decisao_pendente_marker`, `conduct_decisao_pendente`** (022) e `SessionCloseFlow` do core (ver topo do arquivo) — os scripts finos da skill materializada importam os mesmos símbolos, nunca uma cópia paralela.
+
+**`serializer.py` (022):** `parse`/`render` ganharam os campos anti-loop `gate_lembrete_fingerprint`/`gate_encerramento_fingerprint` no front-matter — opcionais (estados pré-022 herdam `None`) e gravados **só quando preenchidos** (sem gate acionado, o arquivo permanece byte-compatível com o formato anterior). `SessionState.close_session` os **zera** no fechamento: fingerprints não vazam para a próxima sessão.
 
 ### `resume_context.py` — apêndice do índice de decisões no resume (feature 021) 🟢
 
@@ -228,13 +245,15 @@ Fiação em `main.py` (ramo `cmd resume`, só após `execute_command` produzir o
 
 `load_config(fs, config_path="harness.toml") -> HarnessConfig` expõe as seções da configuração. Na feature 007, a seção `[harness]` (`HarnessSection`) ganhou suporte opcional aos campos `upstream_path` e `version` para possibilitar a rotina evolucionária de atualização e avisos passivos de versão defasada no boot.
 
+**Delta 022/023:** `DecisionsSection` ganhou `require_registration: bool = True` (liga o gate de registro; tomls sem o campo herdam `True`, desativável por projeto — sem flag nova para a granularidade, política fixa no core por YAGNI). `SessionState` (`models.py`) ganhou os campos anti-loop `gate_lembrete_fingerprint`/`gate_encerramento_fingerprint` (opcionais, zerados por `close_session`). O literal de versão em `HarnessSection.version` foi de `2.0.1` para **`2.1.1`** (`CORE_VERSION` derivado dele, fonte única — lembrando que `_get_upstream_version` parseia esta linha por regex, o literal não pode virar expressão).
+
 ---
 
 ## 10. `core/ports` — contratos abstratos 🟢
 
-`fs.py` (`FileSystemPort` com `read_file, write_file, write_file_atomic, exists, list_dir, makedirs, remove, is_dir`), `git.py` (`GitPort`: `get_head_commit, get_remote_commit`), `process.py` (`ProcessPort`: `execute_formatter`, `run_command`).
+`fs.py` (`FileSystemPort` com `read_file, write_file, write_file_atomic, exists, list_dir, makedirs, remove, is_dir`), `git.py` (`GitPort`: `get_head_commit, get_remote_commit, commit_paths, list_dirty_paths, list_changed_paths_since, merge_ff_only`), `process.py` (`ProcessPort`: `execute_formatter`, `run_command`).
 
-As assinaturas `is_dir` e `run_command` foram acrescentadas para viabilizar as rotinas de bootstrap físicas e setup do virtual environment no destino.
+As assinaturas `is_dir` e `run_command` foram acrescentadas para viabilizar as rotinas de bootstrap físicas e setup do virtual environment no destino. **`list_changed_paths_since(repo_path, ref)` (022):** caminhos alterados entre `ref` e o HEAD (`git diff --name-only <ref> HEAD`) — enxerga o trabalho já **commitado** na sessão (diff da âncora), complemento de `list_dirty_paths` (trabalho não commitado). Read-only; ref inválida levanta `RuntimeError` (RN-N4), cabendo à borda tratar como ausência de baseline (o gate converte em fail-open com aviso).
 
 ---
 
@@ -245,7 +264,9 @@ As assinaturas `is_dir` e `run_command` foram acrescentadas para viabilizar as r
 - **`process/formatter.py`** (`HostFormatterAdapter`): Mapeia chamadas do formatador e implementa `run_command` via subprocess.
 - **`mcp/server.py`** (driver MCP — FastMCP "Harness"): Instancia os adaptadores e expõe 4 ferramentas. Incorpora avisos discretos de atualização passiva no boot do servidor MCP.
 - **`antigravity/hook_bridge.py`** (driver de ganchos do Antigravity — `AntigravityHookBridge`, feature 009): terceiro driver de entrada, descrito em detalhe na §12.
-- **`main.py`** (driver CLI v2.0.0): Argparse expandido para expor os subcomandos `init` (inicialização de workspace físico no destino), `upgrade` (atualização evolucionária não destrutiva) e **`agy-hook <evento>`** (feature 009). Incorpora alertas passivos no topo do boot de comandos da CLI.
+- **`main.py`** (driver CLI v2.1.1): Argparse expandido para expor os subcomandos `init` (inicialização de workspace físico no destino), `upgrade` (atualização evolucionária não destrutiva) e **`agy-hook <evento>`** (feature 009). Incorpora alertas passivos no topo do boot de comandos da CLI.
+  - **Flag `decisions --gate` (features 022/023):** modo hook Stop do Claude. Os informativos da validação/indexação migram para `stderr` e o `stdout` fica reservado ao JSON do hook; **exit sempre 0** (inclusive com grafo inválido — sob `--gate` erros de integridade não derrubam o turno; sem a flag, o comportamento manual/post-merge permanece byte-idêntico, MD-0006). Depois da indexação, avalia o gate: com sessão ativa, `require_registration` ligado, veredito `pendente` e **identidade grossa** inédita (`session.gate_lembrete_fingerprint != verdict.fingerprint_lembrete`), persiste a grossa no estado e emite `{"decision": "block", "reason": <marker DECISAO_PENDENTE + orientação>}` — o soft-block dispara **no máximo uma vez por sessão** (023). Qualquer falha interna vira aviso em `stderr` e libera o turno.
+  - **Flag `cmd --sem-decisao` (feature 022):** só para `encerrar-sessao` — declara que não houve decisão não óbvia na sessão; repassada a `SessionCloseFlow.run(..., sem_decisao=...)`, satisfaz o 3º portão deixando rastro auditável na narrativa.
   - **Subcomando `agy-hook` (feature 009):** aceita `event ∈ {pre-tool-use, post-tool-use, stop}` (validado pelo argparse). `agy-hook` foi adicionado à exceção (`args.command not in ("init", "upgrade", "agy-hook")`) tanto do carregamento global de config quanto do check passivo de sync — o gancho de borda **não** usa essa config global; ele a (re)carrega dentro do próprio ramo. Garantia não-bloqueante de borda: TODO o ramo (resolução de config, leitura do stdin, construção de `FormattingService`/`DecisionService`/`AntigravityHookBridge` e a delegação) roda sob `try/except`; o `fallback` exigido por evento (`{"decision": "allow"}` para `pre-tool-use`, senão `{}`) é **pré-computado a partir de `args.event` antes de qualquer operação que possa lançar**, de modo que config corrompida, stdin ilegível ou qualquer outra falha ainda emite o stdout exigido e encerra com **exit 0**. O stdin é lido com guarda de `isatty()`.
 
 ---
@@ -254,7 +275,7 @@ As assinaturas `is_dir` e `run_command` foram acrescentadas para viabilizar as r
 
 **Arquivo:** `src/adapters/antigravity/hook_bridge.py` (162 linhas). Terceiro driver de entrada do hexágono, simétrico à CLI e ao servidor MCP: fala o protocolo de ganchos do Antigravity (stdin/stdout JSON camelCase, um formato por evento) e **delega aos serviços de domínio já existentes**, sem ramificar o core por harness (RN-N5 preservada — o domínio nunca conhece `active_harness`).
 
-`AntigravityHookBridge.__init__(fs, formatting_service, decision_service, decisions_dir, decisions_index_file, decisions_header_file)` recebe `fs` e os serviços por **injeção**; a instanciação concreta fica na borda (`agy-hook` no `main.py`), mantendo o adaptador testável com dublês.
+`AntigravityHookBridge.__init__(fs, formatting_service, decision_service, decisions_dir, decisions_index_file, decisions_header_file, gate_evaluator=None)` recebe `fs` e os serviços por **injeção**; a instanciação concreta fica na borda (`agy-hook` no `main.py`), mantendo o adaptador testável com dublês. **`gate_evaluator` (022, advisory):** callable sem argumentos, montado na borda, que devolve um `GateVerdict` (ou `None` quando o gate não se aplica — sessão inativa ou `require_registration` desligado). No `stop`, pendência vira **aviso em stderr** (`_log`), nunca bloqueio nem reentrada no laço (RN-N26); falha do avaliador é capturada sem descartar a reindexação já feita. O bridge continua sem conhecer git/config.
 
 `handle(event, stdin_text) -> str` despacha por evento e **nunca levanta**: cada ramo passa por `_safe(event, handler, stdin_text, fallback)`, que executa o handler e, em qualquer exceção, loga em `stderr` (erro barulhento, via `_log`) e emite o `fallback` do evento. Evento desconhecido → loga e retorna `{}`. Os três handlers (algoritmo as-built por evento):
 
