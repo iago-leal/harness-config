@@ -42,31 +42,85 @@ def render_commit_pendente_marker(paths: list, *, cap: int = 20) -> str:
     arquivos = ",".join(shown)
     return (
         f'[HARNESS:COMMIT_PENDENTE arquivos="{arquivos}" total={len(paths)}{truncado} '
-        'acao="git add -- <arquivos> e git commit (mensagem descritiva); '
-        'depois rode novamente encerrar-sessao"]'
+        'acao="pergunte ao usuário se deve commitar estas mudanças; só então '
+        "git add -- <arquivos> e git commit (mensagem descritiva) e rode novamente "
+        "encerrar-sessao; se ele recusar e ainda assim quiser encerrar, rode "
+        'encerrar-sessao --com-pendencias"]'
     )
 
 
-def conduct_commit_pendente(paths, *, is_interactive=None, out=print) -> None:
-    """Anuncia trabalho pendente antes de encerrar (dualidade TTY × marker).
+def conduct_commit_pendente(
+    paths, *, is_interactive=None, out=print, asker=None
+) -> bool:
+    """Anuncia trabalho pendente e devolve a autorização de encerrar assim mesmo.
 
-    Sem TTY, emite o marker estruturado para o agente mediar. Com TTY, lista os
-    arquivos em texto legível. Em ambos os casos NÃO commita nem fecha: o commit
-    com mensagem descritiva cabe ao agente/usuário, que então re-roda o comando
-    (RN-03, abortar-e-reexecutar; o core nunca faz ``git add`` do trabalho).
+    Feature 024 (RN-01/RN-06): o commit do trabalho é do agente/usuário, não do
+    core (RN-N5). Esta função apenas ANUNCIA e, no terminal, pergunta o desfecho
+    de segunda ordem — nunca faz ``git add``.
+
+    Sem TTY, emite o marker estruturado para o agente mediar e devolve ``False``
+    (a autorização vem, se vier, da flag ``--com-pendencias`` no chamador). Com
+    TTY, anuncia a contagem à frente (RF-04), lista os caminhos e pergunta pelo
+    ``asker`` se deve encerrar mesmo com trabalho não commitado (RN-06);
+    ``asker=None`` só anuncia e devolve ``False``.
     """
     if is_interactive is None:
         is_interactive = sys.stdin.isatty()
     if not is_interactive:
         out(render_commit_pendente_marker(paths))
-        return
-    out("Há trabalho não commitado (exceto o estado de sessão) antes de encerrar:")
+        return False
+    n = len(paths)
+    plural = "s" if n != 1 else ""
+    out(f"há {n} mudança{plural} não commitada{plural} (exceto o estado de sessão):")
     for p in paths:
         out(f"  - {p}")
-    out(
-        "Commit esse trabalho (git add -- <arquivo> && git commit, com mensagem "
-        "descritiva) e rode encerrar-sessao novamente."
+    if asker is None:
+        return False
+    return asker(
+        f"Encerrar mesmo com {n} mudança{plural} não commitada{plural}? [s/N] "
     )
+
+
+def render_encerramento_nao_versionado_marker(
+    state_file: str, ancora: str, motivo: str
+) -> str:
+    """Marker pós-fechamento: a sessão fechou sem o commit de encerramento (024).
+
+    Primeiro da família emitido DEPOIS do fechamento e informativo (não abortivo).
+    Contrato consumido pelo agente (ver
+    `_reversa_forward/024-oferta-commit-consentida/interfaces/encerramento-nao-versionado-marker.md`).
+    ``motivo`` distingue ``sem-autorizacao`` (ninguém respondeu, sem terminal) de
+    ``recusa-explicita`` (flag ``--sem-commit-encerramento`` ou ``n`` no terminal).
+    """
+    return (
+        f'[HARNESS:ENCERRAMENTO_NAO_VERSIONADO arquivo="{state_file}" '
+        f'ancora="{ancora}" motivo="{motivo}" '
+        'acao="o encerramento não foi versionado; para registrar depois: '
+        f"git add -- {state_file} && git commit; para autorizar na próxima vez, "
+        'rode com --com-commit-encerramento"]'
+    )
+
+
+def conduct_encerramento_nao_versionado(
+    state_file: str, ancora: str, motivo: str, *, is_interactive=None, out=print
+) -> None:
+    """Anuncia o encerramento não versionado (RF-09), depois do sucesso do fechamento.
+
+    Com TTY, precede o marker de um aviso legível (invariante do contrato §5); sem
+    TTY, emite só o marker. Em ambos os casos o marker carrega o ``motivo`` para o
+    agente reagir (esquecimento × decisão do usuário).
+    """
+    if is_interactive is None:
+        is_interactive = sys.stdin.isatty()
+    if is_interactive:
+        razao = (
+            "sem autorização" if motivo == "sem-autorizacao" else "recusa do usuário"
+        )
+        out(
+            f"Encerramento não versionado (motivo: {razao}): o estado de sessão em "
+            f"{state_file} ficou como mudança pendente no working tree."
+        )
+    out(render_encerramento_nao_versionado_marker(state_file, ancora, motivo))
 
 
 def narrative_is_stale(git, repo_path: str, session_file: str, session) -> bool:
@@ -213,8 +267,19 @@ def render_offer_markers(offers) -> list:
     return lines
 
 
-def _ask_yes(question: str) -> bool:
-    return input(question).strip().lower() in ("s", "sim", "y", "yes")
+def _ask_yes(question: str, *, default: bool = False) -> bool:
+    """Lê uma resposta sim/não da entrada, com default configurável (feature 024).
+
+    ``default`` decide o valor de uma resposta VAZIA (Enter): as perguntas com
+    default afirmativo (``[S/n]``, como a do commit de encerramento) tratam o
+    silêncio como sim; as de default negativo (``[s/N]``) o tratam como não. Uma
+    resposta explícita sempre vence o default. Retrocompatível: sem o kwarg, o
+    comportamento é o de antes (empty → não).
+    """
+    ans = input(question).strip().lower()
+    if not ans:
+        return default
+    return ans in ("s", "sim", "y", "yes")
 
 
 def conduct_end_session_offers(
@@ -305,12 +370,24 @@ class SessionCloseFlow:
         asker=_ask_yes,
         is_interactive: Optional[bool] = None,
         sem_decisao: bool = False,
+        com_pendencias: bool = False,
+        versionar_encerramento: Optional[bool] = None,
     ) -> int:
         """Executa o encerramento e devolve o código de saída (0 sucesso, ≠0 falha).
 
         Sequência (espelha o contrato da skill): pré-check de pendência →
-        fechamento → ofertas. Estado malformado e falha de commit do estado
-        encerram barulhento (exit 1), nunca em silêncio (RN-N4/RN-31).
+        narrativa → registro de decisões → fechamento → ofertas. Estado malformado
+        e falha de commit do estado encerram barulhento (exit 1), nunca em
+        silêncio (RN-N4/RN-N31).
+
+        Consentimento (feature 024): dois pontos de decisão que antes eram
+        automáticos passam a exigir aval. ``com_pendencias`` autoriza encerrar com
+        trabalho não commitado (1º portão); ``versionar_encerramento`` é
+        tri-estado — ``True`` autoriza o commit de encerramento, ``False`` o
+        recusa, ``None`` resolve pelo default da borda (terminal pergunta ``[S/n]``;
+        sem terminal, ``None`` vale recusa — RN-08, o silêncio nunca autoriza
+        escrita). No terminal o core só pergunta o que ele mesmo executa (RN-N5):
+        o desfecho diante de pendência e a gravação do commit de encerramento.
         """
         from src.core.commands.service import CommandService
         from src.core.commands.errors import SessionCommitError
@@ -320,6 +397,9 @@ class SessionCloseFlow:
 
             def err(message):
                 print(message, file=sys.stderr)
+
+        if is_interactive is None:
+            is_interactive = sys.stdin.isatty()
 
         service = CommandService(self.fs, self.git)
         session_file = config.session.state_file
@@ -332,14 +412,29 @@ class SessionCloseFlow:
             return self._abort_malformed(session_file, exc, err)
 
         if sessao_existente is not None:
+            # 1º portão — trabalho pendente (016/019), agora consentido (024/RN-06).
+            # No terminal, o core anuncia e pergunta o DESFECHO ("encerrar mesmo
+            # assim?"); sem terminal, emite o marker e a autorização só vem da flag
+            # --com-pendencias. Recusado, aborta sem fechar (early return). O commit
+            # do trabalho segue sendo do agente/usuário (RN-N5): o core nunca chama
+            # git add.
             pendentes = pending_work_paths(self.git, repo_path, session_file)
             if pendentes:
-                # Emite marker / lista (não fecha). O agente commita o trabalho
-                # real e re-roda o encerrar-sessao.
-                conduct_commit_pendente(
-                    pendentes, is_interactive=is_interactive, out=out
+                resposta = conduct_commit_pendente(
+                    pendentes,
+                    is_interactive=is_interactive,
+                    out=out,
+                    asker=(None if com_pendencias else asker),
                 )
-                return 0
+                if not (com_pendencias or resposta):
+                    return 0
+                # Autorizado a encerrar COM trabalho pendente: rastro auditável na
+                # narrativa (D-05), salvo antes de execute_command reler o estado.
+                sessao_existente.narrative.feito.append(
+                    f"Sessão encerrada com {len(pendentes)} mudança(s) não "
+                    "commitada(s) por escolha do usuário."
+                )
+                service.save_session(session_file, sessao_existente)
 
             # Gate de narrativa viva: não se encerra com a narrativa vazia ou
             # congelada desde o início da sessão. Barulhento e não-fechante — o
@@ -392,12 +487,25 @@ class SessionCloseFlow:
                         )
                         return 0
 
+        # Decisão do commit de encerramento (024/RN-04/RN-08). Só quando há sessão
+        # a fechar — o no-op de sessão ausente independe dela.
+        versionar, motivo = True, None
+        if sessao_existente is not None:
+            versionar, motivo = self._resolve_versionar_encerramento(
+                versionar_encerramento, is_interactive=is_interactive, asker=asker
+            )
+
+        # D-11: âncora do marker = HEAD ANTES do fechamento (o mesmo valor que o
+        # estado grava; nada é commitado quando não se versiona).
+        ancora = self.git.get_head_commit(repo_path) if not versionar else None
+
         try:
             result_msg = service.execute_command(
                 command="encerrar-sessao",
                 args=[],
                 repo_path=repo_path,
                 session_filepath=session_file,
+                versionar_estado=versionar,
             )
         except MalformedSessionStateError as exc:
             return self._abort_malformed(session_file, exc, err)
@@ -407,9 +515,21 @@ class SessionCloseFlow:
 
         out(result_msg)
 
-        # Ofertas de fim de sessão (014): SÓ após sucesso, como etapa POSTERIOR e
-        # estritamente não-bloqueante (RN-01/02).
-        if result_msg.startswith("Sessão encerrada com sucesso"):
+        # Só o caminho que de fato fechou (não o no-op "Nenhuma sessão…") emite o
+        # aviso pós-fechamento e conduz as ofertas.
+        if result_msg.startswith("Sessão encerrada"):
+            # Marker de encerramento não versionado (RF-09): DEPOIS do sucesso e
+            # ANTES da oferta de push (invariantes do contrato §5/§6).
+            if not versionar and sessao_existente is not None:
+                conduct_encerramento_nao_versionado(
+                    session_file,
+                    ancora,
+                    motivo,
+                    is_interactive=is_interactive,
+                    out=out,
+                )
+            # Ofertas de fim de sessão (014): etapa POSTERIOR e estritamente
+            # não-bloqueante (RN-01/02).
             self._conduct_offers(
                 repo_path,
                 config,
@@ -419,6 +539,30 @@ class SessionCloseFlow:
                 is_interactive=is_interactive,
             )
         return 0
+
+    @staticmethod
+    def _resolve_versionar_encerramento(
+        versionar_encerramento: Optional[bool], *, is_interactive: bool, asker
+    ):
+        """Resolve o tri-estado do commit de encerramento em ``(versionar, motivo)``.
+
+        Flag explícita vence a pergunta (flags §3, regra derivada 1). Sem flag, o
+        default é por borda (D-07/RN-08): no terminal pergunta com default
+        afirmativo (Enter versiona); sem terminal, o silêncio NÃO autoriza. O
+        ``motivo`` acompanha a recusa para o marker distinguir esquecimento de
+        decisão.
+        """
+        if versionar_encerramento is True:
+            return True, None
+        if versionar_encerramento is False:
+            return False, "recusa-explicita"
+        if is_interactive:
+            ok = asker(
+                "Gravar o commit de encerramento (versiona o estado de sessão)? [S/n] ",
+                default=True,
+            )
+            return (True, None) if ok else (False, "recusa-explicita")
+        return False, "sem-autorizacao"
 
     @staticmethod
     def _abort_malformed(session_file: str, exc, err) -> int:
@@ -478,6 +622,8 @@ __all__ = [
     "pending_work_paths",
     "render_commit_pendente_marker",
     "conduct_commit_pendente",
+    "render_encerramento_nao_versionado_marker",
+    "conduct_encerramento_nao_versionado",
     "narrative_is_stale",
     "render_narrativa_pendente_marker",
     "conduct_narrativa_pendente",

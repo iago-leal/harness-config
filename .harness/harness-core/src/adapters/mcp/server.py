@@ -90,6 +90,15 @@ def process_decisions(
     description="Executa um comando de sessão interativa (encerrar-sessao, resume, handoff, clarificar)",
 )
 def session_command(cmd_name: str, active_feature: Optional[str] = None) -> str:
+    """Borda MCP dos comandos de sessão.
+
+    Assimetria deliberada da feature 024 (D-04): esta borda NÃO tem interlocutor a
+    quem perguntar o consentimento do commit de encerramento, então mantém o
+    default ``versionar_estado=True`` de ``execute_command`` — encerrar via MCP
+    segue versionando o estado, sem pergunta. Propagar aqui a inversão da RN-08
+    produziria fechamento não versionado silencioso, o oposto do pedido. A ressalva
+    está declarada na RN-04 do requirements da 024.
+    """
     service = CommandService(fs, git)
     config = load_config(fs)
     session_file = config.session.state_file

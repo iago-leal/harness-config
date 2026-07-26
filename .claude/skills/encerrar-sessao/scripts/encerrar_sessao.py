@@ -29,6 +29,36 @@ def main() -> int:
             "gate de registro; a declaração fica registrada na narrativa)."
         ),
     )
+    # Feature 024: paridade de superfície com a borda CLI (RN-N33). Mesmas flags,
+    # mesmos textos de --help (consequência, não efeito mecânico).
+    parser.add_argument(
+        "--com-pendencias",
+        action="store_true",
+        dest="com_pendencias",
+        help=(
+            "Encerra mesmo havendo trabalho não commitado (a declaração fica "
+            "registrada na narrativa)."
+        ),
+    )
+    grupo_commit_encerramento = parser.add_mutually_exclusive_group()
+    grupo_commit_encerramento.add_argument(
+        "--com-commit-encerramento",
+        action="store_true",
+        dest="com_commit_encerramento",
+        help=(
+            "Autoriza versionar o estado de sessão ao encerrar. Sem terminal "
+            "interativo, sem esta flag o estado não é versionado."
+        ),
+    )
+    grupo_commit_encerramento.add_argument(
+        "--sem-commit-encerramento",
+        action="store_true",
+        dest="sem_commit_encerramento",
+        help=(
+            "Encerra sem versionar o estado de sessão; ele fica como mudança "
+            "pendente no working tree."
+        ),
+    )
     args = parser.parse_args()
 
     try:
@@ -60,9 +90,18 @@ def main() -> int:
         return code
 
     # 2. Encerra a sessão: pré-check de pendência → gate de narrativa → gate de
-    #    registro de decisões (022) → fechamento → ofertas.
+    #    registro de decisões (022) → fechamento consentido (024) → ofertas.
+    versionar_encerramento = None
+    if args.com_commit_encerramento:
+        versionar_encerramento = True
+    elif args.sem_commit_encerramento:
+        versionar_encerramento = False
     return SessionCloseFlow(fs, git, process).run(
-        os.getcwd(), config, sem_decisao=args.sem_decisao
+        os.getcwd(),
+        config,
+        sem_decisao=args.sem_decisao,
+        com_pendencias=args.com_pendencias,
+        versionar_encerramento=versionar_encerramento,
     )
 
 

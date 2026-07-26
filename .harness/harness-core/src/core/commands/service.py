@@ -28,10 +28,25 @@ class CommandService:
         self.fs.write_file_atomic(filepath, serializer.render(state))
 
     def execute_command(
-        self, command: str, args: List[str], repo_path: str, session_filepath: str
+        self,
+        command: str,
+        args: List[str],
+        repo_path: str,
+        session_filepath: str,
+        *,
+        versionar_estado: bool = True,
     ) -> str:
         """
         Executa um slash command de forma agnóstica à IDE.
+
+        ``versionar_estado`` (feature 024/D-03): quando ``True`` (default, que
+        preserva todos os chamadores atuais — inclusive a borda MCP), o
+        encerramento grava o commit de encerramento por cima do trabalho, como
+        antes. Quando ``False``, o estado é fechado no arquivo mas NÃO versionado
+        (o ``commit_paths`` é pulado); o desfecho fica registrado na narrativa
+        (D-05) e o arquivo permanece como mudança pendente no working tree. A
+        decisão chega pronta da borda (``SessionCloseFlow``), que sabe se há
+        terminal e autorização; o serviço permanece livre de IO de pergunta.
         """
         cmd_normalized = command.strip().lower().lstrip("/")
 
@@ -49,7 +64,8 @@ class CommandService:
 
             # Âncora = último commit de TRABALHO, capturada ANTES de qualquer
             # escrita. O commit de encerramento fica por cima; a âncora nunca
-            # aponta para ele (BR-MIGRAR-014 / BR-MIGRAR-015, RN-07).
+            # aponta para ele (BR-MIGRAR-014 / BR-MIGRAR-015, RN-07). Sem
+            # versionamento, o HEAD nem se move, e a âncora coincide com ele.
             ancora = self.git.get_head_commit(repo_path)
             feature = session.active_feature
 
@@ -60,6 +76,29 @@ class CommandService:
                 # mantido pelo anúncio na mensagem de saída, não por um erro.
                 session.start_session(feature, ancora)
             session.close_session(ancora)
+
+            if not versionar_estado:
+                # Desfecho não versionado (024/RN-04/RN-08): fecha no arquivo, não
+                # commita. Registra o ato na narrativa (D-05, RN-N3: o core não
+                # inventa narrativa, apenas registra ato deliberado); o motivo
+                # detalhado vive no marker da borda.
+                session.narrative.feito.append(
+                    "Encerramento não versionado: o estado de sessão ficou como "
+                    "mudança pendente no working tree."
+                )
+                self.save_session(session_filepath, session)
+                msg = (
+                    f"Sessão encerrada (sem versionar o estado) na feature "
+                    f"'{feature}' com âncora {ancora}; o estado de sessão ficou "
+                    "como mudança pendente no working tree."
+                )
+                if reativada:
+                    msg += (
+                        "\n(Sessão estava inativa; reativada automaticamente antes "
+                        "de encerrar.)"
+                    )
+                return msg
+
             self.save_session(session_filepath, session)
 
             # Versiona SOMENTE o arquivo de estado (jamais git add -A): o registro

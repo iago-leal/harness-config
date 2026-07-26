@@ -134,6 +134,55 @@ def test_execute_encerrar_sessao():
     assert FakeGit.CLOSING_HEAD in msg
 
 
+def test_execute_encerrar_sessao_sem_versionar_fecha_sem_commit():
+    # Feature 024/D-03: versionar_estado=False fecha o estado no arquivo, NÃO
+    # chama commit_paths e acrescenta a linha declarativa na narrativa (D-05).
+    fs = MockFileSystem()
+    work_head = "a" * 40
+    git = FakeGit(work_head)
+    service = CommandService(fs, git)
+    session_file = "session.md"
+
+    state = SessionState(commit_hash=work_head, active_feature="feat-1")
+    service.save_session(session_file, state)
+
+    msg = service.execute_command(
+        "encerrar-sessao", [], "repo/", session_file, versionar_estado=False
+    )
+
+    # Estado fechado no arquivo, mas nenhum commit criado.
+    loaded = service.load_session(session_file)
+    assert loaded.is_active is False
+    assert loaded.commit_hash == work_head
+    assert git.commit_calls == []
+
+    # Mensagem anuncia o não-versionamento (não "com sucesso").
+    assert "sem versionar" in msg
+    assert "com sucesso" not in msg
+
+    # Linha declarativa gravada na narrativa (visível na retomada seguinte).
+    assert any("não versionado" in item for item in loaded.narrative.feito)
+
+
+def test_execute_encerrar_sessao_versionar_default_preserva_rn_n31():
+    # Teste-guarda: o default versionar_estado=True mantém o comportamento da
+    # RN-N31 (commit do estado por cima do trabalho), intacto para o MCP e demais.
+    fs = MockFileSystem()
+    work_head = "a" * 40
+    git = FakeGit(work_head)
+    service = CommandService(fs, git)
+    session_file = "session.md"
+    service.save_session(
+        session_file, SessionState(commit_hash=work_head, active_feature="feat-1")
+    )
+
+    msg = service.execute_command("encerrar-sessao", [], "repo/", session_file)
+
+    assert len(git.commit_calls) == 1
+    assert git.commit_calls[0][1] == [session_file]
+    assert "Sessão encerrada com sucesso" in msg
+
+
 def test_execute_encerrar_sessao_falha_commit_preserva_estado():
     fs = MockFileSystem()
     work_head = "a" * 40

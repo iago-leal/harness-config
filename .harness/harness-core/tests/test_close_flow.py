@@ -15,7 +15,12 @@ from src.core.domain.models import SessionState, SessionNarrative
 from src.core.commands.service import CommandService
 from src.core.ports.git import GitPort
 from src.core.session import serializer
-from src.core.session.close_flow import SessionCloseFlow
+from src.core.session.close_flow import (
+    SessionCloseFlow,
+    conduct_commit_pendente,
+    render_commit_pendente_marker,
+    render_encerramento_nao_versionado_marker,
+)
 from tests.helpers import MockFileSystem
 
 STATE_FILE = ".harness/estado-da-sessao.md"
@@ -121,15 +126,37 @@ def _seed_active_session(fs, git, narrative=None):
     CommandService(fs, git).save_session(STATE_FILE, state)
 
 
-def _run(flow, *, out=None, err=None, is_interactive=False):
+def _run(
+    flow,
+    *,
+    out=None,
+    err=None,
+    is_interactive=False,
+    asker=None,
+    sem_decisao=False,
+    com_pendencias=False,
+    versionar_encerramento=True,
+):
+    """Roda o fluxo com o desfecho de fechamento AUTORIZADO por default.
+
+    ``versionar_encerramento=True`` por default: os testes deste helper exercitam
+    o caminho que de fato fecha, e a feature 024 exige aval explícito para o commit
+    de encerramento (sem terminal, o default se inverte). Os testes do
+    consentimento em si passam o valor conforme o cenário; os de aborto (pendência
+    / narrativa / registro) nem chegam a esta decisão.
+    """
     outs, errs = [], []
-    code = flow.run(
-        "repo/",
-        _config(),
+    kwargs = dict(
         out=(out or outs.append),
         err=(err or errs.append),
         is_interactive=is_interactive,
+        sem_decisao=sem_decisao,
+        com_pendencias=com_pendencias,
+        versionar_encerramento=versionar_encerramento,
     )
+    if asker is not None:
+        kwargs["asker"] = asker
+    code = flow.run("repo/", _config(), **kwargs)
     return code, outs, errs
 
 
@@ -450,6 +477,7 @@ def test_gate_escape_sem_decisao_registra_na_narrativa_e_fecha():
         err=lambda _m: None,
         is_interactive=False,
         sem_decisao=True,
+        versionar_encerramento=True,
     )
 
     assert code == 0
@@ -513,7 +541,12 @@ def test_gate_desligado_por_config_nao_dispara():
     )
     outs = []
     code = flow.run(
-        "repo/", config, out=outs.append, err=lambda _m: None, is_interactive=False
+        "repo/",
+        config,
+        out=outs.append,
+        err=lambda _m: None,
+        is_interactive=False,
+        versionar_encerramento=True,
     )
 
     assert code == 0
@@ -523,9 +556,7 @@ def test_gate_desligado_por_config_nao_dispara():
 
 def test_gate_fingerprints_zerados_no_fechamento():
     fs = MockFileSystem()
-    git = FakeGit(
-        dirty=[], changed_since=["docs/x.md", ".harness/decisoes/MD-0015.md"]
-    )
+    git = FakeGit(dirty=[], changed_since=["docs/x.md", ".harness/decisoes/MD-0015.md"])
     _seed_active_session(fs, git)
     # Estado herdado com fingerprint de lembrete (Stop) preenchido.
     state = serializer.parse(fs.read_file(STATE_FILE))
@@ -539,3 +570,309 @@ def test_gate_fingerprints_zerados_no_fechamento():
     persisted = serializer.parse(fs.read_file(STATE_FILE))
     assert persisted.gate_lembrete_fingerprint is None
     assert persisted.gate_encerramento_fingerprint is None
+
+
+# ===========================================================================
+# Feature 024 — oferta de commit consentida (fim do commit automático).
+# Dois pontos de decisão: commit do trabalho pendente (RN-06) e commit de
+# encerramento (RN-04/RN-08), com default assimétrico por borda (D-07).
+
+
+def _config_sem_gate_decisoes():
+    # Isola os cenários de pendência/encerramento do 3º portão (022): o gate de
+    # decisões é ortogonal a esta feature e dispararia sobre o trabalho sujo.
+    return HarnessConfig(
+        session={"state_file": STATE_FILE},
+        decisions={"require_registration": False},
+    )
+
+
+# --- T003/T004: renderizadores (unidade) -----------------------------------
+
+
+def test_marker_commit_pendente_vira_oferta_preservando_formato():
+    # RF-01/RF-10: o campo `acao` deixa de ordenar e passa a descrever a oferta;
+    # arquivos/total/truncado/mostrados e o teto de 20 ficam byte a byte.
+    marker = render_commit_pendente_marker(["a.txt", "b.txt"])
+    assert 'arquivos="a.txt,b.txt"' in marker
+    assert "total=2" in marker
+    assert "truncado" not in marker
+    # Oferta, não ordem: pergunta antes, e aponta a saída da recusa.
+    assert "pergunte ao usuário se deve commitar" in marker
+    assert "--com-pendencias" in marker
+
+    # Truncamento: total real preservado, teto de 20 mantido.
+    muitos = [f"f{i}.txt" for i in range(34)]
+    marker_trunc = render_commit_pendente_marker(muitos)
+    assert "total=34" in marker_trunc
+    assert "truncado=true mostrados=20" in marker_trunc
+
+
+def test_marker_encerramento_nao_versionado_formato():
+    # RF-09: contrato do marker pós-fechamento (arquivo, ancora, motivo, acao).
+    marker = render_encerramento_nao_versionado_marker(
+        STATE_FILE, WORK_HEAD, "sem-autorizacao"
+    )
+    assert marker.startswith("[HARNESS:ENCERRAMENTO_NAO_VERSIONADO")
+    assert f'arquivo="{STATE_FILE}"' in marker
+    assert f'ancora="{WORK_HEAD}"' in marker
+    assert 'motivo="sem-autorizacao"' in marker
+    assert "--com-commit-encerramento" in marker
+
+
+# --- T006: pré-check interativo (unidade + fluxo) --------------------------
+
+
+def test_conduct_commit_pendente_interativo_conta_lista_e_pergunta():
+    # RF-04: contagem à frente, lista abaixo, pergunta de segunda ordem (RN-06).
+    outs, perguntas = [], []
+
+    def asker(q, *, default=False):
+        perguntas.append(q)
+        return True
+
+    autorizado = conduct_commit_pendente(
+        ["a.txt", "b.txt", "c.txt", "d.txt", "e.txt", "f.txt", "g.txt"],
+        is_interactive=True,
+        out=outs.append,
+        asker=asker,
+    )
+
+    assert autorizado is True
+    assert any("há 7 mudanças não commitadas" in o for o in outs)
+    # A lista dos caminhos aparece abaixo da contagem.
+    assert any("  - a.txt" in o for o in outs)
+    # Pergunta o DESFECHO (encerrar assim mesmo), não "quer que eu commite?".
+    assert perguntas and "Encerrar mesmo com 7 mudança" in perguntas[0]
+
+
+def test_conduct_commit_pendente_sem_tty_emite_marker_e_nega():
+    outs = []
+    autorizado = conduct_commit_pendente(
+        ["x.txt"], is_interactive=False, out=outs.append, asker=None
+    )
+    assert autorizado is False
+    assert any("[HARNESS:COMMIT_PENDENTE" in o for o in outs)
+
+
+def test_flow_pendente_recusa_no_terminal_aborta_sem_fechar():
+    # RF-06: recusada a segunda ordem ("encerrar assim mesmo?"), não fecha.
+    fs = MockFileSystem()
+    git = FakeGit(dirty=["trabalho.txt"])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(
+        flow,
+        is_interactive=True,
+        asker=lambda q, *, default=False: False,  # recusa a 2ª ordem
+    )
+
+    assert code == 0
+    assert any("há 1 mudança não commitada" in o for o in outs)
+    assert git.commit_calls == []
+    assert flow.offers_called == 0
+
+
+# --- T027: pendências autorizadas gravam a declaração ----------------------
+
+
+def test_flow_com_pendencias_fecha_e_declara_na_narrativa():
+    # --com-pendencias libera o 1º portão (sem terminal) e grava o rastro.
+    fs = MockFileSystem()
+    git = FakeGit(dirty=["trabalho.txt"])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    outs = []
+    code = flow.run(
+        "repo/",
+        _config_sem_gate_decisoes(),
+        out=outs.append,
+        err=lambda _m: None,
+        is_interactive=False,
+        com_pendencias=True,
+        versionar_encerramento=True,
+    )
+
+    assert code == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    # Ainda anuncia (marker), mas fecha por causa da flag.
+    assert any("[HARNESS:COMMIT_PENDENTE" in o for o in outs)
+    persisted = serializer.parse(fs.read_file(STATE_FILE))
+    assert any(
+        "não commitada(s) por escolha do usuário" in item
+        for item in persisted.narrative.feito
+    )
+
+
+# --- T007: decisão do commit de encerramento -------------------------------
+
+
+def test_encerramento_consentido_no_terminal_versiona():
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    perguntas = []
+
+    def asker(q, *, default=False):
+        perguntas.append((q, default))
+        return True  # autoriza
+
+    code, outs, _ = _run(
+        flow, is_interactive=True, asker=asker, versionar_encerramento=None
+    )
+
+    assert code == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    assert git.commit_calls and git.commit_calls[0][1] == [STATE_FILE]
+    # A pergunta do encerramento tem default AFIRMATIVO (D-07).
+    assert any(
+        "commit de encerramento" in q and default is True for q, default in perguntas
+    )
+
+
+def test_encerramento_recusado_no_terminal_fecha_sem_commit_com_marker():
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(
+        flow,
+        is_interactive=True,
+        asker=lambda q, *, default=False: False,  # recusa o encerramento
+        versionar_encerramento=None,
+    )
+
+    assert code == 0
+    assert any("Sessão encerrada (sem versionar" in o for o in outs)
+    assert git.commit_calls == []  # nada versionado
+    marker = next(o for o in outs if "[HARNESS:ENCERRAMENTO_NAO_VERSIONADO" in o)
+    assert 'motivo="recusa-explicita"' in marker
+    # Ofertas ainda conduzidas após o fechamento (não bloqueadas).
+    assert flow.offers_called == 1
+
+
+def test_arvore_limpa_vai_direto_a_decisao_de_encerramento():
+    # Gherkin "árvore limpa": só o estado sujo → pula a oferta de commit do
+    # trabalho e vai direto à decisão do commit de encerramento.
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[STATE_FILE])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    perguntas = []
+
+    def asker(q, *, default=False):
+        perguntas.append(q)
+        return True
+
+    code, outs, _ = _run(
+        flow, is_interactive=True, asker=asker, versionar_encerramento=None
+    )
+
+    assert code == 0
+    assert not any("[HARNESS:COMMIT_PENDENTE" in o for o in outs)
+    # A única pergunta feita é a do commit de encerramento.
+    assert len(perguntas) == 1
+    assert "commit de encerramento" in perguntas[0]
+
+
+# --- T026: flag vence a pergunta -------------------------------------------
+
+
+def test_flag_de_encerramento_vence_a_pergunta_no_terminal():
+    # Com a flag, o asker não é chamado para a decisão do encerramento.
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    def asker_proibido(q, *, default=False):
+        raise AssertionError("a flag já respondeu; não deve perguntar")
+
+    code, outs, _ = _run(
+        flow,
+        is_interactive=True,
+        asker=asker_proibido,
+        versionar_encerramento=False,  # recusa explícita por flag
+    )
+
+    assert code == 0
+    assert git.commit_calls == []
+    marker = next(o for o in outs if "[HARNESS:ENCERRAMENTO_NAO_VERSIONADO" in o)
+    assert 'motivo="recusa-explicita"' in marker
+
+
+# --- T009: duas sessões encadeadas após fechamento não versionado ----------
+
+
+def test_estado_sujo_nao_dispara_precheck_nem_gate_na_sessao_seguinte():
+    # O state_file deixado sujo pelo fechamento não versionado NÃO vira pendência
+    # em cascata (excluído por caminho exato, RN-N34) nem infla o 3º portão
+    # (excluído do universo do gate, RN-N43).
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[STATE_FILE], changed_since=[STATE_FILE])
+    _seed_active_session(fs, git)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    assert not any("[HARNESS:COMMIT_PENDENTE" in o for o in outs)
+    assert not any("[HARNESS:DECISAO_PENDENTE" in o for o in outs)
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+
+
+# --- T010: os portões 2 e 3 seguem inalterados sob as flags novas ----------
+
+
+def test_flags_novas_nao_furam_o_gate_de_narrativa():
+    # Guarda: as flags de consentimento não bypassam o gate de narrativa viva.
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git, narrative=SessionNarrative())  # vazia
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow, com_pendencias=True, versionar_encerramento=True)
+
+    assert code == 0
+    assert any("[HARNESS:NARRATIVA_PENDENTE" in o for o in outs)
+    assert git.commit_calls == []
+    assert flow.offers_called == 0
+
+
+def test_marker_nao_versionado_sai_depois_do_sucesso_e_antes_das_ofertas():
+    # Invariantes do contrato §5/§6 (A014): o marker pós-fechamento é emitido
+    # DEPOIS da mensagem de sucesso e ANTES da oferta de push.
+    fs = MockFileSystem()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git)
+
+    class OrderFlow(SessionCloseFlow):
+        def _conduct_offers(self, *args, **kwargs):
+            kwargs.get("out", print)("[SENTINELA_OFERTAS]")
+
+    flow = OrderFlow(fs, git, MagicMock())
+    outs = []
+    code = flow.run(
+        "repo/",
+        _config(),
+        out=outs.append,
+        err=lambda _m: None,
+        is_interactive=False,
+        versionar_encerramento=False,
+    )
+
+    assert code == 0
+    idx_sucesso = next(
+        i for i, o in enumerate(outs) if o.startswith("Sessão encerrada")
+    )
+    idx_marker = next(
+        i for i, o in enumerate(outs) if "ENCERRAMENTO_NAO_VERSIONADO" in o
+    )
+    idx_oferta = next(i for i, o in enumerate(outs) if "SENTINELA_OFERTAS" in o)
+    assert idx_sucesso < idx_marker < idx_oferta

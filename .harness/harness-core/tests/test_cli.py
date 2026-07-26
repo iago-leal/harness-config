@@ -431,7 +431,9 @@ def test_encerrar_sessao_inativa_reativa_e_fecha(tmp_path):
     )
 
     result = subprocess.run(
-        [python_bin, main_path, "cmd", "encerrar-sessao"],
+        # Feature 024/RN-08: subprocess não tem TTY; sem a flag o estado não seria
+        # versionado. Autoriza explicitamente para exercitar o fechamento feliz.
+        [python_bin, main_path, "cmd", "encerrar-sessao", "--com-commit-encerramento"],
         capture_output=True,
         text=True,
         cwd=str(tmp_path),
@@ -466,6 +468,159 @@ def test_encerrar_com_trabalho_solto_emite_marker_e_nao_fecha(tmp_path):
     assert "trabalho.txt" in result.stdout
     # Não fechou: o estado permanece ativo.
     assert "status: active" in estado.read_text()
+
+
+def _seed_clean_committed_session(tmp_path):
+    """Sessão ativa com árvore limpa (tudo commitado), pronta p/ a decisão de encerramento.
+
+    Sem TTY (subprocess) e com árvore limpa, o fluxo chega direto à decisão do
+    commit de encerramento (024). A âncora "a"*40 não existe no histórico: os
+    portões de narrativa e de decisões abrem por fail-open, isolando a matriz de
+    resolução das flags.
+    """
+    _seed_session_repo(tmp_path, "a" * 40, "active")
+    subprocess.run(["git", "add", "-A"], cwd=str(tmp_path), capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "seed"], cwd=str(tmp_path), capture_output=True
+    )
+
+
+def _commit_count(tmp_path):
+    out = subprocess.run(
+        ["git", "rev-list", "--count", "HEAD"],
+        cwd=str(tmp_path),
+        capture_output=True,
+        text=True,
+    )
+    return int(out.stdout.strip())
+
+
+def test_encerrar_sem_terminal_sem_flag_nao_versiona_e_avisa(tmp_path):
+    # 024/RF-08/RN-08: sem TTY e sem flag, o default se inverte — nada é
+    # versionado e o marker de aviso torna o desfecho visível.
+    main_path, python_bin = _harness_cli_paths()
+    _seed_clean_committed_session(tmp_path)
+    antes = _commit_count(tmp_path)
+
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "encerrar-sessao"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode == 0
+    assert "sem versionar" in result.stdout
+    assert "[HARNESS:ENCERRAMENTO_NAO_VERSIONADO" in result.stdout
+    assert 'motivo="sem-autorizacao"' in result.stdout
+    # Nenhum commit novo criado.
+    assert _commit_count(tmp_path) == antes
+    # Ordem: o marker sai DEPOIS da mensagem de fechamento.
+    assert result.stdout.index("Sessão encerrada") < result.stdout.index(
+        "[HARNESS:ENCERRAMENTO_NAO_VERSIONADO"
+    )
+
+
+def test_encerrar_sem_terminal_com_flag_versiona_sem_marker(tmp_path):
+    # 024/RF-08: com --com-commit-encerramento, o estado é versionado e nenhum
+    # marker de aviso é emitido.
+    main_path, python_bin = _harness_cli_paths()
+    _seed_clean_committed_session(tmp_path)
+    antes = _commit_count(tmp_path)
+
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "encerrar-sessao", "--com-commit-encerramento"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode == 0
+    assert "Sessão encerrada com sucesso" in result.stdout
+    assert "ENCERRAMENTO_NAO_VERSIONADO" not in result.stdout
+    assert _commit_count(tmp_path) == antes + 1
+
+
+def test_encerrar_sem_terminal_sem_commit_flag_e_recusa_explicita(tmp_path):
+    # 024: --sem-commit-encerramento não versiona (idêntico ao default no
+    # desfecho), mas o motivo é recusa-explicita, não sem-autorizacao.
+    main_path, python_bin = _harness_cli_paths()
+    _seed_clean_committed_session(tmp_path)
+    antes = _commit_count(tmp_path)
+
+    result = subprocess.run(
+        [python_bin, main_path, "cmd", "encerrar-sessao", "--sem-commit-encerramento"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode == 0
+    assert 'motivo="recusa-explicita"' in result.stdout
+    assert _commit_count(tmp_path) == antes
+
+
+def test_encerrar_flags_mutuamente_exclusivas_erro_de_uso(tmp_path):
+    # 024/D-08: passar as duas flags de encerramento juntas é erro de uso do
+    # argparse (código 2), sem efeito sobre a sessão.
+    main_path, python_bin = _harness_cli_paths()
+    _seed_clean_committed_session(tmp_path)
+    antes = _commit_count(tmp_path)
+
+    result = subprocess.run(
+        [
+            python_bin,
+            main_path,
+            "cmd",
+            "encerrar-sessao",
+            "--com-commit-encerramento",
+            "--sem-commit-encerramento",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+    assert result.returncode == 2
+    assert "not allowed with" in result.stderr or "não" in result.stderr.lower()
+    # Nada mudou na sessão.
+    assert _commit_count(tmp_path) == antes
+
+
+def test_encerrar_com_pendencias_sem_terminal_fecha(tmp_path):
+    # 024: com trabalho sujo e sem TTY, --com-pendencias libera o 1º portão e o
+    # fluxo segue (aqui, com --com-commit-encerramento para versionar o estado).
+    main_path, python_bin = _harness_cli_paths()
+    _seed_clean_committed_session(tmp_path)
+    (tmp_path / "trabalho.txt").write_text("rascunho")
+
+    # Sem --com-pendencias: emite COMMIT_PENDENTE e não fecha.
+    r1 = subprocess.run(
+        [python_bin, main_path, "cmd", "encerrar-sessao", "--com-commit-encerramento"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+    assert "[HARNESS:COMMIT_PENDENTE" in r1.stdout
+
+    # Com --com-pendencias: fecha, versionando só o estado.
+    r2 = subprocess.run(
+        [
+            python_bin,
+            main_path,
+            "cmd",
+            "encerrar-sessao",
+            "--com-pendencias",
+            "--com-commit-encerramento",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+    assert r2.returncode == 0
+    assert "Sessão encerrada com sucesso" in r2.stdout
+    # O trabalho solto continua fora do histórico.
+    assert (tmp_path / "trabalho.txt").exists()
 
 
 def test_cmd_regen_runs_configured_command(tmp_path):

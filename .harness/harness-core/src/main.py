@@ -26,6 +26,8 @@ from src.core.session.close_flow import (  # noqa: F401
     pending_work_paths,
     render_commit_pendente_marker,
     conduct_commit_pendente,
+    render_encerramento_nao_versionado_marker,
+    conduct_encerramento_nao_versionado,
     render_decisao_pendente_marker,
     conduct_decisao_pendente,
     SessionCloseFlow,
@@ -140,6 +142,38 @@ def build_parser() -> argparse.ArgumentParser:
             "Só para encerrar-sessao: declara que não houve decisão não óbvia "
             "nesta sessão (satisfaz o gate de registro; a declaração fica "
             "registrada na narrativa do estado de sessão)."
+        ),
+    )
+    # Feature 024: consentimento para escrita no git ao encerrar. Os textos de
+    # --help dizem a CONSEQUÊNCIA, não o efeito mecânico, e são idênticos ao
+    # script fino da skill (paridade RN-N33).
+    parser_cmd.add_argument(
+        "--com-pendencias",
+        action="store_true",
+        dest="com_pendencias",
+        help=(
+            "Só para encerrar-sessao: encerra mesmo havendo trabalho não "
+            "commitado (a declaração fica registrada na narrativa)."
+        ),
+    )
+    grupo_commit_encerramento = parser_cmd.add_mutually_exclusive_group()
+    grupo_commit_encerramento.add_argument(
+        "--com-commit-encerramento",
+        action="store_true",
+        dest="com_commit_encerramento",
+        help=(
+            "Só para encerrar-sessao: autoriza versionar o estado de sessão ao "
+            "encerrar. Sem terminal interativo, sem esta flag o estado não é "
+            "versionado."
+        ),
+    )
+    grupo_commit_encerramento.add_argument(
+        "--sem-commit-encerramento",
+        action="store_true",
+        dest="sem_commit_encerramento",
+        help=(
+            "Só para encerrar-sessao: encerra sem versionar o estado de sessão; "
+            "ele fica como mudança pendente no working tree."
         ),
     )
 
@@ -352,9 +386,7 @@ def main():
                 and session is not None
                 and session.is_active
             ):
-                verdict = evaluate_registration_gate(
-                    git, os.getcwd(), session, config
-                )
+                verdict = evaluate_registration_gate(git, os.getcwd(), session, config)
                 if verdict.aviso:
                     print(f"Aviso: {verdict.aviso}", file=sys.stderr)
                 if (
@@ -407,9 +439,20 @@ def main():
         # também alimenta os scripts finos da skill — fonte única, sem duplicar a
         # orquestração (pré-check de pendência → fechamento → ofertas).
         if cmd_name_norm == "encerrar-sessao":
+            # Tri-estado do commit de encerramento a partir das flags exclusivas
+            # (024): ausência das duas → None (default resolvido pela borda).
+            versionar_encerramento = None
+            if args.com_commit_encerramento:
+                versionar_encerramento = True
+            elif args.sem_commit_encerramento:
+                versionar_encerramento = False
             sys.exit(
                 SessionCloseFlow(fs, git, process).run(
-                    os.getcwd(), config, sem_decisao=args.sem_decisao
+                    os.getcwd(),
+                    config,
+                    sem_decisao=args.sem_decisao,
+                    com_pendencias=args.com_pendencias,
+                    versionar_encerramento=versionar_encerramento,
                 )
             )
 
@@ -648,9 +691,7 @@ def main():
                 )
                 if session is None or not session.is_active:
                     return None
-                return evaluate_registration_gate(
-                    git, os.getcwd(), session, agy_config
-                )
+                return evaluate_registration_gate(git, os.getcwd(), session, agy_config)
 
             bridge = AntigravityHookBridge(
                 fs=fs,
