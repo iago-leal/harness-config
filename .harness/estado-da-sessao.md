@@ -1,11 +1,16 @@
 ---
-commit: d23a097249ed88d00c7741a2215f5173096d178a
+commit: dc1dc8323ff3dbde633666dbbfcd7381d0a7dc08
 feature: saneamento do T7 (cache de sync com fonte única em layout.py)
-start_time: '2026-07-15T22:28:48.632585+00:00'
+start_time: '2026-07-26T16:05:18.000200+00:00'
 status: inactive
 ---
 
 ## O que foi feito
+- **Feature 024 — encerramento com consentimento (MD-0017)**: o fechamento deixou de escrever no git por iniciativa própria. Dois pontos de decisão com default assimétrico por borda — no terminal a pergunta do commit de encerramento tem default afirmativo; sem terminal (hook/script) o silêncio não autoriza e exige `--com-commit-encerramento`, produzindo o marker `ENCERRAMENTO_NAO_VERSIONADO` quando ausente. Tocou `close_flow.py`, `main.py`, `commands/service.py`, o MCP e a skill `encerrar-sessao` (assets + as duas cópias materializadas); core em **2.2.0**; suíte em **320 verdes**.
+- **Auditoria do `harness init`** (pergunta de partida da sessão): está atualizado. Materializa a partir do código em execução (fonte única da 020), entrega `SessionStart → cmd resume` e `Stop → decisions --gate` sem o `PostToolUse` aposentado pela MD-0014, e a skill `encerrar-sessao` dos assets é byte-a-byte igual às cópias instaladas, já com o consentimento da MD-0017. O merge por-item reconhece a instalação pré-022 pela assinatura `harness decisions` e a substitui em vez de duplicar.
+- **Diagnosticado o aviso "nova versão disponível" que aparecia em outro projeto**: vem do alerta passivo de `main.py:284-300`, que lê o literal de versão do **working tree** do upstream (`check_version_update`) e por isso dispara sem commit nem push — distinto da oferta de fim de sessão (014), que só enxerga `origin/main`. A varredura dos `harness.toml` de `~/dev` e `~/Empresas` isolou a origem: a **raiz `~/dev`**, congelada em 1.2.55.
+- **Saneada a instalação adaptada da raiz `~/dev`** (commit `536577c` lá): três defeitos do `upgrade-raiz.sh`, todos derivados da colisão do nome `harness` com esta pasta. (i) O script não sincronizava o `version` do `harness.toml`, passo 5 do `upgrade_project` nativo — a raiz ficava com código novo e etiqueta velha, reclamando para sempre. (ii) O patch que troca o wrapper pelo python direto apaga a assinatura que o `claude_settings.py` usa para se reconhecer, de modo que cada execução **anexava** um gancho em vez de substituir: a raiz acumulara três `SessionStart` e três `Stop`, um deles ainda sem `--gate`. (iii) Os ganchos git do `bootstrap` testam `[ -x ./harness ]`, que na raiz é o **diretório** do upstream — o teste passava, a chamada morria com `is a directory` e **todo `git commit` na raiz falhava**. Script corrigido nos três pontos e verificado por reexecução.
+- **Removido resíduo** `.claude/skills/encerrar-sessao/.harness/microdecisoes.md` (1 byte, sobra de execução com cwd errado dentro da pasta da skill).
 - **Re-extração `/reversa` de reconciliação pós-MD-0014 e features 022/023, completa (7/7 itens do plano)**: Scout → Archaeologist → Detective → Architect → Writer → Reviewer → Regression-check, execução autônoma sequencial. Escopo: incorporar a `_reversa_sdd/` o gate de registro de microdecisões (022), a dupla identidade do lembrete (023) e a aposentadoria do format-on-edit no Claude (MD-0014).
 - **Scout/Archaeologist**: `inventory.md`/`surface.json` (92 Python, 34 `test_*.py`, 16 fichas, suíte 300, core 2.1.1; hooks do Claude sem `PostToolUse`, Stop com `--gate`); `code-analysis.md` com nova subseção `gate.py` (§4), 3º portão (§8), bordas `--gate`/`--sem-decisao` (§11) e advisory (§12); `data-dictionary.md` (§1 campos anti-loop, §6 `require_registration`, §9 `GateVerdict`); `modules.json`.
 - **Detective**: `domain.md` §2.19–2.21 (**RN-N42..N47**) + 5 conceitos novos no glossário; `state-machines.md` (encerramento com **três portões**, fingerprints zerados no fechamento); `permissions.md`; **ADRs 0022 e 0023** novos (0002 já emendado pela sessão da MD-0014).
@@ -16,16 +21,19 @@ status: inactive
 - Declarado: sem decisão não óbvia nesta sessão (gate de registro).
 
 ## Próximos passos
-- **Propagar à base instalada**: `upgrade`/`migrate` nos projetos-alvo e core-raiz de `~/dev` via `.harness/upgrade-raiz.sh` (leva o gate da 022 calibrado pela 023).
+- **Correção de fundo do reconhecimento de assinatura**: fazer o `claude_settings.py` reconhecer também a forma `…/src/main.py <subcomando>`, para que instalações adaptadas (a raiz `~/dev`, hoje a única) parem de depender da deduplicação feita à mão pelo `upgrade-raiz.sh`. Candidata a microdecisão + feature curta.
+- **Investigar o índice de microdecisões gravado relativo ao cwd**: apareceram dois `.harness/microdecisoes.md` de 1 byte fora da raiz (dentro de `.claude/skills/encerrar-sessao/` e de `_reversa_forward/024-…/`), ambos removidos nesta sessão. Sugere que algum caminho do `decisions` resolve o índice pelo diretório corrente em vez da raiz do projeto.
+- **Reconciliar o `_reversa_sdd/` com a feature 024** (a re-extração anterior parou em 022/023) e propagar o core 2.2.0 ao resto da base instalada.
 - **Retomar a feature "estrutura de pastas advisory"** (pausada na clarificação): falta travar o gatilho fino e os sinais para virar `reversa-requirements`.
 - **`harness migrate` real** nos ~17 projetos com layout copiado (manual, `!`); **descontinuação de `sync`/`upgrade`/oferta-014** segue feature futura; **mini-site** ainda cita literal antigo do cache (regenerar via `/reversa-docs`); **G-11** inalterado.
 - 💡 Reversa 1.2.43 → 1.2.52 disponível no npm (`npx reversa update`), se quiser atualizar o framework em si.
 
 ## Pendências / bloqueios
-- Sem bloqueios. Push para `origin/main` autorizado e executado nesta sessão (commit da re-extração + commit de registro).
-- Vault: segue sem nota-projeto do `harness` no Obsidian (reconfirmado na sessão anterior; nada a atualizar).
+- Sem bloqueios. A raiz `~/dev` está em 2.2.0, com um gancho de cada evento e `git commit` novamente funcional; lá o `CLAUDE.md` ficou fora do commit por tratar do índice de projetos, assunto alheio à manutenção.
+- Vault: segue sem nota-projeto do `harness` no Obsidian (nada a atualizar).
 
 ## Ponteiros
-- Artefatos reconciliados: `_reversa_sdd/` (domain §2.19–2.21, ADRs 0022/0023, spec-impact com linha `decisions/gate`, confidence-report com o resumo do delta), `.reversa/{state.json,plan.md}` (bloco "Re-extração 2026-07-15" e `last_reextraction` com o regression_check 23 features/0 vermelhos).
-- Históricos de regressão gravados em: `_reversa_forward/{022,023}/regression-watch.md` (primeira verificação) e `{004,009,014,018,019,020,021}/regression-watch.md` (re-verificação dirigida, blocos de 2026-07-15 19:22).
-- Decisões: nenhuma ficha nova (declarado `--sem-decisao`); base MD-0001..MD-0016 inalterada.
+- Feature 024: `_reversa_forward/024-oferta-commit-consentida/` (requirements → actions → regression-watch) e ficha `.harness/decisoes/MD-0017.md`; código em `core/session/close_flow.py`, `main.py`, `core/commands/service.py`, `adapters/mcp/server.py`; testes em `test_close_flow.py`, `test_cli.py`, `test_commands.py`.
+- Raiz `~/dev`: `.harness/upgrade-raiz.sh` (agora sincroniza versão, deduplica ganchos do `settings.json` e reaponta os ganchos git para o python do core), commit `536577c`.
+- Artefatos da re-extração anterior: `_reversa_sdd/` (domain §2.19–2.21, ADRs 0022/0023, spec-impact com linha `decisions/gate`) e `.reversa/{state.json,plan.md}` (bloco "Re-extração 2026-07-15").
+- Decisões: base MD-0001..MD-0017.
