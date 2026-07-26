@@ -1,0 +1,28 @@
+{"ts":"2026-07-24T10:47:58Z","action":"T001","status":"done","files":["tests/"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T002","status":"done","files":["src/core/domain/models.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T003","status":"done","files":["tests/test_close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T004","status":"done","files":["tests/test_close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T005","status":"done","files":["tests/test_commands.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T006","status":"done","files":["tests/test_close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T007","status":"done","files":["tests/test_close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T008","status":"done","files":["tests/test_cli.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T009","status":"done","files":["tests/test_close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T010","status":"done","files":["tests/test_close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T011","status":"done","files":["src/core/session/close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T012","status":"done","files":["src/core/session/close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T013","status":"done","files":["src/core/commands/service.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T014","status":"done","files":["src/core/session/close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T015","status":"done","files":["src/core/session/close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T016","status":"done","files":["src/main.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T017","status":"done","files":[".claude/skills/encerrar-sessao/scripts/encerrar_sessao.py",".agents/skills/encerrar-sessao/scripts/encerrar_sessao.py","src/core/install/assets/skills/encerrar-sessao/scripts/encerrar_sessao.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T018","status":"done","files":[".claude/skills/encerrar-sessao/SKILL.md",".agents/skills/encerrar-sessao/SKILL.md","src/core/install/assets/skills/encerrar-sessao/SKILL.md"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T019","status":"done","files":["src/adapters/mcp/server.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T020","status":"done","files":["src/main.py",".claude/skills/encerrar-sessao/scripts/encerrar_sessao.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T021","status":"done","files":["src/core/domain/config.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T022","status":"done","files":["tests/"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T023","status":"done","files":["manual (smoke git real: cenários E/F/G + subpasta não rastreada)"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T024","status":"done","files":[".harness/decisoes/MD-0017.md",".harness/microdecisoes.md"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T025","status":"done","files":["tests/test_cli.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T026","status":"done","files":["tests/test_close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T027","status":"done","files":["tests/test_close_flow.py"]}
+{"ts":"2026-07-24T10:47:58Z","action":"T028","status":"pending","files":["manual (propagação à base instalada, fora deste repo)"]}

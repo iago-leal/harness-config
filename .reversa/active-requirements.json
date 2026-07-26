@@ -1,10 +1,16 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/023-granularidade-lembrete-gate",
-  "feature-id": "023",
-  "short-name": "granularidade-lembrete-gate",
-  "started-at": "2026-07-15T17:56:43-03:00",
-  "current-stage": "requirements",
-  "stages-completed": [],
+  "feature-dir": "_reversa_forward/024-oferta-commit-consentida",
+  "feature-id": "024",
+  "short-name": "oferta-commit-consentida",
+  "started-at": "2026-07-23T00:00:00-03:00",
+  "current-stage": "coding",
+  "stages-completed": [
+    "requirements",
+    "clarify",
+    "plan",
+    "to-do",
+    "audit"
+  ],
   "paused-features": []
 }
