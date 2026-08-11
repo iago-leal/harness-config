@@ -116,3 +116,29 @@ _Reavaliado em 2026-07-05: nenhum recurso aplicável neste projeto; agentes marc
 - [x] **Writer** — reconciliação incremental (units `session`, `microdecisoes`, nova `progress`; code-spec-matrix)
 - [x] **Reviewer** — atualização do relatório de confiança
 - [x] **Regression-check** — primeira verificação de 024/025/026/027 + varredura das 27 features
+
+## Re-extração 2026-08-11-b (reconciliação pós-feature 028 — índice de decisões sob demanda)
+
+> Escopo: reconciliação incremental do delta desde a rodada 024-027 (mesma data, mais
+> cedo). Uma feature do ciclo forward: 028 (MD-0022) substituiu a injeção do índice
+> integral de microdecisões no SessionStart por uma visão compacta derivada
+> (`.harness/decisoes-recentes.md`: contagem, ponteiros, K=10 mais recentes só com
+> títulos), derivada na MESMA passada do índice nas duas bordas (CLI `decisions` e
+> `_handle_stop` da ponte Antigravity), com write-only-when-changed nas duas escritas,
+> fallback autoresolvente para o índice completo no resume e trecho de guidance
+> idempotente gravado pelo init no arquivo da engine (marcador `<!-- harness:decisoes -->`).
+> Config: `DecisionsSection.compact_file`/`compact_index_size` (ge=0). Core 2.6.0,
+> suíte 389. Também no delta: MD-0021 (abandono do vault Obsidian no encerramento,
+> decisão operacional sem código), README.md novo na raiz e ajuda da CLI corrigida.
+> Atenção: todo o delta existe apenas na árvore de trabalho, sem commit.
+> Detective revisa a RN-N41 in-place e cria o ADR 0028; Writer reconcilia as units
+> `microdecisoes` e `session`; encerra com regression-check (step-04): primeira
+> verificação da 028 (W001-W008) + varredura dirigida das features tocadas pelo diff.
+
+- [x] **Scout** ✅ — atualização estrutural no delta (inventory, surface.json)
+- [x] **Archaeologist** ✅ — atualização estrutural no delta (code-analysis, data-dictionary, modules.json)
+- [x] **Detective** ✅ — reconciliação incremental (domain: RN-N41 revisada + §2.26 nova; permissions; ADR 0028)
+- [x] **Architect** ✅ — atualização estrutural (architecture, c4-components, erd-complete, spec-impact-matrix)
+- [x] **Writer** ✅ — reconciliação incremental (units `microdecisoes`, `comandos-customizados` e `bootstrap` — o contrato do resume vive em comandos-customizados, `session` não muda na 028; code-spec-matrix)
+- [x] **Reviewer** ✅ — atualização do relatório de confiança (delta 028 ~98% 🟢; G-19 registrado; nenhuma pergunta nova)
+- [x] **Regression-check** ✅ — primeira verificação da 028 (W001-W008: 8/8 🟢) + varredura dirigida (005/007/009/012/021 verdes; W001 da 021 arquivado por supersessão da 028; achado G-20/T8: MCP `process_decisions` não derivava a compacta — fechado no mesmo dia por TDD direto, MD-0023, core 2.6.1)

@@ -1,7 +1,8 @@
 {
   "generated_at": "2026-06-24T14:15:30Z",
-  "reconciled_at": "2026-08-11T00:00:00-03:00",
+  "reconciled_at": "2026-08-11T16:30:00-03:00",
   "reconciliation_notes": [
+    "RECONCILIAÇÃO 2026-08-11-b (pós-feature 028, MD-0022): submódulo 'decisions' ganhou compile_compact_view (visão compacta .harness/decisoes-recentes.md derivada na MESMA passada do índice) e os auxiliares _extract_title/_write_if_changed (write-only-when-changed nas duas visões); 'session' teve build_decisions_appendix estendido com compact_file (precedência compacta→índice com fallback); 'bootstrap' ganhou _ensure_decisions_guidance no init (trecho idempotente por marcador '<!-- harness:decisoes -->' em CLAUDE.md/AGENTS.md/GEMINI.md); DecisionsSection ganhou compact_file/compact_index_size (ge=0). Bordas main.py (ramo decisions) e AntigravityHookBridge._handle_stop derivam a compacta após o índice. Core 2.5.0 → 2.6.0; suíte 372 → 389.",
     "RECONCILIAÇÃO 2026-07-15 (pós-MD-0014 e features 022-023): submódulo 'decisions' expandido com gate.py (gate de registro de microdecisões — evaluate_registration_gate, compute_fingerprint fina, compute_lembrete_fingerprint grossa, GateVerdict); GitPort/SubprocessGitAdapter ganharam list_changed_paths_since; close_flow.py ganhou o 3º portão (render_decisao_pendente_marker/conduct_decisao_pendente + parâmetro sem_decisao); main.py ganhou 'decisions --gate' e 'cmd --sem-decisao'; AntigravityHookBridge ganhou gate_evaluator (advisory); ClaudeProfile/claude_settings deixaram de materializar o PostToolUse format-on-edit (MD-0014) e o Stop passou a 'decisions --gate'. Core 2.1.1.",
     "Todos os caminhos foram corrigidos de 'harness-core/...' para '.harness/harness-core/...' (a relocação física é da feature 011; este modules.json nunca havia sido atualizado para refleti-la, mesmo em extrações posteriores).",
     "Novo submódulo 'migrate' (feature 020).",
@@ -81,6 +82,11 @@
             {
               "description": "O upgrade atualiza o core e o wrapper mas preserva a pasta de dados .harness/decisoes/ e .reversa/",
               "location": ".harness/harness-core/src/core/bootstrap/init_service.py:82",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Guidance de microdecisões (028): último passo do init grava trecho no arquivo da engine (claude→CLAUDE.md, antigravity→AGENTS.md, gemini→GEMINI.md), idempotente pelo marcador '<!-- harness:decisoes -->' — arquivo ausente cria, marcador presente não toca, presente sem marcador faz append preservando o conteúdo; o upgrade nunca toca esse arquivo",
+              "location": ".harness/harness-core/src/core/bootstrap/init_service.py:330",
               "confidence": "confirmed"
             }
           ],
@@ -215,7 +221,7 @@
         {
           "name": "decisions",
           "path": ".harness/harness-core/src/core/decisions",
-          "purpose": "Carga, validação de integridade do grafo e compilação do índice de microdecisões com backlinks. Desde a feature 021, o índice compilado aqui é também lido em runtime por session.resume_context. Desde a 022, abriga também o gate de registro (gate.py): avaliação pura de pendência de registro de decisão, consumida por três bordas (portão do encerramento, hook Stop do Claude, advisory do Antigravity).",
+          "purpose": "Carga, validação de integridade do grafo e compilação das DUAS visões derivadas de microdecisões: o índice completo com backlinks e, desde a 028, a visão compacta (.harness/decisoes-recentes.md — contagem, ponteiros, K fichas mais recentes só com títulos), ambas na mesma passada e com escrita condicionada a mudança. Desde a 028 é a compacta que session.resume_context injeta no resume (índice como fallback). Desde a 022, abriga também o gate de registro (gate.py): avaliação pura de pendência de registro de decisão, consumida por três bordas (portão do encerramento, hook Stop do Claude, advisory do Antigravity).",
           "primary_files": [
             ".harness/harness-core/src/core/decisions/service.py",
             ".harness/harness-core/src/core/decisions/gate.py"
@@ -246,6 +252,19 @@
                 "decisions: List[Decision]",
                 "output_filepath: str",
                 "header_filepath: Optional[str]"
+              ],
+              "returns": "None",
+              "confidence": "confirmed"
+            },
+            {
+              "name": "compile_compact_view",
+              "file": ".harness/harness-core/src/core/decisions/service.py",
+              "params": [
+                "decisions: List[Decision]",
+                "output_filepath: str",
+                "index_file: str",
+                "decisions_dir: str",
+                "max_items: int"
               ],
               "returns": "None",
               "confidence": "confirmed"
@@ -292,6 +311,11 @@
             {
               "description": "Aresta órfã (target inexistente) é erro de integridade",
               "location": ".harness/harness-core/src/core/decisions/service.py:77",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Visão compacta (028): derivada na mesma passada do índice, K fichas mais recentes por ID decrescente sem backlinks; título extraído num único ponto (_extract_title, regex do H1 com fallback para o ID); escrita condicionada a mudança (_write_if_changed) nas DUAS visões — sem mudança nas fichas, mtime imóvel.",
+              "location": ".harness/harness-core/src/core/decisions/service.py:139",
               "confidence": "confirmed"
             },
             {
@@ -664,7 +688,8 @@
               "params": [
                 "fs: FileSystemPort",
                 "index_file: str",
-                "enabled: bool"
+                "enabled: bool",
+                "compact_file: Optional[str] = None"
               ],
               "returns": "str",
               "confidence": "confirmed"
@@ -707,12 +732,17 @@
               "confidence": "confirmed"
             },
             {
-              "description": "Apêndice do índice de decisões só ativo quando active_harness == claude e inject_decisions_index == True; ausência de índice é não-bloqueante (retorna string vazia)",
+              "description": "Apêndice de decisões só ativo quando active_harness == claude e inject_decisions_index == True; ausência das fontes é não-bloqueante (retorna string vazia)",
               "location": ".harness/harness-core/src/core/session/resume_context.py:13",
               "confidence": "confirmed"
             },
             {
-              "description": "Índice de decisões é anexado DEPOIS do estado da sessão, cedendo sob truncamento do sink (RN-N8)",
+              "description": "Precedência compacta→índice (028): com compact_file presente e não vazio injeta a visão compacta ('## Decisões recentes (índice completo sob demanda)'); compacta ausente → fallback autoresolvente para o índice completo (aviso em stderr fica na borda); sem compact_file, comportamento 021 byte-idêntico",
+              "location": ".harness/harness-core/src/core/session/resume_context.py:30",
+              "confidence": "confirmed"
+            },
+            {
+              "description": "Apêndice de decisões é anexado DEPOIS do estado da sessão, cedendo sob truncamento do sink (RN-N8)",
               "location": ".harness/harness-core/src/core/session/resume_context.py:19",
               "confidence": "confirmed"
             }
@@ -866,7 +896,8 @@
             "DecisionsSection",
             "SyncCache",
             "HarnessSection",
-            "SessionSection (agora com inject_decisions_index, feature 021)"
+            "SessionSection (agora com inject_decisions_index, feature 021)",
+            "DecisionsSection.compact_file/compact_index_size (feature 028)"
           ],
           "dependencies": [
             "ports.fs"

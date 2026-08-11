@@ -10,7 +10,6 @@
   "forward_folder": "_reversa_forward",
   "phase": "concluido",
   "reextraction_started_at": "2026-08-11",
-  "reextraction_completed_at": "2026-08-11",
   "completed": [
     "reconhecimento",
     "escavacao",
@@ -22,92 +21,65 @@
   "checkpoints": {
     "scout": {
       "completed_at": "2026-08-11",
-      "files": [
+      "scope": "dirigida (feature 028: MD-0022, visão compacta de decisões)",
+      "artifacts": [
         "_reversa_sdd/inventory.md",
         ".reversa/context/surface.json"
       ],
-      "note": "dependencies.md sem mudança (nenhuma dependência nova nas features 024-027)"
+      "notes": "Sem módulo novo; fichas 20→22; suíte 372→389; core 2.6.0; artefato derivado novo .harness/decisoes-recentes.md; README.md novo na raiz; delta 028 sem commit."
     },
     "archaeologist": {
       "completed_at": "2026-08-11",
-      "modules_analyzed": [
-        "core/progress (NOVO, 026/027)",
-        "core/commands (024)",
-        "core/session/close_flow (024)",
-        "main.py decisions --gate (025) e ramo progress (026/027)",
-        "core/domain/config (ProgressSection/ProgressKanbanSection)"
-      ],
-      "modules_pending": [],
-      "files": [
+      "scope": "dirigida (feature 028)",
+      "artifacts": [
         "_reversa_sdd/code-analysis.md",
         "_reversa_sdd/data-dictionary.md",
         ".reversa/context/modules.json"
-      ]
+      ],
+      "notes": "compile_compact_view/_extract_title/_write_if_changed em decisions; resume_context com precedência compacta→índice; guidance idempotente no init (passo 7 do §1); DecisionsSection.compact_file/compact_index_size; bordas main.py e hook_bridge derivam a compacta na mesma passada."
     },
     "detective": {
       "completed_at": "2026-08-11",
-      "files": [
+      "scope": "dirigida (feature 028)",
+      "artifacts": [
         "_reversa_sdd/domain.md",
-        "_reversa_sdd/state-machines.md",
         "_reversa_sdd/permissions.md",
-        "_reversa_sdd/adrs/0024-consentimento-escrita-git-encerramento.md",
-        "_reversa_sdd/adrs/0025-aposentadoria-soft-block-stop.md",
-        "_reversa_sdd/adrs/0026-medidor-progresso-derivado.md",
-        "_reversa_sdd/adrs/0027-exportador-kanban-namespace.md"
+        "_reversa_sdd/adrs/0028-visao-compacta-decisoes-resume.md"
       ],
-      "note": "RN-N31 e RN-N44 revisadas in-place; secoes 2.22-2.25 novas (RN-N48..N55); maquina de sessao com oferta consentida e tri-estado; matriz de permissoes com linha progress e 4 salvaguardas novas; ADRs 0024-0027 criados."
+      "notes": "RN-N41 revisada in-place (§2.18: compacta como primária, fallback autoresolvente); nova §2.26 com RN-N56 (duas visões/uma passada/duas bordas), RN-N57 (compacta é artefato derivado, estende RN-N12) e RN-N58 (guidance write-once por marcador); glossário com 2 entradas; permissions com linhas init/decisions/cmd resume atualizadas e nova salvaguarda; ADR 0028 criado; MD-0021 registrada como nota de rodada (decisão operacional sem código)."
     },
     "architect": {
       "completed_at": "2026-08-11",
-      "files": [
+      "scope": "dirigida (feature 028)",
+      "artifacts": [
         "_reversa_sdd/architecture.md",
-        "_reversa_sdd/c4-containers.md",
         "_reversa_sdd/c4-components.md",
         "_reversa_sdd/erd-complete.md",
         "_reversa_sdd/traceability/spec-impact-matrix.md"
       ],
-      "note": "Reconciliação estrutural 024-027: 13 unidades (core/progress novo), C4 com ProgressService/artefatos derivados, ERD com PROGRESS_SECTION/PROGRESS_KANBAN_SECTION + efêmeras MEDICAO, spec-impact com linhas ✨✨✨✨ e subseções 024-027. Core 2.5.0; 025/026/027 não commitadas."
+      "notes": "Nenhum componente novo (a 028 vive em métodos de componentes existentes); architecture §4 com item novo da visão compacta + item do resume revisado, §6 com ADR 0028; c4 com compile_compact_view/_extract_title/_write_if_changed, resume_context revisto e config 2.6.0; ERD com DECISIONS_SECTION.compact_file/compact_index_size e população 20→22; spec-impact com subseção 028 e 5 linhas da matriz atualizadas."
     },
     "writer": {
       "completed_at": "2026-08-11",
-      "files": [
-        "_reversa_sdd/session/requirements.md",
-        "_reversa_sdd/session/design.md",
+      "scope": "dirigida (feature 028)",
+      "artifacts": [
         "_reversa_sdd/microdecisoes/requirements.md",
         "_reversa_sdd/microdecisoes/design.md",
-        "_reversa_sdd/progress/requirements.md",
-        "_reversa_sdd/progress/design.md",
-        "_reversa_sdd/progress/tasks.md",
+        "_reversa_sdd/comandos-customizados/requirements.md",
+        "_reversa_sdd/bootstrap/requirements.md",
         "_reversa_sdd/traceability/code-spec-matrix.md"
       ],
-      "note": "Nova unit progress/ (f026/f027, RN-N50..N55); session/ reconciliada com o consentimento da f024 (RN-N48/N49, RF-08); microdecisoes/ com o advisory da f025 (RN-N44 revisada, RF-06 reescrito); code-spec-matrix com 12 units e os artefatos derivados novos."
+      "notes": "O contrato do resume vive em comandos-customizados (não em session/, restrita a serializer/sinks): RN-N41 e RF-08 revisados + 2 cenários novos. microdecisoes com RN-N56/N57, RF-08 novo e design de compile_compact_view; bootstrap com nota do guidance write-once (RN-N58); code-spec-matrix com nota 028 e 4 linhas atualizadas. session/ intocada (a 028 não muda serializer/sinks/estado)."
     },
     "reviewer": {
       "completed_at": "2026-08-11",
-      "files": [
+      "scope": "dirigida (feature 028)",
+      "artifacts": [
         "_reversa_sdd/confidence-report.md",
         "_reversa_sdd/gaps.md",
         "_reversa_sdd/questions.md"
       ],
-      "note": "Delta 024-027: ~73 afirmações, ~97% 🟢, 0 🔴; 5 🟡 enumerados. gaps.md +G-16/G-17/G-18 (registros informativos); questions.md sem pergunta nova (clarify da 027 já respondido). 025/026/027 não commitadas."
-    },
-    "regression_check": {
-      "completed_at": "2026-08-11",
-      "files": [
-        "_reversa_forward/024-oferta-commit-consentida/regression-watch.md",
-        "_reversa_forward/025-aposentar-soft-block-stop/regression-watch.md",
-        "_reversa_forward/026-medidor-progresso-entregaveis/regression-watch.md",
-        "_reversa_forward/027-exportador-kanban/regression-watch.md",
-        "_reversa_forward/013-commit-encerrar-sessao/regression-watch.md",
-        "_reversa_forward/014-oferta-upgrade-ao-encerrar/regression-watch.md",
-        "_reversa_forward/015-corrige-encerrar-sessao-noop/regression-watch.md",
-        "_reversa_forward/016-encerrar-sessao-autonomo/regression-watch.md",
-        "_reversa_forward/018-encerrar-sessao-como-skill/regression-watch.md",
-        "_reversa_forward/019-oferta-commit-cobre-harness/regression-watch.md",
-        "_reversa_forward/022-hook-registro-decisoes/regression-watch.md",
-        "_reversa_forward/023-granularidade-lembrete-gate/regression-watch.md"
-      ],
-      "note": "024-027: primeira verificação, 30 itens 🟢, 0 🔴. Re-verificação por diff: 013/014/015/016/018/019/022/023. Supersessões da 025 arquivadas (022 W005; 023 W002/W004, 🟡 deliberados). Seções de reconciliação das 025/026/027 resolvidas (marca do medidor eliminada dos watch)."
+      "notes": "Delta 028 com ~98% de confiança (🟢 96% / 🟡 4% / 🔴 0): único 🟡 é a contagem de 389 testes, relatada na sessão e não re-executada nesta rodada. Nenhuma lacuna nem pergunta nova; G-19 registrado (guidance write-once não retroativa — risco aceito na MD-0022, não lacuna). MD-0021 tratada como nota de rodada (decisão operacional sem código)."
     }
   },
   "redator_progress": [
@@ -118,8 +90,8 @@
   ],
   "last_reextraction": {
     "date": "2026-08-11",
-    "scope": "dirigida (features 024-027: MD-0017..MD-0020)",
-    "verdict": "🟢 sem regressão; 3 supersessões deliberadas arquivadas (MD-0018)"
+    "scope": "dirigida (feature 028: MD-0022, visão compacta de decisões; rodada b)",
+    "verdict": "🟢 sem regressão (028: 8/8 verdes); 1 supersessão deliberada arquivada (W001 da 021 → 028); achado G-20/T8 fechado no mesmo dia por TDD direto (MD-0023, core 2.6.1, suíte 390)"
   },
   "engines": [
     "claude-code",

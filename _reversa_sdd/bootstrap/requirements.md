@@ -3,6 +3,7 @@
 > Regenerado pelo Writer em 2026-06-24 (Re-extração pós-feature 007)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
 > Rastreabilidade ao Legado: [`.harness/harness-core/src/core/bootstrap/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/bootstrap/service.py) e [`.harness/harness-core/src/core/bootstrap/init_service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/bootstrap/init_service.py). Drivers: `src/main.py` (subcomandos `bootstrap`, `init` e `upgrade`).
+> **Reconciliação de 2026-08-11-b (feature 028, não commitada nesta data):** o `init` ganhou um último passo, `_ensure_decisions_guidance(target_path, active_harness)` — grava no arquivo da engine ativa (claude→`CLAUDE.md`, antigravity→`AGENTS.md`, gemini→`GEMINI.md`) o trecho de guidance que ensina o agente a consultar microdecisões sob demanda (visão compacta → índice → fichas). Idempotente pelo marcador `<!-- harness:decisoes -->` (presente → não regrava; ausente → append; arquivo inexistente → cria) e **write-once**: o `upgrade` jamais o toca (risco aceito: guidance defasado em instalações antigas até intervenção manual). RN-N58; ver `domain.md#2.26`, ADR 0028 / MD-0022.
 
 ## Visão Geral
 

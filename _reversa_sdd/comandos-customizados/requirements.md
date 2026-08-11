@@ -15,6 +15,8 @@ Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessa
 > ✨ **f019 — Pré-check de pendência restrito ao arquivo de estado (reconciliação 2026-07-05):** `SessionCloseFlow.pending_work_paths` (a orquestração em volta de `encerrar-sessao`, RN-N33) excluía **todo** o diretório `.harness/` da oferta de commit pendente; passou a excluir só o caminho exato de `session_file`. Consequência: decisões (`.harness/decisoes/MD-*.md`) e o índice (`.harness/microdecisoes.md`) sujos agora **entram** na oferta (`COMMIT_PENDENTE` sem TTY, listagem `[s/N]` com TTY) antes de `encerrar-sessao` prosseguir. `RF-02` abaixo passa a exigir esse pré-check limpo como precondição. Ver `domain.md#2.16` (RN-N34/RN-N35), ADR 0019.
 >
 > ✨ **f021 — Apêndice do índice de decisões no `resume` (reconciliação 2026-07-05):** quando `active_harness == "claude"` e `session.inject_decisions_index` (default `True`) estão satisfeitos, o `resume` (RF-01) anexa `.harness/microdecisoes.md` ao texto reinjetado, **depois** da narrativa — função pura `build_decisions_appendix` em `core/session/resume_context.py`, gate calculado em `main.py`. Não-bloqueante: índice ausente → aviso em `stderr`, resume segue só com o estado. Ver `domain.md#2.18` (RN-N41), ADR 0021.
+
+> ✨ **f028 — Apêndice trocado pela visão compacta (reconciliação 2026-08-11-b):** `build_decisions_appendix(fs, index_file, enabled, compact_file=None)` passa a injetar a **visão compacta** `.harness/decisoes-recentes.md` (contagem, ponteiros, K=10 títulos mais recentes) em vez do índice integral — o custo do resume vira O(K), não mais O(N fichas). Precedência autoresolvente: compacta ausente (instalação pré-028) → cai para o índice completo com `Aviso:` em stderr, corrigido na primeira compilação seguinte; ambos ausentes → só o estado, exit 0. Corte Claude-only da 021 preservado. Ver RN-N41 revisada (`domain.md#2.18`), `domain.md#2.26`, ADR 0028 / MD-0022.
 >
 > ✨ **f022/f023 — 3º portão: registro obrigatório de microdecisões (reconciliação 2026-07-15):** `SessionCloseFlow.run(..., sem_decisao=False)` ganhou, depois do pré-check e do gate de narrativa, o portão de registro (`evaluate_registration_gate`, unit `microdecisoes/`): trabalho substantivo desde a âncora sem ficha `MD-*.md` tocada → aborta com marker `[HARNESS:DECISAO_PENDENTE ...]` (protocolo abortar-e-reexecutar) e persiste o fingerprint **fino** no estado; a reexecução com o mesmo estado avisa "não sanada" e libera (anti-loop); trabalho novo **rearma** (teste-guarda da f023); `--sem-decisao` (novo flag do `cmd`) satisfaz o gate gravando a declaração na narrativa (rastro auditável, RN-N3 preservada). Desativável por `decisions.require_registration`. Ver `domain.md#2.20-2.21` (RN-N43..N47), ADRs 0022/0023.
 
@@ -38,7 +40,7 @@ Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessa
 - **Isolamento no fechamento:** `encerrar-sessao` exige sessão ativa (senão erro), captura a âncora com `get_head_commit` **antes** das escritas, `close_session(ancora)`, salva atomicamente e então cria um commit contendo **só** o `state_file` via `GitPort.commit_paths` (nunca `git add -A`); a âncora segue no trabalho, o commit de encerramento por cima. Falha de commit → `SessionCommitError` (barulhento), sem reverter o estado salvo; a saída reporta os dois hashes. ✨f013 (ver `domain.md#2.14`). 🟢
 - **RN-N34 — Pendência restrita ao arquivo de estado (✨f019):** `pending_work_paths` exclui da oferta de commit **apenas** `session_file`, não o diretório `.harness/` inteiro; decisões e índice sujos entram na oferta. 🟢
 - **RN-N35 — Gate de narrativa viva (✨f018, refinado):** `encerrar-sessao` recusa fechar se a narrativa estiver vazia ou idêntica à do commit-âncora de partida — sinal de que o agente esqueceu de consolidar. Fail-open só sem baseline legível na âncora e narrativa já preenchida. 🟢
-- **RN-N41 — Apêndice do índice de decisões no resume (✨f021):** `enabled = active_harness == "claude" and session.inject_decisions_index`; quando `True`, `build_decisions_appendix` anexa `.harness/microdecisoes.md` ao texto do resume, depois do estado. Índice ausente/vazio/gate desligado → string vazia (não-bloqueante). 🟢
+- **RN-N41 (revisada na ✨f028) — Apêndice de decisões no resume, visão compacta com fallback:** `enabled = active_harness == "claude" and session.inject_decisions_index`; quando `True`, `build_decisions_appendix` anexa a **visão compacta** (`decisions.compact_file`) ao texto do resume, depois do estado; compacta ausente → fallback para o índice completo com `Aviso:` em stderr (autoresolvente); ambos ausentes/vazios ou gate desligado → string vazia (não-bloqueante, exit 0). 🟢
 
 ## Requisitos Funcionais
 
@@ -51,7 +53,7 @@ Despacha slash commands de sessão agnósticos à IDE: `resume`, `encerrar-sessa
 | RF-05 | Comando desconhecido.                                       | Must       | Retorna `"Comando desconhecido: <command>"`.                                                                                                                                                        |
 | RF-06 | Pré-check de pendência antes de `encerrar-sessao` (✨f019). | Must       | `pending_work_paths` exclui só `session_file`; se restar trabalho sujo, aborta com marker/prompt sem fechar.                                                                                        |
 | RF-07 | Gate de narrativa viva antes de `encerrar-sessao` (✨f018). | Must       | Narrativa vazia ou idêntica à da âncora de partida → aborta com marker/prompt sem fechar.                                                                                                           |
-| RF-08 | Apêndice do índice de decisões no `resume` (✨f021).        | Should     | Claude + flag ligado + índice presente/não-vazio → texto do resume ganha o apêndice após o estado; caso contrário, resume segue normalmente.                                                        |
+| RF-08 | Apêndice de decisões no `resume` (✨f021, revisado ✨f028).  | Should     | Claude + flag ligado → texto do resume ganha o apêndice após o estado, com a **compacta** como fonte primária e o índice completo como fallback (aviso em stderr); nenhum dos dois presente → resume segue normalmente.       |
 
 ## Requisitos Não Funcionais
 
@@ -88,9 +90,13 @@ Dado uma narrativa vazia ou idêntica à do commit-âncora de partida
 Quando `./harness cmd encerrar-sessao`
 Então o comando aborta com o marker/prompt de narrativa pendente e a sessão permanece ATIVA (✨f018).
 
-Dado active_harness "claude", session.inject_decisions_index true e um índice de decisões não-vazio
+Dado active_harness "claude", session.inject_decisions_index true e a visão compacta presente
 Quando `./harness cmd resume`
-Então o texto reinjetado contém o estado seguido do apêndice do índice de decisões (✨f021).
+Então o texto reinjetado contém o estado seguido da visão compacta de decisões (✨f021, revisado ✨f028).
+
+Dado active_harness "claude", flag ligado, compacta AUSENTE e índice completo presente
+Quando `./harness cmd resume`
+Então o texto reinjetado contém o estado seguido do índice completo, com `Aviso:` em stderr (fallback autoresolvente, ✨f028).
 
 Dado active_harness "gemini" (ou o índice de decisões ausente)
 Quando `./harness cmd resume`

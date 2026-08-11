@@ -20,6 +20,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11-b (varredura dirigida pós-feature 028)
+
+> A 028 tocou `init_service.py` apenas com o passo aditivo `_ensure_decisions_guidance` no `init`; nada do circuito de upgrade/materialização mudou.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `upgrade_project` segue materializando via subprocesso; sem chamada in-process nova. |
+| W002 | 🟢 verde | `_get_upstream_version` aborta barulhento, inalterado. |
+| W003 | 🟢 verde | Leitura de versão via `CORE_CONFIG_CANDIDATE_RELPATHS`, inalterada (CORE_VERSION agora 2.6.0). |
+| W004 | 🟢 verde | `apply_local_materializers` única para init/upgrade, inalterada — a guidance da 028 é passo do `init`, fora dos materializadores, por design (write-once, RN-N58). |
+
 ### Re-extração 2026-06-28 09:45
 
 > Pós-feature 018. O mecanismo de upgrade resiliente (subprocesso do python de destino; aborto barulhento; caminhos-candidatos) está **intacto**. A 018 só troca o _conteúdo_ da função única `apply_local_materializers`: `materialize_session_commands` → `materialize_session_skills`. Verificação factual: suíte 212 passed, `test_local_apply.py` verde.

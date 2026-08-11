@@ -17,6 +17,16 @@ Este arquivo define os itens de verificação (watch items) que devem permanecer
 
 ## 📈 2. Histórico de re-extrações
 
+### Re-extração 2026-08-11-b (varredura dirigida pós-feature 028)
+
+> A 028 acrescentou ao `init` um último passo aditivo: `_ensure_decisions_guidance` grava o trecho de guidance de microdecisões no arquivo da engine do destino (idempotente pelo marcador `<!-- harness:decisoes -->`, RN-N58). O `upgrade` não foi tocado.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `upgrade` segue preservando `.reversa/` e `.harness/decisoes/`; a 028 não tocou `upgrade_project` (e deliberadamente NÃO estende o upgrade à guidance — write-once, RN-N58). |
+| W002 | 🟢 verde | Lógica de cópia do `init` inalterada; o passo novo só faz append/criação no arquivo da engine, sem sobrescrever conteúdo do usuário (marcador presente → no-op). |
+| W003 | 🟢 verde | Checagem passiva de versão intocada pela 028. |
+
 ### Re-extração 2026-06-25 14:32
 
 | ID   | Veredito | Observação                                                                                                                                                                         |

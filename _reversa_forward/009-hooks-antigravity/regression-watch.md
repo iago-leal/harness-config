@@ -18,6 +18,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11-b (varredura dirigida pós-feature 028)
+
+> A 028 estendeu o `_handle_stop` da ponte: após `compile_index`, deriva também a visão compacta (`compile_compact_view`, parâmetros `decisions_compact_file`/`decisions_compact_size` no construtor). Verificação dirigida dos itens tocáveis pelo delta.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W002 | 🟢 verde | Pureza hexagonal preservada: `compile_compact_view` vive em `core/decisions/service.py`, sem ramificação por harness; a ponte só orquestra. |
+| W003 | 🟢 verde | Não-bloqueio intacto: a derivação da compacta ocorre dentro do mesmo fluxo protegido do `stop`; stdout segue `{}`. |
+| W004 | 🟢 verde | Footprint zero: a compacta é escrita sob o `project_path` (`.harness/decisoes-recentes.md`), nada fora. |
+| demais | 🟢 verde | W001/W005/W006/W007 não são tocados pelo delta da 028 (install-prompt, scratch, materializador e round-trip de formatação inalterados). W009 permanece 🟡 (premissa de runtime, não testável local). |
+
 ### Re-extração 2026-07-15 19:22
 
 > Re-verificação dirigida pós-feature 022: o delta tocou `hook_bridge.py` (parâmetro `gate_evaluator` no construtor + advisory no `stop`). Contratos por evento re-lidos no diff — stdout por evento e não-bloqueio intactos.

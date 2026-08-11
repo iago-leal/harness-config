@@ -3,6 +3,7 @@
 > Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 005)
 > Foca no COMO a unit é construída, a partir do código legado lido. Escala: 🟢 / 🟡 / 🔴
 > **Reconciliação de 2026-08-11 (feature 025):** o ramo `--gate` do driver passou a advisory (stderr `Aviso:`, stdout vazio); `gate.py` e o serviço byte-idênticos. O medidor da 026 reavalia o mesmo gate em leitura pura, sem persistir fingerprint (RN-N52).
+> **Reconciliação de 2026-08-11-b (feature 028):** o serviço ganhou `compile_compact_view` + auxiliares `_extract_title`/`_write_if_changed`; as duas bordas derivam a visão compacta na mesma passada do índice, e `compile_index` passou a usar `_write_if_changed` (escrita condicionada a mudança nas duas gravações). Core 2.6.0.
 
 ## Interface
 
@@ -10,7 +11,8 @@
 | ------------------------------------ | ----------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
 | `DecisionService.load_decisions`     | `(directory: str)`            | `List[Decision]` | Lista ordenada de `MD-*.md`; diretório ausente → `[]`; front-matter ausente/inválido → `ValueError`. |
 | `DecisionService.validate_integrity` | `(decisions: List[Decision])` | `List[str]`      | Lista de erros; vazia = grafo válido.                                                                |
-| `DecisionService.compile_index`      | `(decisions, output, header)` | —                | Deriva backlinks e grava o índice atomicamente.                                                      |
+| `DecisionService.compile_index`      | `(decisions, output, header)` | —                | Deriva backlinks e grava o índice atomicamente (desde a 028, só quando o conteúdo mudou).            |
+| `DecisionService.compile_compact_view` (028) | `(decisions, output_filepath, index_file, decisions_dir, max_items)` | — | Deriva a visão compacta (contagem, ponteiros, K títulos por ID desc); `max_items=0` degrada; escrita condicionada a mudança. |
 | `evaluate_registration_gate` (022)   | `(git, repo_path, session, config)` | `GateVerdict` | Avaliação pura de pendência de registro; fail-open barulhento (nunca levanta).                       |
 | `compute_fingerprint` (022)          | `(anchor, head, dirty)`       | `str`            | Identidade fina `sha1(âncora+HEAD+sujos ordenados)` — portão do encerramento.                        |
 | `compute_lembrete_fingerprint` (023) | `(anchor)`                    | `str`            | Identidade grossa `sha1(âncora)` — lembrete do Stop, máx. 1 por sessão.                              |
@@ -26,7 +28,8 @@ Driver CLI (`main.py`, subcomando `decisions [--gate]`): `config = load_config(f
    - Backlinks ordenados por ID de origem (determinismo).
    - Título extraído do H1 `# MD-XXXX — <título>` por regex.
    - Sub-linha `↳ <saídas> · <entradas>` montada por composição.
-   - Cabeçalho opcional concatenado no topo. Gravação **atômica** via `write_file_atomic`. 🟢
+   - Cabeçalho opcional concatenado no topo. Gravação **atômica** via `write_file_atomic` — desde a 028, mediada por `_write_if_changed` (conteúdo idêntico → nenhuma escrita, mtime imóvel). 🟢
+   - **compile_compact_view(decisions, output_filepath, index_file, decisions_dir, max_items) (028):** chamada pelas bordas logo após `compile_index`; monta `# Decisões recentes` + 3 linhas de orientação (consulta sob demanda: índice completo e fichas em `decisions_dir`) + `Total: N ficha(s)` + K fichas mais recentes por ID decrescente (`- **MD-NNNN** — título` via `_extract_title`: H1 com fallback no ID; sem backlinks); `max_items=0` → só cabeçalho + contagem + ponteiros; grava via `_write_if_changed`. 🟢
 
 4. **evaluate_registration_gate(git, repo_path, session, config) (022):** âncora = `session.commit_hash`; coleta `head`/`dirty`/`changed` via `GitPort` (falha → `GateVerdict(pendente=False, aviso=...)`); universo ordenado = `changed ∪ dirty`; exclui `{state_file, index_file, header_file}`; fichas = prefixo `decisions.dir` + regex `^MD-.*\.md$`; `pendente = bool(mudancas) and not fichas`; preenche os dois fingerprints. 🟢
 
@@ -58,6 +61,8 @@ Driver CLI (`main.py`, subcomando `decisions [--gate]`): `config = load_config(f
 | Gate como avaliação pura, política nas bordas (022)           | `gate.py` (sem `active_harness`), 3 bordas distintas         | 🟢 (ADR 0022 / MD-0015) |
 | Dupla identidade fina/grossa por consumidor (023)             | `compute_fingerprint` × `compute_lembrete_fingerprint`       | 🟢 (ADR 0023 / MD-0016) |
 | Advisory no fim de turno; portão duro único no encerramento (025) | `main.py` (ramo `--gate`: stderr `Aviso:`, stdout vazio); `gate.py` intocado | 🟢 (ADR 0025 / MD-0018) |
+| Duas visões derivadas na mesma passada, sem comando/gatilho novo (028) | `main.py` (ramo `decisions`) e `hook_bridge._handle_stop` chamam `compile_compact_view` após `compile_index` | 🟢 (ADR 0028 / MD-0022) |
+| Write-only-when-changed nas duas escritas (028)               | `_write_if_changed` em `service.py`                          | 🟢                      |
 
 ## Estado Interno
 

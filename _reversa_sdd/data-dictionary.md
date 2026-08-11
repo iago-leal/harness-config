@@ -113,12 +113,15 @@ Cada item da lista corresponde a uma linha `- <item>` sob a seção. Helper `is_
 | `[decisions]`  | `index_file`                                    | str                                      | `.harness/microdecisoes.md`       |
 | `[decisions]`  | `header_file`                                   | str                                      | `.harness/decisoes/_cabecalho.md` |
 | `[decisions]`  | `require_registration` (novo 🟢, feature 022)   | bool                                     | `True`                            |
+| `[decisions]`  | `compact_file` (novo 🟢, feature 028)           | str                                      | `.harness/decisoes-recentes.md`   |
+| `[decisions]`  | `compact_index_size` (novo 🟢, feature 028)     | int (`ge=0`)                             | `10`                              |
 | `[session]`    | `state_file`                                    | str                                      | `.harness/estado-da-sessao.md`    |
 | `[session]`    | `inject_decisions_index` (novo 🟢, feature 021) | bool                                     | `True`                            |
 
 > 🟢 **`upstream_path`** e **`version`** foram adicionados na feature 007 à seção `[harness]` para permitir que instalações físicas locais em repositórios de destino retenham metadados que conectam a cópia ao seu core upstream original e acompanhem as atualizações físicas.
 > 🟢 **`inject_decisions_index`** (feature 021): opt-out do apêndice do índice de decisões anexado ao `cmd resume` — só tem efeito quando `active_harness == "claude"` (gate por harness fixado no código, não configurável). Retrocompatível: harness.toml sem a chave assume `True`.
 > 🟢 **`require_registration`** (feature 022): liga o gate de registro de microdecisões (bloqueio no `encerrar-sessao`, lembrete no Stop do Claude, advisory no Antigravity). Habilitado por padrão; desativável por projeto; tomls sem o campo herdam `True`. A granularidade do lembrete (uma vez por sessão) é política fixa no core, sem flag (YAGNI, MD-0016).
+> 🟢 **`compact_file`/`compact_index_size`** (feature 028, MD-0022): caminho da **visão compacta** de decisões (artefato derivado, mesma passada do índice) e quantas fichas recentes ela lista. `compact_index_size` valida `ge=0` (negativo → erro Pydantic barulhento); `0` degrada para cabeçalho + contagem + ponteiros, sem lista. Tomls sem os campos herdam os defaults.
 
 ---
 
@@ -231,3 +234,12 @@ Contrato EXTERNO com o fork do vscode-kanban do mantenedor; schema conhecido por
 - **`HarnessSection.version`**: literal `2.1.1` → `2.5.0` (2.2.0 na 024, 2.3.0 na 025, 2.4.0 na 026, 2.5.0 na 027).
 - **`SessionState`/`GateVerdict`**: sem mudança de schema no período (o gate mudou de POLÍTICA na borda — advisory, MD-0018 — não de dados).
 - **`Decision`**: sem mudança de schema; população 16 → 20 fichas (MD-0017..MD-0020).
+
+## Mudanças vs extração anterior (feature 028, reconciliação 2026-08-11-b)
+
+- **`DecisionsSection.compact_file`/`compact_index_size`** (028): dois campos novos em `[decisions]` (ver §6) — único delta-de-dados da feature; herança sem migração.
+- **Visão compacta** (`.harness/decisoes-recentes.md`): novo artefato DERIVADO (não é schema persistido de domínio): `# Decisões recentes` + 3 linhas de orientação + `Total: N ficha(s)` + K fichas mais recentes por ID decrescente (`- **MD-NNNN** — título`, sem backlinks). Derivado na mesma passada do índice em todas as bordas que indexam (CLI, ponte e, desde a MD-0023, a tool MCP), write-only-when-changed, nunca editado à mão.
+- **`build_decisions_appendix`** (028): novo parâmetro `compact_file: str | None = None` — precedência compacta→índice no apêndice do `cmd resume`; chamadores antigos preservados.
+- **`AntigravityHookBridge.__init__`** (028): dois parâmetros novos com default (`decisions_compact_file`, `decisions_compact_size`).
+- **`HarnessSection.version`**: literal `2.5.0` → `2.6.0`.
+- **`Decision`**: sem mudança de schema; população 20 → 22 fichas (MD-0021 — operacional, sem código; MD-0022).

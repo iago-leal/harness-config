@@ -4,6 +4,7 @@
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
 > **Reconciliação de 2026-07-05** (Reviewer, pós-features 010-021): Scout, Archaeologist, Detective, Architect e Writer reconciliaram nesta sessão os artefatos que estavam congelados desde a feature 009 (`inventory.md`, `dependencies.md`, `surface.json`, `code-analysis.md`, `data-dictionary.md`, `modules.json`, `c4-components.md`, `erd-complete.md`, `traceability/spec-impact-matrix.md`) e incorporaram as features 019-021 em `domain.md`/`state-machines.md`/`permissions.md`/ADRs/`architecture.md`/specs SDD. Ver seção "Reconciliação 2026-07-05" abaixo para o detalhe do que mudou desde o relatório de 2026-06-24.
 > **Reconciliação de 2026-08-11** (Reviewer, pós-features 024-027; a 024 commitada em `5c4433d`, **025/026/027 apenas na working tree nesta data**): reconciliação dirigida do consentimento para escrita no git ao encerrar (024), da aposentadoria do soft-block do Stop (025), do medidor de progresso read-only (026) e do exportador kanban (027). Ver seção "Reconciliação 2026-08-11" abaixo.
+> **Reconciliação de 2026-08-11-b** (Reviewer, pós-feature 028; **todo o delta apenas na working tree nesta data**): reconciliação dirigida da visão compacta de decisões (028: `compile_compact_view`, precedência compacta→índice no resume, guidance write-once no init, config `compact_file`/`compact_index_size`; core 2.6.0, suíte 389) + MD-0021 (decisão operacional sem código) e README.md novo na raiz. Ver seção "Reconciliação 2026-08-11-b" abaixo.
 > **Reconciliação de 2026-07-15** (Reviewer, pós-MD-0014 e features 022-023): reconciliação incremental do gate de registro de microdecisões (022: `gate.py`, 3º portão, `decisions --gate`, advisory Antigravity) e da dupla identidade do lembrete (023), mais a aposentadoria do format-on-edit no perfil Claude (MD-0014). Ver seção "Reconciliação 2026-07-15" abaixo.
 
 Sintetiza a avaliação de confiança da **re-extração** do ecossistema `harness` após a implementação do motor de bootstrap evolucionário (feature 007) e da reprodutibilidade e configurações dinâmicas de formatação (feature 008). Substitui integralmente o relatório anterior de 2026-06-24; a reconciliação de 2026-07-05 estende (não substitui) este relatório para as features 010-021.
@@ -105,6 +106,30 @@ _(Cálculo: (275 + 50 × 0.5) / 343 = 87.46%)_
 | **Total (delta)** |              **~73**             |      **100%**       |
 
 **Confiança do delta reconciliado (024-027):** **~97%** 🟢 — todo o conteúdo foi lido do código as-built (`close_flow.py`, `commands/service.py`, `main.py`, o pacote `core/progress/` integral) e cruzado com as specs forward das quatro features (requirements com esclarecimentos, roadmaps, actions) e as fichas MD-0017..MD-0020; as quatro nasceram por TDD e a suíte 372 verde foi relatada nos fechamentos. Os ~5 🟡: (1) a conferência visual do board no fork do vscode-kanban permanece pendente do mantenedor (ids não numéricos, campos opcionais, efeito de mover card gerenciado na UI — Observações do regression-watch da 027); (2) a paridade `stages.py` ↔ prosa do skill é convenção vigiada por teste, não derivação (ADR 0026); (3) a contagem de 372 testes é relato de sessão, não recontada por execução nesta rodada; (4) o comportamento do marker `ENCERRAMENTO_NAO_VERSIONADO` na skill 1.4.0 foi conferido no asset, não em sessão real de encerramento pós-024; (5) T028 da 024 (propagação manual à base migrada) segue pendente por decisão, com a feature pausada em 27/28.
+
+## Resumo Geral (reconciliação 2026-08-11-b — feature 028)
+
+> Mesmo protocolo: avalia-se a confiança do **delta** reconciliado, não a base histórica.
+
+| Nível             | Quantidade (estimativa do delta) | Percentual do delta |
+| :---------------- | :------------------------------: | :-----------------: |
+| 🟢 CONFIRMADO     |               ~24                |         96%         |
+| 🟡 INFERIDO       |                ~1                |         4%          |
+| 🔴 LACUNA         |                0                 |         0%          |
+| **Total (delta)** |              **~25**             |      **100%**       |
+
+**Confiança do delta reconciliado (028):** **~98%** 🟢 — delta pequeno e integralmente lido do código as-built (`decisions/service.py` 195 linhas, `resume_context.py` 47, `init_service.py` 368, `config.py` 111, `hook_bridge.py` 197, `main.py`), cruzado com a spec forward da 028 (requirements com esclarecimentos, roadmap, actions, legacy-impact, regression-watch W001-W008) e a ficha MD-0022; TDD com suíte 389 verde relatada no fechamento. O único 🟡: a contagem de 389 testes é relato de sessão desta mesma data, não recontada por execução independente nesta rodada de re-extração. Nota: MD-0021 (abandono do vault Obsidian no encerramento) é decisão **operacional sem código** — registrada como nota de rodada em `domain.md#2.26`, sem RN própria, deliberadamente.
+
+### Reconciliação 2026-08-11-b — delta feature 028
+
+| Artefato                                                                     | Veredito | Observação                                                                                                                                                                                                                    |
+| :--------------------------------------------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `inventory.md`, `surface.json`                                               | 🟢 forte | Fichas 20→22, suíte 372→389, core 2.6.0; novo artefato derivado `.harness/decisoes-recentes.md`; README.md novo na raiz; delta sem commit sinalizado.                                                                          |
+| `code-analysis.md`, `data-dictionary.md`, `modules.json`                     | 🟢 forte | `compile_compact_view`/`_extract_title`/`_write_if_changed` (§4), precedência compacta→índice no resume (§8), guidance idempotente no init (§1), config e bordas (§9/§11/§12); dicionário com os 2 campos novos e o formato da compacta. |
+| `domain.md`, `permissions.md`, ADR 0028                                      | 🟢 forte | RN-N41 revisada in-place (§2.18) + §2.26 nova (RN-N56..N58) + 2 entradas de glossário; matriz de permissões com `init`/`decisions`/`cmd resume` atualizadas e a salvaguarda da posse do artefato derivado; ADR 0028 com alternativas descartadas da MD-0022. |
+| `architecture.md`, `c4-components.md`, `erd-complete.md`                     | 🟢 forte | Nenhum componente novo (métodos em componentes existentes — refletido como revisão, não linha nova); ERD com `DECISIONS_SECTION.compact_file`/`compact_index_size` e população 20→22; sem mudança de schema em `SESSION_STATE`. |
+| specs SDD (`microdecisoes/`, `comandos-customizados/`, `bootstrap/`) + `code-spec-matrix.md` | 🟢 forte | RN-N56/N57 e RF-08 na unit de decisões; RN-N41/RF-08 revisados + 2 cenários na unit de comandos (onde o contrato do resume vive); nota RN-N58 na unit de bootstrap; matriz sem arquivo novo, 4 linhas atualizadas.              |
+| `spec-impact-matrix.md`                                                      | 🟢 forte | Subseção 028; linhas `DecisionService`/`resume_context`/`InitService`/`config`/ponte atualizadas com RN-N56..N58 e features/ADRs 028.                                                                                          |
 
 ### Reconciliação 2026-08-11 — delta features 024-027
 

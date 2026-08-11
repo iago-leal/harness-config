@@ -21,6 +21,18 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11-b (verificação dirigida pós-feature 028)
+
+> A 028 revisou deliberadamente o comportamento vigiado pelo W001 (MD-0022): o apêndice do `cmd resume` passou a injetar a **visão compacta** (`decisions.compact_file`), com o índice completo como fallback. Supersessão registrada em Arquivadas; o contrato novo é vigiado pelos W001/W002 da 028.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🗄️ arquivado | Supersedido pela 028 (ver Arquivadas). A mecânica (apêndice depois do estado, via `build_decisions_appendix`) permanece; muda a fonte primária. |
+| W002 | 🟢 verde | Gate na borda (`active_harness == "claude" and inject_decisions_index`) inalterado; a assinatura ganhou `compact_file` opcional sem ramificar serviço de domínio. |
+| W003 | 🟢 verde | Essência preservada e generalizada: compacta ausente → índice com `Aviso:` em stderr; **ambos** ausentes → aviso, só o estado, exit 0. |
+| W004 | 🟢 verde | Teto de 10 000 caracteres no texto somado (`HookContextSink`) inalterado — e a compacta o pressiona menos que o índice integral. |
+| W005 | 🟢 verde | `SessionSection.inject_decisions_index` default `True` inalterado; o flag agora governa a injeção da compacta. |
+
 ### Re-extração 2026-07-15 19:22
 
 > Re-verificação dirigida pós-features 022/023: `main.py` mudou (ramo `decisions --gate` e flag `--sem-decisao` no `cmd`), mas o ramo `cmd resume` está intocado — fiação do apêndice confirmada por grep (`main.py:389/458`).
@@ -45,4 +57,4 @@
 
 ## Arquivadas
 
-_(vazio)_
+- **W001** — arquivado em 2026-08-11, supersedido pela feature 028 (MD-0022): o apêndice do `cmd resume` no Claude deixou de injetar o índice integral (`decisions.index_file`) e passou a injetar a visão compacta (`decisions.compact_file`), com o índice como fallback autoresolvente. O contrato novo é vigiado pelos W001/W002 do `regression-watch.md` da 028; a RN-N41 foi revisada in-place em `domain.md#2.18`. A linha original permanece na tabela principal acima por regra do Reversa (histórico imutável); este registro a neutraliza para fins de regressão.

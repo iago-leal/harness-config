@@ -19,6 +19,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11-b (varredura dirigida pós-feature 028)
+
+> A 028 estendeu `decisions/service.py` (visão compacta) e o ramo `decisions` da CLI; verificação dirigida dos itens desta feature.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | Artefatos de decisão seguem em `.harness/decisoes/` + `.harness/microdecisoes.md`; a 028 só **adiciona** um segundo derivado no mesmo namespace (`.harness/decisoes-recentes.md`), nada volta à raiz. |
+| W002 | 🟢 verde | CLI lê `config.decisions.compact_file`/`compact_index_size` (`main.py:394`), sem literal chumbado; `server.py` segue lendo `config.decisions`. |
+| W003 | 🟢 verde | `load_config` funcional, inalterado pela 028 (a extensão foi em `DecisionsSection`, com defaults — tomls antigos herdam). |
+| W004 | 🟢 verde | `decisions` valida e regenera o índice com a mesma semântica; `compile_index` agora grava via `_write_if_changed` (mtime imóvel sem mudança), conteúdo idêntico. **Achado colateral:** a tool MCP `process_decisions` compila só o índice, sem a compacta — não viola este item (o índice em si é idêntico), registrado como `gaps.md#G-20`. |
+
 ### Re-extração 2026-06-25 14:32
 
 | ID   | Veredito | Observação                                                                                                                                                               |
