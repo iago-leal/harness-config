@@ -6,5 +6,5 @@
 |------------|----|----|----|----|
 | critical   |    |    |    |    |
 | high       |    |    |    |    |
-| medium     |    |    | BUG-20260811-XZ3B |    |
+| medium     |    |    | BUG-20260811-XZ3B, BUG-20260811-TVCP |    |
 | low        |    |    |    | BUG-20260811-OYKV |

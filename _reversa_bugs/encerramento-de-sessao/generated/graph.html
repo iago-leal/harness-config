@@ -29,9 +29,11 @@
 Source of truth: <code>../bugs/&lt;ID&gt;/bug.md</code>.</div>
 
 <div class="card">
-  <svg viewBox="0 0 900 230" role="img" aria-label="Grafo de bugs">
+  <svg viewBox="0 0 900 430" role="img" aria-label="Grafo de bugs">
     <line x1="300" y1="115" x2="600" y2="115" stroke="var(--edge)" stroke-width="2" stroke-dasharray="6 5"/>
     <text x="450" y="103" text-anchor="middle" fill="var(--muted)" font-size="12">related-to (proposed)</text>
+    <line x1="220" y1="175" x2="400" y2="255" stroke="var(--edge)" stroke-width="2" stroke-dasharray="6 5"/>
+    <text x="255" y="230" text-anchor="middle" fill="var(--muted)" font-size="12">related-to (proposed)</text>
     <g>
       <rect x="60" y="55" width="240" height="120" rx="10" fill="#fff7ed" stroke="var(--medium)" stroke-width="2"/>
       <text x="180" y="85" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-XZ3B (#1)</text>
@@ -46,12 +48,19 @@ Source of truth: <code>../bugs/&lt;ID&gt;/bug.md</code>.</div>
       <text x="720" y="128" text-anchor="middle" font-size="12" fill="var(--ink)">ritual do vault (MD-0021)</text>
       <text x="720" y="155" text-anchor="middle" font-size="12" fill="var(--low)" font-weight="600">low · P3 · open</text>
     </g>
+    <g>
+      <rect x="330" y="255" width="240" height="120" rx="10" fill="#fff7ed" stroke="var(--medium)" stroke-width="2"/>
+      <text x="450" y="285" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-TVCP (#3)</text>
+      <text x="450" y="310" text-anchor="middle" font-size="12" fill="var(--ink)">Wrapper do upstream sem</text>
+      <text x="450" y="328" text-anchor="middle" font-size="12" fill="var(--ink)">âncora de cwd (SessionStart)</text>
+      <text x="450" y="355" text-anchor="middle" font-size="12" fill="var(--medium)" font-weight="600">medium · P2 · open</text>
+    </g>
   </svg>
   <div class="note">Aresta tracejada: relação proposta (hipótese), fora de priorização automática.</div>
 </div>
 
 <div class="card">
-  <h2 style="font-size:1.05rem; margin-top:0;">Bugs abertos (2)</h2>
+  <h2 style="font-size:1.05rem; margin-top:0;">Bugs abertos (3)</h2>
   <table>
     <tr><th>#</th><th>ID</th><th>Título</th><th>Sev.</th><th>Pri.</th><th>Fase</th><th>Área/Módulo</th><th>Spec</th></tr>
     <tr>
@@ -65,6 +74,12 @@ Source of truth: <code>../bugs/&lt;ID&gt;/bug.md</code>.</div>
       <td>Memória por-projeto desatualizada reintroduz o ritual do vault abolido pela MD-0021</td>
       <td class="sev low">low</td><td>P3</td><td>triaging</td>
       <td>ambiente-operacional / memoria-por-projeto</td><td>spec-gap</td>
+    </tr>
+    <tr>
+      <td>3</td><td><code>BUG-20260811-TVCP</code></td>
+      <td>Wrapper local do upstream não ancora o cwd e o hook de SessionStart semeia .harness/ fora da raiz</td>
+      <td class="sev medium">medium</td><td>P2</td><td>triaging</td>
+      <td>base-instalada / bootstrap</td><td>shim-execution.md (020)</td>
     </tr>
   </table>
 </div>

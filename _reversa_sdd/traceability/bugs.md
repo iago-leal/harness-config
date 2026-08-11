@@ -9,3 +9,4 @@
 |-----|--------|--------|--------------|----------------|
 | BUG-20260811-XZ3B (#1) | Encerramento direto não deriva o índice de decisões nem a visão compacta | open (triaging, medium/P2) | `domain.md` §2.26, RN-N56; ADR 0028 | `core/session/close_flow.py`; `install/assets/skills/encerrar-sessao/scripts/encerrar_sessao.py` |
 | BUG-20260811-OYKV (#2) | Memória por-projeto desatualizada reintroduz o ritual do vault abolido pela MD-0021 | open (triaging, low/P3) | spec-gap (referência: MD-0021) | nenhum (artefato externo: memória por-projeto do Claude Code) |
+| BUG-20260811-TVCP (#3) | Wrapper local do upstream não ancora o cwd e o hook de SessionStart semeia .harness/ fora da raiz | open (triaging, medium/P2) | spec-gap parcial (`shim-execution.md` da 020 cobre só o shim dos projetos-alvo) | `harness` (wrapper da raiz); `src/main.py` (os.getcwd) |
