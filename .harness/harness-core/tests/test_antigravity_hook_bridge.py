@@ -39,6 +39,7 @@ class SpyDecisionService:
         self.load_calls = []
         self.validate_calls = []
         self.compile_calls = []
+        self.compact_calls = []
 
     def load_decisions(self, directory):
         self.load_calls.append(directory)
@@ -50,6 +51,13 @@ class SpyDecisionService:
 
     def compile_index(self, decisions, output_filepath, header_filepath=None):
         self.compile_calls.append((output_filepath, header_filepath))
+
+    def compile_compact_view(
+        self, decisions, output_filepath, index_file, decisions_dir, max_items
+    ):
+        self.compact_calls.append(
+            (output_filepath, index_file, decisions_dir, max_items)
+        )
 
 
 class ExplodingFormattingService:
@@ -67,6 +75,11 @@ class ExplodingDecisionService:
         raise RuntimeError("falha simulada de decisões")
 
     def compile_index(self, decisions, output_filepath, header_filepath=None):
+        raise RuntimeError("falha simulada de decisões")
+
+    def compile_compact_view(
+        self, decisions, output_filepath, index_file, decisions_dir, max_items
+    ):
         raise RuntimeError("falha simulada de decisões")
 
 
@@ -124,6 +137,8 @@ def _make_bridge(fs=None, formatting=None, decisions=None, gate_evaluator=None):
         decisions_dir=".reversa/decisoes",
         decisions_index_file=".reversa/microdecisoes.md",
         decisions_header_file=".reversa/decisoes/_cabecalho.md",
+        decisions_compact_file=".reversa/decisoes-recentes.md",
+        decisions_compact_size=10,
         gate_evaluator=gate_evaluator,
     )
 
@@ -241,6 +256,24 @@ def test_stop_chama_servico_de_decisoes():
     assert spy_dec.load_calls == [".reversa/decisoes"]
     assert len(spy_dec.compile_calls) == 1
     assert json.loads(out) == {}
+
+
+def test_stop_deriva_visao_compacta_na_mesma_passada():
+    # Feature 028: a reindexação de fim de turno também deriva a visão
+    # compacta, com os caminhos e o teto injetados pela borda.
+    spy_dec = SpyDecisionService()
+    bridge = _make_bridge(decisions=spy_dec)
+
+    bridge.handle("stop", _stop_payload())
+
+    assert spy_dec.compact_calls == [
+        (
+            ".reversa/decisoes-recentes.md",
+            ".reversa/microdecisoes.md",
+            ".reversa/decisoes",
+            10,
+        )
+    ]
 
 
 def test_stop_nunca_emite_continue():

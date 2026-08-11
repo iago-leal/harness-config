@@ -10,7 +10,7 @@ class HarnessSection(BaseModel):
     upstream_path: Optional[str] = None
     # Manter o valor como LITERAL nesta linha: `_get_upstream_version` (012,
     # RN-03) lê a versão do upstream parseando este arquivo por regex.
-    version: str = "2.5.0"
+    version: str = "2.6.0"
 
 
 # Versão canônica do core, derivada do literal acima — fonte única para o help
@@ -37,6 +37,13 @@ class DecisionsSection(BaseModel):
     # Antigravity — o soft-block do Stop foi aposentado na MD-0018).
     # Habilitado por padrão; desativável por projeto. Tomls sem o campo herdam True.
     require_registration: bool = True
+    # Feature 028: visão compacta do acervo, derivada na MESMA passada que
+    # compila o índice completo. É ela que o `cmd resume` injeta no
+    # SessionStart (o índice integral vira consulta sob demanda). `ge=0`:
+    # teto negativo é erro de configuração barulhento; 0 é válido e degrada
+    # para cabeçalho + contagem + ponteiros.
+    compact_file: str = ".harness/decisoes-recentes.md"
+    compact_index_size: int = Field(default=10, ge=0)
 
 
 class SessionSection(BaseModel):

@@ -14,6 +14,29 @@ from src.core.install.local_apply import apply_local_materializers
 from src.core.bootstrap.shim import render_shim
 from src.core.bootstrap.service import BootstrapService
 
+# Feature 028: marcador estável do trecho de guidance sobre microdecisões.
+# A idempotência do init é por detecção de substring DESTE marcador, não do
+# conteúdo — edições manuais do usuário dentro da seção são preservadas.
+DECISIONS_GUIDANCE_MARKER = "<!-- harness:decisoes -->"
+
+# Arquivo de guidance por engine (contrato trecho-guidance-init.md da 028).
+_GUIDANCE_FILE_BY_HARNESS = {
+    "claude": "CLAUDE.md",
+    "antigravity": "AGENTS.md",
+    "gemini": "GEMINI.md",
+}
+
+_DECISIONS_GUIDANCE_TRECHO = f"""{DECISIONS_GUIDANCE_MARKER}
+## Microdecisões do projeto
+
+Este projeto registra decisões técnicas em fichas `.harness/decisoes/MD-NNNN.md`.
+No início da sessão é injetada uma visão compacta (as mais recentes). Antes de
+buscas amplas ou de decidir algo já decidido, consulte o índice completo em
+`.harness/microdecisoes.md` e abra a ficha específica quando precisar do contexto.
+Registre decisões novas com uma ficha; o índice e a visão compacta são derivados
+automaticamente (`./harness decisions`). Não os edite à mão.
+"""
+
 
 class UpstreamVersionUndeterminedError(Exception):
     """Levantada quando a versão do core no upstream não pode ser lida.
@@ -139,6 +162,34 @@ class InitializationService:
         # pela oferta de commit pendente (019). Não há mais core local a ignorar
         # sob a fonte única (feature 020).
         self._ensure_gitignore_entry(target_path, SYNC_CACHE_GITIGNORE_ENTRY)
+
+        # 10. Trecho de guidance sobre microdecisões no arquivo da engine
+        # (CLAUDE.md/AGENTS.md/GEMINI.md) — escrita única na instalação, à
+        # maneira do Reversa (feature 028, D3). O upgrade nunca toca nisso.
+        self._ensure_decisions_guidance(target_path, active_harness)
+
+    def _ensure_decisions_guidance(self, target_path: str, active_harness: str) -> None:
+        """Grava (uma única vez) o trecho de guidance sobre microdecisões.
+
+        Idempotência por marcador: se o arquivo-alvo já contém
+        ``DECISIONS_GUIDANCE_MARKER``, nada é escrito — o conteúdo da seção
+        pertence ao usuário a partir da primeira gravação. Engine sem arquivo
+        de guidance mapeado degrada para silêncio (não-bloqueante).
+        """
+        filename = _GUIDANCE_FILE_BY_HARNESS.get(active_harness)
+        if not filename:
+            return
+        guidance_path = os.path.join(target_path, filename)
+        if not self.fs.exists(guidance_path):
+            self.fs.write_file_atomic(guidance_path, _DECISIONS_GUIDANCE_TRECHO)
+            return
+        content = self.fs.read_file(guidance_path)
+        if DECISIONS_GUIDANCE_MARKER in content:
+            return
+        self.fs.write_file_atomic(
+            guidance_path,
+            content.rstrip("\n") + "\n\n" + _DECISIONS_GUIDANCE_TRECHO,
+        )
 
     def upgrade_project(self, target_path: str, force: bool = False) -> None:
         """Atualiza a instalação do Harness Core no projeto de destino a partir do upstream configurado.

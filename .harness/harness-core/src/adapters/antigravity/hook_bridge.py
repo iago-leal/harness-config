@@ -44,6 +44,8 @@ class AntigravityHookBridge:
         decisions_index_file: str,
         decisions_header_file: str,
         gate_evaluator=None,
+        decisions_compact_file: str = ".harness/decisoes-recentes.md",
+        decisions_compact_size: int = 10,
     ):
         self.fs = fs
         self.formatting_service = formatting_service
@@ -51,6 +53,10 @@ class AntigravityHookBridge:
         self.decisions_dir = decisions_dir
         self.decisions_index_file = decisions_index_file
         self.decisions_header_file = decisions_header_file
+        # Feature 028: a visão compacta é derivada na MESMA passada do índice
+        # (D-01), também nesta borda — paridade com o branch `decisions` da CLI.
+        self.decisions_compact_file = decisions_compact_file
+        self.decisions_compact_size = decisions_compact_size
         # Feature 022 (advisory): callable sem argumentos, montado na borda, que
         # devolve um GateVerdict (ou None quando o gate não se aplica). O bridge
         # não conhece git/config — só consome o veredito para AVISAR em stderr;
@@ -123,6 +129,13 @@ class AntigravityHookBridge:
             self._log("microdecisões com erros de integridade: " + "; ".join(errors))
         self.decision_service.compile_index(
             decisions, self.decisions_index_file, self.decisions_header_file
+        )
+        self.decision_service.compile_compact_view(
+            decisions,
+            self.decisions_compact_file,
+            self.decisions_index_file,
+            self.decisions_dir,
+            self.decisions_compact_size,
         )
 
         # Advisory do gate de registro (022): pendência vira aviso em stderr,

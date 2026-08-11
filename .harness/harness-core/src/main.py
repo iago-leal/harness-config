@@ -122,7 +122,8 @@ def build_parser() -> argparse.ArgumentParser:
             "Executa um slash command de sessão. `resume` reinjeta o estado de "
             ".harness/estado-da-sessao.md no contexto do harness ativo (JSON no "
             "stdout para Claude/Gemini; arquivo para Antigravity). No Claude, o "
-            "resume também anexa o índice de decisões (.harness/microdecisoes.md) "
+            "resume também anexa a visão compacta de decisões "
+            "(.harness/decisoes-recentes.md; fallback para o índice completo) "
             "para ancorar a busca do agente, desativável por "
             "session.inject_decisions_index."
         ),
@@ -387,9 +388,20 @@ def main():
                     sys.exit(1)
             else:
                 info("Grafo de microdecisões validado com sucesso (zero erros).")
-                # Compila o índice consolidado
+                # Compila o índice consolidado e, na MESMA passada, a visão
+                # compacta que o `cmd resume` injeta no SessionStart (028/D-01).
                 service.compile_index(decisions, output_file, header_file)
+                service.compile_compact_view(
+                    decisions,
+                    config.decisions.compact_file,
+                    output_file,
+                    decisoes_dir,
+                    config.decisions.compact_index_size,
+                )
                 info(f"Índice de decisões compilado com sucesso em '{output_file}'.")
+                info(
+                    f"Visão compacta derivada em '{config.decisions.compact_file}'."
+                )
             if not gate_mode:
                 sys.exit(0)
         except Exception as e:
@@ -507,22 +519,36 @@ def main():
         # Só o `resume` alimenta o SessionStart: entrega via sink do harness ativo.
         # Os demais comandos (handoff, clarificar) imprimem normal.
         if cmd_name_norm == "resume":
-            # Feature 021: no Claude, ancora a busca do agente anexando o índice de
-            # decisões ao estado reinjetado (uma injeção por sessão). O gate por
+            # Feature 021 (→028): no Claude, ancora a busca do agente anexando a
+            # visão COMPACTA de decisões ao estado reinjetado; o índice integral
+            # vira consulta sob demanda e só entra como fallback autoresolvente
+            # (janela entre o upgrade e a primeira reindexação). O gate por
             # harness vive na borda (RN-N5); a composição é pura. Não-bloqueante:
-            # índice ausente → aviso em stderr e segue só com o estado.
+            # fonte ausente → aviso em stderr e segue.
             enabled = (
                 config.harness.active_harness == "claude"
                 and config.session.inject_decisions_index
             )
-            if enabled and not fs.exists(config.decisions.index_file):
-                print(
-                    f"Aviso: índice de decisões ausente em "
-                    f"{config.decisions.index_file}; reinjetando só o estado.",
-                    file=sys.stderr,
-                )
+            if enabled and not fs.exists(config.decisions.compact_file):
+                if fs.exists(config.decisions.index_file):
+                    print(
+                        f"Aviso: visão compacta ainda não derivada em "
+                        f"{config.decisions.compact_file}; injetando o índice "
+                        "completo (rode ./harness decisions ou aguarde o "
+                        "próximo fim de turno).",
+                        file=sys.stderr,
+                    )
+                else:
+                    print(
+                        f"Aviso: índice de decisões ausente em "
+                        f"{config.decisions.index_file}; reinjetando só o estado.",
+                        file=sys.stderr,
+                    )
             result_msg += build_decisions_appendix(
-                fs, config.decisions.index_file, enabled
+                fs,
+                config.decisions.index_file,
+                enabled,
+                compact_file=config.decisions.compact_file,
             )
             sink = get_sink(config.harness.active_harness, fs)
             sink.emit(result_msg)
@@ -800,6 +826,8 @@ def main():
                 decisions_index_file=agy_config.decisions.index_file,
                 decisions_header_file=agy_config.decisions.header_file,
                 gate_evaluator=gate_evaluator,
+                decisions_compact_file=agy_config.decisions.compact_file,
+                decisions_compact_size=agy_config.decisions.compact_index_size,
             )
 
             stdin_text = "" if sys.stdin.isatty() else sys.stdin.read()

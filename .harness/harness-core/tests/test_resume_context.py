@@ -28,3 +28,68 @@ def test_appendix_empty_when_disabled():
 def test_appendix_empty_when_index_absent():
     fs = MockFileSystem()
     assert build_decisions_appendix(fs, ".harness/microdecisoes.md", True) == ""
+
+
+# --------------------------------------------------------------------------- #
+# Feature 028 — visão compacta com fallback para o índice integral
+# --------------------------------------------------------------------------- #
+
+
+def test_appendix_prefere_visao_compacta_quando_existe():
+    fs = MockFileSystem()
+    fs.write_file(".harness/microdecisoes.md", "- **MD-0001** — Completa\n")
+    fs.write_file(".harness/decisoes-recentes.md", "Total: 1 ficha\n- **MD-0001** — Compacta\n")
+    out = build_decisions_appendix(
+        fs, ".harness/microdecisoes.md", True,
+        compact_file=".harness/decisoes-recentes.md",
+    )
+    assert "Compacta" in out
+    assert "Decisões recentes" in out
+    # O índice integral NÃO entra quando a visão compacta existe.
+    assert "Completa" not in out
+    assert out.startswith("\n")
+
+
+def test_appendix_fallback_para_indice_quando_compacta_ausente():
+    fs = MockFileSystem()
+    fs.write_file(".harness/microdecisoes.md", "- **MD-0001** — Completa\n")
+    out = build_decisions_appendix(
+        fs, ".harness/microdecisoes.md", True,
+        compact_file=".harness/decisoes-recentes.md",
+    )
+    assert "Completa" in out
+    assert "Índice de decisões" in out
+
+
+def test_appendix_fallback_quando_compacta_vazia():
+    fs = MockFileSystem()
+    fs.write_file(".harness/microdecisoes.md", "- **MD-0001** — Completa\n")
+    fs.write_file(".harness/decisoes-recentes.md", "   \n")
+    out = build_decisions_appendix(
+        fs, ".harness/microdecisoes.md", True,
+        compact_file=".harness/decisoes-recentes.md",
+    )
+    assert "Completa" in out
+
+
+def test_appendix_disabled_ignora_compacta():
+    fs = MockFileSystem()
+    fs.write_file(".harness/decisoes-recentes.md", "Total: 1 ficha\n")
+    assert (
+        build_decisions_appendix(
+            fs, ".harness/microdecisoes.md", False,
+            compact_file=".harness/decisoes-recentes.md",
+        )
+        == ""
+    )
+
+
+def test_appendix_vazio_quando_ambos_ausentes():
+    fs = MockFileSystem()
+    assert (
+        build_decisions_appendix(
+            fs, ".harness/microdecisoes.md", True,
+            compact_file=".harness/decisoes-recentes.md",
+        )
+        == ""
+    )

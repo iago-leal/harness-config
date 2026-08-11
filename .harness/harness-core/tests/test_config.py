@@ -1,5 +1,7 @@
 """Configuração tipada — seção [regen] (feature 016)."""
 
+import pytest
+
 from src.core.domain.config import load_config, HarnessConfig, RegenSection
 from tests.helpers import MockFileSystem
 
@@ -109,3 +111,34 @@ def test_load_config_absent_decisions_flag_defaults_true():
     )
     cfg = load_config(fs, "harness.toml")
     assert cfg.decisions.require_registration is True
+
+
+def test_decisions_compact_defaults():
+    # Feature 028: tomls existentes herdam a visão compacta sem migração.
+    cfg = HarnessConfig()
+    assert cfg.decisions.compact_file == ".harness/decisoes-recentes.md"
+    assert cfg.decisions.compact_index_size == 10
+
+
+def test_load_config_compact_size_zero_valido():
+    # K = 0 é válido: a visão degrada para cabeçalho + contagem + ponteiros.
+    fs = MockFileSystem()
+    fs.write_file(
+        "harness.toml",
+        '[harness]\nactive_harness = "claude"\n\n'
+        "[decisions]\ncompact_index_size = 0\n",
+    )
+    cfg = load_config(fs, "harness.toml")
+    assert cfg.decisions.compact_index_size == 0
+
+
+def test_load_config_compact_size_negativo_erro_barulhento():
+    # Teto negativo é erro de configuração: falha na carga, nunca silencia.
+    fs = MockFileSystem()
+    fs.write_file(
+        "harness.toml",
+        '[harness]\nactive_harness = "claude"\n\n'
+        "[decisions]\ncompact_index_size = -1\n",
+    )
+    with pytest.raises(Exception):
+        load_config(fs, "harness.toml")

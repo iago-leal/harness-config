@@ -553,3 +553,65 @@ def test_get_upstream_version_le_o_config_real_em_lockstep():
     )
     service = InitializationService(fs, MockProcessPort())
     assert service._get_upstream_version("/up") == CORE_VERSION
+
+
+# --------------------------------------------------------------------------- #
+# Feature 028 — trecho de guidance das microdecisões no init
+# --------------------------------------------------------------------------- #
+
+_BASE_028 = "/Users/iagoleal/dev/harness/destino"
+
+
+def _init_028(fs, active_harness="claude"):
+    InitializationService(fs, MockProcessPort()).initialize_project(
+        target_path=_BASE_028,
+        active_harness=active_harness,
+        upstream_path="/Users/iagoleal/dev/harness",
+    )
+
+
+def test_init_grava_trecho_de_guidance_no_claude_md():
+    fs = InitMockFileSystem()
+    _init_028(fs)
+
+    content = fs.read_file(f"{_BASE_028}/CLAUDE.md")
+    assert "<!-- harness:decisoes -->" in content
+    # A guidance situa o agente: acervo, índice sob demanda e derivação.
+    assert ".harness/decisoes" in content
+    assert ".harness/microdecisoes.md" in content
+    assert "./harness decisions" in content
+
+
+def test_reinit_nao_duplica_guidance():
+    fs = InitMockFileSystem()
+    _init_028(fs)
+    primeira = fs.read_file(f"{_BASE_028}/CLAUDE.md")
+
+    _init_028(fs)
+    segunda = fs.read_file(f"{_BASE_028}/CLAUDE.md")
+
+    assert segunda == primeira
+    assert segunda.count("<!-- harness:decisoes -->") == 1
+
+
+def test_init_anexa_guidance_a_claude_md_preexistente():
+    fs = InitMockFileSystem()
+    fs.write_file(f"{_BASE_028}/CLAUDE.md", "# Meu projeto\n\nRegras minhas.\n")
+    _init_028(fs)
+
+    content = fs.read_file(f"{_BASE_028}/CLAUDE.md")
+    # Conteúdo do usuário preservado, guidance anexada ao final.
+    assert content.startswith("# Meu projeto")
+    assert "Regras minhas." in content
+    assert "<!-- harness:decisoes -->" in content
+    assert content.index("Regras minhas.") < content.index("<!-- harness:decisoes -->")
+
+
+def test_init_antigravity_grava_guidance_em_agents_md():
+    fs = InitMockFileSystem()
+    _init_028(fs, active_harness="antigravity")
+
+    content = fs.read_file(f"{_BASE_028}/AGENTS.md")
+    assert "<!-- harness:decisoes -->" in content
+    # Perfil antigravity não cria CLAUDE.md.
+    assert not fs.exists(f"{_BASE_028}/CLAUDE.md")
