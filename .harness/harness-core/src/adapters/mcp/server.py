@@ -112,15 +112,37 @@ def session_command(cmd_name: str, active_feature: Optional[str] = None) -> str:
     segue versionando o estado, sem pergunta. Propagar aqui a inversão da RN-08
     produziria fechamento não versionado silencioso, o oposto do pedido. A ressalva
     está declarada na RN-04 do requirements da 024.
+
+    MD-0026 (RN-N56): esta borda também é uma borda de encerramento — antes de
+    fechar, deriva as duas visões de decisões com a semântica da MD-0025
+    (``derive_views_for_close``, fonte única com o ``SessionCloseFlow``) e as
+    inclui no commit de encerramento via ``caminhos_extras``, para a árvore
+    terminar limpa. Sem os portões do fluxo interativo (a assimetria da 024
+    permanece), os avisos não-bloqueantes voltam anexados à resposta da tool.
     """
     service = CommandService(fs, git)
     config = load_config(fs)
     session_file = config.session.state_file
     args = [active_feature] if active_feature else []
 
-    return service.execute_command(
+    caminhos_extras: list[str] = []
+    avisos: list[str] = []
+    if cmd_name.strip().lower().lstrip("/") == "encerrar-sessao":
+        # Sessão ausente é no-op no serviço (D1 da 016): sem fechamento, sem
+        # derivação — o load é barulhento para estado malformado (RN-N4), como
+        # já seria dentro de execute_command.
+        if service.load_session(session_file) is not None:
+            caminhos_extras = DecisionService(fs).derive_views_for_close(
+                config, avisos.append
+            )
+
+    result = service.execute_command(
         command=cmd_name,
         args=args,
         repo_path=os.getcwd(),
         session_filepath=session_file,
+        caminhos_extras=caminhos_extras or None,
     )
+    if avisos:
+        result += "\n" + "\n".join(avisos)
+    return result

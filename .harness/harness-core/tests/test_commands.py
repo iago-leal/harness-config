@@ -303,3 +303,54 @@ def test_execute_clarificar_and_handoff():
     msg_handoff = service.execute_command("handoff", [], repo_path, session_file)
     assert "Handoff Bastão" in msg_handoff
     assert "a" * 40 in msg_handoff
+
+
+def test_execute_encerrar_sessao_caminhos_extras_entram_no_commit():
+    # MD-0026: a borda MCP deriva as visões de decisões antes do fechamento e
+    # as inclui no commit de encerramento via caminhos_extras — a árvore termina
+    # limpa sem git add -A (o stage segue restrito a caminhos explícitos).
+    fs = MockFileSystem()
+    git = FakeGit("a" * 40)
+    service = CommandService(fs, git)
+    session_file = "session.md"
+    state = SessionState(commit_hash="a" * 40, active_feature="feat-1")
+    service.save_session(session_file, state)
+
+    msg = service.execute_command(
+        "encerrar-sessao",
+        [],
+        "repo/",
+        session_file,
+        caminhos_extras=[".harness/microdecisoes.md", ".harness/decisoes-recentes.md"],
+    )
+
+    assert "Sessão encerrada com sucesso" in msg
+    assert len(git.commit_calls) == 1
+    _, called_paths, _ = git.commit_calls[0]
+    assert called_paths == [
+        session_file,
+        ".harness/microdecisoes.md",
+        ".harness/decisoes-recentes.md",
+    ]
+
+
+def test_execute_encerrar_sessao_sem_versionar_ignora_caminhos_extras():
+    # Sem versionamento não há commit nenhum: os extras são irrelevantes.
+    fs = MockFileSystem()
+    git = FakeGit("a" * 40)
+    service = CommandService(fs, git)
+    session_file = "session.md"
+    state = SessionState(commit_hash="a" * 40, active_feature="feat-1")
+    service.save_session(session_file, state)
+
+    msg = service.execute_command(
+        "encerrar-sessao",
+        [],
+        "repo/",
+        session_file,
+        versionar_estado=False,
+        caminhos_extras=[".harness/microdecisoes.md"],
+    )
+
+    assert "sem versionar" in msg
+    assert git.commit_calls == []

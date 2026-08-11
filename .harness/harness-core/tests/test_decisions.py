@@ -240,3 +240,93 @@ def test_write_only_when_changed_nas_duas_escritas(tmp_path):
     _derivar()
     assert index_file in fs.atomic_writes
     assert compact_file in fs.atomic_writes
+
+
+# ---------------------------------------------------------------------------
+# Semântica da borda de encerramento como fonte única (MD-0026): a mesma
+# rotina serve o SessionCloseFlow e a borda MCP. Devolve os caminhos das
+# visões derivadas (para o commit de encerramento) ou lista vazia quando pula.
+
+
+def _close_config(tmp_path):
+    from src.core.domain.config import DecisionsSection, HarnessConfig
+
+    return HarnessConfig(
+        decisions=DecisionsSection(
+            dir=os.path.join(tmp_path, "decisoes"),
+            index_file=os.path.join(tmp_path, "microdecisoes.md"),
+            header_file=os.path.join(tmp_path, "decisoes", "_cabecalho.md"),
+            compact_file=os.path.join(tmp_path, "decisoes-recentes.md"),
+            compact_index_size=10,
+        )
+    )
+
+
+def test_derive_views_for_close_devolve_caminhos_das_visoes(tmp_path):
+    fs = LocalFileSystemAdapter()
+    service = DecisionService(fs)
+    decisoes_dir = os.path.join(tmp_path, "decisoes")
+    fs.makedirs(decisoes_dir)
+    _write_ficha(fs, decisoes_dir, 1, "Decisão 1")
+    config = _close_config(tmp_path)
+    avisos = []
+
+    caminhos = service.derive_views_for_close(config, avisos.append)
+
+    assert caminhos == [
+        config.decisions.index_file,
+        config.decisions.compact_file,
+    ]
+    assert avisos == []
+    assert fs.exists(config.decisions.index_file)
+    assert fs.exists(config.decisions.compact_file)
+
+
+def test_derive_views_for_close_acervo_vazio_devolve_vazio(tmp_path):
+    fs = LocalFileSystemAdapter()
+    service = DecisionService(fs)
+    decisoes_dir = os.path.join(tmp_path, "decisoes")
+    fs.makedirs(decisoes_dir)
+    fs.write_file(
+        os.path.join(decisoes_dir, "_cabecalho.md"), "# Índice de Microdecisões\n"
+    )
+    config = _close_config(tmp_path)
+    avisos = []
+
+    caminhos = service.derive_views_for_close(config, avisos.append)
+
+    assert caminhos == []
+    assert avisos == []
+    assert not fs.exists(config.decisions.index_file)
+    assert not fs.exists(config.decisions.compact_file)
+
+
+def test_derive_views_for_close_integridade_avisa_e_devolve_vazio(tmp_path):
+    fs = LocalFileSystemAdapter()
+    service = DecisionService(fs)
+    decisoes_dir = os.path.join(tmp_path, "decisoes")
+    fs.makedirs(decisoes_dir)
+    # Relação para alvo inexistente: erro de integridade no grafo.
+    fs.write_file(
+        os.path.join(decisoes_dir, "MD-0001.md"),
+        """---
+id: MD-0001
+gancho: teste
+relacoes:
+  - depende-de MD-9999
+estado: ativo
+---
+
+# MD-0001 — Decisão quebrada
+- **D:** d
+""",
+    )
+    config = _close_config(tmp_path)
+    avisos = []
+
+    caminhos = service.derive_views_for_close(config, avisos.append)
+
+    assert caminhos == []
+    assert any("integridade" in a for a in avisos)
+    assert not fs.exists(config.decisions.index_file)
+    assert not fs.exists(config.decisions.compact_file)

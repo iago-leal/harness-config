@@ -100,6 +100,53 @@ class DecisionService:
         self.fs.write_file_atomic(filepath, content)
         return True
 
+    def derive_views_for_close(self, config, err) -> List[str]:
+        """Deriva índice completo + visão compacta com a semântica da borda de
+        encerramento (MD-0025/MD-0026, RN-N56) — fonte única compartilhada pelo
+        ``SessionCloseFlow`` e pela borda MCP ``session_command``.
+
+        Estritamente não-bloqueante: erro de integridade ou falha interna vira
+        chamada a ``err`` e o encerramento segue. Com o grafo inválido, as
+        visões NÃO são regravadas (semântica da CLI menos o abort): visão
+        derivada de acervo quebrado seria pior que visão velha. Sem fichas,
+        sem derivação: o init cria ``decisions.dir`` em todo projeto, então o
+        critério é o acervo vazio — projeto que nunca registrou decisão não
+        ganha visões inventadas no fechamento.
+
+        Devolve os caminhos das visões derivadas (para a borda incluí-los no
+        commit de encerramento) ou lista vazia quando a derivação foi pulada.
+        """
+        try:
+            decisions = self.load_decisions(config.decisions.dir)
+            if not decisions:
+                return []
+            errors = self.validate_integrity(decisions)
+            if errors:
+                err(
+                    "Aviso: visões de decisões não derivadas no encerramento "
+                    "(erros de integridade no grafo):"
+                )
+                for e in errors:
+                    err(f" - {e}")
+                return []
+            self.compile_index(
+                decisions, config.decisions.index_file, config.decisions.header_file
+            )
+            self.compile_compact_view(
+                decisions,
+                config.decisions.compact_file,
+                config.decisions.index_file,
+                config.decisions.dir,
+                config.decisions.compact_index_size,
+            )
+            return [config.decisions.index_file, config.decisions.compact_file]
+        except Exception as exc:
+            err(
+                "Aviso: derivação das visões de decisões falhou "
+                f"(não-bloqueante): {exc}"
+            )
+            return []
+
     def compile_compact_view(
         self,
         decisions: List[Decision],

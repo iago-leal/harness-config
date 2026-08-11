@@ -35,6 +35,7 @@ class CommandService:
         session_filepath: str,
         *,
         versionar_estado: bool = True,
+        caminhos_extras: Optional[List[str]] = None,
     ) -> str:
         """
         Executa um slash command de forma agnóstica à IDE.
@@ -47,6 +48,12 @@ class CommandService:
         (D-05) e o arquivo permanece como mudança pendente no working tree. A
         decisão chega pronta da borda (``SessionCloseFlow``), que sabe se há
         terminal e autorização; o serviço permanece livre de IO de pergunta.
+
+        ``caminhos_extras`` (MD-0026): artefatos do próprio harness que a borda
+        regravou nesta passada (as visões de decisões, no MCP) e que entram no
+        commit de encerramento junto do estado — sempre por caminho explícito,
+        nunca ``git add -A``. Ignorado quando ``versionar_estado=False`` ou em
+        comandos que não commitam.
         """
         cmd_normalized = command.strip().lower().lstrip("/")
 
@@ -101,13 +108,15 @@ class CommandService:
 
             self.save_session(session_filepath, session)
 
-            # Versiona SOMENTE o arquivo de estado (jamais git add -A): o registro
-            # de encerramento entra no histórico sem arrastar mudanças alheias do
+            # Versiona o arquivo de estado e, quando a borda os regravou, os
+            # artefatos derivados do próprio harness (caminhos_extras) — sempre
+            # por caminho explícito, jamais git add -A: o registro de
+            # encerramento entra no histórico sem arrastar mudanças alheias do
             # working tree. Falha de commit é barulhenta e preserva o estado salvo.
             try:
                 commit_encerramento = self.git.commit_paths(
                     repo_path,
-                    [session_filepath],
+                    [session_filepath, *(caminhos_extras or [])],
                     f"chore(sessao): encerrar sessão {feature}; âncora {ancora}",
                 )
             except Exception as exc:
