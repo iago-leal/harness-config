@@ -51,7 +51,7 @@ class ClaudeProfile(HarnessProfile):
             "{\n"
             '  "hooks": {\n'
             '    "SessionStart": [\n'
-            '      { "matcher": "startup|resume|clear", "hooks": [\n'
+            '      { "matcher": "startup|resume|clear|compact", "hooks": [\n'
             '        { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/harness cmd resume", "timeout": 12 } ] }\n'
             "    ],\n"
             '    "Stop": [\n'

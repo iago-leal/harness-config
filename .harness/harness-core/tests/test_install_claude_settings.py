@@ -164,3 +164,47 @@ def test_absent_creates_single_item_per_harness_event():
         assert len(hooks[event]) == 1
     # PostToolUse (format-on-edit) não é mais materializado.
     assert "PostToolUse" not in hooks
+
+
+def test_session_start_matcher_covers_compact():
+    """MD-0024: o SessionStart deve disparar também após compact/auto-compact,
+    para o `cmd resume` reabrir a sessão encerrada na mesma conversa."""
+    fs = MockFileSystem()
+    materialize_claude_settings(fs, "proj")
+
+    data = json.loads(fs.written_files[SETTINGS])
+    matcher = data["hooks"]["SessionStart"][0]["matcher"]
+    assert matcher == "startup|resume|clear|compact"
+
+
+def test_replaces_legacy_matcher_without_compact():
+    """Instalação pré-MD-0024 (matcher sem `compact`) é substituída pelo
+    merge por-item, sem duplicar o gancho."""
+    fs = MockFileSystem()
+    fs.write_file(
+        SETTINGS,
+        json.dumps(
+        {
+            "hooks": {
+                "SessionStart": [
+                    {
+                        "matcher": "startup|resume|clear",
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "${CLAUDE_PROJECT_DIR}/harness cmd resume",
+                                "timeout": 12,
+                            }
+                        ],
+                    }
+                ]
+            }
+        }
+        ),
+    )
+    materialize_claude_settings(fs, "proj")
+
+    data = json.loads(fs.written_files[SETTINGS])
+    session_start = data["hooks"]["SessionStart"]
+    assert len(session_start) == 1
+    assert session_start[0]["matcher"] == "startup|resume|clear|compact"

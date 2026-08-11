@@ -4,8 +4,9 @@
 > Acervo completo: índice em `.harness/microdecisoes.md`; fichas em `.harness/decisoes/MD-NNNN.md`.
 > Antes de buscas amplas, ou antes de redecidir algo, consulte o índice completo.
 
-Total: 23 fichas
+Total: 24 fichas
 
+- **MD-0024** — SessionStart também dispara no compact (reabertura da sessão na mesma conversa)
 - **MD-0023** — MCP `process_decisions` também deriva a visão compacta (fecha G-20/T8)
 - **MD-0022** — Visão compacta de decisões no SessionStart: índice completo vira consulta sob demanda
 - **MD-0021** — Abandono da atualização do vault Obsidian no encerramento de sessão
@@ -15,4 +16,3 @@ Total: 23 fichas
 - **MD-0017** — Consentimento para escrita no git ao encerrar: dois pontos de decisão, default assimétrico por borda
 - **MD-0016** — Lembrete do gate com identidade grossa: um soft-block por sessão, âncora como fingerprint
 - **MD-0015** — Gate de registro de microdecisões: fingerprint no estado e soft-block único no Stop
-- **MD-0014** — Aposentar o gatilho `PostToolUse` (format-on-edit) no perfil Claude

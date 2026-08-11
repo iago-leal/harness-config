@@ -24,7 +24,7 @@
 - **MD-0010** — caminhos dos regression-watch pré-011 atualizados para o layout `.harness/`
   ↳ relaciona MD-0005
 - **MD-0011** — Slash command de encerrar-sessao resolve a raiz via git (robusto a cwd)
-  ↳ relacionado-com MD-0012
+  ↳ relacionado-com MD-0012 · relacionado-com MD-0024
 - **MD-0012** — `encerrar-sessao` resolve o core do upstream quando não há core local (fonte única)
   ↳ relaciona MD-0011 · relacionado-com MD-0013
 - **MD-0013** — Caminho do cache de sync centralizado em `layout.py` (saneamento do T7)
@@ -36,7 +36,7 @@
 - **MD-0016** — Lembrete do gate com identidade grossa: um soft-block por sessão, âncora como fingerprint
   ↳ estende MD-0015 · substituído-por MD-0018
 - **MD-0017** — Consentimento para escrita no git ao encerrar: dois pontos de decisão, default assimétrico por borda
-  ↳ relaciona MD-0015 · relacionado-com MD-0021
+  ↳ relaciona MD-0015 · relacionado-com MD-0021 · relacionado-com MD-0024
 - **MD-0018** — Aposentadoria do soft-block do Stop: o lembrete vira advisory em stderr; a garantia dura fica só no portão do encerramento
   ↳ substitui MD-0016, refina MD-0015 · relacionado-com MD-0019
 - **MD-0019** — Medidor de progresso de entregáveis: `harness progress`, artefato derivado sem timestamp, alerta como achado persistente
@@ -49,3 +49,5 @@
   ↳ refina MD-0002, relaciona MD-0019 · refinado-por MD-0023
 - **MD-0023** — MCP `process_decisions` também deriva a visão compacta (fecha G-20/T8)
   ↳ refina MD-0022, relaciona MD-0013
+- **MD-0024** — SessionStart também dispara no compact (reabertura da sessão na mesma conversa)
+  ↳ relaciona MD-0017, relaciona MD-0011
