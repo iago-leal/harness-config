@@ -24,6 +24,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11 11:26
+
+> Re-verificação dirigida pós-features 024-027 (escopo por diff: o ramo `--gate` de `main.py` foi reescrito pela 025, que aposentou o soft-block em favor do advisory em stderr — MD-0018). **W005 está supersedido deliberadamente** e foi registrado na seção "Arquivadas" abaixo, com a tabela principal fisicamente preservada (regra do Reversa); a metade do item sobre o modo SEM `--gate` migrou para o W003 da 025. Os demais itens permanecem plenamente válidos. Suíte 372 verde.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001-W004 | 🟢 verde | Portões do encerramento, avaliador puro, escape `--sem-decisao` e campos opcionais do estado intocados pelo delta (`gate.py` byte-idêntico na 025). |
+| W005 | 🟡 amarelo | **Supersedido pela 025 (MD-0018):** o stdout sob `--gate` agora é SEMPRE vazio; o contrato novo é vigiado pelos W001/W002 da 025. Não é regressão acidental. |
+| W006-W010 | 🟢 verde | Perfis de hook, bridge Antigravity, porta git, `require_registration` e skill inalterados no que este watch vigia; o advisory da bridge convergiu com a CLI (mesma linha em stderr). |
+
+
 ### Re-extração 2026-07-15 19:22
 
 > Primeira verificação da 022, na re-extração de reconciliação pós-022/023. Vereditos por leitura direta do código as-built (gate.py integral; diffs de close_flow/main/serializer/models/config/hook_bridge/claude_settings/harness_profiles; greps dirigidos na skill e nos testes) cruzada com os artefatos recém-gerados (`domain.md` §2.20, `state-machines.md`, `code-analysis.md` §4/§8/§11/§12, `data-dictionary.md` §1/§9). Suíte 300 verde relatada no fechamento da 023 (não recontada nesta rodada).
@@ -43,4 +54,4 @@
 
 ## Arquivadas
 
-_(vazio)_
+- **W005** — arquivado em 2026-08-11, supersedido pela feature 025 (MD-0018): o stdout sob `--gate` deixou de carregar o JSON `{"decision":"block",...}` e passou a ser sempre vazio, com o advisory numa linha `Aviso:` em stderr. O contrato novo é vigiado pelos W001/W002 do `regression-watch.md` da 025; a metade do item sobre o modo SEM `--gate` migrou para o W003 da 025. A linha original permanece na tabela principal acima por regra do Reversa (histórico imutável); este registro a neutraliza para fins de regressão.

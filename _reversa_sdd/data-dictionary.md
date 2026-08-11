@@ -189,3 +189,45 @@ Estrutura JSON compilada por `DocumentationService.generate_html` e injetada no 
 - **`GateVerdict`** (022/023): novo value-object transitório (§9).
 - **`HarnessSection.version`**: literal `2.0.1` → `2.1.1`.
 - **`Decision`**: sem mudança de schema; população 12 → 16 fichas (MD-0013..MD-0016).
+
+## 10. `Medicao` e satélites — medição de progresso (features 026/027, NOVO) 🟢
+
+Modelos transitórios de `core/progress/service.py` (Pydantic, **jamais persistidos** — a saída versionada é a projeção markdown, o board é a projeção kanban):
+
+| Campo (`Medicao`) | Tipo | Obrigatório | Default | Significado |
+|-------------------|------|-------------|---------|-------------|
+| `ativa` | FeatureProgresso? | não | `None` | feature forward ativa (de `active-requirements.json`) |
+| `pausadas` | List[FeatureProgresso] | não | `[]` | features pausadas |
+| `concluidas` | int | não | `0` | contagem de features `done` (sem detalhe — não geram card) |
+| `alertas` | List[Alerta] | não | `[]` | derivados e persistentes: alta (divergência declarado×físico), média (pendência de reconciliação no regression-watch) |
+| `falhas` | List[str] | não | `[]` | fontes presentes mas ilegíveis (falha real → exit 2 na borda) |
+| `board_habilitado` | bool | não | `False` | espelha `[progress.kanban].enabled` (027) |
+| `demandas` | List[Demanda] | não | `[]` | cards manuais do board em coluna não-`done` (027) |
+
+**`FeatureProgresso`**: `feature_id`, `short_name`, `estagio` (físico, via `stages.py`), contagens por fase, `iniciada_em` (027, `started-at`) e `acoes: List[AcaoProgresso]` (027). **`AcaoProgresso`** (027): `acao_id` (ID real `T00N` — ids ordinais foram rejeitados por instabilidade a reordenação da tabela, MD-0020/DESCARTADO-e), `descricao`, `fase`, `feita`, `criada_em` (primeiro `ts` da ação no `progress.jsonl`; fallback `started-at`; nunca a hora corrente). **`Demanda`** (027): `card_id`, `titulo`, `coluna` — todos com default `""`.
+
+## 11. Card do board kanban (`.vscode/vscode-kanban.json`, feature 027, NOVO) 🟢
+
+Contrato EXTERNO com o fork do vscode-kanban do mantenedor; schema conhecido por um único módulo (`kanban.py`). Objeto de 4 chaves ordenadas (`todo`, `in-progress`, `testing`, `done`), arrays de cards:
+
+| Campo | Tipo | Emitido pelo exportador | Significado |
+|-------|------|--------------------------|-------------|
+| `id` | str | sim | gerenciados: `hns:<feature>`, `hns:<feature>:<T00N>`, `hns:alerta:<origem>` |
+| `title` | str | sim | ação: `T00N — descrição`; resumo: `NNN-short-name — feitas/total ações` |
+| `type` | str | sim | `note` (gerenciados) ou `bug` (alertas) |
+| `prio` | int | sim | 0 ação, 1 resumo, 9 alerta alta, 5 alerta média |
+| `creation_time` | str | sim | determinístico (ver `AcaoProgresso.criada_em`) |
+| `description` | {content, mime} | sim | uma linha, `text/markdown` |
+| `details` | {content, mime} | **não** (as-built) | opcional no fork; não emitido |
+| `category` | str | sim | `"harness"` = posse do exportador; qualquer outro valor (ou ausente) = card manual, preservado byte a byte |
+
+## Mudanças vs extração anterior (features 024-027, reconciliação 2026-08-11)
+
+- **`ProgressSection`** (026): nova seção `[progress]` (`file`, default `.harness/progresso.md`) em `HarnessConfig`, herança sem migração.
+- **`ProgressKanbanSection`** (027): aninhada como `ProgressSection.kanban` (`enabled`, default `False`; `file`, default `.vscode/vscode-kanban.json`).
+- **`Medicao`/`FeatureProgresso`/`AcaoProgresso`/`Demanda`** (026/027): novos value-objects transitórios (§10).
+- **Card do board** (027): novo contrato externo (§11), único delta-de-contrato-externo do período.
+- **`CommandService.execute_command`** (024): novo parâmetro `versionar_estado: bool = True` — não é schema de dados, mas muda o efeito colateral (commit de fechamento condicionado a consentimento, MD-0017).
+- **`HarnessSection.version`**: literal `2.1.1` → `2.5.0` (2.2.0 na 024, 2.3.0 na 025, 2.4.0 na 026, 2.5.0 na 027).
+- **`SessionState`/`GateVerdict`**: sem mudança de schema no período (o gate mudou de POLÍTICA na borda — advisory, MD-0018 — não de dados).
+- **`Decision`**: sem mudança de schema; população 16 → 20 fichas (MD-0017..MD-0020).

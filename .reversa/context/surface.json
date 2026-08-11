@@ -1,21 +1,63 @@
 {
   "generated_at": "2026-06-24T11:35:46-03:00",
-  "reconciled_at": "2026-07-15T00:00:00-03:00",
+  "reconciled_at": "2026-08-11T00:00:00-03:00",
   "project_root": "/Users/iagoleal/dev/harness",
   "languages": [
-    { "name": "Python", "extensions": [".py"], "file_count": 92 },
-    { "name": "Markdown", "extensions": [".md"], "file_count": 22 },
-    { "name": "Shell", "extensions": [".sh"], "file_count": 1 },
-    { "name": "HTML", "extensions": [".html"], "file_count": 2 },
-    { "name": "TOML", "extensions": [".toml"], "file_count": 1 },
-    { "name": "JSON", "extensions": [".json"], "file_count": 2 },
-    { "name": "YAML", "extensions": [".yml"], "file_count": 1 }
+    {
+      "name": "Python",
+      "extensions": [
+        ".py"
+      ],
+      "file_count": 100
+    },
+    {
+      "name": "Markdown",
+      "extensions": [
+        ".md"
+      ],
+      "file_count": 26
+    },
+    {
+      "name": "Shell",
+      "extensions": [
+        ".sh"
+      ],
+      "file_count": 1
+    },
+    {
+      "name": "HTML",
+      "extensions": [
+        ".html"
+      ],
+      "file_count": 2
+    },
+    {
+      "name": "TOML",
+      "extensions": [
+        ".toml"
+      ],
+      "file_count": 2
+    },
+    {
+      "name": "JSON",
+      "extensions": [
+        ".json"
+      ],
+      "file_count": 3
+    },
+    {
+      "name": "YAML",
+      "extensions": [
+        ".yml"
+      ],
+      "file_count": 1
+    }
   ],
   "primary_language": "Python",
   "frameworks": [
     {
       "name": "Harness Core (Python, arquitetura hexagonal)",
-      "version": "2.0.0",
+      "version": "2.5.0",
       "source": ".harness/harness-core/src/main.py"
     },
     {
@@ -36,14 +78,21 @@
   ],
   "package_manager": "uv",
   "entry_points": [
-    { "path": "harness", "type": "wrapper_cli" },
-    { "path": ".harness/harness-core/src/main.py", "type": "cli_core" },
+    {
+      "path": "harness",
+      "type": "wrapper_cli"
+    },
+    {
+      "path": ".harness/harness-core/src/main.py",
+      "type": "cli_core"
+    },
     {
       "path": ".harness/harness-core/src/adapters/mcp/server.py",
       "type": "mcp_server"
     }
   ],
   "config_files": [
+    "harness.toml",
     ".harness/harness-core/harness.toml",
     ".harness/harness-core/requirements.in",
     ".harness/harness-core/requirements.txt",
@@ -52,10 +101,12 @@
     ".gitignore",
     ".github/workflows/ci.yml"
   ],
-  "ci_cd": [".github/workflows/ci.yml"],
+  "ci_cd": [
+    ".github/workflows/ci.yml"
+  ],
   "database_hints": [],
   "test_framework": "pytest",
-  "test_file_count": 34,
+  "test_file_count": 37,
   "modules": [
     ".harness/harness-core/src/core/bootstrap",
     ".harness/harness-core/src/core/formatting",
@@ -67,10 +118,11 @@
     ".harness/harness-core/src/core/session",
     ".harness/harness-core/src/core/domain",
     ".harness/harness-core/src/core/migrate",
+    ".harness/harness-core/src/core/progress",
     ".harness/harness-core/src/core/ports",
     ".harness/harness-core/src/adapters"
   ],
-  "total_files": 122,
+  "total_files": 135,
   "notes": [
     "Re-extração 2026-06-24: módulo legado `claude-config/` foi PURGADO (commit 5624f78); decisões agora vivem em `.harness/decisoes/` e o índice em `.harness/microdecisoes.md` (feature 005).",
     "Os caminhos de decisão deixaram de ser literais chumbados: `main.py` e `server.py` leem `load_config().decisions` (dir/index_file/header_file da seção `[decisions]` do harness.toml).",
@@ -79,7 +131,8 @@
     "A feature 008 adicionou gerenciamento determinístico de dependências via uv (requirements.in/txt), pipeline de CI no GitHub Actions e ativou dinamicamente a configuração de formatação (opt-out e exclude_paths) no FormattingService.",
     "RECONCILIAÇÃO 2026-07-05 (pós-features 010-021, este arquivo estava congelado desde 2026-06-24 e não incorporava sequer a relocação de caminhos da feature 011): todos os caminhos `harness-core/...` foram corrigidos para `.harness/harness-core/...` (a relocação em si é da feature 011, mas este surface.json nunca foi atualizado para refleti-la). Módulo `core/migrate` (020) adicionado à lista `modules`. Dependência de MCP corrigida de `mcp` para `fastmcp` (o pacote direto no requirements.in). `test_file_count` de 15 para 33 arquivos `test_*.py` (sem contar `helpers.py`). `total_files` recalculado por amostragem (90 Python + ~18 Markdown + 2 HTML + 1 wrapper + 1 TOML + 2 JSON + 1 YAML, com alguma imprecisão residual esperada de uma contagem heurística, não de auditoria exaustiva arquivo-a-arquivo).",
     "Não incorporado nesta reconciliação (fora do escopo do Scout, delegado ao Archaeologist/Detective/Architect): semântica detalhada de `core/migrate`, `core/session/close_flow.py` e `core/session/resume_context.py`; reconciliação de `domain.md`/ADRs com as decisões de 019-021; regeneração de `c4-components.md` e `spec-impact-matrix.md` (também congelados desde a feature 009).",
-    "RECONCILIAÇÃO 2026-07-15 (pós-MD-0014 e features 022-023): novo módulo `core/decisions/gate.py` (GateVerdict, compute_fingerprint fina para o 3º portão do encerrar-sessao, compute_lembrete_fingerprint grossa para o lembrete do Stop — MD-0015/MD-0016); novo teste `test_decision_gate.py` (test_file_count 33 → 34; Python 90 → 92). O hook PostToolUse (format-on-edit) foi aposentado no perfil Claude (MD-0014) e o evento Stop passou a invocar `harness decisions --gate`. Fichas de decisão: 12 → 16 (MD-0013..MD-0016). Suíte em 300 testes; core 2.1.1."
+    "RECONCILIAÇÃO 2026-07-15 (pós-MD-0014 e features 022-023): novo módulo `core/decisions/gate.py` (GateVerdict, compute_fingerprint fina para o 3º portão do encerrar-sessao, compute_lembrete_fingerprint grossa para o lembrete do Stop — MD-0015/MD-0016); novo teste `test_decision_gate.py` (test_file_count 33 → 34; Python 90 → 92). O hook PostToolUse (format-on-edit) foi aposentado no perfil Claude (MD-0014) e o evento Stop passou a invocar `harness decisions --gate`. Fichas de decisão: 12 → 16 (MD-0013..MD-0016). Suíte em 300 testes; core 2.1.1.",
+    "RECONCILIAÇÃO 2026-08-11 (pós-features 024-027; 025/026/027 ainda sem commit — lidas da árvore de trabalho): novo módulo `core/progress/` (service.py, render.py, stages.py, kanban.py — medidor read-only 026 e exportador kanban 027); novo subcomando `progress` na CLI (modos padrão/--json/--em-hook); `harness.toml` na RAIZ do projeto (opt-in `[progress.kanban] enabled = true`) além do harness.toml do core; artefatos derivados novos `.harness/progresso.md` e `.vscode/vscode-kanban.json`; a 024 condicionou a escrita no git ao encerrar a consentimento (close_flow.py, MD-0017) e a 025 aposentou o soft-block do Stop (`decisions --gate` virou advisory puro em stderr, MD-0018 — o hook Stop permanece em .claude/settings.json, mas nunca bloqueia). Contagens: Python 92 → 100 (src 57 → 62; testes 34 → 37 test_*.py + helpers.py); fichas 16 → 20 (MD-0017..MD-0020); suíte em 372 testes; core 2.1.1 → 2.5.0."
   ],
   "organization_suggestion": {
     "granularity": "feature",
@@ -95,7 +148,9 @@
       },
       {
         "type": "cli_subcommands_as_features",
-        "evidence": [".harness/harness-core/src/main.py"]
+        "evidence": [
+          ".harness/harness-core/src/main.py"
+        ]
       }
     ],
     "features": [
@@ -112,7 +167,10 @@
       "session-close-flow-as-skill",
       "fonte-unica-e-migrate",
       "resume-ancorado-em-decisoes",
-      "gate-registro-microdecisoes"
+      "gate-registro-microdecisoes",
+      "consentimento-git-ao-encerrar",
+      "medidor-progresso-entregaveis",
+      "exportador-kanban"
     ]
   }
 }

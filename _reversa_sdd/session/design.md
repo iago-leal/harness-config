@@ -2,6 +2,7 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração; feature 004)
 > Foca no COMO a unit é construída, a partir do código legado lido. Escala: 🟢 / 🟡 / 🔴
+> **Reconciliação de 2026-08-11 (feature 024):** o fluxo de encerramento (`close_flow.py`) ganhou o consentimento para escrita no git; serializer e sinks byte-idênticos.
 
 ## Interface
 
@@ -61,6 +62,8 @@
 | Teto de 10000 chars no envelope do Claude                                       | `sinks.py` (`MAX_CHARS`)                              | 🟢        |
 | Campos do gate opcionais e omitidos quando vazios (byte-compat pré-022) ✨f022  | `serializer.py` (`parse`/`render`), MD-0015           | 🟢        |
 | Fingerprints zerados no fechamento (não vazam entre sessões) ✨f022             | `models.py` (`close_session`)                         | 🟢        |
+| Consentimento resolvido na borda, executado no domínio: a CLI resolve o tri-estado (TTY/flags) e o `close_flow` só recebe o valor; `execute_command(..., versionar_estado)` pula `commit_paths` com `False` ✨f024 | `close_flow.py`, `main.py`, `commands/service.py`, MD-0017 | 🟢        |
+| Anúncio obrigatório do desfecho não versionado (marker com `motivo`, emitido após o sucesso e antes das ofertas) ✨f024 | `close_flow.py` (`render_encerramento_nao_versionado_marker`), RN-N49 | 🟢        |
 
 ## Estado Interno
 

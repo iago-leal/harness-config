@@ -4,6 +4,7 @@
 > Projeto: `/Users/iagoleal/dev/harness`. Módulo único: **harness-core** — CLI Python + servidor MCP + **driver de ganchos do Antigravity**, em arquitetura hexagonal (ports & adapters). `doc_level = completo`.
 > **Reconciliação de 2026-07-05** (Archaeologist, pós-features 010-021 — este documento estava congelado desde a 009): nova unidade **13. `core/migrate`** (feature 020); unidade **8. `core/session`** expandida com `close_flow.py` (018, fonte única de orquestração do encerramento) e `resume_context.py` (021, apêndice do índice de decisões no `resume`). Caminhos confirmados sob `.harness/harness-core/` (a relocação em si é da feature 011). `data-dictionary.md` e `modules.json` reconciliados em conjunto — ver notas no rodapé de cada um.
 > **Reconciliação de 2026-07-15** (Archaeologist, pós-MD-0014 e features 022-023): unidade **4. `core/decisions`** ganhou o módulo `gate.py` (gate de registro de microdecisões — avaliação pura, dupla identidade fina/grossa); **8. `core/session`** ganhou o 3º portão no `close_flow.py` e os campos anti-loop no `serializer.py`; **borda** `main.py` ganhou `decisions --gate` (hook Stop) e `cmd encerrar-sessao --sem-decisao`; `GitPort`/`SubprocessGitAdapter` ganharam `list_changed_paths_since`; o `AntigravityHookBridge` ganhou o advisory via `gate_evaluator` injetado; **o PostToolUse (format-on-edit) foi aposentado no perfil Claude** (MD-0014) — `ClaudeProfile.hooks_block()` e `claude_settings.py` não o materializam mais. Core 2.0.1 → **2.1.1**.
+> **Reconciliação de 2026-08-11** (Archaeologist, pós-features 024-027; 025/026/027 lidas da árvore de trabalho, ainda sem commit): nova unidade **14. `core/progress`** (026/027 — medidor read-only `harness progress` + exportador kanban, quatro módulos: `service.py`, `stages.py`, `render.py`, `kanban.py`); **5. `core/commands`** ganhou `versionar_estado` no `execute_command` (024); **8. `core/session`** teve o `close_flow.py` reescrito no eixo do **consentimento** (024 — pré-check vira oferta com desfecho de segunda ordem, commit de encerramento tri-estado com default assimétrico por borda, marker `ENCERRAMENTO_NAO_VERSIONADO`); a borda `main.py` teve o ramo `decisions --gate` **despromovido de soft-block a advisory puro** (025 — stdout sempre vazio, aviso em stderr, exit 0) e ganhou o subcomando **`progress`** (026/027, três modos mutuamente exclusivos e contrato de exit codes 0/1/2); `config.py` ganhou `ProgressSection`/`ProgressKanbanSection`. Core 2.1.1 → **2.5.0**.
 
 Categoria (Princípio nº 4): **Aplicação** — ferramenta com usuário (o próprio mantenedor), evolui no tempo, organizada em camadas.
 
@@ -17,7 +18,7 @@ Hexágono clássico em três anéis:
 
 Inversão de dependência preservada: os serviços recebem as portas por injeção no construtor; quem as instancia (`main.py`, `server.py`, testes) escolhe a implementação concreta. O driver do Antigravity segue o mesmo padrão: recebe `fs` e os serviços de domínio por injeção, e a CLI (`agy-hook`) faz a instanciação concreta na borda.
 
-São **13 unidades** analisadas: 9 serviços de capacidade (`bootstrap`, `formatting`, `sync`, `decisions`, `commands`, `documentation`, `install`, `session`, e o **novo `migrate`**, feature 020), o pacote `domain` (modelos + config + cache), o pacote `ports` e o pacote `adapters` (que abriga o terceiro driver, em `adapters/antigravity/`).
+São **14 unidades** analisadas: 10 serviços de capacidade (`bootstrap`, `formatting`, `sync`, `decisions`, `commands`, `documentation`, `install`, `session`, `migrate` — feature 020 — e o **novo `progress`**, features 026/027), o pacote `domain` (modelos + config + cache), o pacote `ports` e o pacote `adapters` (que abriga o terceiro driver, em `adapters/antigravity/`).
 
 ```mermaid
 graph TD
@@ -26,6 +27,7 @@ graph TD
     AGY[adapters/antigravity/hook_bridge.py — AntigravityHookBridge] --> Services
     CLI -- agy-hook --> AGY
     CLI -- migrate --> Migrate[core/migrate — feature 020]
+    CLI -- progress --> Progress[core/progress — features 026/027]
     subgraph Services[core/* — serviços de domínio]
         boot[bootstrap]
         fmt[formatting]
@@ -42,6 +44,7 @@ graph TD
     Services --> Ports[core/ports — fs/git/process]
     Ports -.implementadas por.-> Adapters[adapters — fs/git/process]
     Migrate --> Ports
+    Progress --> Ports
     cmd --> sess
     CLI --> Config[core/domain/config.load_config]
     MCP --> Config
@@ -151,7 +154,7 @@ A feature 007 introduziu `check_version_update(fs, local_version, upstream_path)
 - **`compute_lembrete_fingerprint(anchor)`** — identidade **grossa** (023/D-02), `sha1(âncora)`: estável do início ao fim da sessão → o lembrete do Stop dispara **no máximo uma vez por sessão**; nem arquivo tocado nem commit novo o rearmam.
 - **`GateVerdict`** (Pydantic, não persistido): `pendente`, `mudancas`, `fichas_tocadas`, `fingerprint` (fina), `fingerprint_lembrete` (grossa), `aviso`. Só os fingerprints sobrevivem, nos campos anti-loop do `SessionState`.
 
-**Três bordas consomem o veredito** (cada uma com sua política): o 3º portão do `SessionCloseFlow` (bloqueio com escape `--sem-decisao`, identidade fina — §8), o ramo `decisions --gate` do `main.py` (soft-block JSON no hook Stop do Claude, identidade grossa — §11) e o `AntigravityHookBridge` (advisory em stderr, nunca bloqueia — §12). Liga/desliga por `decisions.require_registration` (default `True`).
+**Três bordas consomem o veredito** (desde a 025, com apenas **duas políticas**): o 3º portão do `SessionCloseFlow` (a ÚNICA política bloqueante, com escape `--sem-decisao`, identidade fina — §8), o ramo `decisions --gate` do `main.py` (**advisory puro desde a 025/MD-0018**: o soft-block JSON `{"decision":"block",...}` no stdout foi aposentado; o desfecho pendente vira linha `Aviso:` em stderr, stdout sempre vazio, exit 0 — identidade grossa preservada, no máximo 1 aviso por sessão — §11) e o `AntigravityHookBridge` (advisory em stderr, nunca bloqueia, inalterado — §12). Liga/desliga por `decisions.require_registration` (default `True`).
 
 ---
 
@@ -159,9 +162,9 @@ A feature 007 introduziu `check_version_update(fs, local_version, upstream_path)
 
 **Arquivo:** `src/core/commands/service.py` (92 linhas).
 
-`CommandService.execute_command(command, args, repo_path, session_filepath) -> str` normaliza o comando (`strip().lower().lstrip("/")`) e despacha:
+`CommandService.execute_command(command, args, repo_path, session_filepath, versionar_estado=True) -> str` normaliza o comando (`strip().lower().lstrip("/")`) e despacha:
 
-- **`encerrar-sessao`**: carrega sessão; se ausente/inativa → erro. Senão lê HEAD (`git`), `session.close_session(commit)`, salva atomicamente.
+- **`encerrar-sessao`**: carrega sessão; se ausente/inativa → erro. Senão lê HEAD (`git`), `session.close_session(commit)`, salva atomicamente. **Desde a 024 (MD-0017)**, o parâmetro `versionar_estado` (default `True`, preservando todos os chamadores) controla o commit de fechamento: com `False`, fecha o estado no arquivo, **pula** `commit_paths`, acrescenta linha declarativa na narrativa (RN-N3: registra ato, não inventa narrativa) e devolve mensagem anunciando o não-versionamento — a âncora é capturada antes de qualquer escrita e, sem commit, âncora e HEAD coincidem. A borda MCP mantém `versionar_estado=True` por assimetria deliberada (D-04 da 024).
 - **`resume`**: sem sessão → cria `SessionState` com HEAD atual e feature `args[0]` (ou `"default_feature"`), salva, retorna "Nova sessão". Com sessão → compara `session.commit_hash` com HEAD; se divergir, monta `⚠️ ALERTA` de âncora; `start_session` reativa **preservando a narrativa** escrita pelo agente; salva; retorna `<warning><corpo da narrativa>\n<footer>`.
 - **`clarificar`**: texto fixo (limite de 2 rodadas de diálogo).
 - **`handoff`**: monta bloco Markdown com feature ativa + HEAD.
@@ -218,14 +221,14 @@ Extraído da borda `main.py` (D-01) para que a CLI (`main.py`, ramo `cmd encerra
 
 Sequência orquestrada por `SessionCloseFlow.run(repo_path, config, ...)`:
 
-1. **Pré-check de trabalho pendente** (`pending_work_paths` — feature 016, estendida na 019 para cobrir `.harness/`): lista os caminhos sujos da working tree, **exceto** o próprio arquivo de estado (que o commit de fechamento versiona). Se houver, `conduct_commit_pendente` aborta o encerramento e orienta (marker `[HARNESS:COMMIT_PENDENTE ...]` sem TTY; lista legível com TTY) — protocolo "abortar e reexecutar": o core nunca faz `git add` do trabalho alheio.
+1. **Pré-check de trabalho pendente** (`pending_work_paths` — feature 016, estendida na 019 para cobrir `.harness/`): lista os caminhos sujos da working tree, **exceto** o próprio arquivo de estado. **Desde a 024 (MD-0017)**, `conduct_commit_pendente` devolve `bool` (autorização) em vez de sempre abortar: anuncia a contagem à frente e pergunta o desfecho de segunda ordem — com TTY, `s` autoriza encerrar com o trabalho fora do histórico (rastro na narrativa) e `n` aborta; sem TTY, a autorização vem apenas da flag `--com-pendencias` (marker `[HARNESS:COMMIT_PENDENTE ...]` com `acao` de OFERTA). O core segue sem jamais fazer `git add` do trabalho alheio: toda escrita dele é sobre ato próprio.
 2. **Gate de narrativa viva** (`narrative_is_stale`): recusa encerrar se a narrativa das 4 seções está vazia OU idêntica à do commit-âncora de partida (sinal de que o agente esqueceu de consolidar). Fail-open só quando não há baseline legível na âncora E a narrativa atual já está preenchida. `conduct_narrativa_pendente` replica a dualidade marker/TTY do passo anterior.
-3. **Fechamento propriamente dito** — delega a `CommandService.execute_command("encerrar-sessao", ...)` (a lógica de domínio de transição de estado permanece lá, inalterada; `close_flow` só decide **quando** chamá-la).
+3. **Fechamento propriamente dito** — delega a `CommandService.execute_command("encerrar-sessao", ...)`. **Desde a 024**, `run` resolve antes um **tri-estado `versionar_encerramento`** com default assimétrico por borda: com TTY pergunta `[S/n]` (default afirmativo); **sem TTY o silêncio NÃO autoriza** — versiona só com `--com-commit-encerramento` (par mutuamente exclusivo com `--sem-commit-encerramento`, erro de uso barulhento se ambas). Quando não versiona, repassa `versionar_estado=False` ao serviço e, **após o sucesso e antes da oferta de push**, emite o marker `ENCERRAMENTO_NAO_VERSIONADO` com `motivo` distinguindo esquecimento do agente de recusa explícita — para a oferta de push nunca sugerir publicar achando que o registro entrou junto.
 4. **Ofertas de fim de sessão** (`conduct_end_session_offers`, feature 014, ordem **push → upgrade**, RN-10): cada oferta cabível (`offers.push`/`offers.upgrade`) é anunciada por _marker_ sem TTY ou pergunta `[s/N]` com TTY; a falha de uma ação (rede/push/upgrade) avisa e segue sem abortar a outra nem desfazer o encerramento já concluído (RN-02/RN-09).
 
 **3º portão (feature 022), entre o gate de narrativa e o fechamento:** com `decisions.require_registration` ligado, `evaluate_registration_gate` avalia a pendência de registro — o pré-check já forçou o commit do trabalho, então o diff da âncora enxerga a sessão inteira. Quatro desfechos: (a) `aviso` do veredito ecoa em `err` (fail-open barulhento); (b) pendente + `sem_decisao=True` → o escape auditável (RN-03) grava `"Declarado: sem decisão não óbvia nesta sessão (gate de registro)."` na narrativa (`feito`) e segue — não é o core inventando narrativa (RN-N3), é rastro de ato deliberado; (c) pendente + fingerprint **fino** já bloqueado antes (`gate_encerramento_fingerprint == verdict.fingerprint`) → avisa "pendência não sanada" e **encerra mesmo assim** (anti-loop, RF-04); (d) pendente inédito → persiste o fingerprint no estado, emite `conduct_decisao_pendente` (marker `[HARNESS:DECISAO_PENDENTE mudancas=... total=N acao=...]` sem TTY, cap de 20 caminhos; texto legível com TTY) e **aborta com exit 0** — protocolo abortar-e-reexecutar, o core nunca cria a ficha pelo usuário. A identidade fina garante que trabalho novo após o bloqueio **rearma** o portão (pinado por teste-guarda, 023).
 
-🟢 **Sem duplicação CLI↔skill:** `main.py` reexporta `render_offer_markers`, `conduct_end_session_offers`, `pending_work_paths`, `render_commit_pendente_marker`, `conduct_commit_pendente`, **`render_decisao_pendente_marker`, `conduct_decisao_pendente`** (022) e `SessionCloseFlow` do core (ver topo do arquivo) — os scripts finos da skill materializada importam os mesmos símbolos, nunca uma cópia paralela.
+🟢 **Sem duplicação CLI↔skill:** `main.py` reexporta `render_offer_markers`, `conduct_end_session_offers`, `pending_work_paths`, `render_commit_pendente_marker`, `conduct_commit_pendente`, **`render_decisao_pendente_marker`, `conduct_decisao_pendente`** (022), **`render_encerramento_nao_versionado_marker`, `conduct_encerramento_nao_versionado`** (024) e `SessionCloseFlow` do core (ver topo do arquivo) — os scripts finos da skill materializada importam os mesmos símbolos, nunca uma cópia paralela.
 
 **`serializer.py` (022):** `parse`/`render` ganharam os campos anti-loop `gate_lembrete_fingerprint`/`gate_encerramento_fingerprint` no front-matter — opcionais (estados pré-022 herdam `None`) e gravados **só quando preenchidos** (sem gate acionado, o arquivo permanece byte-compatível com o formato anterior). `SessionState.close_session` os **zera** no fechamento: fingerprints não vazam para a próxima sessão.
 
@@ -306,6 +309,42 @@ As assinaturas `is_dir` e `run_command` foram acrescentadas para viabilizar as r
 7. **Modo real**, na ordem: (a) escreve o shim (`render_shim()`) e o torna executável; (b) instala os ganchos Git via `BootstrapService` (tolera ausência de repo git); (c) materializa `.claude/settings.json` por merge, se `active_harness == "claude"`; (d) remove o campo `version` do `harness.toml` (deixa de fazer sentido sob fonte única — a versão passa a ser sempre a do upstream); (e) **por último**, remove a(s) cópia(s) do core (`_safe_remove_core`, que recusa remover qualquer diretório cujo nome-base não seja literalmente `harness-core` — guarda contra um `remove_tree` malformado apagar a coisa errada).
 
 **Exceção consciente ao footprint per-projeto (RN-N17, documentada no docstring do módulo):** ao contrário de `init`/`materialize`, o `migrate` **atua sobre outros projetos** por design — é ferramenta de manutenção da base já instalada, não uma operação per-projeto isolada. A guarda inegociável (guardas 1 e 2 acima) é nunca remover o core do upstream em si nem cair numa autorreferência circular.
+
+---
+
+## 14. `core/progress` — medidor read-only de entregáveis + exportador kanban (features 026/027, NOVO) 🟢
+
+**Arquivos:** `service.py`, `stages.py`, `render.py`, `kanban.py`. Décima quarta unidade, inteiramente aditiva: nenhuma linha pré-existente do domínio mudou de comportamento.
+
+Papel: responder "**quanto falta**" (o harness já respondia "o quê" e "por quê"). Termômetro 100% **derivado** das fontes de verdade — nunca armazena estado próprio; o serviço é **leitura pura** (invariante pinada por teste: `fs.writes == []` após `measure()`); toda escrita vive na borda CLI.
+
+### `service.py` — `ProgressService.measure() -> Medicao` 🟢
+
+Agrega **cinco fontes** num modelo transitório `Medicao` (Pydantic, jamais persistido):
+
+1. **Ciclo forward**: `.reversa/active-requirements.json` (ativa + pausadas) e os artefatos físicos de `_reversa_forward/*` — estágio físico via `stages.py`, checkboxes por fase e, desde a 027, as **ações individuais** (`AcaoProgresso` com o ID real `T00N` e `criada_em` = primeiro `ts` da ação no `progress.jsonl`, linhas corrompidas silenciosamente puladas, fallback no `started-at`).
+2. **Regression-watch**: varredura dos `regression-watch.md`; a marca literal "pendência de reconciliação" (substring, minúsculas) vira **alerta média persistente** — o alerta existe enquanto o problema existir, sem ack.
+3. **Microdecisões**: contagem de fichas por listagem e gate reavaliado por `evaluate_registration_gate` em leitura pura (**sem** persistir fingerprint).
+4. **Sessão**: estado via `CommandService.load_session`.
+5. **Board kanban (027, condicionada a `[progress.kanban].enabled`)**: lido **somente** pelos cards manuais — os em coluna não-`done` viram `Medicao.demandas` (fila de entrada de demandas do mantenedor); cards gerenciados do arquivo jamais são fonte (fluxo unidirecional `actions.md` → board). Board ausente é ausência legítima; presente mas ilegível é **falha real**.
+
+Divergência entre estágio declarado e físico é alerta **alta** persistente; fonte ausente é `n/a` legítimo, fonte ilegível é falha real (contrato de exit 2 na borda).
+
+### `stages.py` — paridade com o skill `reversa-requirements` 🟢
+
+Implementação em código da tabela de **estágio físico** e da regra de contagem de checkboxes que vivem em prosa no skill — ponto único de paridade. `contar_checkboxes` e `listar_acoes` (027 — extrai fase, ID real, descrição e status por linha) usam o **MESMO critério de linha**, o que impede contagem e listagem de divergirem para o mesmo `actions.md`.
+
+### `render.py` — projeções da mesma `Medicao` 🟢
+
+Markdown **sem timestamp e sem caminho absoluto** (o diff do artefato versionado só aparece quando o estado medido muda) — inclui `## Demandas do board` apenas com o kanban habilitado (`- nenhuma` quando vazio); JSON com `aferido_em` (stdout não é versionado, pode carimbar hora).
+
+### `kanban.py` — único módulo do core que conhece o schema do board (027) 🟢
+
+`extrair_manuais(board_json)` (valida topo dict e colunas lista → `ValueError`; filtra os `category == "harness"`) e `render_board(medicao, board_atual)` (projeção determinística + merge preservando manuais). Posse por namespace: ids `hns:<feature>` (resumo), `hns:<feature>:<T00N>` (ação da ativa), `hns:alerta:<origem>`; mapeamento ação `[ ]`→`todo`, `[X]`→`done`, resumo da ativa→`in-progress` (prio 1), pausadas→`todo` (prio 1), alertas→`todo` como `bug` (prio 9 alta / 5 média); `testing` **nunca** recebe card gerenciado; concluídas não geram card (a `Medicao` só carrega a contagem). **Nenhum caminho consulta a hora corrente** — mesmo estado + mesmos manuais → bytes idênticos. Segurança: escreve unicamente o `.json` configurado; **jamais** cria ou toca `.vscode/vscode-kanban.js` (o fork EXECUTA esse arquivo — `workspaces.ts:769`).
+
+### Borda CLI (ramo `progress` no `main.py`) 🟢
+
+Três modos mutuamente exclusivos: **padrão** grava `[progress].file` (default `.harness/progresso.md`) e, com opt-in, o board — ambos atômicos e **write-only-when-changed**, cada um com linha própria no stdout; **`--json`** despeja a `Medicao` com `aferido_em` sem tocar artefato; **`--em-hook`** (pensado para pre-commit) regrava artefato defasado e sai com **1** instruindo o re-commit — alerta grave vira aviso em stderr **sem jamais bloquear** (D-03 da 026: o exit 3 do medidor original de `comentarios-concursos` não foi transplantado; bloqueio duro é exclusivo do portão de encerramento, MD-0018). Falha real (fonte/board ilegível) ecoa `Erro de leitura:` e sai com **2 SEM regravar nada**, preservando os artefatos bons. `--json` e `--em-hook` nunca tocam o board.
 
 ---
 

@@ -9,8 +9,8 @@
   "output_folder": "_reversa_sdd",
   "forward_folder": "_reversa_forward",
   "phase": "concluido",
-  "reextraction_started_at": "2026-07-15T18:30:00-03:00",
-  "reextraction_completed_at": "2026-07-15T19:30:00-03:00",
+  "reextraction_started_at": "2026-08-11",
+  "reextraction_completed_at": "2026-08-11",
   "completed": [
     "reconhecimento",
     "escavacao",
@@ -21,80 +21,93 @@
   "pending": [],
   "checkpoints": {
     "scout": {
-      "completed_at": "2026-07-15T00:00:00-03:00",
+      "completed_at": "2026-08-11",
       "files": [
         "_reversa_sdd/inventory.md",
-        "_reversa_sdd/dependencies.md",
         ".reversa/context/surface.json"
-      ]
+      ],
+      "note": "dependencies.md sem mudança (nenhuma dependência nova nas features 024-027)"
     },
     "archaeologist": {
-      "completed_at": "2026-07-15T00:00:00-03:00",
+      "completed_at": "2026-08-11",
       "modules_analyzed": [
-        "harness-core",
-        "antigravity-hooks",
-        "migrate",
-        "session-close-flow",
-        "resume-context",
-        "decisions-gate"
+        "core/progress (NOVO, 026/027)",
+        "core/commands (024)",
+        "core/session/close_flow (024)",
+        "main.py decisions --gate (025) e ramo progress (026/027)",
+        "core/domain/config (ProgressSection/ProgressKanbanSection)"
       ],
-      "modules_pending": []
+      "modules_pending": [],
+      "files": [
+        "_reversa_sdd/code-analysis.md",
+        "_reversa_sdd/data-dictionary.md",
+        ".reversa/context/modules.json"
+      ]
     },
     "detective": {
-      "completed_at": "2026-07-15T00:00:00-03:00",
+      "completed_at": "2026-08-11",
       "files": [
         "_reversa_sdd/domain.md",
         "_reversa_sdd/state-machines.md",
         "_reversa_sdd/permissions.md",
-        "_reversa_sdd/adrs/0022-gate-registro-microdecisoes.md",
-        "_reversa_sdd/adrs/0023-dupla-identidade-lembrete-gate.md",
-        "_reversa_sdd/adrs/0009-abandono-claude-config-centralizacao-harness.md",
-        "_reversa_sdd/adrs/0010-estado-sessao-unificado-harness.md",
-        "_reversa_sdd/adrs/0011-reinjecao-multi-harness-strategy-sink.md",
-        "_reversa_sdd/adrs/0012-caminhos-decisao-por-configuracao.md",
-        "_reversa_sdd/adrs/0013-harness-core-modulo-per-projeto-footprint.md",
-        "_reversa_sdd/adrs/0014-bootstrap-e-evolucao-do-tooling.md",
-        "_reversa_sdd/adrs/0015-reprodutibilidade-e-configuracoes-dinamicas-de-formatacao.md",
-        "_reversa_sdd/adrs/0016-ganchos-antigravity-driver-de-borda.md",
-        "_reversa_sdd/adrs/0017-comandos-ide-materializados-no-init.md",
-        "_reversa_sdd/adrs/0018-encerrar-sessao-como-skill-adaptador.md",
-        "_reversa_sdd/adrs/0019-precheck-pendencia-restrito-ao-estado.md",
-        "_reversa_sdd/adrs/0020-fonte-unica-execucao-e-migrate.md",
-        "_reversa_sdd/adrs/0021-resume-ancorado-indice-decisoes.md"
-      ]
+        "_reversa_sdd/adrs/0024-consentimento-escrita-git-encerramento.md",
+        "_reversa_sdd/adrs/0025-aposentadoria-soft-block-stop.md",
+        "_reversa_sdd/adrs/0026-medidor-progresso-derivado.md",
+        "_reversa_sdd/adrs/0027-exportador-kanban-namespace.md"
+      ],
+      "note": "RN-N31 e RN-N44 revisadas in-place; secoes 2.22-2.25 novas (RN-N48..N55); maquina de sessao com oferta consentida e tri-estado; matriz de permissoes com linha progress e 4 salvaguardas novas; ADRs 0024-0027 criados."
     },
     "architect": {
-      "completed_at": "2026-07-15T00:00:00-03:00",
+      "completed_at": "2026-08-11",
       "files": [
         "_reversa_sdd/architecture.md",
-        "_reversa_sdd/c4-context.md",
         "_reversa_sdd/c4-containers.md",
         "_reversa_sdd/c4-components.md",
         "_reversa_sdd/erd-complete.md",
         "_reversa_sdd/traceability/spec-impact-matrix.md"
-      ]
+      ],
+      "note": "Reconciliação estrutural 024-027: 13 unidades (core/progress novo), C4 com ProgressService/artefatos derivados, ERD com PROGRESS_SECTION/PROGRESS_KANBAN_SECTION + efêmeras MEDICAO, spec-impact com linhas ✨✨✨✨ e subseções 024-027. Core 2.5.0; 025/026/027 não commitadas."
     },
     "writer": {
-      "completed_at": "2026-07-15T00:00:00-03:00",
+      "completed_at": "2026-08-11",
       "files": [
-        "_reversa_sdd/install/{requirements,design,tasks}.md",
-        "_reversa_sdd/session/{requirements,design,tasks}.md",
-        "_reversa_sdd/microdecisoes/{requirements,design,tasks}.md",
-        "_reversa_sdd/bootstrap/{requirements,design,tasks}.md",
-        "_reversa_sdd/format-on-edit/{requirements,design,tasks,contracts}.md",
-        "_reversa_sdd/sync-check/{requirements,design,tasks,contracts}.md",
-        "_reversa_sdd/comandos-customizados/{requirements,design,tasks}.md",
-        "_reversa_sdd/migrate/{requirements,design,tasks}.md",
+        "_reversa_sdd/session/requirements.md",
+        "_reversa_sdd/session/design.md",
+        "_reversa_sdd/microdecisoes/requirements.md",
+        "_reversa_sdd/microdecisoes/design.md",
+        "_reversa_sdd/progress/requirements.md",
+        "_reversa_sdd/progress/design.md",
+        "_reversa_sdd/progress/tasks.md",
         "_reversa_sdd/traceability/code-spec-matrix.md"
-      ]
+      ],
+      "note": "Nova unit progress/ (f026/f027, RN-N50..N55); session/ reconciliada com o consentimento da f024 (RN-N48/N49, RF-08); microdecisoes/ com o advisory da f025 (RN-N44 revisada, RF-06 reescrito); code-spec-matrix com 12 units e os artefatos derivados novos."
     },
     "reviewer": {
-      "completed_at": "2026-07-15T00:00:00-03:00",
+      "completed_at": "2026-08-11",
       "files": [
         "_reversa_sdd/confidence-report.md",
         "_reversa_sdd/gaps.md",
         "_reversa_sdd/questions.md"
-      ]
+      ],
+      "note": "Delta 024-027: ~73 afirmações, ~97% 🟢, 0 🔴; 5 🟡 enumerados. gaps.md +G-16/G-17/G-18 (registros informativos); questions.md sem pergunta nova (clarify da 027 já respondido). 025/026/027 não commitadas."
+    },
+    "regression_check": {
+      "completed_at": "2026-08-11",
+      "files": [
+        "_reversa_forward/024-oferta-commit-consentida/regression-watch.md",
+        "_reversa_forward/025-aposentar-soft-block-stop/regression-watch.md",
+        "_reversa_forward/026-medidor-progresso-entregaveis/regression-watch.md",
+        "_reversa_forward/027-exportador-kanban/regression-watch.md",
+        "_reversa_forward/013-commit-encerrar-sessao/regression-watch.md",
+        "_reversa_forward/014-oferta-upgrade-ao-encerrar/regression-watch.md",
+        "_reversa_forward/015-corrige-encerrar-sessao-noop/regression-watch.md",
+        "_reversa_forward/016-encerrar-sessao-autonomo/regression-watch.md",
+        "_reversa_forward/018-encerrar-sessao-como-skill/regression-watch.md",
+        "_reversa_forward/019-oferta-commit-cobre-harness/regression-watch.md",
+        "_reversa_forward/022-hook-registro-decisoes/regression-watch.md",
+        "_reversa_forward/023-granularidade-lembrete-gate/regression-watch.md"
+      ],
+      "note": "024-027: primeira verificação, 30 itens 🟢, 0 🔴. Re-verificação por diff: 013/014/015/016/018/019/022/023. Supersessões da 025 arquivadas (022 W005; 023 W002/W004, 🟡 deliberados). Seções de reconciliação das 025/026/027 resolvidas (marca do medidor eliminada dos watch)."
     }
   },
   "redator_progress": [
@@ -104,34 +117,17 @@
     "traceability/code-spec-matrix.md"
   ],
   "last_reextraction": {
-    "scope": "reconciliação incremental pós-MD-0014 (aposentadoria do PostToolUse/format-on-edit no perfil Claude) e features 022 (gate de registro obrigatório de microdecisões) e 023 (dupla identidade do lembrete) + regression-check: primeira verificação de 022 (W001-W010) e 023 (W001-W006), re-verificação dirigida das 7 features com origens tocadas pelo delta (004/009/014/018/019/020/021) e reconfirmação por escopo de diff das 14 restantes",
-    "type": "reconciliacao-incremental-e-regressao",
-    "started_at": "2026-07-15T18:30:00-03:00",
-    "completed_at": "2026-07-15T19:30:00-03:00",
-    "method": "Scout: inventory.md/surface.json (92 Python, 34 test_*.py, 16 fichas, suíte 300, core 2.1.1; hooks do Claude sem PostToolUse, Stop com --gate). Archaeologist: code-analysis.md (nova subseção gate.py em §4; 3º portão em §8; --gate/--sem-decisao em §11; advisory em §12), data-dictionary.md (§1 campos anti-loop, §6 require_registration, §9 GateVerdict), modules.json. Detective: domain.md §2.19-2.21 (RN-N42..N47) + glossário do gate, state-machines.md (3 portões, fingerprints zerados), permissions.md, ADRs 0022/0023 novas (0002 já emendado pela sessão da MD-0014). Architect: architecture.md, c4-context/containers/components, erd-complete (SESSION_STATE + GATE_VERDICT), spec-impact-matrix (nova linha decisions/gate HIGH; corrigidas 2 menções stale de T7 aberto). Writer: units microdecisoes/ (gate, RF-05..07), session/ (RF-06/07), format-on-edit/ (gatilho revisto MD-0014), comandos-customizados/ (3º portão), code-spec-matrix. Reviewer: confidence-report (delta ~98%: 46🟢/2🟡/0🔴), gaps (G-14 fechado, G-15 novo informativo), questions (nenhuma nova). Regression-check: 23 features.",
-    "user_scope_choice": "Retomada autônoma (diretriz permanente do mantenedor: sem parar em gates de CONTINUAR); escopo derivado do estado da sessão anterior (re-extração pós-022/023 explicitamente prevista como próximo passo)",
-    "achado_novo": "Nenhuma dívida técnica nova. Dois artefatos com informação stale corrigidos: ressalva T1 na RN-N11 de microdecisoes/requirements.md (G-14, T1 resolvido desde cf73980) e duas menções de 'T7 aberto' na spec-impact-matrix que contradiziam o próprio rodapé. Registro informativo G-15: itens PostToolUse->harness format legados em projetos-alvo pré-MD-0014 não são podados (decisão deliberada da MD-0014, não bug).",
-    "desescopo_confirmado": "Inalterado: upgrade/SyncService seguem ativos (G-13/ADR 0020). MD-0014 descartou poda ativa de hooks format legados (G-15).",
-    "regression_check": {
-      "features_checked": 23,
-      "watch_items_total": 115,
-      "verified_this_round": 59,
-      "green": 58,
-      "yellow": 1,
-      "red": 0,
-      "yellow_items": ["009/W009"],
-      "promotions": [],
-      "notes": [
-        "022 (W001-W010) e 023 (W001-W006): primeira verificação, 16/16 verdes — leitura direta do código as-built (gate.py integral, diffs de close_flow/main/serializer/models/config/hook_bridge/claude_settings/harness_profiles) + greps dirigidos (skill 1.3.0 com --sem-decisao, teste-guarda test_gate_portao_rearma_com_trabalho_novo_apos_bloqueio em test_close_flow.py:481, identidade grossa em main.py:362-365)",
-        "7 features com origens tocadas pelo delta re-verificadas item-a-item (004: serializer aditivo; 009: advisory só em stderr; 014: 3º portão aborta ANTES do fechamento, ofertas preservadas; 018: skill 1.3.0 segue consumindo o core; 019: pending_work_paths intocado; 020: merge por-item preservado, assinaturas mudadas deliberadamente; 021: ramo resume intocado) — 43 itens, 42 verdes + 1 amarelo herdado (009/W009, premissa de runtime do Antigravity, não testável localmente)",
-        "14 features restantes (001-003, 005-008, 010-013, 015-017) reconfirmadas por escopo de diff: git diff 9c9d52f~1..8348e48 comprova que nenhuma origem delas mudou desde a varredura completa de 2026-07-05 — vereditos anteriores permanecem (amarelos históricos são supersessões deliberadas documentadas)",
-        "Zero vermelhos em todas as 23 features — o cenário que os W001-W003 da 023 vigiavam (re-extração incorporando só a semântica da 022) não se materializou: a dupla identidade entrou nos artefatos de uma vez"
-      ]
-    }
+    "date": "2026-08-11",
+    "scope": "dirigida (features 024-027: MD-0017..MD-0020)",
+    "verdict": "🟢 sem regressão; 3 supersessões deliberadas arquivadas (MD-0018)"
   },
-  "engines": ["claude-code", "codex", "gemini-cli", "antigravity"],
+  "engines": [
+    "claude-code",
+    "antigravity"
+  ],
   "agents": [
     "reversa",
+    "reversa-autonomous",
     "reversa-scout",
     "reversa-archaeologist",
     "reversa-detective",
@@ -143,6 +139,11 @@
     "reversa-design-system",
     "reversa-agents-help",
     "reversa-reconstructor",
+    "reversa-debugger",
+    "reversa-debugger-fix",
+    "reversa-debugger-debate",
+    "reversa-depth-inspection",
+    "reversa-debugger-graph",
     "reversa-migrate",
     "reversa-paradigm-advisor",
     "reversa-curator",
@@ -158,8 +159,16 @@
     "reversa-audit",
     "reversa-quality",
     "reversa-coding",
+    "reversa-add",
+    "reversa-sync",
     "reversa-principles",
     "reversa-resume",
+    "reversa-brainstorm",
+    "reversa-framer",
+    "reversa-explorer",
+    "reversa-challenger",
+    "reversa-arbiter",
+    "reversa-pre-spec",
     "reversa-new",
     "reversa-ideator",
     "reversa-researcher",
@@ -177,7 +186,60 @@
     "reversa-selo-generativo",
     "reversa-highcharts-visualizer",
     "reversa-especialista-d3",
-    "reversa-image-prompt-json"
+    "reversa-image-prompt-json",
+    "reversa-refactor",
+    "reversa-restructure",
+    "reversa-modularize",
+    "reversa-decouple",
+    "reversa-optimize",
+    "reversa-simplify",
+    "reversa-standardize",
+    "reversa-prune"
   ],
-  "created_files": []
+  "created_files": [
+    ".claude/skills/reversa-autonomous",
+    ".agents/skills/reversa-autonomous",
+    ".claude/skills/reversa-debugger",
+    ".agents/skills/reversa-debugger",
+    ".claude/skills/reversa-debugger-fix",
+    ".agents/skills/reversa-debugger-fix",
+    ".claude/skills/reversa-debugger-debate",
+    ".agents/skills/reversa-debugger-debate",
+    ".claude/skills/reversa-depth-inspection",
+    ".agents/skills/reversa-depth-inspection",
+    ".claude/skills/reversa-debugger-graph",
+    ".agents/skills/reversa-debugger-graph",
+    ".claude/skills/reversa-add",
+    ".agents/skills/reversa-add",
+    ".claude/skills/reversa-sync",
+    ".agents/skills/reversa-sync",
+    ".claude/skills/reversa-brainstorm",
+    ".agents/skills/reversa-brainstorm",
+    ".claude/skills/reversa-framer",
+    ".agents/skills/reversa-framer",
+    ".claude/skills/reversa-explorer",
+    ".agents/skills/reversa-explorer",
+    ".claude/skills/reversa-challenger",
+    ".agents/skills/reversa-challenger",
+    ".claude/skills/reversa-arbiter",
+    ".agents/skills/reversa-arbiter",
+    ".claude/skills/reversa-pre-spec",
+    ".agents/skills/reversa-pre-spec",
+    ".claude/skills/reversa-refactor",
+    ".agents/skills/reversa-refactor",
+    ".claude/skills/reversa-restructure",
+    ".agents/skills/reversa-restructure",
+    ".claude/skills/reversa-modularize",
+    ".agents/skills/reversa-modularize",
+    ".claude/skills/reversa-decouple",
+    ".agents/skills/reversa-decouple",
+    ".claude/skills/reversa-optimize",
+    ".agents/skills/reversa-optimize",
+    ".claude/skills/reversa-simplify",
+    ".agents/skills/reversa-simplify",
+    ".claude/skills/reversa-standardize",
+    ".agents/skills/reversa-standardize",
+    ".claude/skills/reversa-prune",
+    ".agents/skills/reversa-prune"
+  ]
 }

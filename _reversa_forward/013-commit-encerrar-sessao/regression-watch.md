@@ -22,6 +22,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11 11:26
+
+> Re-verificação dirigida pós-features 024-027 (escopo por diff: `commands/service.py` e `close_flow.py` foram tocados pela 024). Itens não listados abaixo (W003/W004/W006) têm origem intocada pelo delta e mantêm o veredito anterior. Suíte 372 verde.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | Com `versionar_estado=True` (default), o commit isolado do `state_file` é byte-idêntico ao pré-024; com `False`, o pulo do `commit_paths` é **deliberado e consentido** (f024/D-03), com linha declarativa na narrativa — não é regressão. |
+| W002 | 🟢 verde | Âncora = HEAD pré-commit em todos os desfechos, inclusive o não versionado da 024 (`service.py:69`); RN-07 preservada. |
+| W005 | 🟢 verde | Caminho versionado segue reportando os dois hashes (`service.py:120`); o desfecho não versionado reporta a âncora e o motivo — extensão da 024, não perda. |
+
+
 ### Re-extração 2026-06-28 09:45
 
 > Re-verificação pós-feature 018. As regras de versionamento do encerramento (RN-N31/N32) seguem no `CommandService`, intactas — `SessionCloseFlow` apenas o invoca. Único ajuste: W006 referia o `session_command_artifact`, **removido** pela 018. Verificação factual: suíte 212 passed.

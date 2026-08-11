@@ -31,6 +31,17 @@ os watch items cobrem os **novos invariantes** e a **preservação** do fechamen
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11 11:26
+
+> Re-verificação dirigida pós-features 024-027 (escopo por diff: `main.py` e o entorno do `CommandService` foram tocados pela 024/025). Itens não listados (W004-W008) têm origem intocada e mantêm o veredito anterior. Suíte 372 verde.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `CommandService` segue sem push/upgrade/`input` (grep vazio); o consentimento da 024 é resolvido na borda e chega ao serviço como o bool `versionar_estado` (D-04) — a fronteira domínio × borda ficou ainda mais nítida. |
+| W002 | 🟢 verde | Ofertas só após `encerrar-sessao` com sucesso; o marker `ENCERRAMENTO_NAO_VERSIONADO` da 024 é emitido **antes** da oferta de push, preservando a ordem da cadeia. |
+| W009 | 🟢 verde | Ordem push → upgrade inalterada. |
+
+
 ### Re-extração 2026-07-15 19:22
 
 > Re-verificação dirigida pós-feature 022: o delta inseriu o 3º portão em `SessionCloseFlow.run` ANTES do fechamento — quando o portão aborta, o fechamento não ocorre e as ofertas não rodam, o que preserva (e reforça) W002. `offers.py`/`sync` intocados.

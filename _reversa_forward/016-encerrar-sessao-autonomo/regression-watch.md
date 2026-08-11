@@ -25,6 +25,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11 11:26
+
+> Re-verificação dirigida pós-features 024-027 (escopo por diff: `close_flow.py`/`main.py` tocados pela 024). Itens não listados (W001-W003/W005/W006/W008) têm origem intocada e mantêm o veredito anterior. Suíte 372 verde.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W004 | 🟢 verde | Commit de fechamento segue versionando só o `state_file` via `git add -- <path>` no caminho consentido (default). |
+| W007 | 🟢 verde | Marker `COMMIT_PENDENTE` presente (`close_flow.py:44`) e o fechamento sem consentimento não ocorre. **Refinamento deliberado da 024:** com `--com-pendencias` (ou "s" no terminal), o fechamento com pendências passa a ser autorizável, com rastro na narrativa (RN-N48) — evolução consentida, não violação. |
+| W009 | 🟢 verde | `NoActiveSessionError` permanece removida. |
+
+
 ### Re-extração 2026-06-28 09:45
 
 > Primeira verificação dos watch da 016. A feature 018 **moveu** o pré-check de pendência e as ofertas da borda `main.py` para `SessionCloseFlow` (core), e o regen para o script da skill — comportamento **preservado**, não alterado (helpers reexportados por `src.main`, suíte 212 verde). O `CommandService`/`RegenService` ficaram intactos. Verificação factual: suíte 212 passed.

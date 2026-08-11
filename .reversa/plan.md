@@ -87,3 +87,32 @@ _Reavaliado em 2026-07-05: nenhum recurso aplicável neste projeto; agentes marc
 - [x] **Writer** — reconciliação incremental (units `microdecisoes`, `format-on-edit`, `session`, `comandos-customizados`; code-spec-matrix)
 - [x] **Reviewer** — atualização do relatório de confiança
 - [x] **Regression-check** — primeira verificação de 022/023 + varredura completa das 23 features
+
+## Re-extração 2026-08-11 (reconciliação pós-features 024-027 — consentimento, aposentadoria do soft-block, medidor e kanban)
+
+> Escopo: reconciliação incremental do delta desde 2026-07-15 (âncora 8348e48). Quatro
+> features do ciclo forward: 024 (MD-0017) condicionou toda escrita no git ao encerrar a
+> consentimento explícito, com default assimétrico por borda e marker
+> ENCERRAMENTO_NAO_VERSIONADO (`close_flow.py`, skill encerrar-sessao, core 2.2.0);
+> 025 (MD-0018) aposentou o soft-block do hook Stop — o gate vira advisory puro em stderr
+> e o único portão duro fica no encerramento (core 2.3.0); 026 (MD-0019) criou o medidor
+> read-only de entregáveis `harness progress` (novo módulo `core/progress/`:
+> service/render/stages; markdown derivado sem timestamp, --json, --em-hook; core 2.4.0);
+> 027 (MD-0020) somou o exportador kanban derivado da mesma `Medicao`
+> (`core/progress/kanban.py`, board `.vscode/vscode-kanban.json` com namespace `harness`
+> e cards manuais preservados como canal de demandas; core 2.5.0). Atenção: 025/026/027
+> existem apenas na árvore de trabalho, ainda sem commit — a re-extração lê a árvore.
+> Scout/Archaeologist atualizam os estruturais no delta; Detective reconcilia regras,
+> máquinas de estado e ADRs 0024-0027; Architect atualiza c4/erd/spec-impact; Writer
+> reconcilia as units (`session`, `microdecisoes`, nova unit `progress`); Reviewer fecha
+> o relatório de confiança. Encerra com regression-check (step-04): primeira verificação
+> de 024/025/026/027 + varredura das 27 features, resolvendo as pendências de
+> reconciliação que alimentam os 3 alertas do medidor.
+
+- [x] **Scout** — atualização estrutural no delta (inventory, dependencies, surface.json)
+- [x] **Archaeologist** — atualização estrutural no delta (code-analysis, data-dictionary, modules.json)
+- [x] **Detective** — reconciliação incremental (domain, state-machines, permissions, ADRs 0024-0027)
+- [x] **Architect** — atualização estrutural (architecture, c4-\*, erd-complete, spec-impact-matrix)
+- [x] **Writer** — reconciliação incremental (units `session`, `microdecisoes`, nova `progress`; code-spec-matrix)
+- [x] **Reviewer** — atualização do relatório de confiança
+- [x] **Regression-check** — primeira verificação de 024/025/026/027 + varredura das 27 features

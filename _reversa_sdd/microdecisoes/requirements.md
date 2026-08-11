@@ -3,6 +3,7 @@
 > Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 005)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
 > Rastreabilidade ao Legado: [`.harness/harness-core/src/core/decisions/service.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/decisions/service.py) e [`gate.py`](file:///Users/iagoleal/dev/harness/.harness/harness-core/src/core/decisions/gate.py); fichas em [`.harness/decisoes/`](file:///Users/iagoleal/dev/harness/.harness/decisoes/); índice [`.harness/microdecisoes.md`](file:///Users/iagoleal/dev/harness/.harness/microdecisoes.md). Drivers: `src/main.py` (subcomando `decisions [--gate]`, hook `Stop`) e `adapters/mcp/server.py` (`process_decisions`).
+> **Reconciliação de 2026-08-11 (feature 025, não commitada nesta data):** o soft-block do Stop foi **aposentado** — o ramo `decisions --gate` deixa de emitir JSON `{"decision":"block"}` no stdout e emite linha `Aviso:` em stderr; stdout sempre vazio. O enforcement colapsa de três políticas para duas (portão duro único no encerramento; advisory nos fins de turno, idêntico nas duas bordas). `gate.py` byte-idêntico; toda a mecânica (avaliação pura, fingerprint grosso persistido antes da emissão, máx. um aviso/sessão, fail-open, exit 0) preservada. RN-N44 revisada e RF-06 reescrito abaixo; ADR 0025 / MD-0018 (`substitui MD-0016`).
 > **Reconciliação de 2026-07-15 (features 022-023):** a unit ganhou o **gate de registro** (`gate.py`) — avaliação pura de pendência de registro de microdecisão, com dupla identidade anti-loop. RN-N43..N47 e RF-05..RF-07 abaixo; ressalva T1 da RN-N11 removida (resolvida em `cf73980`, estava stale).
 
 > ⚠️ **Reescrita vs versão anterior:** a implementação **deixou de ser** o script shell `bin/gerar-index-decisoes.sh` em `harness-config/` (purgado, commit `5624f78`) e passou a ser o `DecisionService` Python em `harness-core`. As fichas migraram de `decisoes/` (raiz) para `.harness/decisoes/` e o índice de `microdecisoes.md` (raiz) para `.harness/microdecisoes.md` (feature 005). Os caminhos não são mais chumbados: vêm de `[decisions]` no `harness.toml`.
@@ -26,7 +27,7 @@ Gerencia o grafo de microdecisões arquiteturais — fichas `MD-NNNN.md` com fro
 - **RN-N14 — Front-matter obrigatório:** cada `MD-*.md` exige front-matter YAML; diretório ausente → lista vazia; front-matter ausente/YAML inválido → `ValueError`. Cada relação é `"<verbo> MD-XXXX"` (dois tokens), verbo num conjunto fechado de seis, alvo `^MD-\d{4}$`. 🟢
 - **Integridade de conteúdo da ficha:** H1 `# MD-XXXX` + as 4 seções obrigatórias `D / PORQUÊ / DESCARTADO / ESTADO` (regex case-insensitive). 🟢
 - **RN-N43 — Pendência de registro por sinal físico (feature 022):** universo = diff da âncora (`list_changed_paths_since`) ∪ sujos (`list_dirty_paths`), menos estado/índice/cabeçalho; fichas = `^MD-.*\.md$` sob `decisions.dir`; `pendente = mudanças ∧ ¬fichas`. Sem filtro por tipo de arquivo. Fail-open barulhento (âncora ilegível → `pendente=False` + `aviso`). 🟢
-- **RN-N44 — Enforcement híbrido:** o mesmo veredito alimenta o 3º portão do `encerrar-sessao` (bloqueio, escape `--sem-decisao`), o hook Stop do Claude (`decisions --gate`, soft-block JSON, exit 0 sempre) e o Antigravity (advisory em stderr, nunca bloqueia). Ligado por `decisions.require_registration` (default `True`). 🟢
+- **RN-N44 (revisada na feature 025) — Enforcement em duas políticas:** o mesmo veredito alimenta (1) o **único portão bloqueante**, o 3º portão do `encerrar-sessao` (escape `--sem-decisao`), e (2) o **advisory de fim de turno**, agora idêntico em espírito nas duas bordas: o hook Stop do Claude (`decisions --gate`) emite `Aviso:` em stderr com stdout vazio e exit 0, mesma política que o Antigravity sempre teve. O soft-block JSON da redação original (022) foi aposentado na 025; nenhum hook regravado — a mudança é comportamental no comando, propagada pela fonte única (RN-N36). Ligado por `decisions.require_registration` (default `True`). 🟢
 - **RN-N45 — Anti-loop por fingerprint no estado de sessão:** o mesmo estado de pendência nunca dispara o gate duas vezes; campos opcionais no front-matter, zerados no fechamento. 🟢
 - **RN-N47 — Dupla identidade (feature 023):** lembrete usa `sha1(âncora)` (grossa — máx. 1 soft-block/sessão); portão usa `sha1(âncora+HEAD+sujos)` (fina — trabalho novo rearma, pinado por teste-guarda). 🟢
 
@@ -39,7 +40,7 @@ Gerencia o grafo de microdecisões arquiteturais — fichas `MD-NNNN.md` com fro
 | RF-03 | Compilar o índice com backlinks.    | Must       | `compile_index` grava `.harness/microdecisoes.md` com sub-linhas `↳ <saídas> · <entradas>`, deterministicamente.              |
 | RF-04 | Caminhos por configuração.          | Must       | `./harness decisions` lê `dir`/`index_file`/`header_file` de `load_config().decisions`; nenhum literal de caminho no serviço. |
 | RF-05 | Avaliar pendência de registro (022). | Must      | `evaluate_registration_gate` devolve `GateVerdict` com `pendente`, `mudancas`, `fichas_tocadas`, fingerprints e `aviso` opcional; nunca levanta para a borda. |
-| RF-06 | Soft-block único no Stop do Claude (022/023). | Must | `decisions --gate`: pendência com identidade grossa inédita → JSON `{"decision":"block","reason":...}` no stdout e persistência do fingerprint; mesma sessão não re-emite; exit 0 sempre. |
+| RF-06 | Aviso único no Stop do Claude (022/023, **advisory desde a 025**). | Must | `decisions --gate`: pendência com identidade grossa inédita → linha `Aviso:` em **stderr** (stdout sempre vazio) e persistência do fingerprint **antes** da emissão; mesma sessão não re-emite; exit 0 sempre; jamais bloqueia. |
 | RF-07 | Escape auditável no encerramento (022). | Must   | `encerrar-sessao --sem-decisao` grava a declaração na narrativa e satisfaz o gate. |
 
 ## Requisitos Não Funcionais
@@ -72,11 +73,11 @@ Então um ValueError barulhento é levantado.
 
 Dado trabalho substantivo na sessão (commit desde a âncora ou working tree sujo) sem ficha MD-*.md tocada
 Quando `./harness decisions --gate` roda pela primeira vez na sessão
-Então o stdout recebe {"decision":"block","reason":"[HARNESS:DECISAO_PENDENTE ...]"} e o fingerprint grosso é persistido no estado.
+Então stderr recebe a linha `Aviso:` com o lembrete, o stdout fica vazio e o fingerprint grosso é persistido no estado (advisory desde a 025).
 
 Dado que o lembrete já disparou nesta sessão (fingerprint grosso persistido)
 Quando novos arquivos são tocados e `decisions --gate` roda de novo
-Então nenhum novo bloqueio é emitido (máx. 1 soft-block por sessão — feature 023).
+Então nenhum novo aviso é emitido (máx. 1 por sessão — feature 023; canal advisory desde a 025).
 
 Dado o portão do encerramento já bloqueado uma vez para o estado de pendência atual
 Quando um NOVO commit sem ficha entra e `encerrar-sessao` roda

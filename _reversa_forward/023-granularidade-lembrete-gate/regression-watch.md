@@ -21,6 +21,20 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11 11:26
+
+> Re-verificação dirigida pós-features 024-027 (escopo por diff: o ramo `--gate` de `main.py` foi reescrito pela 025 — MD-0018). **W002 e W004 estão supersedidos deliberadamente** e foram registrados na seção "Arquivadas" abaixo, com a tabela principal fisicamente preservada; a mecânica que sobrevive (identidade grossa, 1 emissão por sessão) é vigiada pelo W002 da 025. Suíte 372 verde.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `compute_lembrete_fingerprint` e `fingerprint_lembrete` presentes e preenchidos pelo avaliador (`gate.py` intocado pela 025). |
+| W002 | 🟡 amarelo | **Supersedido no canal pela 025:** o lembrete não é mais soft-block, é advisory em stderr; a identidade grossa e o máximo de 1 emissão por sessão persistem (vigiados pelo W002 da 025). |
+| W003 | 🟢 verde | Portão do encerramento segue com identidade FINA e rearme; teste-guarda presente (`test_close_flow.py:509`). |
+| W004 | 🟡 amarelo | **Supersedido integralmente pela 025:** o contrato do stdout agora é o vazio incondicional (`interfaces/stop-gate-stdout.md` da 025). |
+| W005 | 🟢 verde | Nenhum campo novo no `SessionState` para o lembrete; sem código de migração. |
+| W006 | 🟢 verde | Nenhuma flag de política do lembrete na `DecisionsSection`; `require_registration` segue o único botão. |
+
+
 ### Re-extração 2026-07-15 19:22
 
 > Primeira verificação da 023, na re-extração de reconciliação pós-022/023. A dupla identidade foi incorporada aos artefatos de uma vez (não houve extração intermediária "só-022") — o cenário de defasagem que W001–W003 vigiavam não se materializou.
@@ -36,4 +50,5 @@
 
 ## Arquivadas
 
-_(vazio)_
+- **W002** — arquivado em 2026-08-11, supersedido no canal pela feature 025 (MD-0018): o lembrete deixou de ser soft-block e virou advisory em stderr; a mecânica sobrevivente (identidade grossa via `gate_lembrete_fingerprint`, máximo de 1 emissão por sessão, persistência antes da emissão) é vigiada pelo W002 da 025.
+- **W004** — arquivado em 2026-08-11, supersedido integralmente pela 025: o contrato do stdout sob `--gate` agora é o vazio incondicional (`interfaces/stop-gate-stdout.md` da 025), vigiado pelo W001 da 025. As linhas originais permanecem na tabela principal acima por regra do Reversa; este registro as neutraliza para fins de regressão.

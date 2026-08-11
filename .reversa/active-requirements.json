@@ -1,16 +1,32 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/024-oferta-commit-consentida",
-  "feature-id": "024",
-  "short-name": "oferta-commit-consentida",
-  "started-at": "2026-07-23T00:00:00-03:00",
-  "current-stage": "coding",
+  "feature-dir": "_reversa_forward/027-exportador-kanban",
+  "feature-id": "027",
+  "short-name": "exportador-kanban",
+  "started-at": "2026-08-11T13:00:21.110752+00:00",
+  "current-stage": "done",
   "stages-completed": [
     "requirements",
-    "clarify",
     "plan",
     "to-do",
-    "audit"
+    "coding"
   ],
-  "paused-features": []
+  "paused-features": [
+    {
+      "feature-dir": "_reversa_forward/024-oferta-commit-consentida",
+      "feature-id": "024",
+      "short-name": "oferta-commit-consentida",
+      "started-at": "2026-07-23T00:00:00-03:00",
+      "current-stage": "coding",
+      "stages-completed": [
+        "requirements",
+        "clarify",
+        "plan",
+        "to-do",
+        "audit"
+      ],
+      "paused-at": "2026-08-11T09:10:00-03:00",
+      "paused-from-stage": "coding-em-progresso"
+    }
+  ]
 }

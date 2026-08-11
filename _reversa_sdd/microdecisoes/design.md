@@ -2,6 +2,7 @@
 
 > Regenerado pelo Writer em 2026-06-24 (Re-extração após a feature 005)
 > Foca no COMO a unit é construída, a partir do código legado lido. Escala: 🟢 / 🟡 / 🔴
+> **Reconciliação de 2026-08-11 (feature 025):** o ramo `--gate` do driver passou a advisory (stderr `Aviso:`, stdout vazio); `gate.py` e o serviço byte-idênticos. O medidor da 026 reavalia o mesmo gate em leitura pura, sem persistir fingerprint (RN-N52).
 
 ## Interface
 
@@ -14,7 +15,7 @@
 | `compute_fingerprint` (022)          | `(anchor, head, dirty)`       | `str`            | Identidade fina `sha1(âncora+HEAD+sujos ordenados)` — portão do encerramento.                        |
 | `compute_lembrete_fingerprint` (023) | `(anchor)`                    | `str`            | Identidade grossa `sha1(âncora)` — lembrete do Stop, máx. 1 por sessão.                              |
 
-Driver CLI (`main.py`, subcomando `decisions [--gate]`): `config = load_config(fs)` → `decisoes_dir = config.decisions.dir`, `output_file = config.decisions.index_file`, `header_file = config.decisions.header_file`. Sem literais. Sob `--gate` (hook Stop do Claude): informativos em stderr, stdout reservado ao JSON do hook, exit 0 sempre; após indexar, avalia o gate e emite o soft-block quando a identidade grossa é inédita, persistindo-a no estado via `CommandService.save_session`.
+Driver CLI (`main.py`, subcomando `decisions [--gate]`): `config = load_config(fs)` → `decisoes_dir = config.decisions.dir`, `output_file = config.decisions.index_file`, `header_file = config.decisions.header_file`. Sem literais. Sob `--gate` (hook Stop do Claude): tudo em stderr, **stdout sempre vazio** (advisory desde a 025 — o envelope JSON de soft-block foi aposentado), exit 0 sempre; após indexar, avalia o gate e, quando a identidade grossa é inédita, persiste-a no estado via `CommandService.save_session` **antes** de emitir a linha `Aviso:` em stderr (máx. um aviso por sessão).
 
 ## Fluxo Principal
 
@@ -56,6 +57,7 @@ Driver CLI (`main.py`, subcomando `decisions [--gate]`): `config = load_config(f
 | Gravação atômica do índice                                    | `write_file_atomic` (`adapters/fs/local.py`)                 | 🟢                      |
 | Gate como avaliação pura, política nas bordas (022)           | `gate.py` (sem `active_harness`), 3 bordas distintas         | 🟢 (ADR 0022 / MD-0015) |
 | Dupla identidade fina/grossa por consumidor (023)             | `compute_fingerprint` × `compute_lembrete_fingerprint`       | 🟢 (ADR 0023 / MD-0016) |
+| Advisory no fim de turno; portão duro único no encerramento (025) | `main.py` (ramo `--gate`: stderr `Aviso:`, stdout vazio); `gate.py` intocado | 🟢 (ADR 0025 / MD-0018) |
 
 ## Estado Interno
 

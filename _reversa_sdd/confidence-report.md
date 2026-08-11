@@ -3,6 +3,7 @@
 > Regenerado pelo Revisor em 2026-06-24 (Re-extração após a feature 008-reprodutibilidade-e-config)
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO · 🔴 LACUNA
 > **Reconciliação de 2026-07-05** (Reviewer, pós-features 010-021): Scout, Archaeologist, Detective, Architect e Writer reconciliaram nesta sessão os artefatos que estavam congelados desde a feature 009 (`inventory.md`, `dependencies.md`, `surface.json`, `code-analysis.md`, `data-dictionary.md`, `modules.json`, `c4-components.md`, `erd-complete.md`, `traceability/spec-impact-matrix.md`) e incorporaram as features 019-021 em `domain.md`/`state-machines.md`/`permissions.md`/ADRs/`architecture.md`/specs SDD. Ver seção "Reconciliação 2026-07-05" abaixo para o detalhe do que mudou desde o relatório de 2026-06-24.
+> **Reconciliação de 2026-08-11** (Reviewer, pós-features 024-027; a 024 commitada em `5c4433d`, **025/026/027 apenas na working tree nesta data**): reconciliação dirigida do consentimento para escrita no git ao encerrar (024), da aposentadoria do soft-block do Stop (025), do medidor de progresso read-only (026) e do exportador kanban (027). Ver seção "Reconciliação 2026-08-11" abaixo.
 > **Reconciliação de 2026-07-15** (Reviewer, pós-MD-0014 e features 022-023): reconciliação incremental do gate de registro de microdecisões (022: `gate.py`, 3º portão, `decisions --gate`, advisory Antigravity) e da dupla identidade do lembrete (023), mais a aposentadoria do format-on-edit no perfil Claude (MD-0014). Ver seção "Reconciliação 2026-07-15" abaixo.
 
 Sintetiza a avaliação de confiança da **re-extração** do ecossistema `harness` após a implementação do motor de bootstrap evolucionário (feature 007) e da reprodutibilidade e configurações dinâmicas de formatação (feature 008). Substitui integralmente o relatório anterior de 2026-06-24; a reconciliação de 2026-07-05 estende (não substitui) este relatório para as features 010-021.
@@ -57,11 +58,13 @@ _(Cálculo: (275 + 50 × 0.5) / 343 = 87.46%)_
 | `run-harness-core-local/`                                            | 22  |  2  |  2  |    88%    |
 | `antigravity-hooks/` (f009, não revisada em detalhe até esta rodada) | ~24 | ~3  |  1  |   ~89%    |
 | `migrate/` 🆕 (NOVA, f020)                                           | 25  |  3  |  1  |    92%    |
+| `progress/` 🆕🆕 (NOVA, f026/f027)                                   | 30  |  4  |  0  |    94%    |
 
 > 🛠️ = unit significativamente refinada na feature 008 para consumir configurações e padrões glob.
 > 🚀 = unit significativamente expandida na feature 007 para cobrir bootstrapping e evolução não destrutiva; estendida na f020 (`bootstrap/shim.py`, `claude_settings.py`).
 > 🆕 = conteúdo novo desta reconciliação de 2026-07-05. `comandos-customizados/` ganhou +11 afirmações 🟢 (RN-N34/N35/N41, RF-06/07/08, rastreabilidade de `close_flow.py`/`resume_context.py`); `migrate/` é uma unit inteiramente nova (nunca revisada antes por não existir).
 > `antigravity-hooks/` não foi objeto de revisão linha-a-linha nesta rodada (fora do escopo da reconciliação 019-021); a contagem é herdada da extração de 2026-06-24 sem verificação adicional.
+> 🆕🆕 = conteúdo novo da reconciliação de 2026-08-11. `progress/` é unit inteiramente nova (medidor + exportador kanban); na mesma rodada, `session/` ganhou RN-N48/N49 + RF-08 (consentimento, f024) e `microdecisoes/` teve RN-N44 revisada e RF-06 reescrito (advisory, f025) — os quatro 🟡 da `progress/` são as pendências operacionais listadas no `design.md` (conferência visual do board, paridade por convenção, medidor sem gatilho de hook, condução manual das demandas).
 
 ### Artefatos de interpretação e arquitetura
 
@@ -89,6 +92,30 @@ _(Cálculo: (275 + 50 × 0.5) / 343 = 87.46%)_
 | **Total (delta)** |              **~48**             |      **100%**       |
 
 **Confiança do delta reconciliado (MD-0014 + 022-023):** **~98%** 🟢 — a mais alta de qualquer rodada, por três razões: (1) todo o conteúdo foi lido diretamente do código as-built (`gate.py` integral, diffs de `main.py`/`close_flow.py`/`serializer.py`/`models.py`/`config.py`/`hook_bridge.py`/`claude_settings.py`/`harness_profiles.py`); (2) as features 022/023 nasceram por TDD com specs forward completas (requirements com esclarecimentos, roadmap, actions 9/9), cruzadas nesta reconciliação; (3) a suíte de 300 testes e os smokes reais (A–F da 022, A–E 9/9 da 023) foram relatados nos fechamentos das sessões e as fichas MD-0015/MD-0016 documentam decisão e descartes. Os ~2 🟡 são: a contagem de 300 testes (relato de sessão, não recontada por execução nesta rodada) e o efeito colateral da remoção da assinatura `"harness format"` (itens legados preservados como de terceiros — comportamento deduzido do merge por-item + teste `test_migrate.py`, não smoke-testado em projeto-alvo real nesta rodada).
+
+## Resumo Geral (reconciliação 2026-08-11 — features 024-027)
+
+> Mesmo protocolo das rodadas anteriores: avalia-se a confiança do **delta** reconciliado, não a base histórica.
+
+| Nível             | Quantidade (estimativa do delta) | Percentual do delta |
+| :---------------- | :------------------------------: | :-----------------: |
+| 🟢 CONFIRMADO     |               ~68                |         93%         |
+| 🟡 INFERIDO       |                ~5                |         7%          |
+| 🔴 LACUNA         |                0                 |         0%          |
+| **Total (delta)** |              **~73**             |      **100%**       |
+
+**Confiança do delta reconciliado (024-027):** **~97%** 🟢 — todo o conteúdo foi lido do código as-built (`close_flow.py`, `commands/service.py`, `main.py`, o pacote `core/progress/` integral) e cruzado com as specs forward das quatro features (requirements com esclarecimentos, roadmaps, actions) e as fichas MD-0017..MD-0020; as quatro nasceram por TDD e a suíte 372 verde foi relatada nos fechamentos. Os ~5 🟡: (1) a conferência visual do board no fork do vscode-kanban permanece pendente do mantenedor (ids não numéricos, campos opcionais, efeito de mover card gerenciado na UI — Observações do regression-watch da 027); (2) a paridade `stages.py` ↔ prosa do skill é convenção vigiada por teste, não derivação (ADR 0026); (3) a contagem de 372 testes é relato de sessão, não recontada por execução nesta rodada; (4) o comportamento do marker `ENCERRAMENTO_NAO_VERSIONADO` na skill 1.4.0 foi conferido no asset, não em sessão real de encerramento pós-024; (5) T028 da 024 (propagação manual à base migrada) segue pendente por decisão, com a feature pausada em 27/28.
+
+### Reconciliação 2026-08-11 — delta features 024-027
+
+| Artefato                                                                     | Veredito | Observação                                                                                                                                                                                                                   |
+| :--------------------------------------------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `inventory.md`, `dependencies.md`, `surface.json`                            | 🟢 forte | Contagens atualizadas (13 subcomandos com `progress`, 20 fichas, suíte 372, core 2.5.0); nenhuma dependência nova nas quatro features.                                                                                        |
+| `code-analysis.md`, `data-dictionary.md`, `modules.json`                     | 🟢 forte | Nova unidade `core/progress/` (13ª); consentimento no `close_flow`/`CommandService`; `Medicao` e o contrato do board no dicionário (§10/§11).                                                                                 |
+| `domain.md`, `state-machines.md`, `permissions.md`, ADRs 0024-0027           | 🟢 forte | §2.22-2.25 novas (RN-N48..N55); RN-N31/RN-N44 revisadas in-place; máquina do encerramento com os dois desfechos válidos (com/sem commit); matriz de permissões com a linha `progress` e quatro salvaguardas novas.            |
+| `architecture.md`, `c4-containers/components.md`, `erd-complete.md`          | 🟢 forte | 13 unidades; `core/progress` nos dois diagramas C4 com os artefatos derivados; ERD com `PROGRESS_SECTION`/`PROGRESS_KANBAN_SECTION` e a família efêmera `MEDICAO`; **sem mudança de schema** em `SESSION_STATE`/`GATE_VERDICT` (a 024 muda fluxo, não dado). |
+| specs SDD (`session/`, `microdecisoes/`, nova `progress/`) + `code-spec-matrix.md` | 🟢 forte | `session/` com RN-N48/N49 e RF-08; `microdecisoes/` com RN-N44 revisada e RF-06 reescrito (advisory); `progress/` é unit inteiramente nova (requirements/design/tasks); matriz com 12 units e os dois artefatos derivados.     |
+| `spec-impact-matrix.md`                                                      | 🟢 forte | Linhas ✨✨✨✨ para o medidor (HIGH) e o exportador (MEDIUM); item 10 de impacto crítico (tripwire de pureza + posse por namespace); subseções 024-027.                                                                        |
 
 ### Reconciliação 2026-07-05 — artefatos estruturais (Scout/Archaeologist/Architect)
 
@@ -136,5 +163,8 @@ _(Cálculo: (275 + 50 × 0.5) / 343 = 87.46%)_
 |   🟡 (stale)   | 🟢 (corrigido)  | RN-N11: "via MCP `load_config` quebra (T1)"             | **2026-07-15:** a ressalva em `microdecisoes/requirements.md` estava stale — T1 foi resolvido em `cf73980` e todos os demais artefatos já o diziam; removida.                                                |
 |   🟢 (stale)   | 🟢 (corrigido)  | ADR 0002 / hooks do Claude com `PostToolUse`            | **2026-07-15:** MD-0014 aposentou o gatilho; `c4-context.md`, `permissions.md`, `architecture.md` §4/§6, `format-on-edit/` e `code-spec-matrix.md` atualizados (o ADR 0002 em si já fora emendado em 07/07). |
 |       —        |    🟢 (novo)    | Gate de registro (022) e dupla identidade (023)         | **2026-07-15:** ~48 afirmações novas, 96% confirmadas por leitura direta do código as-built + specs forward + fichas MD-0015/MD-0016.                                                                        |
+| 🟢 (redação 022) | 🟢 (revisada)  | RN-N44 — enforcement híbrido em três bordas             | **2026-08-11:** a 025 colapsou as três políticas em duas (portão duro único no encerramento; advisory nos fins de turno); a redação foi revisada in-place em `domain.md` §2.20, não substituída — a mecânica do gate sobrevive integral. |
+| 🟢 (redação 013) | 🟢 (revisada)  | RN-N31 — commit incondicional do encerramento           | **2026-08-11:** a 024 condiciona o commit ao consentimento (`versionar_estado`); RN-N48/N49 assumem a política; o MCP preserva o comportamento antigo (D-04).                                                |
+|       —        |    🟢 (novo)    | Medidor read-only (026) e exportador kanban (027)       | **2026-08-11:** ~73 afirmações novas no delta 024-027, 93% confirmadas por leitura direta do pacote `core/progress/` + specs forward + fichas MD-0017..MD-0020.                                              |
 
 `doc_level = completo` e o plugin do Codex **não está disponível** nesta sessão (não há ferramentas `codex:*`). A etapa de revisão cruzada foi pulada conforme o protocolo.

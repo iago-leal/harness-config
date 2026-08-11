@@ -18,6 +18,17 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11 11:26
+
+> Re-verificação dirigida pós-features 024-027 (escopo por diff: `close_flow.py` tocado pela 024, que reescreveu o texto da oferta vigiada aqui). Suíte 372 verde.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `pending_work_paths` segue excluindo **apenas** o `state_file` (`p != session_file`, `close_flow.py:30`); a 024 mudou o texto e o protocolo da oferta (consultivo, RN-N48), não o universo de caminhos. |
+| W002 | 🟢 verde | `list_dirty_paths` mantém `--porcelain --untracked-files=all`; origem intocada pelo delta. |
+| W003 | 🟢 verde | `.gitignore` do alvo segue recebendo `SYNC_CACHE_GITIGNORE_ENTRY` em `init`/`upgrade`; origem intocada. |
+
+
 ### Re-extração 2026-07-15 19:22
 
 > Re-verificação dirigida pós-feature 022: `close_flow.py` mudou (3º portão), mas `pending_work_paths` está intocado — confirmado por leitura direta (`return [p for p in dirty if p != session_file]`, close_flow.py:30).

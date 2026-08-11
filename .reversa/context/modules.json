@@ -1,18 +1,19 @@
 {
   "generated_at": "2026-06-24T14:15:30Z",
-  "reconciled_at": "2026-07-15T00:00:00-03:00",
+  "reconciled_at": "2026-08-11T00:00:00-03:00",
   "reconciliation_notes": [
     "RECONCILIAÇÃO 2026-07-15 (pós-MD-0014 e features 022-023): submódulo 'decisions' expandido com gate.py (gate de registro de microdecisões — evaluate_registration_gate, compute_fingerprint fina, compute_lembrete_fingerprint grossa, GateVerdict); GitPort/SubprocessGitAdapter ganharam list_changed_paths_since; close_flow.py ganhou o 3º portão (render_decisao_pendente_marker/conduct_decisao_pendente + parâmetro sem_decisao); main.py ganhou 'decisions --gate' e 'cmd --sem-decisao'; AntigravityHookBridge ganhou gate_evaluator (advisory); ClaudeProfile/claude_settings deixaram de materializar o PostToolUse format-on-edit (MD-0014) e o Stop passou a 'decisions --gate'. Core 2.1.1.",
     "Todos os caminhos foram corrigidos de 'harness-core/...' para '.harness/harness-core/...' (a relocação física é da feature 011; este modules.json nunca havia sido atualizado para refleti-la, mesmo em extrações posteriores).",
     "Novo submódulo 'migrate' (feature 020).",
     "Submódulo 'session' expandido com close_flow.py (018) e resume_context.py (021).",
-    "Fora do escopo desta reconciliação (Archaeologist é código-fonte, não decisão de negócio): mapeamento fino de business_rules novas de 010-019 não relacionadas a session/migrate — delegado ao Detective."
+    "Fora do escopo desta reconciliação (Archaeologist é código-fonte, não decisão de negócio): mapeamento fino de business_rules novas de 010-019 não relacionadas a session/migrate — delegado ao Detective.",
+    "2026-08-11 (pós-024-027): novo submódulo core/progress (medidor read-only 026 + exportador kanban 027); commands/service ganhou versionar_estado (024); close_flow reescrito no eixo do consentimento (024); decisions --gate despromovido a advisory puro (025). Core 2.1.1 → 2.5.0."
   ],
   "modules": [
     {
       "name": "harness-core",
       "path": ".harness/harness-core",
-      "purpose": "CLI Python + servidor MCP em arquitetura hexagonal para harness de agentes (formatação, sincronia Git, microdecisões, sessão, documentação, instalação por prompt, migração de instalações e evolução local).",
+      "purpose": "CLI Python + servidor MCP em arquitetura hexagonal para harness de agentes (formatação, sincronia Git, microdecisões, sessão, documentação, instalação por prompt, migração de instalações e evolução local), medição de progresso de entregáveis e exportação kanban.",
       "primary_files": [
         ".harness/harness-core/src/main.py",
         ".harness/harness-core/src/adapters/mcp/server.py",
@@ -32,7 +33,9 @@
             {
               "name": "install_hooks",
               "file": ".harness/harness-core/src/core/bootstrap/service.py",
-              "params": ["repo_path: str"],
+              "params": [
+                "repo_path: str"
+              ],
               "returns": "List[str]",
               "confidence": "confirmed"
             },
@@ -85,7 +88,10 @@
             "Cópia recursiva de arquivos com exclusão de lixo local",
             "Instalação e ganchos Git fail-fast no host de destino"
           ],
-          "dependencies": ["ports.fs", "ports.process"],
+          "dependencies": [
+            "ports.fs",
+            "ports.process"
+          ],
           "complexity": "medium"
         },
         {
@@ -99,7 +105,9 @@
             {
               "name": "format_file",
               "file": ".harness/harness-core/src/core/formatting/service.py",
-              "params": ["file_path: str"],
+              "params": [
+                "file_path: str"
+              ],
               "returns": "int",
               "confidence": "confirmed"
             }
@@ -136,19 +144,27 @@
             "Seleção de formatador por extensão (ruff/prettier/rustfmt)",
             "Verificação dinâmica de padrões glob de exclusão com fnmatch"
           ],
-          "dependencies": ["ports.fs", "ports.process", "domain.config"],
+          "dependencies": [
+            "ports.fs",
+            "ports.process",
+            "domain.config"
+          ],
           "complexity": "medium"
         },
         {
           "name": "sync",
           "path": ".harness/harness-core/src/core/sync",
           "purpose": "Verificação de sincronia Git local x remoto e checagem de atualizações locais vs upstream. Mantido intacto pela feature 020 (a mudança de fonte do core não afetou este mecanismo de aviso).",
-          "primary_files": [".harness/harness-core/src/core/sync/service.py"],
+          "primary_files": [
+            ".harness/harness-core/src/core/sync/service.py"
+          ],
           "functions": [
             {
               "name": "check_sync",
               "file": ".harness/harness-core/src/core/sync/service.py",
-              "params": ["repo_path: str"],
+              "params": [
+                "repo_path: str"
+              ],
               "returns": "bool",
               "confidence": "confirmed"
             },
@@ -181,13 +197,19 @@
               "confidence": "confirmed"
             }
           ],
-          "entities": ["SyncCache"],
+          "entities": [
+            "SyncCache"
+          ],
           "algorithms": [
             "Cache local com TTL de horas",
             "ls-remote para comparar HEAD local vs remoto",
             "Comparação semântica simples de strings de versão"
           ],
-          "dependencies": ["ports.fs", "ports.git", "domain.cache"],
+          "dependencies": [
+            "ports.fs",
+            "ports.git",
+            "domain.cache"
+          ],
           "complexity": "medium"
         },
         {
@@ -202,14 +224,18 @@
             {
               "name": "load_decisions",
               "file": ".harness/harness-core/src/core/decisions/service.py",
-              "params": ["directory: str"],
+              "params": [
+                "directory: str"
+              ],
               "returns": "List[Decision]",
               "confidence": "confirmed"
             },
             {
               "name": "validate_integrity",
               "file": ".harness/harness-core/src/core/decisions/service.py",
-              "params": ["decisions: List[Decision]"],
+              "params": [
+                "decisions: List[Decision]"
+              ],
               "returns": "List[str]",
               "confidence": "confirmed"
             },
@@ -227,21 +253,32 @@
             {
               "name": "evaluate_registration_gate",
               "file": ".harness/harness-core/src/core/decisions/gate.py",
-              "params": ["git", "repo_path: str", "session", "config"],
+              "params": [
+                "git",
+                "repo_path: str",
+                "session",
+                "config"
+              ],
               "returns": "GateVerdict",
               "confidence": "confirmed"
             },
             {
               "name": "compute_fingerprint",
               "file": ".harness/harness-core/src/core/decisions/gate.py",
-              "params": ["anchor: str", "head: str", "dirty: list"],
+              "params": [
+                "anchor: str",
+                "head: str",
+                "dirty: list"
+              ],
               "returns": "str",
               "confidence": "confirmed"
             },
             {
               "name": "compute_lembrete_fingerprint",
               "file": ".harness/harness-core/src/core/decisions/gate.py",
-              "params": ["anchor: str"],
+              "params": [
+                "anchor: str"
+              ],
               "returns": "str",
               "confidence": "confirmed"
             }
@@ -268,13 +305,20 @@
               "confidence": "confirmed"
             }
           ],
-          "entities": ["Decision", "Relationship", "GateVerdict"],
+          "entities": [
+            "Decision",
+            "Relationship",
+            "GateVerdict"
+          ],
           "algorithms": [
             "Graph inversion / backlink compilation determinística por ID",
             "Parse de front-matter YAML por split em '---'",
             "Fingerprint sha1 determinístico do estado de pendência (fino e grosso, sem relógio)"
           ],
-          "dependencies": ["ports.fs", "domain.models"],
+          "dependencies": [
+            "ports.fs",
+            "domain.models"
+          ],
           "complexity": "high"
         },
         {
@@ -300,14 +344,19 @@
             {
               "name": "load_session",
               "file": ".harness/harness-core/src/core/commands/service.py",
-              "params": ["filepath: str"],
+              "params": [
+                "filepath: str"
+              ],
               "returns": "Optional[SessionState]",
               "confidence": "confirmed"
             },
             {
               "name": "save_session",
               "file": ".harness/harness-core/src/core/commands/service.py",
-              "params": ["filepath: str", "state: SessionState"],
+              "params": [
+                "filepath: str",
+                "state: SessionState"
+              ],
               "returns": "None",
               "confidence": "confirmed"
             }
@@ -339,7 +388,10 @@
               "confidence": "confirmed"
             }
           ],
-          "entities": ["SessionState", "SessionNarrative"],
+          "entities": [
+            "SessionState",
+            "SessionNarrative"
+          ],
           "dependencies": [
             "ports.fs",
             "ports.git",
@@ -360,14 +412,18 @@
             {
               "name": "extract_commands",
               "file": ".harness/harness-core/src/core/documentation/service.py",
-              "params": ["parser"],
+              "params": [
+                "parser"
+              ],
               "returns": "List[Dict]",
               "confidence": "confirmed"
             },
             {
               "name": "parse_markdown_rules",
               "file": ".harness/harness-core/src/core/documentation/service.py",
-              "params": ["domain_filepath: str"],
+              "params": [
+                "domain_filepath: str"
+              ],
               "returns": "List[Dict]",
               "confidence": "confirmed"
             },
@@ -385,12 +441,16 @@
               "confidence": "confirmed"
             }
           ],
-          "entities": ["HARNESS_DOC_DATA"],
+          "entities": [
+            "HARNESS_DOC_DATA"
+          ],
           "algorithms": [
             "CLI parser introspection do argparse",
             "Injeção de JSON em placeholder do template HTML"
           ],
-          "dependencies": ["ports.fs"],
+          "dependencies": [
+            "ports.fs"
+          ],
           "complexity": "medium"
         },
         {
@@ -406,14 +466,19 @@
             {
               "name": "render",
               "file": ".harness/harness-core/src/core/install/service.py",
-              "params": ["active_harness: str", "parser: ArgumentParser"],
+              "params": [
+                "active_harness: str",
+                "parser: ArgumentParser"
+              ],
               "returns": "str",
               "confidence": "confirmed"
             },
             {
               "name": "get_profile",
               "file": ".harness/harness-core/src/core/install/harness_profiles.py",
-              "params": ["active_harness: str"],
+              "params": [
+                "active_harness: str"
+              ],
               "returns": "HarnessProfile",
               "confidence": "confirmed"
             }
@@ -436,7 +501,9 @@
             "Substituição de 4 placeholders no template.md",
             "Introspecção do argparse para listar comandos"
           ],
-          "dependencies": ["ports.fs"],
+          "dependencies": [
+            "ports.fs"
+          ],
           "complexity": "medium"
         },
         {
@@ -455,35 +522,48 @@
             {
               "name": "parse",
               "file": ".harness/harness-core/src/core/session/serializer.py",
-              "params": ["text: str"],
+              "params": [
+                "text: str"
+              ],
               "returns": "SessionState",
               "confidence": "confirmed"
             },
             {
               "name": "render",
               "file": ".harness/harness-core/src/core/session/serializer.py",
-              "params": ["state: SessionState"],
+              "params": [
+                "state: SessionState"
+              ],
               "returns": "str",
               "confidence": "confirmed"
             },
             {
               "name": "render_narrative",
               "file": ".harness/harness-core/src/core/session/serializer.py",
-              "params": ["narrative: SessionNarrative"],
+              "params": [
+                "narrative: SessionNarrative"
+              ],
               "returns": "str",
               "confidence": "confirmed"
             },
             {
               "name": "get_sink",
               "file": ".harness/harness-core/src/core/session/sinks.py",
-              "params": ["active_harness: str", "fs: FileSystemPort"],
+              "params": [
+                "active_harness: str",
+                "fs: FileSystemPort"
+              ],
               "returns": "SessionSink",
               "confidence": "confirmed"
             },
             {
               "name": "pending_work_paths",
               "file": ".harness/harness-core/src/core/session/close_flow.py",
-              "params": ["git: GitPort", "repo_path: str", "session_file: str"],
+              "params": [
+                "git: GitPort",
+                "repo_path: str",
+                "session_file: str"
+              ],
               "returns": "list",
               "confidence": "confirmed"
             },
@@ -524,7 +604,9 @@
             {
               "name": "render_offer_markers",
               "file": ".harness/harness-core/src/core/session/close_flow.py",
-              "params": ["offers: EndSessionOffers"],
+              "params": [
+                "offers: EndSessionOffers"
+              ],
               "returns": "List[str]",
               "confidence": "confirmed"
             },
@@ -547,7 +629,10 @@
             {
               "name": "render_decisao_pendente_marker",
               "file": ".harness/harness-core/src/core/session/close_flow.py",
-              "params": ["paths: list", "cap: int = 20"],
+              "params": [
+                "paths: list",
+                "cap: int = 20"
+              ],
               "returns": "str",
               "confidence": "confirmed"
             },
@@ -565,7 +650,11 @@
             {
               "name": "SessionCloseFlow.run",
               "file": ".harness/harness-core/src/core/session/close_flow.py",
-              "params": ["repo_path: str", "config: HarnessConfig", "sem_decisao: bool = False"],
+              "params": [
+                "repo_path: str",
+                "config: HarnessConfig",
+                "sem_decisao: bool = False"
+              ],
               "returns": "int (exit code)",
               "confidence": "confirmed"
             },
@@ -687,7 +776,9 @@
             {
               "name": "MigrateService._safe_remove_core",
               "file": ".harness/harness-core/src/core/migrate/service.py",
-              "params": ["path: str"],
+              "params": [
+                "path: str"
+              ],
               "returns": "None",
               "confidence": "confirmed"
             }
@@ -777,7 +868,21 @@
             "HarnessSection",
             "SessionSection (agora com inject_decisions_index, feature 021)"
           ],
-          "dependencies": ["ports.fs"],
+          "dependencies": [
+            "ports.fs"
+          ],
+          "complexity": "medium"
+        },
+        {
+          "name": "progress",
+          "path": ".harness/harness-core/src/core/progress",
+          "purpose": "Medidor read-only de entregáveis (026) e exportador kanban (027): agrega cinco fontes de verdade num modelo transitório Medicao e a projeta em markdown sem timestamp (.harness/progresso.md) e no board do fork vscode-kanban (.vscode/vscode-kanban.json, opt-in), preservando cards manuais como canal de demandas.",
+          "primary_files": [
+            ".harness/harness-core/src/core/progress/service.py",
+            ".harness/harness-core/src/core/progress/stages.py",
+            ".harness/harness-core/src/core/progress/render.py",
+            ".harness/harness-core/src/core/progress/kanban.py"
+          ],
           "complexity": "medium"
         },
         {
@@ -793,19 +898,28 @@
             {
               "name": "is_dir",
               "file": ".harness/harness-core/src/core/ports/fs.py",
-              "params": ["path: str"],
+              "params": [
+                "path: str"
+              ],
               "returns": "bool",
               "confidence": "confirmed"
             },
             {
               "name": "run_command",
               "file": ".harness/harness-core/src/core/ports/process.py",
-              "params": ["args: List[str]", "cwd: Optional[str]"],
+              "params": [
+                "args: List[str]",
+                "cwd: Optional[str]"
+              ],
               "returns": "CompletedProcess",
               "confidence": "confirmed"
             }
           ],
-          "entities": ["FileSystemPort", "GitPort", "ProcessPort"],
+          "entities": [
+            "FileSystemPort",
+            "GitPort",
+            "ProcessPort"
+          ],
           "dependencies": [],
           "complexity": "low"
         },
@@ -824,7 +938,10 @@
             {
               "name": "write_file_atomic",
               "file": ".harness/harness-core/src/adapters/fs/local.py",
-              "params": ["path: str", "content: str"],
+              "params": [
+                "path: str",
+                "content: str"
+              ],
               "returns": "None",
               "confidence": "confirmed"
             },
@@ -852,7 +969,10 @@
             {
               "name": "session_command",
               "file": ".harness/harness-core/src/adapters/mcp/server.py",
-              "params": ["cmd_name: str", "active_feature: Optional[str]"],
+              "params": [
+                "cmd_name: str",
+                "active_feature: Optional[str]"
+              ],
               "returns": "str",
               "confidence": "confirmed"
             }

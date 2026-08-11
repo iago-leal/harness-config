@@ -36,7 +36,22 @@
 
 ## Histórico de re-extrações
 
-_(vazio — primeira geração; a re-extração dirigida pós-024 preencherá esta seção)_
+### Re-extração 2026-08-11 11:26
+
+> Primeira verificação da 024, na re-extração dirigida de reconciliação das features 024-027. Vereditos por greps dirigidos no código as-built (`close_flow.py`, `commands/service.py`, `main.py`, `server.py`, script fino e as três cópias do `SKILL.md`) cruzados com os artefatos recém-gerados (`domain.md` §2.22, `session/requirements.md` RN-N48/N49, `spec-impact-matrix.md`, `code-spec-matrix.md`). Suíte 372 verde relatada no fechamento da 027 (não recontada nesta rodada). **A defasagem vigiada na primeira Observação está sanada:** a RN-N31 foi reescrita como condicional ao aval (🟢 revisada no `confidence-report.md`), e MD-0017, ADR 0024, o marker `ENCERRAMENTO_NAO_VERSIONADO` e as flags estão incorporados a `domain.md`/`erd-complete.md`/`spec-impact-matrix.md`.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W001 | 🟢 verde | `execute_command` tem `versionar_estado: bool = True` (`service.py:37`); com `False`, o ramo pula `commit_paths` e grava a linha declarativa (`service.py:80`). Teste presente na suíte. |
+| W002 | 🟢 verde | `_resolve_versionar_encerramento` (`close_flow.py:544`): sem terminal e sem flag → `None` → recusa; no terminal, pergunta `[S/n]` com default afirmativo. Refletido em RN-N48. |
+| W003 | 🟢 verde | `render_encerramento_nao_versionado_marker` (`close_flow.py:84`) emite o marker com `motivo` após o sucesso e antes da oferta de push (`close_flow.py:123`). RN-N49. |
+| W004 | 🟢 verde | `conduct_commit_pendente` (`close_flow.py:52`) anuncia a contagem à frente, lista caminhos e devolve `bool`; sem terminal, marker + `False`. |
+| W005 | 🟢 verde | Marker `COMMIT_PENDENTE` com `acao` descrevendo a oferta; campos `arquivos`/`total`/`truncado`/`mostrados` e teto de 20 preservados (`close_flow.py:44`). |
+| W006 | 🟢 verde | As três flags presentes nas duas bordas: `main.py:151/161/171` e `encerrar_sessao.py:35/45/54`; grupo mutuamente exclusivo nas duas. |
+| W007 | 🟢 verde | Âncora = HEAD pré-commit em todos os desfechos, inclusive o não versionado (HEAD e âncora coincidem; sem alerta no `resume`). RF-12 confirmada na unit `session/`. |
+| W008 | 🟢 verde | Linha "Sessão encerrada com N mudança(s) não commitada(s) por escolha do usuário" gravada na narrativa no caminho autorizado. |
+| W009 | 🟢 verde | Borda MCP mantém `versionar_estado=True` com a assimetria declarada no docstring (`server.py:97`, D-04). |
+| W010 | 🟢 verde | Skill `encerrar-sessao` 1.4.0 nas três cópias (`.claude/`, `.agents/`, asset do core), byte-idênticas; sem promessa de commit automático. O core avançou legitimamente de 2.2.0 para **2.5.0** pelos bumps das features 025/026/027 — não é versão cruzada. **T028 (propagação à base instalada) segue pendente por decisão** (`gaps.md#G-17`); W010 continua vigiando as versões durante a propagação futura. |
 
 ## Arquivadas
 

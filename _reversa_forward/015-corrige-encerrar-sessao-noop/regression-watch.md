@@ -20,6 +20,16 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11 11:26
+
+> Re-verificação dirigida pós-features 024-027 (escopo por diff: fluxo de encerramento tocado pela 024). W001 mantém o 🟡 histórico (supersessão parcial pela 016, já registrada); W002 intocado. Suíte 372 verde.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W003 | 🟢 verde | Falha segue sinalizada por exceção nomeada com exit code decidido na borda; o `conduct_commit_pendente` da 024 devolve `bool` e a borda conduz — o padrão se manteve. |
+| W004 | 🟢 verde | Caminho feliz consentido byte-idêntico ao pré-024: âncora = HEAD de trabalho, `commit_paths` só do estado, commit de encerramento por cima. |
+
+
 ### Re-extração 2026-07-05 17:00
 
 > **Primeira verificação dos watch da 015** (nunca fora checada em rodadas anteriores). A feature 016, que veio logo em seguida, **revisou deliberadamente** parte da regra de W001/W003: sessão inativa deixou de ser condição de falha (reativa e fecha, exit 0) e a exceção `NoActiveSessionError` foi **removida** — o próprio código documenta isso (`core/commands/errors.py`, comentário "NOTA (feature 016)"). Não é regressão acidental da reconciliação atual; é uma decisão de produto já tomada há tempo, só nunca antes registrada neste watch.

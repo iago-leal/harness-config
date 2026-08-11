@@ -5,6 +5,7 @@
 > Nível de Documentação: **Completo** · Escala: 🟢 CONFIRMADO · 🟡 INFERIDO
 > **Re-extração estrutural de 2026-07-05** (este documento estava congelado desde 2026-06-24/feature 006, sem incorporar nem a feature 008 que já resolvia o T4 aqui descrito como aberto): `SESSION_SECTION` ganha `inject_decisions_index` (✨f021); `HARNESS_SECTION` explicitada com `upstream_path`/`version` (✨f007, ainda vigentes — não removidos pela f020, ver domain.md); T4 corrigido para RESOLVIDO (feature 008); `DECISION` — população cresceu de 5 para 12 fichas, sem mudança de schema; novas estruturas efêmeras `EndSessionOffers`/`PushOffer`/`UpgradeOffer` (✨f014, dataclasses — exceção ao padrão Pydantic do resto do domínio); nota sobre a divergência de nome do `SYNC_CACHE` entre CLI e MCP (T7, dívida técnica nova, ver `architecture.md`).
 > **Reconciliação de 2026-07-15** (pós-features 022-023): `SESSION_STATE` ganha os campos anti-loop opcionais `gate_lembrete_fingerprint`/`gate_encerramento_fingerprint` (✨f022, primeira mudança de schema da entidade); `DECISIONS_SECTION` ganha `require_registration` (✨f022, default true); nova estrutura efêmera `GATE_VERDICT` (✨f022/f023, Pydantic, não persistida); população de `DECISION` 12 → 16 fichas.
+> **Reconciliação de 2026-08-11** (pós-features 024-027): novas seções de configuração `PROGRESS_SECTION`/`PROGRESS_KANBAN_SECTION` (✨f026/f027); novas estruturas efêmeras `MEDICAO`/`FEATURE_PROGRESSO`/`ACAO_PROGRESSO`/`DEMANDA` (✨f026/f027, jamais persistidas) e o **contrato externo do board kanban** (✨f027, único delta-de-contrato-externo do lote); população de `DECISION` 16 → 20 fichas; **nenhuma mudança de schema** em `SESSION_STATE`/`GATE_VERDICT` (a 024 muda fluxo, não dado). Versão do core 2.1.1 → 2.5.0.
 
 > 🟢 **Não há banco de dados relacional.** Confirmado em `surface.json` (`database_hints: []`) e na análise de código: nenhum DDL, migration, ORM ou cliente de banco. A "persistência" do `harness-core` é inteiramente baseada em **arquivos versionados** — Markdown com front-matter YAML, JSON e TOML. O ERD abaixo modela as **estruturas de dados de configuração, estado e decisão** (modelos Pydantic v2 do domínio) como entidades lógicas, com as relações de composição reais entre elas. As "PK/FK" são lógicas (identificadores de domínio), não chaves de um SGBD.
 
@@ -75,6 +76,13 @@ erDiagram
         string state_file "[session] · default .harness/estado-da-sessao.md (feature 006)"
         bool inject_decisions_index "[session] · default true (feature 021, NOVO)"
     }
+    PROGRESS_SECTION {
+        string file "[progress] · default .harness/progresso.md (feature 026, NOVO)"
+    }
+    PROGRESS_KANBAN_SECTION {
+        bool enabled "[progress.kanban] · default false (feature 027, NOVO, opt-in)"
+        string board_file "[progress.kanban] file · default .vscode/vscode-kanban.json (feature 027)"
+    }
 
     %% ── Relacoes de composicao reais ──
     SESSION_STATE ||--o| SESSION_NARRATIVE : "contem (value-object)"
@@ -85,6 +93,8 @@ erDiagram
     HARNESS_CONFIG ||--|| SYNC_SECTION : "compoe [sync]"
     HARNESS_CONFIG ||--|| DECISIONS_SECTION : "compoe [decisions]"
     HARNESS_CONFIG ||--|| SESSION_SECTION : "compoe [session]"
+    HARNESS_CONFIG ||--|| PROGRESS_SECTION : "compoe [progress] (f026)"
+    PROGRESS_SECTION ||--|| PROGRESS_KANBAN_SECTION : "aninha [progress.kanban] (f027)"
 ```
 
 ---
@@ -112,7 +122,7 @@ erDiagram
 
 ### 4. Configuração Tipada — `harness.toml` (`config.py`) 🟢
 
-- **`HARNESS_CONFIG`** compõe as seções `HARNESS_SECTION` (`active_harness`, `upstream_path`/`version` ✨f007 — ainda vigentes, a remoção planejada pela f020 foi desescopada), `FORMATTING_SECTION`, `SYNC_SECTION`, `DECISIONS_SECTION` (✨ feature 005, chave do desacoplamento dos caminhos de decisão) e `SESSION_SECTION` (✨ feature 006, `state_file`; ✨ feature 021, `inject_decisions_index`). Via única tipada: `load_config(fs)` é o único caminho de configuração; `load_harness_config` (dict legado) foi removido (T5 fechado, feature 006).
+- **`HARNESS_CONFIG`** compõe as seções `HARNESS_SECTION` (`active_harness`, `upstream_path`/`version` ✨f007 — ainda vigentes, a remoção planejada pela f020 foi desescopada), `FORMATTING_SECTION`, `SYNC_SECTION`, `DECISIONS_SECTION` (✨ feature 005, chave do desacoplamento dos caminhos de decisão) e `SESSION_SECTION` (✨ feature 006, `state_file`; ✨ feature 021, `inject_decisions_index`), mais `PROGRESS_SECTION` (✨f026, `[progress].file`) com `PROGRESS_KANBAN_SECTION` aninhada (✨f027, `[progress.kanban].enabled` default `false` + `file` — herança sem migração: toml antigo continua válido). Via única tipada: `load_config(fs)` é o único caminho de configuração; `load_harness_config` (dict legado) foi removido (T5 fechado, feature 006).
 - 🟢 **T4 RESOLVIDO (feature 008):** `FORMATTING_SECTION` passou a ser consumida dinamicamente por `FormattingService` (`exclude_paths` com glob/`fnmatch`, `opt_out_file` configurável) — descrição anterior deste ERD ("não consumido") estava desatualizada desde a feature 008 e não fora corrigida até esta reconciliação.
 
 ### 5. Estruturas efêmeras (não persistidas) 🟢
@@ -121,6 +131,8 @@ erDiagram
 - **Bloco de ganchos do `install-prompt`** (feature 003) — saída textual de `InstallPromptService.render` montada por substituição de placeholders; transitória, destinada à colagem manual.
 - **`EndSessionOffers` / `PushOffer` / `UpgradeOffer` (✨f014, NOVO nesta reconciliação)** — `session/offers.py`. Exceção deliberada ao padrão Pydantic: são `@dataclass` puros, montados por `EndSessionOffersService.detect` a cada `encerrar-sessao` e consumidos por `session/close_flow.conduct_end_session_offers`; nunca persistidos. `EndSessionOffers` agrega `push: PushOffer?` e `upgrade: UpgradeOffer?` (ambos opcionais, `None` = sem oferta cabível).
 - **`GATE_VERDICT` (✨f022/f023, NOVO)** — `decisions/gate.py:GateVerdict` (Pydantic): `pendente`, `mudancas`, `fichas_tocadas`, `fingerprint` (fino), `fingerprint_lembrete` (grosso), `aviso?`. Montado por `evaluate_registration_gate` a cada avaliação e descartado; **só os fingerprints sobrevivem**, copiados para os campos anti-loop de `SESSION_STATE` pelas bordas que interceptam. Ver `data-dictionary.md` §9.
+- **`MEDICAO` / `FEATURE_PROGRESSO` / `ACAO_PROGRESSO` / `DEMANDA` (✨f026/f027, NOVO)** — `core/progress/service.py` (Pydantic): a `Medicao` agrega feature ativa (com ações `AcaoProgresso` de IDs reais `T00N`), pausadas, contagem de concluídas, alertas (alta/média), falhas de leitura, `board_habilitado` e `demandas` (cards manuais fora de `done`, ✨f027). Montada por `ProgressService.measure()` a cada medição e **jamais persistida** — os dois artefatos derivados (`.harness/progresso.md` e o board) são projeções regravadas pela borda. Ver `data-dictionary.md` §10.
+- **Contrato do board kanban (✨f027, delta-de-contrato-externo)** — o `.vscode/vscode-kanban.json` segue o schema do fork do vscode-kanban (colunas `todo`/`in-progress`/`testing`/`done`; cards com `id`/`title`/`type`/`prio`/`creation_time`/`category`), conhecido por um único módulo (`kanban.py`). Não é entidade do domínio: é projeção determinística da `MEDICAO` + ilha manual preservada. Ver `data-dictionary.md` §11.
 
 ---
 
@@ -148,3 +160,12 @@ erDiagram
 - **`DECISIONS_SECTION.require_registration`** (✨f022, NOVO) — liga o gate de registro; default `true`.
 - **Nova estrutura efêmera:** `GATE_VERDICT` (✨f022/f023) — Pydantic, não persistida.
 - **`DECISION`:** população cresceu de 12 para 16 fichas (MD-0013..MD-0016) — sem mudança de schema.
+
+## 🧭 Mudanças 024-027 (reconciliação 2026-08-11)
+
+- **`PROGRESS_SECTION`** (✨f026, NOVO) e **`PROGRESS_KANBAN_SECTION`** (✨f027, NOVO, opt-in default `false`) na configuração tipada — herança sem migração.
+- **Novas estruturas efêmeras:** `MEDICAO`/`FEATURE_PROGRESSO`/`ACAO_PROGRESSO`/`DEMANDA` (✨f026/f027) — Pydantic, jamais persistidas; os artefatos derivados são projeções.
+- **Contrato externo novo:** o board do fork do vscode-kanban (✨f027) — único delta-de-contrato-externo do lote, confinado a `kanban.py`.
+- **`SESSION_STATE`/`GATE_VERDICT`: sem mudança de schema** — a feature 024 muda o fluxo do encerramento (consentimento), não os dados persistidos; a 025 muda só o canal de saída do ramo `--gate`.
+- **`DECISION`:** população cresceu de 16 para 20 fichas (MD-0017..MD-0020) — sem mudança de schema.
+- **Versão do core:** 2.1.1 → 2.5.0 (2.2.0 na 024, 2.3.0 na 025, 2.4.0 na 026, 2.5.0 na 027).

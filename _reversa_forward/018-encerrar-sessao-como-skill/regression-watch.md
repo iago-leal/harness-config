@@ -24,6 +24,16 @@
 
 ## Histórico de re-extrações
 
+### Re-extração 2026-08-11 11:26
+
+> Re-verificação dirigida pós-features 024-027 (escopo por diff: `close_flow.py`, `main.py` e a árvore da skill tocados pela 024). Itens não listados (W001-W003) têm origem intocada e mantêm o veredito anterior. Suíte 372 verde.
+
+| ID | Veredito | Observação |
+|----|----------|------------|
+| W004 | 🟢 verde | Orquestração segue no `SessionCloseFlow`; as duas bordas (CLI e script fino) ganharam **as mesmas** três flags da 024 sem duplicar lógica — as superfícies permanecem convergentes (`main.py:151+`, `encerrar_sessao.py:35+`). |
+| W005 | 🟢 verde | Scripts finos inalterados no mecanismo (resolução do core via git, re-exec sob o venv, falha barulhenta); skill agora em 1.4.0, três cópias byte-idênticas. |
+
+
 ### Re-extração 2026-07-15 19:22
 
 > Re-verificação dirigida pós-feature 022: o delta atualizou os assets da skill (v1.2.x → 1.3.0: passo 5 do marker `DECISAO_PENDENTE` + flag `--sem-decisao` no script). A propriedade central — scripts finos consumindo o core, sem reimplementação — permanece.
