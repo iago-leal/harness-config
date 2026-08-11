@@ -77,8 +77,22 @@ def process_decisions(
         else:
             result_msg += "Grafo de microdecisões validado com sucesso (zero erros).\n"
 
+        # T8 (G-20): as duas visões andam juntas na mesma passada (RN-N56).
+        # Esta borda compila o índice mesmo com erros de integridade (semântica
+        # histórica do MCP, distinta da CLI); a compacta segue o índice para
+        # nunca existir passada que atualize só uma visão.
         service.compile_index(decisions, output_file, header_file)
-        result_msg += f"Índice de decisões compilado com sucesso em '{output_file}'."
+        service.compile_compact_view(
+            decisions,
+            config.decisions.compact_file,
+            output_file,
+            decisoes_dir,
+            config.decisions.compact_index_size,
+        )
+        result_msg += f"Índice de decisões compilado com sucesso em '{output_file}'.\n"
+        result_msg += (
+            f"Visão compacta derivada em '{config.decisions.compact_file}'."
+        )
         return result_msg
 
     except Exception as e:

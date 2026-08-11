@@ -63,3 +63,55 @@ def test_mcp_check_repository_sync_usa_cache_canonico(monkeypatch):
     result = srv.check_repository_sync("/tmp")
     assert "Sincronizado" in result
     assert captured["cache"] == SYNC_CACHE_REL_PATH
+
+
+def test_mcp_process_decisions_deriva_visao_compacta(tmp_path, monkeypatch):
+    # T8 (G-20): a borda MCP compilava só o índice; a visão compacta (f028)
+    # deve ser derivada na MESMA passada, como na CLI e na ponte Antigravity
+    # (RN-N56 — nunca existe passada que atualize só uma visão), lendo os
+    # caminhos de config.decisions.compact_file/compact_index_size.
+    import os
+
+    import src.adapters.mcp.server as srv
+    from src.core.domain.config import DecisionsSection, HarnessConfig
+
+    decisoes_dir = str(tmp_path / "decisoes")
+    index_file = str(tmp_path / "microdecisoes.md")
+    compact_file = str(tmp_path / "decisoes-recentes.md")
+    srv.fs.makedirs(decisoes_dir)
+    srv.fs.write_file(
+        os.path.join(decisoes_dir, "_cabecalho.md"), "# Índice de Microdecisões\n"
+    )
+    srv.fs.write_file(
+        os.path.join(decisoes_dir, "MD-0001.md"),
+        """---
+id: MD-0001
+gancho: pre-commit
+relacoes: []
+estado: ativo
+---
+
+# MD-0001 — Decisão de teste
+- **D:** conteúdo mínimo
+""",
+    )
+    monkeypatch.setattr(
+        srv,
+        "load_config",
+        lambda fs: HarnessConfig(
+            decisions=DecisionsSection(
+                dir=decisoes_dir,
+                index_file=index_file,
+                compact_file=compact_file,
+                compact_index_size=10,
+            )
+        ),
+    )
+
+    result = srv.process_decisions()
+
+    assert "compilado com sucesso" in result
+    assert srv.fs.exists(index_file)
+    assert srv.fs.exists(compact_file)
+    compact = srv.fs.read_file(compact_file)
+    assert "- **MD-0001** — Decisão de teste" in compact
