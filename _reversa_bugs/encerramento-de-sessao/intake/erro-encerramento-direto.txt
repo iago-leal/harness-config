@@ -1,0 +1,5 @@
+Error: Exit code 1
+_cabecalho.md
+---
+(eval):1: no matches found: /Users/iagoleal/dev/comentarios-concursos/.harness/decisoes/MD-*.md
+cat: : No such file or directory
