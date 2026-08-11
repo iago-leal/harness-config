@@ -157,6 +157,11 @@ padrão de lacuna uma borda adiante.
   (suíte 397 verdes), core 2.6.2 → 2.6.3, ficha MD-0025, RN-N43/RN-N56
   atualizadas no `domain.md`. Veredito de spec: **spec-desatualizada**
   (o princípio cobria a borda, a letra não; adendo aplicado como na MD-0023).
-  Dívida documentada: a borda MCP `session_command("encerrar-sessao")` segue sem
-  derivar (executa pelo `CommandService`, fora do flow).
+  Dívida documentada na ocasião: a borda MCP `session_command("encerrar-sessao")`
+  seguia sem derivar (executava pelo `CommandService`, fora do flow).
+- **2026-08-11, mesma data, segunda passada:** a dívida da borda MCP foi paga
+  (MD-0026, core 2.6.4): semântica extraída para
+  `DecisionService.derive_views_for_close` (fonte única com o flow), derivação
+  antes do `execute_command` e visões incluídas no próprio commit de
+  encerramento via `caminhos_extras`. 7 testes novos; suíte 404 verdes.
   Os campos de closure/resolution ficam intactos para o fix formal.
