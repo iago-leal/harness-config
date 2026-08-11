@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Plano de correção — BUG-20260811-OYKV</title>
+<style>
+  :root { --bg:#14161c; --card:#1d2027; --ink:#e8eaf0; --muted:#9aa1ad; --line:#31353f;
+          --accent:#5f9bd6; --ok:#4cc38a; --link:#7ab5ff; }
+  body { margin:0; padding:2rem; background:var(--bg); color:var(--ink);
+         font:15px/1.55 -apple-system, "Segoe UI", sans-serif; }
+  h1 { font-size:1.3rem; margin:0 0 .2rem; }
+  h2 { font-size:1.02rem; margin:0 0 .7rem; color:var(--accent); }
+  .sub { color:var(--muted); font-size:.85rem; margin-bottom:1.4rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:1.1rem 1.25rem; margin-bottom:1.2rem; max-width:980px; }
+  table { border-collapse:collapse; width:100%; font-size:.85rem; }
+  th, td { border:1px solid var(--line); padding:.4rem .6rem; text-align:left; vertical-align:top; }
+  th { background:#232630; }
+  code { background:#2a2e38; padding:.1em .35em; border-radius:4px; font-size:.85em; }
+  a { color:var(--link); }
+  .tag { display:inline-block; border:1px solid var(--line); border-radius:5px;
+         padding:.05rem .45rem; font-size:.78rem; color:var(--muted); margin-right:.35rem; }
+  .ok { color:var(--ok); font-weight:600; }
+  svg { width:100%; height:auto; }
+  .note { color:var(--muted); font-size:.8rem; }
+</style>
+</head>
+<body>
+<h1>Plano de correção — BUG-20260811-OYKV (#2)</h1>
+<div class="sub">Contexto <code>encerramento-de-sessao</code> · 2026-08-11 · severidade <b>low</b> · prioridade <b>P3</b> ·
+<span class="tag">plano retroativo: a higiene já foi aplicada e este plano a formaliza para o ciclo do fix</span></div>
+
+<div class="card">
+<h2>Defeito e causa raiz</h2>
+<p>A memória por-projeto do Claude Code no <code>comentarios-concursos</code>
+(<code>ritual-de-encerramento-de-sessao.md</code>, gravada em 2026-08-02) prescrevia a atualização do
+vault Obsidian no encerramento (ritual abolido pela MD-0021) e afirmava que o harness fora
+desinstalado (reinstalado no commit <code>3ff3f3f9</code>). Injetada em toda sessão, reintroduzia o
+ritual espúrio e premissas falsas.</p>
+<p><b>Causa raiz (estado: <span class="ok">confirmed</span>):</b> artefato de memória escrito em
+2026-08-02 e nunca reconciliado com dois fatos posteriores (MD-0021 e a reinstalação via fonte única);
+não há mecanismo que invalide memórias por-projeto quando decisões do repositório as contradizem.
+Evidência: snapshot integral do estado stale em
+<a href="../evidence/ritual-de-encerramento-de-sessao-snapshot.md">evidence/</a>.</p>
+</div>
+
+<div class="card">
+<h2>Estratégia escolhida</h2>
+<p><b>Reparo de dados (higiene pontual)</b>: reescrever a memória preservando os fatos ainda válidos.
+Não há código do harness envolvido nem teste automatizável (artefato externo ao repositório). A
+questão sistêmica em aberto, que é decisão do usuário: criar salvaguarda no fluxo de encerramento
+declarando que memórias com passos extras não prevalecem sobre a skill (viraria feature), ou fechar
+com a higiene pontual.</p>
+</div>
+
+<div class="card">
+<h2>Correction Change Set</h2>
+<table>
+<tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th></tr>
+<tr><td>CHG-001</td><td>data-repair</td><td><code>~/.claude/projects/-Users-iagoleal-dev-comentarios-concursos/memory/ritual-de-encerramento-de-sessao.md</code> (+ linha do <code>MEMORY.md</code>)</td>
+<td>Reescrita: harness reinstalado (fonte única, <code>3ff3f3f9</code>), encerramento via
+<code>/encerrar-sessao</code>, vault fora do fluxo (MD-0021); preservados remoto <code>origin</code> e
+trabalho direto na <code>main</code>. Antes: <a href="../evidence/ritual-de-encerramento-de-sessao-snapshot.md">snapshot</a> ·
+Depois: <a href="memoria-reescrita-depois.md">memoria-reescrita-depois.md</a></td></tr>
+</table>
+<p class="note">Backup verificado: o snapshot em <code>evidence/</code> é a cópia integral pré-reparo; rollback é restaurá-lo.</p>
+</div>
+
+<div class="card">
+<h2>Verificação (no lugar de testes)</h2>
+<p>Artefato externo e não executável: a closure policy <code>local-software</code> é satisfeita aqui
+pela verificação documental (leitura comparada snapshot × versão atual, registrada na
+<a href="../evidence/reproduction.md">cápsula</a>) e pelo veredito de spec. Proteção de regressão
+automatizada não é possível; a salvaguarda sistêmica, se aprovada, é o sucedâneo.</p>
+</div>
+
+<div class="card">
+<h2>Risco da mudança e fora de escopo</h2>
+<p><b>change_risk: baixa.</b> Um arquivo de memória de um projeto; reversível pelo snapshot; sem
+contrato externo nem dados de terceiros. Fora de escopo: qualquer mudança de código no harness (só
+entraria pela decisão de salvaguarda, como feature própria).</p>
+</div>
+
+<div class="card">
+<h2>Mini-grafo e relações</h2>
+<svg viewBox="0 0 900 200" role="img" aria-label="Mini-grafo do bug">
+  <line x1="330" y1="100" x2="570" y2="100" stroke="#555b68" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="450" y="88" text-anchor="middle" fill="var(--muted)" font-size="12">related-to (proposed → supported)</text>
+  <g>
+    <rect x="90" y="55" width="240" height="90" rx="10" fill="#1e3040" stroke="var(--accent)" stroke-width="2.5"/>
+    <text x="210" y="85" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-OYKV (#2)</text>
+    <text x="210" y="106" text-anchor="middle" font-size="12" fill="var(--ink)">este bug</text>
+    <text x="210" y="128" text-anchor="middle" font-size="12" fill="var(--accent)" font-weight="600">low · P3</text>
+  </g>
+  <g>
+    <rect x="570" y="55" width="240" height="90" rx="10" fill="#20242e" stroke="#555b68" stroke-width="1.5"/>
+    <text x="690" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)">BUG-20260811-XZ3B (#1)</text>
+    <text x="690" y="106" text-anchor="middle" font-size="11" fill="var(--muted)">mesmo episódio de encerramento</text>
+    <text x="690" y="128" text-anchor="middle" font-size="11" fill="var(--muted)">medium · P2</text>
+  </g>
+</svg>
+<table>
+<tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th></tr>
+<tr><td><a href="../bug.md">BUG-20260811-OYKV</a></td><td>related-to</td><td><a href="../../BUG-20260811-XZ3B-indice-nao-derivado-no-encerramento/bug.md">BUG-20260811-XZ3B</a></td><td>proposed → promover a supported (relatados no mesmo episódio real do <code>comentarios-concursos</code>)</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Ordem de correção da sessão</h2>
+<p>1º XZ3B → 2º TVCP → <b>3º OYKV (este)</b>.</p>
+</div>
+</body>
+</html>

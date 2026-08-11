@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Plano de correção — BUG-20260811-TVCP</title>
+<style>
+  :root { --bg:#14161c; --card:#1d2027; --ink:#e8eaf0; --muted:#9aa1ad; --line:#31353f;
+          --accent:#e8a33d; --ok:#4cc38a; --link:#7ab5ff; }
+  body { margin:0; padding:2rem; background:var(--bg); color:var(--ink);
+         font:15px/1.55 -apple-system, "Segoe UI", sans-serif; }
+  h1 { font-size:1.3rem; margin:0 0 .2rem; }
+  h2 { font-size:1.02rem; margin:0 0 .7rem; color:var(--accent); }
+  .sub { color:var(--muted); font-size:.85rem; margin-bottom:1.4rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:1.1rem 1.25rem; margin-bottom:1.2rem; max-width:980px; }
+  table { border-collapse:collapse; width:100%; font-size:.85rem; }
+  th, td { border:1px solid var(--line); padding:.4rem .6rem; text-align:left; vertical-align:top; }
+  th { background:#232630; }
+  code { background:#2a2e38; padding:.1em .35em; border-radius:4px; font-size:.85em; }
+  a { color:var(--link); }
+  .tag { display:inline-block; border:1px solid var(--line); border-radius:5px;
+         padding:.05rem .45rem; font-size:.78rem; color:var(--muted); margin-right:.35rem; }
+  .ok { color:var(--ok); font-weight:600; }
+  svg { width:100%; height:auto; }
+  .note { color:var(--muted); font-size:.8rem; }
+</style>
+</head>
+<body>
+<h1>Plano de correção — BUG-20260811-TVCP (#3)</h1>
+<div class="sub">Contexto <code>encerramento-de-sessao</code> · 2026-08-11 · severidade <b>medium</b> · prioridade <b>P2</b> ·
+<span class="tag">plano retroativo: a correção já foi implementada pelo fluxo de TDD direto do projeto e este plano a formaliza para o ciclo do fix</span></div>
+
+<div class="card">
+<h2>Defeito e causa raiz</h2>
+<p>O wrapper <code>./harness</code> da raiz do repositório upstream preservava o cwd do chamador; como o
+core resolve <code>harness.toml</code> e <code>.harness/</code> por <code>os.getcwd()</code>, o hook de
+SessionStart disparado no compact (MD-0024) com o shell da sessão em <code>.harness/harness-core/</code>
+semeou um <code>.harness/estado-da-sessao.md</code> espúrio dentro da árvore versionada do core.</p>
+<p><b>Causa raiz (estado: <span class="ok">confirmed</span>):</b> o wrapper local do upstream é anterior
+à feature 020 e nunca recebeu a âncora <code>cd "$SCRIPT_DIR"</code> que o <code>render_shim()</code>
+emite para os projetos instalados; era o único executável da base sem âncora (o bootstrap da skill
+também ancora via <code>os.chdir(root)</code>). Evidências: artefato espúrio íntegro em
+<a href="../evidence/estado-espurio-harness-core.md">evidence/</a>, reprodução manual determinística e
+teste-guarda vermelho contra o wrapper antigo (<a href="../evidence/reproduction.md">cápsula</a>).</p>
+</div>
+
+<div class="card">
+<h2>Estratégia escolhida</h2>
+<p><b>Correção direta</b>: alinhar o wrapper ao contrato do shim da 020 com uma linha de âncora. As
+alternativas foram rejeitadas na MD-0027: subir a árvore procurando <code>harness.toml</code> no
+<code>main.py</code> é perigoso (a raiz <code>~/dev</code> tem um <code>harness.toml</code> e receberia
+escritas vazadas); corrigir só o comando do hook deixaria terminal e scripts expostos; teste por grep
+de conteúdo não prova comportamento.</p>
+</div>
+
+<div class="card">
+<h2>Correction Change Set</h2>
+<table>
+<tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th></tr>
+<tr><td>CHG-001</td><td>code</td><td><code>harness</code> (wrapper da raiz) + <code>tests/test_shim.py</code></td>
+<td>MD-0027: <code>cd "$SCRIPT_DIR" || exit 1</code> antes do <code>exec</code> e teste-guarda
+comportamental que executa os bytes reais do wrapper de uma subpasta. Sem bump do core (artefato do
+repositório, não do core). Diff: <a href="CHG-001-md0027-ancora-wrapper.diff">CHG-001</a></td></tr>
+<tr><td>CHG-002</td><td>specification</td><td>adendo <code>_reversa_sdd/addenda/bug-BUG-20260811-TVCP-v001.md</code></td>
+<td>Veredito de spec: estender a letra do contrato de âncora (hoje restrita ao shim dos
+projetos-alvo em <code>shim-execution.md</code> da 020) a todo executável que invoque o core</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Testes</h2>
+<table>
+<tr><th>Intenção</th><th>Teste</th><th>O que prova</th></tr>
+<tr><td>Reprodução</td><td><code>test_shim.py::test_wrapper_local_do_upstream_ancora_o_cwd</code> executado contra o wrapper ANTIGO (<code>git show 39ccdd4:harness</code>)</td>
+<td>FALHOU: o CWD reportado era a subpasta do chamador, não a raiz</td></tr>
+<tr><td>Regressão</td><td>o mesmo teste contra o wrapper corrigido (roda na suíte permanente)</td>
+<td>Invocação de subpasta opera sobre a raiz; se a âncora sumir, o teste quebra</td></tr>
+</table>
+<p class="note">Prova verde atual: <b>405 passed in 22.28s</b> (2026-08-11); CI verde em 3.12/3.13 no commit <code>8b3533f</code>.</p>
+</div>
+
+<div class="card">
+<h2>Risco da mudança e fora de escopo</h2>
+<p><b>change_risk: baixa.</b> Uma linha de shell num único artefato; alinha ao contrato já vigente em
+26 projetos instalados; reversível por revert. Efeito colateral aceito e documentado: argumento de
+caminho RELATIVO passado ao wrapper de outra pasta passa a resolver contra a raiz (caso raro; o uso
+normal é <code>./harness</code> da própria raiz).</p>
+<p><b>Fora de escopo:</b> o core permanece cwd-relativo por design (fonte única: um core, N projetos);
+a âncora é responsabilidade do chamador. O core vendorado 2.2.0 da raiz <code>~/dev</code> é assunto
+de migração, não deste bug.</p>
+</div>
+
+<div class="card">
+<h2>Mini-grafo e relações</h2>
+<svg viewBox="0 0 900 200" role="img" aria-label="Mini-grafo do bug">
+  <line x1="330" y1="100" x2="570" y2="100" stroke="#555b68" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="450" y="88" text-anchor="middle" fill="var(--muted)" font-size="12">related-to (proposed → supported)</text>
+  <g>
+    <rect x="90" y="55" width="240" height="90" rx="10" fill="#3a2f18" stroke="var(--accent)" stroke-width="2.5"/>
+    <text x="210" y="85" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-TVCP (#3)</text>
+    <text x="210" y="106" text-anchor="middle" font-size="12" fill="var(--ink)">este bug</text>
+    <text x="210" y="128" text-anchor="middle" font-size="12" fill="var(--accent)" font-weight="600">medium · P2</text>
+  </g>
+  <g>
+    <rect x="570" y="55" width="240" height="90" rx="10" fill="#20242e" stroke="#555b68" stroke-width="1.5"/>
+    <text x="690" y="85" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)">BUG-20260811-XZ3B (#1)</text>
+    <text x="690" y="106" text-anchor="middle" font-size="11" fill="var(--muted)">descoberto durante a correção dele</text>
+    <text x="690" y="128" text-anchor="middle" font-size="11" fill="var(--muted)">medium · P2</text>
+  </g>
+</svg>
+<table>
+<tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th></tr>
+<tr><td><a href="../bug.md">BUG-20260811-TVCP</a></td><td>related-to</td><td><a href="../../BUG-20260811-XZ3B-indice-nao-derivado-no-encerramento/bug.md">BUG-20260811-XZ3B</a></td><td>proposed → promover a supported (achado colateral da investigação do XZ3B, mesma família de bordas do ciclo de sessão)</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Ordem de correção da sessão</h2>
+<p>1º XZ3B → <b>2º TVCP (este)</b> → 3º OYKV.</p>
+</div>
+</body>
+</html>

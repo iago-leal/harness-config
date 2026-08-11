@@ -3,8 +3,8 @@ schema_version: 1
 id: BUG-20260811-OYKV
 display_number: 2
 title: Memória por-projeto desatualizada reintroduz o ritual do vault abolido pela MD-0021
-status: open
-phase: triaging
+status: resolved
+phase: resolved
 severity: low
 priority: P3
 created: 2026-08-11
@@ -32,24 +32,37 @@ blocking: []
 relationships:
   - bug: BUG-20260811-XZ3B
     type: related-to
-    state: proposed
-    evidence: []
+    state: supported
+    evidence:
+      - "relatados no mesmo episódio real de encerramento no comentarios-concursos (intake de 2026-08-11); promovida de proposed a supported no fix"
 
 traceability:
   specs: []
   affected_code: []
-  root_cause: null
-  reproduction_tests: []
-  regression_tests: []
+  root_cause:
+    state: confirmed
+    statement: >-
+      Memória por-projeto gravada em 2026-08-02 e nunca reconciliada com dois
+      fatos posteriores (MD-0021 aboliu o ritual do vault; commit 3ff3f3f9
+      reinstalou o harness via fonte única); não existe mecanismo que invalide
+      memórias por-projeto quando decisões do repositório as contradizem.
+    evidence:
+      - "evidence/ritual-de-encerramento-de-sessao-snapshot.md (estado stale integral)"
+      - ".harness/decisoes/MD-0021.md e commit 3ff3f3f9 do comentarios-concursos (os fatos que a memória contradizia)"
+  reproduction_tests: []   # artefato externo não executável; verificação documental na cápsula
+  regression_tests: []     # sem proteção automatizável; decisão registrada: sem salvaguarda sistêmica
 
-spec_verdict: null
+spec_verdict: spec-gap  # sem adendo: nenhuma spec do harness governa memórias por-projeto de IDE (artefato externo)
 
-change_set: []
+change_set:
+  - id: CHG-001
+    kind: data-repair
+    ref: "memória reescrita (antes: evidence/ritual-de-encerramento-de-sessao-snapshot.md; depois: fix/memoria-reescrita-depois.md)"
 
 closure:
   policy: local-software
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+resolution_kind: data-repair
 ---
 
 # Memória por-projeto desatualizada reintroduz o ritual do vault abolido pela MD-0021
@@ -131,3 +144,28 @@ código do harness envolvido.
   preservados os fatos válidos (remoto do vault é `origin`; trabalho direto na
   `main`). Linha correspondente do `MEMORY.md` atualizada. Campos de
   closure/resolution intactos.
+
+## Resolution
+
+Fechado em 2026-08-11 pelo ciclo formal do `/reversa-debugger-fix` (plano retroativo
+aprovado pelo usuário; higiene aplicada no mesmo dia, fora da cerimônia).
+
+- **Causa raiz (confirmed):** memória de 2026-08-02 nunca reconciliada com a MD-0021 nem
+  com a reinstalação do harness (`3ff3f3f9`); nenhum mecanismo invalida memórias
+  por-projeto contraditas por decisões do repositório.
+- **Veredito de spec (aprovado pelo usuário): spec-gap, sem adendo.** Nenhuma spec do
+  harness governa memórias por-projeto de IDE; artefato externo ao repositório.
+- **Decisão de salvaguarda (aprovada pelo usuário):** a higiene pontual fecha o bug;
+  SEM salvaguarda sistêmica no core (episódio único não justifica feature; memória de
+  IDE é artefato externo). Se o padrão reincidir, registrar bug novo com `regression-of`
+  e reavaliar a salvaguarda.
+- **resolution_kind:** data-repair.
+
+| CHG | Tipo | Artefato |
+|-----|------|----------|
+| CHG-001 | data-repair | memória `ritual-de-encerramento-de-sessao.md` do `comentarios-concursos` reescrita (backup: snapshot em `evidence/`; estado final: `fix/memoria-reescrita-depois.md`; rollback: restaurar o snapshot) |
+
+**Verificação:** leitura comparada snapshot × versão atual (cápsula em
+`evidence/reproduction.md`); não há teste automatizável para artefato externo, e a
+closure policy `local-software` é satisfeita pela verificação documental + veredito
+aprovado. Relação com o XZ3B promovida a `supported` (mesmo episódio real de intake).

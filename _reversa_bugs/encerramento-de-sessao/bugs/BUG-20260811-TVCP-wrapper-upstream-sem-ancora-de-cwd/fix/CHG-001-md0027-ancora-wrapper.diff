@@ -1,0 +1,139 @@
+commit 8b3533f2c514761070c3dfb124a0e7a9c0d62c2d
+Author: Iago Leal <iagolealdev@gmail.com>
+Date:   Tue Aug 11 18:24:38 2026 -0300
+
+    fix(wrapper): ancora o cwd na raiz do projeto (MD-0027, fecha causa do BUG-20260811-TVCP)
+    
+    O wrapper local ./harness do upstream não fazia cd para a raiz, ao contrário
+    do shim da feature 020; invocado de subpasta (hook SessionStart, script,
+    terminal), o core resolvia harness.toml e .harness/ pelo cwd e semeava
+    artefatos fora da raiz. Âncora cd "$SCRIPT_DIR" + teste de guarda que
+    executa o wrapper real de uma subpasta (vermelho provado contra a versão
+    antiga). Suíte 405 verdes; sem bump do core (o wrapper é artefato do repo).
+
+diff --git a/.harness/decisoes-recentes.md b/.harness/decisoes-recentes.md
+index 92ed882..467e57c 100644
+--- a/.harness/decisoes-recentes.md
++++ b/.harness/decisoes-recentes.md
+@@ -4,8 +4,9 @@
+ > Acervo completo: índice em `.harness/microdecisoes.md`; fichas em `.harness/decisoes/MD-NNNN.md`.
+ > Antes de buscas amplas, ou antes de redecidir algo, consulte o índice completo.
+ 
+-Total: 26 fichas
++Total: 27 fichas
+ 
++- **MD-0027** — Wrapper local do upstream ancora o cwd na raiz, como o shim da 020 (fecha BUG-20260811-TVCP)
+ - **MD-0026** — Borda MCP de encerramento deriva as visões e as versiona no commit de fechamento
+ - **MD-0025** — Encerramento de sessão também deriva as duas visões de decisões (fecha BUG-20260811-XZ3B)
+ - **MD-0024** — SessionStart também dispara no compact (reabertura da sessão na mesma conversa)
+@@ -15,4 +16,3 @@ Total: 26 fichas
+ - **MD-0020** — Exportador kanban derivado da `Medicao`: namespace gerenciado por categoria, cards manuais preservados como canal de demandas
+ - **MD-0019** — Medidor de progresso de entregáveis: `harness progress`, artefato derivado sem timestamp, alerta como achado persistente
+ - **MD-0018** — Aposentadoria do soft-block do Stop: o lembrete vira advisory em stderr; a garantia dura fica só no portão do encerramento
+-- **MD-0017** — Consentimento para escrita no git ao encerrar: dois pontos de decisão, default assimétrico por borda
+diff --git a/.harness/decisoes/MD-0027.md b/.harness/decisoes/MD-0027.md
+new file mode 100644
+index 0000000..ba98053
+--- /dev/null
++++ b/.harness/decisoes/MD-0027.md
+@@ -0,0 +1,15 @@
++---
++id: MD-0027
++gancho: o SessionStart do compact (MD-0024) disparou com o shell da sessão em .harness/harness-core/ e o cmd resume semeou um estado-da-sessao.md espúrio ali dentro (BUG-20260811-TVCP)
++relacoes:
++  - "relaciona MD-0024"
++  - "relaciona MD-0011"
++estado: ativo
++---
++
++# MD-0027 — Wrapper local do upstream ancora o cwd na raiz, como o shim da 020 (fecha BUG-20260811-TVCP)
++
++- **D:** O wrapper `./harness` da raiz do repositório upstream ganhou `cd "$SCRIPT_DIR" || exit 1` antes do `exec`, alinhando-o ao contrato do shim da feature 020 (`render_shim()` já emitia a âncora para os projetos-alvo). Teste-guarda em `test_shim.py` exercita os bytes reais do wrapper com bash real: invocado de uma subpasta, o core deve reportar o cwd na raiz (vermelho comprovado contra o wrapper antigo). O core permanece cwd-relativo por design (fonte única: um core, N projetos); a âncora é responsabilidade de quem invoca.
++- **PORQUÊ:** O core resolve `harness.toml` e todos os caminhos de `.harness/` por `os.getcwd()`. Sem a âncora, qualquer invocação com cwd fora da raiz (hook de SessionStart, script, terminal em subpasta) opera sobre o diretório errado e semeia artefatos espúrios, como o `.harness/` dentro do `harness-core` durante o compact. As demais rotas já ancoravam (shim da 020, `os.chdir(root)` na skill encerrar-sessao); o wrapper local, anterior à 020, era a única exposição restante.
++- **DESCARTADO:** (a) Ancorar dentro do `main.py` procurando `harness.toml` para cima — perigoso: projeto sem `harness.toml` herdaria o de um ancestral (a raiz `~/dev` tem um) e escreveria fora do projeto. (b) Corrigir só o comando do hook (`cd $CLAUDE_PROJECT_DIR &&`) — fecharia uma rota e deixaria as demais invocações de subpasta expostas. (c) Teste por inspeção de conteúdo (grep no wrapper) — frágil e não prova o comportamento; o smoke com bash real prova.
++- **ESTADO:** Implementado (11/08/2026, TDD direto pós-registro do BUG-20260811-TVCP; suíte 405 verdes; sem bump do core — o artefato corrigido é do repositório, não do core).
+diff --git a/.harness/harness-core/tests/test_shim.py b/.harness/harness-core/tests/test_shim.py
+index 539ffe3..affe47a 100644
+--- a/.harness/harness-core/tests/test_shim.py
++++ b/.harness/harness-core/tests/test_shim.py
+@@ -82,3 +82,38 @@ def test_shim_fails_loudly_without_upstream(tmp_path):
+ 
+     assert result.returncode != 0
+     assert "Erro" in result.stderr
++
++
++# Wrapper LOCAL do repositório upstream (era da cópia vendorizada): resolve o
++# core pelo próprio diretório, mas até o BUG-20260811-TVCP preservava o cwd do
++# chamador — e o core é cwd-relativo, então hook/script invocado de subpasta
++# semeava .harness/ fora da raiz (episódio: SessionStart do compact com o shell
++# em .harness/harness-core/). O contrato é o mesmo do shim da 020: âncora na raiz.
++LOCAL_WRAPPER = os.path.abspath(
++    os.path.join(os.path.dirname(__file__), "..", "..", "..", "harness")
++)
++
++
++def test_wrapper_local_do_upstream_ancora_o_cwd(tmp_path):
++    if not os.path.isfile(LOCAL_WRAPPER):
++        pytest.skip("wrapper local do upstream ausente neste checkout")
++    root = str(tmp_path)
++    # O layout que o wrapper espera é o mesmo do upstream fake: core vendorizado
++    # em .harness/harness-core com venv própria.
++    _fake_upstream(root)
++    wrapper = os.path.join(root, "harness")
++    shutil.copyfile(LOCAL_WRAPPER, wrapper)
++    _make_executable(wrapper)
++
++    subdir = os.path.join(root, "sub")
++    os.makedirs(subdir)
++    result = subprocess.run(
++        [wrapper, "cmd", "resume"], cwd=subdir, capture_output=True, text=True
++    )
++
++    assert result.returncode == 0, result.stderr
++    cwd_line = next(
++        line for line in result.stdout.splitlines() if line.startswith("CWD:")
++    )
++    reported = os.path.realpath(cwd_line.split("CWD:", 1)[1].strip())
++    assert reported == os.path.realpath(root)  # raiz, nunca a subpasta do chamador
+diff --git a/.harness/microdecisoes.md b/.harness/microdecisoes.md
+index 75430c6..f3d15a4 100644
+--- a/.harness/microdecisoes.md
++++ b/.harness/microdecisoes.md
+@@ -24,7 +24,7 @@
+ - **MD-0010** — caminhos dos regression-watch pré-011 atualizados para o layout `.harness/`
+   ↳ relaciona MD-0005
+ - **MD-0011** — Slash command de encerrar-sessao resolve a raiz via git (robusto a cwd)
+-  ↳ relacionado-com MD-0012 · relacionado-com MD-0024
++  ↳ relacionado-com MD-0012 · relacionado-com MD-0024 · relacionado-com MD-0027
+ - **MD-0012** — `encerrar-sessao` resolve o core do upstream quando não há core local (fonte única)
+   ↳ relaciona MD-0011 · relacionado-com MD-0013
+ - **MD-0013** — Caminho do cache de sync centralizado em `layout.py` (saneamento do T7)
+@@ -50,8 +50,10 @@
+ - **MD-0023** — MCP `process_decisions` também deriva a visão compacta (fecha G-20/T8)
+   ↳ refina MD-0022, relaciona MD-0013 · relacionado-com MD-0025 · relacionado-com MD-0026
+ - **MD-0024** — SessionStart também dispara no compact (reabertura da sessão na mesma conversa)
+-  ↳ relaciona MD-0017, relaciona MD-0011
++  ↳ relaciona MD-0017, relaciona MD-0011 · relacionado-com MD-0027
+ - **MD-0025** — Encerramento de sessão também deriva as duas visões de decisões (fecha BUG-20260811-XZ3B)
+   ↳ refina MD-0022, relaciona MD-0023 · refinado-por MD-0026
+ - **MD-0026** — Borda MCP de encerramento deriva as visões e as versiona no commit de fechamento
+   ↳ refina MD-0025, relaciona MD-0023
++- **MD-0027** — Wrapper local do upstream ancora o cwd na raiz, como o shim da 020 (fecha BUG-20260811-TVCP)
++  ↳ relaciona MD-0024, relaciona MD-0011
+diff --git a/harness b/harness
+index d422eeb..4cae034 100755
+--- a/harness
++++ b/harness
+@@ -10,6 +10,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ ABS_VENV_PYTHON="$SCRIPT_DIR/$VENV_PYTHON"
+ ABS_MAIN_PY="$SCRIPT_DIR/$MAIN_PY"
+ 
++# Ancora o cwd na raiz do projeto (BUG-20260811-TVCP, mesmo contrato do shim
++# da feature 020): o core resolve harness.toml e .harness/ por os.getcwd(),
++# então invocação de subpasta (hook, script, terminal) semearia artefatos fora
++# da raiz sem esta âncora.
++cd "$SCRIPT_DIR" || exit 1
++
+ # Valida a presença do core. Ele pode faltar quando a cópia vendored foi
+ # gitignorada e o repositório foi clonado sem reidratar — restaure do upstream.
+ if [ ! -f "$ABS_MAIN_PY" ]; then

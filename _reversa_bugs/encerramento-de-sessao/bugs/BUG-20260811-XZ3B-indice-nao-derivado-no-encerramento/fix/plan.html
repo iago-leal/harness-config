@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Plano de correção — BUG-20260811-XZ3B</title>
+<style>
+  :root { --bg:#14161c; --card:#1d2027; --ink:#e8eaf0; --muted:#9aa1ad; --line:#31353f;
+          --accent:#e8a33d; --ok:#4cc38a; --warn:#e8a33d; --link:#7ab5ff; }
+  body { margin:0; padding:2rem; background:var(--bg); color:var(--ink);
+         font:15px/1.55 -apple-system, "Segoe UI", sans-serif; }
+  h1 { font-size:1.3rem; margin:0 0 .2rem; }
+  h2 { font-size:1.02rem; margin:0 0 .7rem; color:var(--accent); }
+  .sub { color:var(--muted); font-size:.85rem; margin-bottom:1.4rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:1.1rem 1.25rem; margin-bottom:1.2rem; max-width:980px; }
+  table { border-collapse:collapse; width:100%; font-size:.85rem; }
+  th, td { border:1px solid var(--line); padding:.4rem .6rem; text-align:left; vertical-align:top; }
+  th { background:#232630; }
+  code { background:#2a2e38; padding:.1em .35em; border-radius:4px; font-size:.85em; }
+  a { color:var(--link); }
+  .tag { display:inline-block; border:1px solid var(--line); border-radius:5px;
+         padding:.05rem .45rem; font-size:.78rem; color:var(--muted); margin-right:.35rem; }
+  .ok { color:var(--ok); font-weight:600; }
+  svg { width:100%; height:auto; }
+  .note { color:var(--muted); font-size:.8rem; }
+</style>
+</head>
+<body>
+<h1>Plano de correção — BUG-20260811-XZ3B (#1)</h1>
+<div class="sub">Contexto <code>encerramento-de-sessao</code> · 2026-08-11 · severidade <b>medium</b> · prioridade <b>P2</b> ·
+<span class="tag">plano retroativo: a correção já foi implementada pelo fluxo de TDD direto do projeto e este plano a formaliza para o ciclo do fix</span></div>
+
+<div class="card">
+<h2>Defeito e causa raiz</h2>
+<p>Sessão encerrada pela borda direta (script da skill no terminal, ou tool MCP <code>session_command</code>)
+não recompilava <code>.harness/microdecisoes.md</code> nem derivava <code>.harness/decisoes-recentes.md</code>:
+ficha criada na sessão ficava invisível às duas visões até outra borda rodar por acaso.</p>
+<p><b>Causa raiz (estado: <span class="ok">confirmed</span>):</b> a RN-N56 foi estendida borda a borda
+(CLI na 028, MCP <code>process_decisions</code> na MD-0023) e as bordas de encerramento ficaram fora
+de todas as extensões: nem <code>SessionCloseFlow</code> nem o caminho MCP → <code>CommandService</code>
+invocavam <code>compile_index</code>/<code>compile_compact_view</code>. Evidências: varredura das bordas
+(nenhuma chamada em <code>close_flow.py</code>), episódio real no <code>comentarios-concursos</code>
+(ficha MD-0001 commitada, índice "Total: 0 fichas") e testes de reprodução vermelhos antes da correção
+(<a href="../evidence/reproduction.md">cápsula</a>).</p>
+</div>
+
+<div class="card">
+<h2>Estratégia escolhida</h2>
+<p><b>Correção direta em duas etapas</b>, análoga ao precedente da MD-0023: derivar as duas visões na
+mesma passada em cada borda de encerramento, com semântica única. Direta porque não havia hipóteses
+concorrentes: a ausência das chamadas era objetiva e o precedente já fixara o desenho.</p>
+</div>
+
+<div class="card">
+<h2>Correction Change Set</h2>
+<table>
+<tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th></tr>
+<tr><td>CHG-001</td><td>code</td><td><code>core/session/close_flow.py</code>, <code>core/decisions/gate.py</code>, <code>core/domain/config.py</code> (2.6.3)</td>
+<td>MD-0025: <code>_derive_decision_views</code> antes do 1º portão, não-bloqueante, sem regravar com grafo inválido nem acervo vazio; <code>compact_file</code> entra nos excluídos do gate de registro (RN-N43). Diff: <a href="CHG-001-md0025-close-flow.diff">CHG-001</a></td></tr>
+<tr><td>CHG-002</td><td>code</td><td><code>core/decisions/service.py</code>, <code>adapters/mcp/server.py</code>, <code>core/commands/service.py</code>, <code>core/domain/config.py</code> (2.6.4)</td>
+<td>MD-0026: semântica extraída para <code>derive_views_for_close</code> (fonte única); borda MCP deriva antes do <code>execute_command</code> e versiona as visões no commit de fechamento via <code>caminhos_extras</code>. Diff: <a href="CHG-002-md0026-borda-mcp.diff">CHG-002</a></td></tr>
+<tr><td>CHG-003</td><td>specification</td><td><code>_reversa_sdd/domain.md</code> §2.26 (RN-N56) e RN-N43; adendo <code>_reversa_sdd/addenda/bug-BUG-20260811-XZ3B-v001.md</code></td>
+<td>Veredito de spec (registro imutável do delta aplicado na reconciliação)</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Testes</h2>
+<table>
+<tr><th>Intenção</th><th>Teste</th><th>O que prova</th></tr>
+<tr><td>Reprodução</td><td>4 testes novos em <code>test_close_flow.py</code>; <code>test_mcp.py::test_mcp_encerrar_sessao_deriva_visoes_e_versiona_junto</code></td>
+<td>Vermelhos antes da correção: as bordas de encerramento não derivavam as visões</td></tr>
+<tr><td>Regressão</td><td>os mesmos + smoke com git real <code>test_cli.py::test_encerrar_deriva_visoes_com_git_real</code>, <code>test_decisions.py</code> (3 de <code>derive_views_for_close</code>), <code>test_commands.py</code> (2 de <code>caminhos_extras</code>), <code>test_decision_gate.py</code> estendido</td>
+<td>Visões coerentes ao fechar por qualquer borda; commit só com caminhos explícitos; gate sem DECISAO_PENDENTE espúrio</td></tr>
+</table>
+<p class="note">Prova verde atual: <b>405 passed in 22.28s</b> (2026-08-11); CI verde em 3.12/3.13 nos commits <code>a904a32</code> e <code>e4a0faf</code>.</p>
+</div>
+
+<div class="card">
+<h2>Risco da mudança e fora de escopo</h2>
+<p><b>change_risk: média.</b> Blast radius: todo encerramento de sessão da base instalada (fonte única
+propaga na hora); mitigado por derivação não-bloqueante (encerramento nunca morre por falha de
+derivação), write-only-when-changed e verificação adversarial (workflow de 12 agentes, 7 achados
+tratados). Reversível por revert dos dois commits.</p>
+<p><b>Fora de escopo</b> (Agent Notes respeitados): nenhuma refatoração ampla; o no-op de sessão
+ausente (D1/016) preservado; a disciplina de consentimento da 024 mantida no fluxo interativo
+(visões viram trabalho pendente no 1º portão; na borda MCP, sem portões, entram no próprio commit).</p>
+</div>
+
+<div class="card">
+<h2>Mini-grafo e relações</h2>
+<svg viewBox="0 0 900 260" role="img" aria-label="Mini-grafo do bug">
+  <line x1="450" y1="130" x2="205" y2="80" stroke="#555b68" stroke-width="2" stroke-dasharray="6 5"/>
+  <line x1="450" y1="130" x2="695" y2="80" stroke="#555b68" stroke-width="2" stroke-dasharray="6 5"/>
+  <g>
+    <rect x="330" y="85" width="240" height="90" rx="10" fill="#3a2f18" stroke="var(--accent)" stroke-width="2.5"/>
+    <text x="450" y="115" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-XZ3B (#1)</text>
+    <text x="450" y="136" text-anchor="middle" font-size="12" fill="var(--ink)">este bug (nó estrutural)</text>
+    <text x="450" y="158" text-anchor="middle" font-size="12" fill="var(--accent)" font-weight="600">medium · P2</text>
+  </g>
+  <g>
+    <rect x="40" y="20" width="220" height="70" rx="10" fill="#20242e" stroke="#555b68" stroke-width="1.5"/>
+    <text x="150" y="48" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)">BUG-20260811-OYKV (#2)</text>
+    <text x="150" y="70" text-anchor="middle" font-size="11" fill="var(--muted)">related-to (proposed)</text>
+  </g>
+  <g>
+    <rect x="640" y="20" width="220" height="70" rx="10" fill="#20242e" stroke="#555b68" stroke-width="1.5"/>
+    <text x="750" y="48" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)">BUG-20260811-TVCP (#3)</text>
+    <text x="750" y="70" text-anchor="middle" font-size="11" fill="var(--muted)">related-to (proposed)</text>
+  </g>
+</svg>
+<table>
+<tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th></tr>
+<tr><td><a href="../../BUG-20260811-OYKV-memoria-stale-ritual-vault/bug.md">BUG-20260811-OYKV</a></td><td>related-to</td><td><a href="../bug.md">BUG-20260811-XZ3B</a></td><td>proposed → promover a supported (mesmo episódio real de encerramento)</td></tr>
+<tr><td><a href="../../BUG-20260811-TVCP-wrapper-upstream-sem-ancora-de-cwd/bug.md">BUG-20260811-TVCP</a></td><td>related-to</td><td><a href="../bug.md">BUG-20260811-XZ3B</a></td><td>proposed → promover a supported (descoberto durante esta correção)</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Ordem de correção da sessão</h2>
+<p><b>1º XZ3B</b> (nó estrutural, as duas arestas do contexto apontam para ele) →
+<b>2º TVCP</b> (mesma família de bordas do ciclo de sessão) →
+<b>3º OYKV</b> (higiene de artefato externo, depende só de decisão de salvaguarda).</p>
+</div>
+</body>
+</html>

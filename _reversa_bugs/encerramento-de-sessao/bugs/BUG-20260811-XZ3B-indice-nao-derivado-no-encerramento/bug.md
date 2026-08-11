@@ -3,8 +3,8 @@ schema_version: 1
 id: BUG-20260811-XZ3B
 display_number: 1
 title: Encerramento direto não deriva o índice de decisões nem a visão compacta
-status: open
-phase: triaging
+status: resolved
+phase: resolved
 severity: medium
 priority: P2
 created: 2026-08-11
@@ -39,18 +39,44 @@ traceability:
     - ".harness/harness-core/src/core/session/close_flow.py"
     - ".harness/harness-core/src/core/install/assets/skills/encerrar-sessao/scripts/encerrar_sessao.py"
     - ".harness/harness-core/src/core/decisions/service.py"
-  root_cause: null
-  reproduction_tests: []
-  regression_tests: []
+  root_cause:
+    state: confirmed
+    statement: >-
+      A RN-N56 foi estendida borda a borda (CLI na 028, MCP process_decisions na
+      MD-0023) e as bordas de encerramento ficaram fora de todas as extensões:
+      nem SessionCloseFlow nem o caminho MCP session_command -> CommandService
+      invocavam compile_index/compile_compact_view.
+    evidence:
+      - "evidence/estado-observado-20260811.md (varredura das bordas + episódio real)"
+      - "evidence/reproduction.md (testes vermelhos antes da correção)"
+  reproduction_tests:
+    - "tests/test_close_flow.py (4 testes novos da MD-0025, vermelhos pré-fix)"
+    - "tests/test_mcp.py::test_mcp_encerrar_sessao_deriva_visoes_e_versiona_junto"
+  regression_tests:
+    - "tests/test_close_flow.py (derivação no encerramento: feliz, grafo inválido, acervo vazio, falha não-bloqueante)"
+    - "tests/test_cli.py::test_encerrar_deriva_visoes_com_git_real (smoke com git real)"
+    - "tests/test_decisions.py (3 testes de derive_views_for_close)"
+    - "tests/test_commands.py (2 testes de caminhos_extras no commit de fechamento)"
+    - "tests/test_mcp.py (borda MCP deriva e versiona; sem sessão não deriva)"
+    - "tests/test_decision_gate.py (compact_file excluído do gate, RN-N43)"
 
-spec_verdict: null
+spec_verdict: spec-desatualizada  # adendo: _reversa_sdd/addenda/bug-BUG-20260811-XZ3B-v001.md
 
-change_set: []
+change_set:
+  - id: CHG-001
+    kind: code
+    ref: "fix/CHG-001-md0025-close-flow.diff (commit a904a32, MD-0025, core 2.6.3)"
+  - id: CHG-002
+    kind: code
+    ref: "fix/CHG-002-md0026-borda-mcp.diff (commit e4a0faf, MD-0026, core 2.6.4)"
+  - id: CHG-003
+    kind: specification
+    ref: "_reversa_sdd/addenda/bug-BUG-20260811-XZ3B-v001.md"
 
 closure:
   policy: local-software
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+resolution_kind: fixed
 ---
 
 # Encerramento direto não deriva o índice de decisões nem a visão compacta
@@ -165,3 +191,31 @@ padrão de lacuna uma borda adiante.
   antes do `execute_command` e visões incluídas no próprio commit de
   encerramento via `caminhos_extras`. 7 testes novos; suíte 404 verdes.
   Os campos de closure/resolution ficam intactos para o fix formal.
+
+## Resolution
+
+Fechado em 2026-08-11 pelo ciclo formal do `/reversa-debugger-fix` (plano retroativo
+aprovado pelo usuário; correção implementada no mesmo dia pelo fluxo de TDD direto).
+
+- **Causa raiz (confirmed):** a RN-N56 foi estendida borda a borda e as duas bordas de
+  encerramento (fluxo interativo e MCP `session_command`) ficaram fora de todas as
+  extensões; nenhuma invocava a derivação das visões. Evidências na cápsula
+  (`evidence/reproduction.md`) e na fotografia do episódio real
+  (`evidence/estado-observado-20260811.md`).
+- **Veredito de spec (aprovado pelo usuário): spec-desatualizada.** O princípio ("todas
+  as bordas") cobria o encerramento; a letra não. Adendo imutável:
+  `_reversa_sdd/addenda/bug-BUG-20260811-XZ3B-v001.md` (o texto vivo da RN-N56 já fora
+  reconciliado nos commits `8f596f2`/`39ccdd4`).
+- **resolution_kind:** fixed.
+
+| CHG | Tipo | Artefato | Commit |
+|-----|------|----------|--------|
+| CHG-001 | code | `close_flow.py`, `gate.py`, `config.py` (2.6.3) — derivação não-bloqueante antes do 1º portão | `a904a32` (MD-0025) |
+| CHG-002 | code | `decisions/service.py`, `mcp/server.py`, `commands/service.py`, `config.py` (2.6.4) — fonte única `derive_views_for_close` + `caminhos_extras` | `e4a0faf` (MD-0026) |
+| CHG-003 | specification | adendo `bug-BUG-20260811-XZ3B-v001.md` | este fechamento |
+
+Diffs completos em `fix/`. **Prova vermelho→verde:** 4 testes de `test_close_flow.py`
+vermelhos pré-MD-0025 e 6 vermelhos intencionais na rodada da MD-0026, nos testes
+listados na traceability; verde final `405 passed in 22.28s` (2026-08-11, exit 0), CI
+verde em 3.12/3.13 nos commits `a904a32` e `e4a0faf`. Closure policy `local-software`
+satisfeita: regressão passando + veredito aprovado.

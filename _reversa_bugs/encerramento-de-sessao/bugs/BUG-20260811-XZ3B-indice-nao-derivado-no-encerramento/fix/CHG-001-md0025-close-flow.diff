@@ -1,0 +1,401 @@
+commit a904a326d95be4e507f2fc9d7fc66e77be8999c7
+Author: Iago Leal <iagolealdev@gmail.com>
+Date:   Tue Aug 11 17:58:23 2026 -0300
+
+    fix(core): encerramento deriva as duas visões de decisões (MD-0025, BUG-20260811-XZ3B)
+    
+    SessionCloseFlow._derive_decision_views roda antes do 1º portão,
+    não-bloqueante, sem regravação com grafo inválido e sem derivação com
+    acervo vazio (critério: fichas ausentes, não diretório ausente). Inclui
+    decisions.compact_file nos excluídos do gate de registro (lacuna latente
+    desde a feature 028). Core 2.6.2 -> 2.6.3; suíte 397 verdes.
+
+diff --git a/.harness/decisoes-recentes.md b/.harness/decisoes-recentes.md
+index 442cc08..ea03eea 100644
+--- a/.harness/decisoes-recentes.md
++++ b/.harness/decisoes-recentes.md
+@@ -4,8 +4,9 @@
+ > Acervo completo: índice em `.harness/microdecisoes.md`; fichas em `.harness/decisoes/MD-NNNN.md`.
+ > Antes de buscas amplas, ou antes de redecidir algo, consulte o índice completo.
+ 
+-Total: 24 fichas
++Total: 25 fichas
+ 
++- **MD-0025** — Encerramento de sessão também deriva as duas visões de decisões (fecha BUG-20260811-XZ3B)
+ - **MD-0024** — SessionStart também dispara no compact (reabertura da sessão na mesma conversa)
+ - **MD-0023** — MCP `process_decisions` também deriva a visão compacta (fecha G-20/T8)
+ - **MD-0022** — Visão compacta de decisões no SessionStart: índice completo vira consulta sob demanda
+@@ -15,4 +16,3 @@ Total: 24 fichas
+ - **MD-0018** — Aposentadoria do soft-block do Stop: o lembrete vira advisory em stderr; a garantia dura fica só no portão do encerramento
+ - **MD-0017** — Consentimento para escrita no git ao encerrar: dois pontos de decisão, default assimétrico por borda
+ - **MD-0016** — Lembrete do gate com identidade grossa: um soft-block por sessão, âncora como fingerprint
+-- **MD-0015** — Gate de registro de microdecisões: fingerprint no estado e soft-block único no Stop
+diff --git a/.harness/decisoes/MD-0025.md b/.harness/decisoes/MD-0025.md
+new file mode 100644
+index 0000000..9326b1f
+--- /dev/null
++++ b/.harness/decisoes/MD-0025.md
+@@ -0,0 +1,15 @@
++---
++id: MD-0025
++gancho: o episódio do comentarios-concursos (BUG-20260811-XZ3B) mostrou o encerramento direto fechando sessão com o índice de decisões defasado — a ficha MD-0001 existia e o índice dizia 0 fichas
++relacoes:
++  - "refina MD-0022"
++  - "relaciona MD-0023"
++estado: ativo
++---
++
++# MD-0025 — Encerramento de sessão também deriva as duas visões de decisões (fecha BUG-20260811-XZ3B)
++
++- **D:** O `SessionCloseFlow.run` passou a derivar índice completo e visão compacta na mesma passada (`_derive_decision_views`), antes do 1º portão de trabalho pendente, estendendo a RN-N56 à borda de encerramento como a MD-0023 fez com o MCP. Três decisões de desenho: (a) roda ANTES do portão de pendência, para que uma visão regravada entre na disciplina de consentimento da 024 em vez de sujar a árvore depois do fechamento; (b) estritamente não-bloqueante, como as ofertas — erro de integridade ou exceção vira aviso em stderr e o fechamento segue; com grafo inválido as visões não são regravadas (semântica da CLI menos o abort); (c) sem fichas no acervo, sem derivação — o critério é o acervo vazio, não o diretório ausente, porque o `init` sempre cria `decisions.dir` com o cabeçalho; guardar pela existência do diretório faria o primeiro fechamento de todo projeto instalado inventar visões e quicar no portão de commit (achado da verificação adversarial). A mesma passada acrescentou `decisions.compact_file` aos excluídos do gate de registro (`gate.py`): sem isso, a compacta recém-derivada disparava DECISAO_PENDENTE espúrio (lacuna latente desde a feature 028). Dívida documentada: a borda MCP `session_command("encerrar-sessao")` executa pelo `CommandService` sem passar pelo flow e ainda não deriva; roteá-la acrescentaria portões ao MCP, decisão adiada. Fix por TDD direto: 4 testes novos em `test_close_flow.py`, 1 no `test_decision_gate.py`, smoke com git real no `test_cli.py`; bump 2.6.2 → 2.6.3.
++- **PORQUÊ:** O encerramento direto (skill `/encerrar-sessao`, sem passar pelo hook Stop) fechava a sessão deixando as visões defasadas até a próxima passada de outra borda; a sessão seguinte retomava com um índice mentiroso. A borda de fechamento é justamente a última passada garantida da sessão: é o ponto natural do saneamento.
++- **DESCARTADO:** (a) Derivar depois do fechamento — deixaria as visões regravadas fora do commit de encerramento, sujando a árvore de um repositório recém-fechado. (b) Compilar mesmo com erros de integridade (semântica do MCP) — na borda de encerramento não há semântica histórica a preservar, e visão derivada de acervo quebrado é pior que visão velha. (c) Bloquear o fechamento quando a derivação falha — sacrificaria o encerramento por um artefato derivado e recuperável.
++- **ESTADO:** Implementado (11/08/2026, TDD direto pós-registro do BUG-20260811-XZ3B, com verificação adversarial multi-agente aplicada; core 2.6.3; suíte 397 verdes).
+diff --git a/.harness/harness-core/src/core/decisions/gate.py b/.harness/harness-core/src/core/decisions/gate.py
+index 2990a43..b8620db 100644
+--- a/.harness/harness-core/src/core/decisions/gate.py
++++ b/.harness/harness-core/src/core/decisions/gate.py
+@@ -85,6 +85,7 @@ def evaluate_registration_gate(git, repo_path: str, session, config) -> GateVerd
+         config.session.state_file,
+         config.decisions.index_file,
+         config.decisions.header_file,
++        config.decisions.compact_file,
+     }
+     dir_prefix = config.decisions.dir.rstrip("/") + "/"
+     fichas = [
+diff --git a/.harness/harness-core/src/core/domain/config.py b/.harness/harness-core/src/core/domain/config.py
+index 67b4625..31f94ca 100644
+--- a/.harness/harness-core/src/core/domain/config.py
++++ b/.harness/harness-core/src/core/domain/config.py
+@@ -10,7 +10,7 @@ class HarnessSection(BaseModel):
+     upstream_path: Optional[str] = None
+     # Manter o valor como LITERAL nesta linha: `_get_upstream_version` (012,
+     # RN-03) lê a versão do upstream parseando este arquivo por regex.
+-    version: str = "2.6.2"
++    version: str = "2.6.3"
+ 
+ 
+ # Versão canônica do core, derivada do literal acima — fonte única para o help
+diff --git a/.harness/harness-core/src/core/session/close_flow.py b/.harness/harness-core/src/core/session/close_flow.py
+index 0847084..919d6bc 100644
+--- a/.harness/harness-core/src/core/session/close_flow.py
++++ b/.harness/harness-core/src/core/session/close_flow.py
+@@ -412,6 +412,13 @@ class SessionCloseFlow:
+             return self._abort_malformed(session_file, exc, err)
+ 
+         if sessao_existente is not None:
++            # Derivação das duas visões de decisões (MD-0025, RN-N56): a borda
++            # de encerramento também é uma passada sobre o acervo, como CLI,
++            # ponte Antigravity e MCP. Roda ANTES do 1º portão: uma visão
++            # regravada aqui vira trabalho pendente e entra na disciplina de
++            # consentimento (024), em vez de sujar a árvore depois do fechamento.
++            self._derive_decision_views(config, err)
++
+             # 1º portão — trabalho pendente (016/019), agora consentido (024/RN-06).
+             # No terminal, o core anuncia e pergunta o DESFECHO ("encerrar mesmo
+             # assim?"); sem terminal, emite o marker e a autorização só vem da flag
+@@ -540,6 +547,48 @@ class SessionCloseFlow:
+             )
+         return 0
+ 
++    def _derive_decision_views(self, config, err) -> None:
++        """Deriva índice completo + visão compacta na mesma passada (RN-N56).
++
++        Estritamente não-bloqueante, como as ofertas: erro de integridade ou
++        falha interna vira aviso em stderr e o encerramento segue. Com o grafo
++        inválido, as visões NÃO são regravadas (semântica da borda CLI menos o
++        abort): visão derivada de acervo quebrado seria pior que visão velha.
++        """
++        try:
++            from src.core.decisions.service import DecisionService
++
++            service = DecisionService(self.fs)
++            decisions = service.load_decisions(config.decisions.dir)
++            # Sem fichas, sem derivação: o init cria `decisions.dir` em todo
++            # projeto, então o critério é o acervo vazio — projeto que nunca
++            # registrou decisão não ganha visões inventadas no fechamento (a
++            # borda CLI, invocada explicitamente, continua compilando mesmo
++            # com acervo vazio).
++            if not decisions:
++                return
++            errors = service.validate_integrity(decisions)
++            if errors:
++                err(
++                    "Aviso: visões de decisões não derivadas no encerramento "
++                    "(erros de integridade no grafo):"
++                )
++                for e in errors:
++                    err(f" - {e}")
++                return
++            service.compile_index(
++                decisions, config.decisions.index_file, config.decisions.header_file
++            )
++            service.compile_compact_view(
++                decisions,
++                config.decisions.compact_file,
++                config.decisions.index_file,
++                config.decisions.dir,
++                config.decisions.compact_index_size,
++            )
++        except Exception as exc:
++            err(f"Aviso: derivação das visões de decisões falhou (não-bloqueante): {exc}")
++
+     @staticmethod
+     def _resolve_versionar_encerramento(
+         versionar_encerramento: Optional[bool], *, is_interactive: bool, asker
+diff --git a/.harness/harness-core/tests/test_cli.py b/.harness/harness-core/tests/test_cli.py
+index a97aaa6..3119737 100644
+--- a/.harness/harness-core/tests/test_cli.py
++++ b/.harness/harness-core/tests/test_cli.py
+@@ -1193,3 +1193,72 @@ def test_progress_sem_optin_nao_cria_board(tmp_path):
+     assert not (tmp_path / ".vscode").exists()
+     md = (tmp_path / ".harness" / "progresso.md").read_text()
+     assert "Demandas do board" not in md
++
++
++def test_encerrar_deriva_visoes_com_git_real(tmp_path):
++    # MD-0025 com git de verdade e âncora real (os demais smokes usam âncora
++    # inexistente e repo sem acervo, que silenciam a derivação e o 3º portão):
++    # ficha commitada com visões defasadas → 1ª passada deriva as duas visões e
++    # bounça no 1º portão SÓ por elas; commitadas, a 2ª passada fecha sem
++    # DECISAO_PENDENTE (a compacta está excluída do gate) e as visões terminam
++    # coerentes com o acervo.
++    main_path, python_bin = _harness_cli_paths()
++    _seed_session_repo(tmp_path, "0" * 40, "active")
++    decisoes = tmp_path / ".harness" / "decisoes"
++    decisoes.mkdir(parents=True, exist_ok=True)
++    (decisoes / "_cabecalho.md").write_text("# Índice de Microdecisões\n")
++    (decisoes / "MD-0001.md").write_text(
++        "---\nid: MD-0001\ngancho: smoke\nrelacoes: []\nestado: ativo\n---\n\n"
++        "# MD-0001 — Decisão de fumaça\n\n"
++        "- **D:** algo.\n- **PORQUÊ:** motivo.\n"
++        "- **DESCARTADO:** alternativa.\n- **ESTADO:** ativo.\n"
++    )
++    subprocess.run(["git", "add", "-A"], cwd=str(tmp_path), capture_output=True)
++    subprocess.run(
++        ["git", "commit", "-m", "seed"], cwd=str(tmp_path), capture_output=True
++    )
++    ancora = subprocess.run(
++        ["git", "rev-parse", "HEAD"], cwd=str(tmp_path), capture_output=True, text=True
++    ).stdout.strip()
++    estado = tmp_path / ".harness" / "estado-da-sessao.md"
++    estado.write_text(
++        f"---\ncommit: {ancora}\nfeature: feat-1\n"
++        "start_time: 2026-06-01T10:00:00+00:00\nstatus: active\n---\n\n"
++        "## O que foi feito\n- consolidou o trabalho da sessão\n"
++    )
++    subprocess.run(
++        ["git", "commit", "-am", "estado"], cwd=str(tmp_path), capture_output=True
++    )
++
++    # 1ª passada: deriva as visões, que viram trabalho pendente — e nada mais.
++    primeira = subprocess.run(
++        [python_bin, main_path, "cmd", "encerrar-sessao", "--com-commit-encerramento"],
++        capture_output=True,
++        text=True,
++        cwd=str(tmp_path),
++    )
++    assert primeira.returncode == 0
++    assert "[HARNESS:COMMIT_PENDENTE" in primeira.stdout
++    assert ".harness/decisoes-recentes.md" in primeira.stdout
++    assert ".harness/microdecisoes.md" in primeira.stdout
++    assert 'total=2' in primeira.stdout
++
++    subprocess.run(["git", "add", "-A"], cwd=str(tmp_path), capture_output=True)
++    subprocess.run(
++        ["git", "commit", "-m", "visoes"], cwd=str(tmp_path), capture_output=True
++    )
++
++    # 2ª passada: derivação idempotente, gate satisfeito, fechamento completo.
++    segunda = subprocess.run(
++        [python_bin, main_path, "cmd", "encerrar-sessao", "--com-commit-encerramento"],
++        capture_output=True,
++        text=True,
++        cwd=str(tmp_path),
++    )
++    assert segunda.returncode == 0
++    assert "Sessão encerrada com sucesso" in segunda.stdout
++    assert "[HARNESS:DECISAO_PENDENTE" not in segunda.stdout
++    assert "MD-0001" in (tmp_path / ".harness" / "microdecisoes.md").read_text()
++    assert "- **MD-0001** — Decisão de fumaça" in (
++        tmp_path / ".harness" / "decisoes-recentes.md"
++    ).read_text()
+diff --git a/.harness/harness-core/tests/test_close_flow.py b/.harness/harness-core/tests/test_close_flow.py
+index 737e5ba..e5ec0f1 100644
+--- a/.harness/harness-core/tests/test_close_flow.py
++++ b/.harness/harness-core/tests/test_close_flow.py
+@@ -876,3 +876,129 @@ def test_marker_nao_versionado_sai_depois_do_sucesso_e_antes_das_ofertas():
+     )
+     idx_oferta = next(i for i, o in enumerate(outs) if "SENTINELA_OFERTAS" in o)
+     assert idx_sucesso < idx_marker < idx_oferta
++
++
++# --- Derivação das visões de decisões no encerramento (MD-0025, RN-N56) ---
++#
++# A borda de encerramento é uma passada sobre o acervo como as demais (CLI
++# `decisions`, ponte Antigravity, MCP): índice completo e visão compacta saem
++# derivados na MESMA passada, write-only-when-changed, sem jamais bloquear o
++# fechamento (mesma disciplina não-bloqueante das ofertas).
++
++DECISIONS_DIR = ".harness/decisoes"
++INDEX_FILE = ".harness/microdecisoes.md"
++COMPACT_FILE = ".harness/decisoes-recentes.md"
++
++FICHA_VALIDA = """---
++id: MD-0001
++gancho: teste
++relacoes: []
++estado: ativo
++---
++
++# MD-0001 — Decisão de teste do encerramento
++
++- **D:** decidiu-se algo.
++- **PORQUÊ:** por um motivo.
++- **DESCARTADO:** a alternativa.
++- **ESTADO:** ativo.
++"""
++
++
++class ListingFS(MockFileSystem):
++    """MockFileSystem com list_dir funcional: o load_decisions precisa
++    enxergar as fichas gravadas sob o diretório de decisões."""
++
++    def list_dir(self, path: str) -> list[str]:
++        prefix = path.rstrip("/") + "/"
++        names = set()
++        for p in set(self.written_files) | set(self.existing_files):
++            if p.startswith(prefix):
++                rest = p[len(prefix):]
++                if "/" not in rest:
++                    names.add(rest)
++        return sorted(names)
++
++
++def _seed_ficha(fs, content=FICHA_VALIDA):
++    fs.existing_files.add(DECISIONS_DIR)
++    fs.write_file(f"{DECISIONS_DIR}/_cabecalho.md", "# Índice de Microdecisões\n")
++    fs.write_file(f"{DECISIONS_DIR}/MD-0001.md", content)
++
++
++def test_encerramento_deriva_ambas_as_visoes_de_decisoes():
++    fs = ListingFS()
++    git = FakeGit(dirty=[])
++    _seed_active_session(fs, git)
++    _seed_ficha(fs)
++    flow = SpyFlow(fs, git, MagicMock())
++
++    code, outs, _ = _run(flow)
++
++    assert code == 0
++    assert any("Sessão encerrada com sucesso" in o for o in outs)
++    index = fs.written_files.get(INDEX_FILE, "")
++    compact = fs.written_files.get(COMPACT_FILE, "")
++    assert "MD-0001" in index
++    assert "- **MD-0001** — Decisão de teste do encerramento" in compact
++
++
++def test_erro_de_integridade_avisa_e_nao_deriva_nem_bloqueia():
++    # Semântica da borda CLI menos o abort: com o grafo quebrado, avisa em
++    # stderr e NÃO regrava as visões (evita visão derivada de acervo inválido),
++    # mas o fechamento segue.
++    fs = ListingFS()
++    git = FakeGit(dirty=[])
++    _seed_active_session(fs, git)
++    _seed_ficha(fs, content="---\nid: MD-0001\ngancho: t\n---\n\nsem H1 nem seções\n")
++    flow = SpyFlow(fs, git, MagicMock())
++
++    code, outs, errs = _run(flow)
++
++    assert code == 0
++    assert any("Sessão encerrada com sucesso" in o for o in outs)
++    assert any("integridade" in e for e in errs)
++    assert INDEX_FILE not in fs.written_files
++    assert COMPACT_FILE not in fs.written_files
++
++
++def test_falha_na_derivacao_nao_bloqueia_o_encerramento():
++    # Não-bloqueante como as ofertas (RN-01/02): exceção interna vira aviso em
++    # stderr; o fechamento nunca é sacrificado pela derivação.
++    fs = ListingFS()
++    git = FakeGit(dirty=[])
++    _seed_active_session(fs, git)
++    _seed_ficha(fs, content="---\n:::yaml quebrado\n---\n\ncorpo\n")
++    flow = SpyFlow(fs, git, MagicMock())
++
++    code, outs, errs = _run(flow)
++
++    assert code == 0
++    assert any("Sessão encerrada com sucesso" in o for o in outs)
++    # Substring exclusiva do ramo de exceção (o ramo de integridade avisa
++    # "não derivadas"): garante que é o except que este teste exercita.
++    assert any("falhou (não-bloqueante)" in e for e in errs)
++    assert INDEX_FILE not in fs.written_files
++    assert COMPACT_FILE not in fs.written_files
++
++
++def test_acervo_sem_fichas_nao_deriva_nada():
++    # O init cria `decisions.dir` (com `_cabecalho.md`) em TODO projeto, então
++    # a fronteira do no-op é o acervo sem fichas, não o diretório ausente:
++    # projeto que nunca registrou decisão não ganha visões inventadas no
++    # fechamento (nem sobrescrito o placeholder do init). A compilação com
++    # acervo vazio fica reservada à invocação explícita da CLI `decisions`.
++    fs = ListingFS()
++    git = FakeGit(dirty=[])
++    _seed_active_session(fs, git)
++    fs.existing_files.add(DECISIONS_DIR)
++    fs.write_file(f"{DECISIONS_DIR}/_cabecalho.md", "# Índice de Microdecisões\n")
++    flow = SpyFlow(fs, git, MagicMock())
++
++    code, outs, errs = _run(flow)
++
++    assert code == 0
++    assert any("Sessão encerrada com sucesso" in o for o in outs)
++    assert INDEX_FILE not in fs.written_files
++    assert COMPACT_FILE not in fs.written_files
++    assert errs == []
+diff --git a/.harness/harness-core/tests/test_decision_gate.py b/.harness/harness-core/tests/test_decision_gate.py
+index aaf3bae..f254067 100644
+--- a/.harness/harness-core/tests/test_decision_gate.py
++++ b/.harness/harness-core/tests/test_decision_gate.py
+@@ -19,6 +19,7 @@ HEAD = "b" * 40
+ STATE_FILE = ".harness/estado-da-sessao.md"
+ INDEX_FILE = ".harness/microdecisoes.md"
+ HEADER_FILE = ".harness/decisoes/_cabecalho.md"
++COMPACT_FILE = ".harness/decisoes-recentes.md"
+ 
+ 
+ class GateGit:
+@@ -81,8 +82,13 @@ def test_ficha_suja_nao_commitada_satisfaz():
+ 
+ 
+ def test_so_artefatos_do_harness_nao_e_pendente():
+-    # Estado de sessão, índice derivado e cabeçalho não são trabalho substantivo.
+-    verdict = _evaluate(GateGit(changed=[STATE_FILE, INDEX_FILE, HEADER_FILE]))
++    # Estado de sessão, visões derivadas (índice E compacta) e cabeçalho não
++    # são trabalho substantivo. A compacta entrou na MD-0025: sem a exclusão,
++    # a derivação da borda de encerramento disparava DECISAO_PENDENTE espúrio
++    # por um arquivo que o próprio harness escreveu.
++    verdict = _evaluate(
++        GateGit(changed=[STATE_FILE, INDEX_FILE, HEADER_FILE, COMPACT_FILE])
++    )
+     assert verdict.pendente is False
+     assert verdict.mudancas == []
+ 
+diff --git a/.harness/microdecisoes.md b/.harness/microdecisoes.md
+index cbd6e79..d863d94 100644
+--- a/.harness/microdecisoes.md
++++ b/.harness/microdecisoes.md
+@@ -46,8 +46,10 @@
+ - **MD-0021** — Abandono da atualização do vault Obsidian no encerramento de sessão
+   ↳ relaciona MD-0017
+ - **MD-0022** — Visão compacta de decisões no SessionStart: índice completo vira consulta sob demanda
+-  ↳ refina MD-0002, relaciona MD-0019 · refinado-por MD-0023
++  ↳ refina MD-0002, relaciona MD-0019 · refinado-por MD-0023 · refinado-por MD-0025
+ - **MD-0023** — MCP `process_decisions` também deriva a visão compacta (fecha G-20/T8)
+-  ↳ refina MD-0022, relaciona MD-0013
++  ↳ refina MD-0022, relaciona MD-0013 · relacionado-com MD-0025
+ - **MD-0024** — SessionStart também dispara no compact (reabertura da sessão na mesma conversa)
+   ↳ relaciona MD-0017, relaciona MD-0011
++- **MD-0025** — Encerramento de sessão também deriva as duas visões de decisões (fecha BUG-20260811-XZ3B)
++  ↳ refina MD-0022, relaciona MD-0023

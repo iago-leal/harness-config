@@ -1,0 +1,568 @@
+commit e4a0faf5278581516978a4eee94909337b80eebf
+Author: Iago Leal <iagolealdev@gmail.com>
+Date:   Tue Aug 11 18:13:23 2026 -0300
+
+    fix(core): borda MCP de encerramento deriva as visões e as versiona junto (MD-0026)
+    
+    Semântica da MD-0025 extraída para DecisionService.derive_views_for_close
+    (fonte única entre SessionCloseFlow e MCP); session_command deriva antes
+    do execute_command e inclui as visões no commit de encerramento via
+    caminhos_extras (stage por caminho explícito, nunca git add -A). Avisos
+    não-bloqueantes anexados à resposta da tool. Core 2.6.3 -> 2.6.4;
+    suíte 404 verdes.
+
+diff --git a/.harness/decisoes-recentes.md b/.harness/decisoes-recentes.md
+index ea03eea..92ed882 100644
+--- a/.harness/decisoes-recentes.md
++++ b/.harness/decisoes-recentes.md
+@@ -4,8 +4,9 @@
+ > Acervo completo: índice em `.harness/microdecisoes.md`; fichas em `.harness/decisoes/MD-NNNN.md`.
+ > Antes de buscas amplas, ou antes de redecidir algo, consulte o índice completo.
+ 
+-Total: 25 fichas
++Total: 26 fichas
+ 
++- **MD-0026** — Borda MCP de encerramento deriva as visões e as versiona no commit de fechamento
+ - **MD-0025** — Encerramento de sessão também deriva as duas visões de decisões (fecha BUG-20260811-XZ3B)
+ - **MD-0024** — SessionStart também dispara no compact (reabertura da sessão na mesma conversa)
+ - **MD-0023** — MCP `process_decisions` também deriva a visão compacta (fecha G-20/T8)
+@@ -15,4 +16,3 @@ Total: 25 fichas
+ - **MD-0019** — Medidor de progresso de entregáveis: `harness progress`, artefato derivado sem timestamp, alerta como achado persistente
+ - **MD-0018** — Aposentadoria do soft-block do Stop: o lembrete vira advisory em stderr; a garantia dura fica só no portão do encerramento
+ - **MD-0017** — Consentimento para escrita no git ao encerrar: dois pontos de decisão, default assimétrico por borda
+-- **MD-0016** — Lembrete do gate com identidade grossa: um soft-block por sessão, âncora como fingerprint
+diff --git a/.harness/decisoes/MD-0026.md b/.harness/decisoes/MD-0026.md
+new file mode 100644
+index 0000000..b16af15
+--- /dev/null
++++ b/.harness/decisoes/MD-0026.md
+@@ -0,0 +1,15 @@
++---
++id: MD-0026
++gancho: a MD-0025 fechou a borda de encerramento do SessionCloseFlow mas deixou como dívida documentada a borda MCP session_command("encerrar-sessao"), que fechava sessão sem derivar as visões
++relacoes:
++  - "refina MD-0025"
++  - "relaciona MD-0023"
++estado: ativo
++---
++
++# MD-0026 — Borda MCP de encerramento deriva as visões e as versiona no commit de fechamento
++
++- **D:** A semântica de derivação da borda de encerramento saiu do `SessionCloseFlow._derive_decision_views` para o `DecisionService.derive_views_for_close(config, err) -> list[str]` (fonte única), e a tool MCP `session_command("encerrar-sessao")` passou a chamá-la antes do `execute_command`, incluindo as visões regravadas no commit de encerramento via o parâmetro novo `caminhos_extras` do `CommandService.execute_command` (stage sempre por caminho explícito, jamais `git add -A`). Avisos não-bloqueantes voltam anexados à resposta da tool, já que o MCP não tem stderr útil. Sessão ausente segue no-op sem derivação (D1 da 016). Core 2.6.3 → 2.6.4.
++- **PORQUÊ:** RN-N56 exige que toda borda de encerramento derive as duas visões na mesma passada; o MCP era a única que fechava sem derivar. Diferente do fluxo interativo, essa borda não tem portões que forcem o commit das visões antes do fechamento: sem incluí-las no commit de encerramento, a árvore terminaria suja num repositório recém-fechado, exatamente o que a MD-0025 descartou.
++- **DESCARTADO:** (a) Rotear o MCP pelo `SessionCloseFlow` — acrescentaria os três portões a uma borda sem interlocutor (assimetria deliberada da 024/D-04), mudança de comportamento muito maior que a dívida. (b) Derivar e deixar as visões sujas no working tree — repete o descarte (a) da MD-0025. (c) Segundo commit só para as visões — dois commits por fechamento poluem o histórico sem ganho. (d) Duplicar a semântica no servidor MCP — divergiria do flow na primeira manutenção; a extração para o service elimina a segunda cópia.
++- **ESTADO:** Implementado (11/08/2026, TDD direto; 7 testes novos em `test_decisions.py`, `test_commands.py` e `test_mcp.py`; suíte 404 verdes; core 2.6.4).
+diff --git a/.harness/harness-core/src/adapters/mcp/server.py b/.harness/harness-core/src/adapters/mcp/server.py
+index 40d4811..e5e1259 100644
+--- a/.harness/harness-core/src/adapters/mcp/server.py
++++ b/.harness/harness-core/src/adapters/mcp/server.py
+@@ -112,15 +112,37 @@ def session_command(cmd_name: str, active_feature: Optional[str] = None) -> str:
+     segue versionando o estado, sem pergunta. Propagar aqui a inversão da RN-08
+     produziria fechamento não versionado silencioso, o oposto do pedido. A ressalva
+     está declarada na RN-04 do requirements da 024.
++
++    MD-0026 (RN-N56): esta borda também é uma borda de encerramento — antes de
++    fechar, deriva as duas visões de decisões com a semântica da MD-0025
++    (``derive_views_for_close``, fonte única com o ``SessionCloseFlow``) e as
++    inclui no commit de encerramento via ``caminhos_extras``, para a árvore
++    terminar limpa. Sem os portões do fluxo interativo (a assimetria da 024
++    permanece), os avisos não-bloqueantes voltam anexados à resposta da tool.
+     """
+     service = CommandService(fs, git)
+     config = load_config(fs)
+     session_file = config.session.state_file
+     args = [active_feature] if active_feature else []
+ 
+-    return service.execute_command(
++    caminhos_extras: list[str] = []
++    avisos: list[str] = []
++    if cmd_name.strip().lower().lstrip("/") == "encerrar-sessao":
++        # Sessão ausente é no-op no serviço (D1 da 016): sem fechamento, sem
++        # derivação — o load é barulhento para estado malformado (RN-N4), como
++        # já seria dentro de execute_command.
++        if service.load_session(session_file) is not None:
++            caminhos_extras = DecisionService(fs).derive_views_for_close(
++                config, avisos.append
++            )
++
++    result = service.execute_command(
+         command=cmd_name,
+         args=args,
+         repo_path=os.getcwd(),
+         session_filepath=session_file,
++        caminhos_extras=caminhos_extras or None,
+     )
++    if avisos:
++        result += "\n" + "\n".join(avisos)
++    return result
+diff --git a/.harness/harness-core/src/core/commands/service.py b/.harness/harness-core/src/core/commands/service.py
+index b87d98e..2336388 100644
+--- a/.harness/harness-core/src/core/commands/service.py
++++ b/.harness/harness-core/src/core/commands/service.py
+@@ -35,6 +35,7 @@ class CommandService:
+         session_filepath: str,
+         *,
+         versionar_estado: bool = True,
++        caminhos_extras: Optional[List[str]] = None,
+     ) -> str:
+         """
+         Executa um slash command de forma agnóstica à IDE.
+@@ -47,6 +48,12 @@ class CommandService:
+         (D-05) e o arquivo permanece como mudança pendente no working tree. A
+         decisão chega pronta da borda (``SessionCloseFlow``), que sabe se há
+         terminal e autorização; o serviço permanece livre de IO de pergunta.
++
++        ``caminhos_extras`` (MD-0026): artefatos do próprio harness que a borda
++        regravou nesta passada (as visões de decisões, no MCP) e que entram no
++        commit de encerramento junto do estado — sempre por caminho explícito,
++        nunca ``git add -A``. Ignorado quando ``versionar_estado=False`` ou em
++        comandos que não commitam.
+         """
+         cmd_normalized = command.strip().lower().lstrip("/")
+ 
+@@ -101,13 +108,15 @@ class CommandService:
+ 
+             self.save_session(session_filepath, session)
+ 
+-            # Versiona SOMENTE o arquivo de estado (jamais git add -A): o registro
+-            # de encerramento entra no histórico sem arrastar mudanças alheias do
++            # Versiona o arquivo de estado e, quando a borda os regravou, os
++            # artefatos derivados do próprio harness (caminhos_extras) — sempre
++            # por caminho explícito, jamais git add -A: o registro de
++            # encerramento entra no histórico sem arrastar mudanças alheias do
+             # working tree. Falha de commit é barulhenta e preserva o estado salvo.
+             try:
+                 commit_encerramento = self.git.commit_paths(
+                     repo_path,
+-                    [session_filepath],
++                    [session_filepath, *(caminhos_extras or [])],
+                     f"chore(sessao): encerrar sessão {feature}; âncora {ancora}",
+                 )
+             except Exception as exc:
+diff --git a/.harness/harness-core/src/core/decisions/service.py b/.harness/harness-core/src/core/decisions/service.py
+index 89fad3a..333e628 100644
+--- a/.harness/harness-core/src/core/decisions/service.py
++++ b/.harness/harness-core/src/core/decisions/service.py
+@@ -100,6 +100,53 @@ class DecisionService:
+         self.fs.write_file_atomic(filepath, content)
+         return True
+ 
++    def derive_views_for_close(self, config, err) -> List[str]:
++        """Deriva índice completo + visão compacta com a semântica da borda de
++        encerramento (MD-0025/MD-0026, RN-N56) — fonte única compartilhada pelo
++        ``SessionCloseFlow`` e pela borda MCP ``session_command``.
++
++        Estritamente não-bloqueante: erro de integridade ou falha interna vira
++        chamada a ``err`` e o encerramento segue. Com o grafo inválido, as
++        visões NÃO são regravadas (semântica da CLI menos o abort): visão
++        derivada de acervo quebrado seria pior que visão velha. Sem fichas,
++        sem derivação: o init cria ``decisions.dir`` em todo projeto, então o
++        critério é o acervo vazio — projeto que nunca registrou decisão não
++        ganha visões inventadas no fechamento.
++
++        Devolve os caminhos das visões derivadas (para a borda incluí-los no
++        commit de encerramento) ou lista vazia quando a derivação foi pulada.
++        """
++        try:
++            decisions = self.load_decisions(config.decisions.dir)
++            if not decisions:
++                return []
++            errors = self.validate_integrity(decisions)
++            if errors:
++                err(
++                    "Aviso: visões de decisões não derivadas no encerramento "
++                    "(erros de integridade no grafo):"
++                )
++                for e in errors:
++                    err(f" - {e}")
++                return []
++            self.compile_index(
++                decisions, config.decisions.index_file, config.decisions.header_file
++            )
++            self.compile_compact_view(
++                decisions,
++                config.decisions.compact_file,
++                config.decisions.index_file,
++                config.decisions.dir,
++                config.decisions.compact_index_size,
++            )
++            return [config.decisions.index_file, config.decisions.compact_file]
++        except Exception as exc:
++            err(
++                "Aviso: derivação das visões de decisões falhou "
++                f"(não-bloqueante): {exc}"
++            )
++            return []
++
+     def compile_compact_view(
+         self,
+         decisions: List[Decision],
+diff --git a/.harness/harness-core/src/core/domain/config.py b/.harness/harness-core/src/core/domain/config.py
+index 31f94ca..fe0abe1 100644
+--- a/.harness/harness-core/src/core/domain/config.py
++++ b/.harness/harness-core/src/core/domain/config.py
+@@ -10,7 +10,7 @@ class HarnessSection(BaseModel):
+     upstream_path: Optional[str] = None
+     # Manter o valor como LITERAL nesta linha: `_get_upstream_version` (012,
+     # RN-03) lê a versão do upstream parseando este arquivo por regex.
+-    version: str = "2.6.3"
++    version: str = "2.6.4"
+ 
+ 
+ # Versão canônica do core, derivada do literal acima — fonte única para o help
+diff --git a/.harness/harness-core/src/core/session/close_flow.py b/.harness/harness-core/src/core/session/close_flow.py
+index 919d6bc..a0c58fc 100644
+--- a/.harness/harness-core/src/core/session/close_flow.py
++++ b/.harness/harness-core/src/core/session/close_flow.py
+@@ -550,44 +550,16 @@ class SessionCloseFlow:
+     def _derive_decision_views(self, config, err) -> None:
+         """Deriva índice completo + visão compacta na mesma passada (RN-N56).
+ 
+-        Estritamente não-bloqueante, como as ofertas: erro de integridade ou
+-        falha interna vira aviso em stderr e o encerramento segue. Com o grafo
+-        inválido, as visões NÃO são regravadas (semântica da borda CLI menos o
+-        abort): visão derivada de acervo quebrado seria pior que visão velha.
++        A semântica (não-bloqueante, sem regravação com grafo inválido, sem
++        derivação com acervo vazio) vive em ``derive_views_for_close`` — fonte
++        única compartilhada com a borda MCP (MD-0026). Aqui o retorno é
++        descartado: no fluxo interativo, as visões regravadas viram trabalho
++        pendente no 1º portão (disciplina de consentimento da 024), em vez de
++        entrar direto no commit de encerramento.
+         """
+-        try:
+-            from src.core.decisions.service import DecisionService
+-
+-            service = DecisionService(self.fs)
+-            decisions = service.load_decisions(config.decisions.dir)
+-            # Sem fichas, sem derivação: o init cria `decisions.dir` em todo
+-            # projeto, então o critério é o acervo vazio — projeto que nunca
+-            # registrou decisão não ganha visões inventadas no fechamento (a
+-            # borda CLI, invocada explicitamente, continua compilando mesmo
+-            # com acervo vazio).
+-            if not decisions:
+-                return
+-            errors = service.validate_integrity(decisions)
+-            if errors:
+-                err(
+-                    "Aviso: visões de decisões não derivadas no encerramento "
+-                    "(erros de integridade no grafo):"
+-                )
+-                for e in errors:
+-                    err(f" - {e}")
+-                return
+-            service.compile_index(
+-                decisions, config.decisions.index_file, config.decisions.header_file
+-            )
+-            service.compile_compact_view(
+-                decisions,
+-                config.decisions.compact_file,
+-                config.decisions.index_file,
+-                config.decisions.dir,
+-                config.decisions.compact_index_size,
+-            )
+-        except Exception as exc:
+-            err(f"Aviso: derivação das visões de decisões falhou (não-bloqueante): {exc}")
++        from src.core.decisions.service import DecisionService
++
++        DecisionService(self.fs).derive_views_for_close(config, err)
+ 
+     @staticmethod
+     def _resolve_versionar_encerramento(
+diff --git a/.harness/harness-core/tests/test_commands.py b/.harness/harness-core/tests/test_commands.py
+index 97169d0..2048cb6 100644
+--- a/.harness/harness-core/tests/test_commands.py
++++ b/.harness/harness-core/tests/test_commands.py
+@@ -303,3 +303,54 @@ def test_execute_clarificar_and_handoff():
+     msg_handoff = service.execute_command("handoff", [], repo_path, session_file)
+     assert "Handoff Bastão" in msg_handoff
+     assert "a" * 40 in msg_handoff
++
++
++def test_execute_encerrar_sessao_caminhos_extras_entram_no_commit():
++    # MD-0026: a borda MCP deriva as visões de decisões antes do fechamento e
++    # as inclui no commit de encerramento via caminhos_extras — a árvore termina
++    # limpa sem git add -A (o stage segue restrito a caminhos explícitos).
++    fs = MockFileSystem()
++    git = FakeGit("a" * 40)
++    service = CommandService(fs, git)
++    session_file = "session.md"
++    state = SessionState(commit_hash="a" * 40, active_feature="feat-1")
++    service.save_session(session_file, state)
++
++    msg = service.execute_command(
++        "encerrar-sessao",
++        [],
++        "repo/",
++        session_file,
++        caminhos_extras=[".harness/microdecisoes.md", ".harness/decisoes-recentes.md"],
++    )
++
++    assert "Sessão encerrada com sucesso" in msg
++    assert len(git.commit_calls) == 1
++    _, called_paths, _ = git.commit_calls[0]
++    assert called_paths == [
++        session_file,
++        ".harness/microdecisoes.md",
++        ".harness/decisoes-recentes.md",
++    ]
++
++
++def test_execute_encerrar_sessao_sem_versionar_ignora_caminhos_extras():
++    # Sem versionamento não há commit nenhum: os extras são irrelevantes.
++    fs = MockFileSystem()
++    git = FakeGit("a" * 40)
++    service = CommandService(fs, git)
++    session_file = "session.md"
++    state = SessionState(commit_hash="a" * 40, active_feature="feat-1")
++    service.save_session(session_file, state)
++
++    msg = service.execute_command(
++        "encerrar-sessao",
++        [],
++        "repo/",
++        session_file,
++        versionar_estado=False,
++        caminhos_extras=[".harness/microdecisoes.md"],
++    )
++
++    assert "sem versionar" in msg
++    assert git.commit_calls == []
+diff --git a/.harness/harness-core/tests/test_decisions.py b/.harness/harness-core/tests/test_decisions.py
+index c5e8084..839b8a9 100644
+--- a/.harness/harness-core/tests/test_decisions.py
++++ b/.harness/harness-core/tests/test_decisions.py
+@@ -240,3 +240,93 @@ def test_write_only_when_changed_nas_duas_escritas(tmp_path):
+     _derivar()
+     assert index_file in fs.atomic_writes
+     assert compact_file in fs.atomic_writes
++
++
++# ---------------------------------------------------------------------------
++# Semântica da borda de encerramento como fonte única (MD-0026): a mesma
++# rotina serve o SessionCloseFlow e a borda MCP. Devolve os caminhos das
++# visões derivadas (para o commit de encerramento) ou lista vazia quando pula.
++
++
++def _close_config(tmp_path):
++    from src.core.domain.config import DecisionsSection, HarnessConfig
++
++    return HarnessConfig(
++        decisions=DecisionsSection(
++            dir=os.path.join(tmp_path, "decisoes"),
++            index_file=os.path.join(tmp_path, "microdecisoes.md"),
++            header_file=os.path.join(tmp_path, "decisoes", "_cabecalho.md"),
++            compact_file=os.path.join(tmp_path, "decisoes-recentes.md"),
++            compact_index_size=10,
++        )
++    )
++
++
++def test_derive_views_for_close_devolve_caminhos_das_visoes(tmp_path):
++    fs = LocalFileSystemAdapter()
++    service = DecisionService(fs)
++    decisoes_dir = os.path.join(tmp_path, "decisoes")
++    fs.makedirs(decisoes_dir)
++    _write_ficha(fs, decisoes_dir, 1, "Decisão 1")
++    config = _close_config(tmp_path)
++    avisos = []
++
++    caminhos = service.derive_views_for_close(config, avisos.append)
++
++    assert caminhos == [
++        config.decisions.index_file,
++        config.decisions.compact_file,
++    ]
++    assert avisos == []
++    assert fs.exists(config.decisions.index_file)
++    assert fs.exists(config.decisions.compact_file)
++
++
++def test_derive_views_for_close_acervo_vazio_devolve_vazio(tmp_path):
++    fs = LocalFileSystemAdapter()
++    service = DecisionService(fs)
++    decisoes_dir = os.path.join(tmp_path, "decisoes")
++    fs.makedirs(decisoes_dir)
++    fs.write_file(
++        os.path.join(decisoes_dir, "_cabecalho.md"), "# Índice de Microdecisões\n"
++    )
++    config = _close_config(tmp_path)
++    avisos = []
++
++    caminhos = service.derive_views_for_close(config, avisos.append)
++
++    assert caminhos == []
++    assert avisos == []
++    assert not fs.exists(config.decisions.index_file)
++    assert not fs.exists(config.decisions.compact_file)
++
++
++def test_derive_views_for_close_integridade_avisa_e_devolve_vazio(tmp_path):
++    fs = LocalFileSystemAdapter()
++    service = DecisionService(fs)
++    decisoes_dir = os.path.join(tmp_path, "decisoes")
++    fs.makedirs(decisoes_dir)
++    # Relação para alvo inexistente: erro de integridade no grafo.
++    fs.write_file(
++        os.path.join(decisoes_dir, "MD-0001.md"),
++        """---
++id: MD-0001
++gancho: teste
++relacoes:
++  - depende-de MD-9999
++estado: ativo
++---
++
++# MD-0001 — Decisão quebrada
++- **D:** d
++""",
++    )
++    config = _close_config(tmp_path)
++    avisos = []
++
++    caminhos = service.derive_views_for_close(config, avisos.append)
++
++    assert caminhos == []
++    assert any("integridade" in a for a in avisos)
++    assert not fs.exists(config.decisions.index_file)
++    assert not fs.exists(config.decisions.compact_file)
+diff --git a/.harness/harness-core/tests/test_mcp.py b/.harness/harness-core/tests/test_mcp.py
+index 4443592..8e9de43 100644
+--- a/.harness/harness-core/tests/test_mcp.py
++++ b/.harness/harness-core/tests/test_mcp.py
+@@ -26,7 +26,9 @@ def test_mcp_session_command_uses_config_path(monkeypatch):
+         def __init__(self, fs, git):
+             pass
+ 
+-        def execute_command(self, command, args, repo_path, session_filepath):
++        def execute_command(
++            self, command, args, repo_path, session_filepath, caminhos_extras=None
++        ):
+             captured["path"] = session_filepath
+             return "ok"
+ 
+@@ -115,3 +117,108 @@ estado: ativo
+     assert srv.fs.exists(compact_file)
+     compact = srv.fs.read_file(compact_file)
+     assert "- **MD-0001** — Decisão de teste" in compact
++
++
++def _config_encerramento(tmp_path):
++    from src.core.domain.config import (
++        DecisionsSection,
++        HarnessConfig,
++        SessionSection,
++    )
++    import os
++
++    return HarnessConfig(
++        session=SessionSection(state_file=str(tmp_path / "estado.md")),
++        decisions=DecisionsSection(
++            dir=str(tmp_path / "decisoes"),
++            index_file=str(tmp_path / "microdecisoes.md"),
++            header_file=os.path.join(str(tmp_path / "decisoes"), "_cabecalho.md"),
++            compact_file=str(tmp_path / "decisoes-recentes.md"),
++            compact_index_size=10,
++        ),
++    )
++
++
++def test_mcp_encerrar_sessao_deriva_visoes_e_versiona_junto(tmp_path, monkeypatch):
++    # Dívida da MD-0025 fechada na MD-0026: a borda MCP também é uma borda de
++    # encerramento (RN-N56) — deriva as duas visões ANTES do fechamento e as
++    # inclui no commit de encerramento, para a árvore terminar limpa.
++    import os
++
++    import src.adapters.mcp.server as srv
++    from src.core.domain.models import SessionState
++    from src.core.session import serializer
++    from tests.test_commands import FakeGit
++
++    config = _config_encerramento(tmp_path)
++    srv.fs.makedirs(config.decisions.dir)
++    srv.fs.write_file(
++        os.path.join(config.decisions.dir, "_cabecalho.md"),
++        "# Índice de Microdecisões\n",
++    )
++    srv.fs.write_file(
++        os.path.join(config.decisions.dir, "MD-0001.md"),
++        """---
++id: MD-0001
++gancho: teste
++relacoes: []
++estado: ativo
++---
++
++# MD-0001 — Decisão da borda MCP
++- **D:** d
++- **PORQUÊ:** p
++- **DESCARTADO:** nada
++- **ESTADO:** feito
++""",
++    )
++    srv.fs.write_file(
++        config.session.state_file,
++        serializer.render(
++            SessionState(commit_hash="a" * 40, active_feature="feat-mcp")
++        ),
++    )
++    fake_git = FakeGit("a" * 40)
++    monkeypatch.setattr(srv, "git", fake_git)
++    monkeypatch.setattr(srv, "load_config", lambda fs: config)
++
++    result = srv.session_command("encerrar-sessao")
++
++    assert "Sessão encerrada com sucesso" in result
++    assert srv.fs.exists(config.decisions.index_file)
++    assert srv.fs.exists(config.decisions.compact_file)
++    compact = srv.fs.read_file(config.decisions.compact_file)
++    assert "- **MD-0001** — Decisão da borda MCP" in compact
++    # As visões entram no MESMO commit de encerramento, junto do estado.
++    assert len(fake_git.commit_calls) == 1
++    _, called_paths, _ = fake_git.commit_calls[0]
++    assert called_paths == [
++        config.session.state_file,
++        config.decisions.index_file,
++        config.decisions.compact_file,
++    ]
++
++
++def test_mcp_encerrar_sessao_sem_sessao_nao_deriva(tmp_path, monkeypatch):
++    # Sessão ausente é no-op (D1 da 016): sem fechamento, sem derivação.
++    import os
++
++    import src.adapters.mcp.server as srv
++    from tests.test_commands import FakeGit
++
++    config = _config_encerramento(tmp_path)
++    srv.fs.makedirs(config.decisions.dir)
++    srv.fs.write_file(
++        os.path.join(config.decisions.dir, "MD-0001.md"),
++        "---\nid: MD-0001\ngancho: t\nrelacoes: []\nestado: ativo\n---\n\n# MD-0001 — X\n",
++    )
++    fake_git = FakeGit("a" * 40)
++    monkeypatch.setattr(srv, "git", fake_git)
++    monkeypatch.setattr(srv, "load_config", lambda fs: config)
++
++    result = srv.session_command("encerrar-sessao")
++
++    assert "Nenhuma sessão para encerrar" in result
++    assert not srv.fs.exists(config.decisions.index_file)
++    assert not srv.fs.exists(config.decisions.compact_file)
++    assert fake_git.commit_calls == []
+diff --git a/.harness/microdecisoes.md b/.harness/microdecisoes.md
+index d863d94..75430c6 100644
+--- a/.harness/microdecisoes.md
++++ b/.harness/microdecisoes.md
+@@ -48,8 +48,10 @@
+ - **MD-0022** — Visão compacta de decisões no SessionStart: índice completo vira consulta sob demanda
+   ↳ refina MD-0002, relaciona MD-0019 · refinado-por MD-0023 · refinado-por MD-0025
+ - **MD-0023** — MCP `process_decisions` também deriva a visão compacta (fecha G-20/T8)
+-  ↳ refina MD-0022, relaciona MD-0013 · relacionado-com MD-0025
++  ↳ refina MD-0022, relaciona MD-0013 · relacionado-com MD-0025 · relacionado-com MD-0026
+ - **MD-0024** — SessionStart também dispara no compact (reabertura da sessão na mesma conversa)
+   ↳ relaciona MD-0017, relaciona MD-0011
+ - **MD-0025** — Encerramento de sessão também deriva as duas visões de decisões (fecha BUG-20260811-XZ3B)
+-  ↳ refina MD-0022, relaciona MD-0023
++  ↳ refina MD-0022, relaciona MD-0023 · refinado-por MD-0026
++- **MD-0026** — Borda MCP de encerramento deriva as visões e as versiona no commit de fechamento
++  ↳ refina MD-0025, relaciona MD-0023

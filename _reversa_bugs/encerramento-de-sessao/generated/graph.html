@@ -5,7 +5,7 @@
 <title>Bugs — encerramento-de-sessao</title>
 <style>
   :root { --bg:#f7f7f5; --card:#ffffff; --ink:#1f2430; --muted:#6b7280; --line:#d8d8d4;
-          --medium:#d97706; --low:#2563eb; --edge:#9ca3af; }
+          --medium:#d97706; --low:#2563eb; --done:#15803d; --edge:#9ca3af; }
   body { margin:0; padding:2rem; background:var(--bg); color:var(--ink);
          font:15px/1.55 -apple-system, "Segoe UI", sans-serif; }
   h1 { font-size:1.35rem; margin:0 0 .25rem; }
@@ -19,6 +19,7 @@
   .sev { font-weight:600; }
   .sev.medium { color:var(--medium); }
   .sev.low { color:var(--low); }
+  .kind { color:var(--done); font-weight:600; }
   code { background:#efefec; padding:.1em .35em; border-radius:4px; font-size:.85em; }
   .note { color:var(--muted); font-size:.8rem; }
 </style>
@@ -26,67 +27,73 @@
 <body>
 <h1>Contexto: encerramento-de-sessao</h1>
 <div class="sub">View gerada em 2026-08-11 pelo protocolo do /reversa-debugger-graph. Não edite à mão.
-Source of truth: <code>../bugs/&lt;ID&gt;/bug.md</code>.</div>
+Source of truth: <code>../bugs/&lt;ID&gt;/bug.md</code>. Todos os bugs do contexto estão RESOLVIDOS.</div>
 
 <div class="card">
   <svg viewBox="0 0 900 430" role="img" aria-label="Grafo de bugs">
-    <line x1="300" y1="115" x2="600" y2="115" stroke="var(--edge)" stroke-width="2" stroke-dasharray="6 5"/>
-    <text x="450" y="103" text-anchor="middle" fill="var(--muted)" font-size="12">related-to (proposed)</text>
-    <line x1="220" y1="175" x2="400" y2="255" stroke="var(--edge)" stroke-width="2" stroke-dasharray="6 5"/>
-    <text x="255" y="230" text-anchor="middle" fill="var(--muted)" font-size="12">related-to (proposed)</text>
+    <line x1="300" y1="115" x2="600" y2="115" stroke="var(--edge)" stroke-width="2.5"/>
+    <text x="450" y="103" text-anchor="middle" fill="var(--muted)" font-size="12">related-to (supported)</text>
+    <line x1="220" y1="175" x2="400" y2="255" stroke="var(--edge)" stroke-width="2.5"/>
+    <text x="255" y="230" text-anchor="middle" fill="var(--muted)" font-size="12">related-to (supported)</text>
     <g>
-      <rect x="60" y="55" width="240" height="120" rx="10" fill="#fff7ed" stroke="var(--medium)" stroke-width="2"/>
-      <text x="180" y="85" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-XZ3B (#1)</text>
+      <rect x="60" y="55" width="240" height="120" rx="10" fill="#f0fdf4" stroke="var(--done)" stroke-width="2"/>
+      <text x="180" y="85" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-XZ3B (#1) ✅</text>
       <text x="180" y="110" text-anchor="middle" font-size="12" fill="var(--ink)">Encerramento direto não</text>
       <text x="180" y="128" text-anchor="middle" font-size="12" fill="var(--ink)">deriva as visões de decisões</text>
-      <text x="180" y="155" text-anchor="middle" font-size="12" fill="var(--medium)" font-weight="600">medium · P2 · open</text>
+      <text x="180" y="155" text-anchor="middle" font-size="12" fill="var(--done)" font-weight="600">medium · P2 · fixed</text>
     </g>
     <g>
-      <rect x="600" y="55" width="240" height="120" rx="10" fill="#eff6ff" stroke="var(--low)" stroke-width="2"/>
-      <text x="720" y="85" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-OYKV (#2)</text>
+      <rect x="600" y="55" width="240" height="120" rx="10" fill="#f0fdf4" stroke="var(--done)" stroke-width="2"/>
+      <text x="720" y="85" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-OYKV (#2) ✅</text>
       <text x="720" y="110" text-anchor="middle" font-size="12" fill="var(--ink)">Memória stale reintroduz</text>
       <text x="720" y="128" text-anchor="middle" font-size="12" fill="var(--ink)">ritual do vault (MD-0021)</text>
-      <text x="720" y="155" text-anchor="middle" font-size="12" fill="var(--low)" font-weight="600">low · P3 · open</text>
+      <text x="720" y="155" text-anchor="middle" font-size="12" fill="var(--done)" font-weight="600">low · P3 · data-repair</text>
     </g>
     <g>
-      <rect x="330" y="255" width="240" height="120" rx="10" fill="#fff7ed" stroke="var(--medium)" stroke-width="2"/>
-      <text x="450" y="285" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-TVCP (#3)</text>
+      <rect x="330" y="255" width="240" height="120" rx="10" fill="#f0fdf4" stroke="var(--done)" stroke-width="2"/>
+      <text x="450" y="285" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">BUG-20260811-TVCP (#3) ✅</text>
       <text x="450" y="310" text-anchor="middle" font-size="12" fill="var(--ink)">Wrapper do upstream sem</text>
       <text x="450" y="328" text-anchor="middle" font-size="12" fill="var(--ink)">âncora de cwd (SessionStart)</text>
-      <text x="450" y="355" text-anchor="middle" font-size="12" fill="var(--medium)" font-weight="600">medium · P2 · open</text>
+      <text x="450" y="355" text-anchor="middle" font-size="12" fill="var(--done)" font-weight="600">medium · P2 · fixed</text>
     </g>
   </svg>
-  <div class="note">Aresta tracejada: relação proposta (hipótese), fora de priorização automática.</div>
+  <div class="note">Arestas contínuas: relações confirmadas pela investigação (supported). Nós verdes: resolvidos e travados por DONE.md.</div>
 </div>
 
 <div class="card">
-  <h2 style="font-size:1.05rem; margin-top:0;">Bugs abertos (3)</h2>
+  <h2 style="font-size:1.05rem; margin-top:0;">Bugs abertos (0)</h2>
+  <div class="note">Nenhum bug aberto neste contexto.</div>
+</div>
+
+<div class="card">
+  <h2 style="font-size:1.05rem; margin-top:0;">Resolvidos (3)</h2>
   <table>
-    <tr><th>#</th><th>ID</th><th>Título</th><th>Sev.</th><th>Pri.</th><th>Fase</th><th>Área/Módulo</th><th>Spec</th></tr>
+    <tr><th>#</th><th>ID</th><th>Título</th><th>Sev.</th><th>Pri.</th><th>Resolução</th><th>Veredito de spec</th></tr>
     <tr>
       <td>1</td><td><code>BUG-20260811-XZ3B</code></td>
       <td>Encerramento direto não deriva o índice de decisões nem a visão compacta</td>
-      <td class="sev medium">medium</td><td>P2</td><td>triaging</td>
-      <td>core / session</td><td>domain.md §2.26 (RN-N56)</td>
+      <td class="sev medium">medium</td><td>P2</td><td class="kind">fixed</td>
+      <td>spec-desatualizada (adendo v001)</td>
     </tr>
     <tr>
       <td>2</td><td><code>BUG-20260811-OYKV</code></td>
       <td>Memória por-projeto desatualizada reintroduz o ritual do vault abolido pela MD-0021</td>
-      <td class="sev low">low</td><td>P3</td><td>triaging</td>
-      <td>ambiente-operacional / memoria-por-projeto</td><td>spec-gap</td>
+      <td class="sev low">low</td><td>P3</td><td class="kind">data-repair</td>
+      <td>spec-gap (sem adendo)</td>
     </tr>
     <tr>
       <td>3</td><td><code>BUG-20260811-TVCP</code></td>
       <td>Wrapper local do upstream não ancora o cwd e o hook de SessionStart semeia .harness/ fora da raiz</td>
-      <td class="sev medium">medium</td><td>P2</td><td>triaging</td>
-      <td>base-instalada / bootstrap</td><td>shim-execution.md (020)</td>
+      <td class="sev medium">medium</td><td>P2</td><td class="kind">fixed</td>
+      <td>spec-gap (adendo aditivo v001)</td>
     </tr>
   </table>
 </div>
 
 <div class="card">
-  <h2 style="font-size:1.05rem; margin-top:0;">Travados por DONE.md (0)</h2>
-  <div class="note">Nenhum bug travado neste contexto.</div>
+  <h2 style="font-size:1.05rem; margin-top:0;">Travados por DONE.md (3)</h2>
+  <div class="note">Os três bugs receberam a trava em 2026-08-11 e as pastas são somente leitura.
+  Reabertura: remover a trava conscientemente ou registrar bug novo com <code>regression-of</code>.</div>
 </div>
 </body>
 </html>

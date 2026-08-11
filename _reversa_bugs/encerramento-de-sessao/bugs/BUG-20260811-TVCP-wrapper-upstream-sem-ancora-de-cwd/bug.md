@@ -3,8 +3,8 @@ schema_version: 1
 id: BUG-20260811-TVCP
 display_number: 3
 title: Wrapper local do upstream não ancora o cwd e o hook de SessionStart semeia .harness/ fora da raiz
-status: open
-phase: triaging
+status: resolved
+phase: resolved
 severity: medium
 priority: P2
 created: 2026-08-11
@@ -33,8 +33,12 @@ blocking: []
 relationships:
   - type: related-to
     target: BUG-20260811-XZ3B
-    state: proposed
-    note: "mesma família de defeitos de borda do ciclo de sessão; descoberto durante a correção do XZ3B"
+    state: supported
+    note: >-
+      mesma família de defeitos de borda do ciclo de sessão; descoberto durante a
+      correção do XZ3B. Promovida de proposed a supported no fix: a investigação
+      confirmou o vínculo causal do episódio (o SessionStart do compact disparou
+      durante a sessão de correção do XZ3B e semeou o artefato espúrio).
 
 traceability:
   specs:
@@ -43,18 +47,35 @@ traceability:
     - "harness (wrapper local da raiz do upstream, sem cd para o próprio diretório)"
     - ".harness/harness-core/src/main.py (resolução de caminhos por os.getcwd())"
     - ".claude/settings.json (hook SessionStart com matcher compact, MD-0024)"
-  root_cause: null
-  reproduction_tests: []
-  regression_tests: []
+  root_cause:
+    state: confirmed
+    statement: >-
+      O wrapper local ./harness do upstream é anterior à feature 020 e nunca
+      recebeu a âncora cd "$SCRIPT_DIR" que o render_shim() emite para os
+      projetos-alvo; era o único executável da base sem âncora, e o core resolve
+      todos os caminhos por os.getcwd().
+    evidence:
+      - "evidence/estado-espurio-harness-core.md (artefato semeado pelo hook)"
+      - "evidence/reproduction.md (vermelho provado contra o wrapper antigo)"
+  reproduction_tests:
+    - "tests/test_shim.py::test_wrapper_local_do_upstream_ancora_o_cwd (vermelho contra git show 39ccdd4:harness)"
+  regression_tests:
+    - "tests/test_shim.py::test_wrapper_local_do_upstream_ancora_o_cwd (permanente na suíte; executa os bytes reais do wrapper de uma subpasta)"
 
-spec_verdict: null
+spec_verdict: spec-gap  # adendo aditivo: _reversa_sdd/addenda/bug-BUG-20260811-TVCP-v001.md
 
-change_set: []
+change_set:
+  - id: CHG-001
+    kind: code
+    ref: "fix/CHG-001-md0027-ancora-wrapper.diff (commit 8b3533f, MD-0027)"
+  - id: CHG-002
+    kind: specification
+    ref: "_reversa_sdd/addenda/bug-BUG-20260811-TVCP-v001.md"
 
 closure:
   policy: local-software
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+resolution_kind: fixed
 ---
 
 # Wrapper local do upstream não ancora o cwd e o hook de SessionStart semeia .harness/ fora da raiz
@@ -146,3 +167,28 @@ a âncora é responsabilidade de quem invoca.
   **spec-gap parcial** — o contrato de âncora existia na 020 para o shim dos
   projetos-alvo, o wrapper local ficou fora da letra.
   Os campos de closure/resolution ficam intactos para o fix formal.
+
+## Resolution
+
+Fechado em 2026-08-11 pelo ciclo formal do `/reversa-debugger-fix` (plano retroativo
+aprovado pelo usuário; correção implementada no mesmo dia pelo fluxo de TDD direto).
+
+- **Causa raiz (confirmed):** o wrapper local do upstream, anterior à 020, nunca recebeu
+  a âncora de cwd que o `render_shim()` emite; era o único executável da base sem âncora.
+  O gatilho que expôs foi o matcher `compact` do SessionStart (MD-0024) herdando o cwd
+  do shell da sessão.
+- **Veredito de spec (aprovado pelo usuário): spec-gap (parcial).** O contrato de âncora
+  existia só para o shim dos projetos-alvo; adendo ADITIVO estende a letra a todo
+  executável que invoque o core: `_reversa_sdd/addenda/bug-BUG-20260811-TVCP-v001.md`.
+- **resolution_kind:** fixed.
+
+| CHG | Tipo | Artefato | Commit |
+|-----|------|----------|--------|
+| CHG-001 | code | `harness` (âncora `cd "$SCRIPT_DIR" \|\| exit 1`) + teste-guarda em `test_shim.py` | `8b3533f` (MD-0027) |
+| CHG-002 | specification | adendo `bug-BUG-20260811-TVCP-v001.md` | este fechamento |
+
+Diff completo em `fix/`. **Prova vermelho→verde:** teste-guarda FALHOU contra o wrapper
+antigo (`git show 39ccdd4:harness` restaurado no lugar) e passa com o corrigido; verde
+final `405 passed in 22.28s` (2026-08-11, exit 0), CI verde em 3.12/3.13 no commit
+`8b3533f`. Closure policy `local-software` satisfeita: regressão passando + veredito
+aprovado. Relação com o XZ3B promovida a `supported` (episódio confirmado).
