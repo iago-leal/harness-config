@@ -1,12 +1,13 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/027-exportador-kanban",
-  "feature-id": "027",
-  "short-name": "exportador-kanban",
-  "started-at": "2026-08-11T13:00:21.110752+00:00",
-  "current-stage": "done",
+  "feature-dir": "_reversa_forward/028-indice-decisoes-sob-demanda",
+  "feature-id": "028",
+  "short-name": "indice-decisoes-sob-demanda",
+  "started-at": "2026-08-11T14:44:12+00:00",
+  "current-stage": "coding",
   "stages-completed": [
     "requirements",
+    "clarify",
     "plan",
     "to-do",
     "coding"
