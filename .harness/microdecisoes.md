@@ -46,8 +46,10 @@
 - **MD-0021** — Abandono da atualização do vault Obsidian no encerramento de sessão
   ↳ relaciona MD-0017
 - **MD-0022** — Visão compacta de decisões no SessionStart: índice completo vira consulta sob demanda
-  ↳ refina MD-0002, relaciona MD-0019 · refinado-por MD-0023
+  ↳ refina MD-0002, relaciona MD-0019 · refinado-por MD-0023 · refinado-por MD-0025
 - **MD-0023** — MCP `process_decisions` também deriva a visão compacta (fecha G-20/T8)
-  ↳ refina MD-0022, relaciona MD-0013
+  ↳ refina MD-0022, relaciona MD-0013 · relacionado-com MD-0025
 - **MD-0024** — SessionStart também dispara no compact (reabertura da sessão na mesma conversa)
   ↳ relaciona MD-0017, relaciona MD-0011
+- **MD-0025** — Encerramento de sessão também deriva as duas visões de decisões (fecha BUG-20260811-XZ3B)
+  ↳ refina MD-0022, relaciona MD-0023

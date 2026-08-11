@@ -19,6 +19,7 @@ HEAD = "b" * 40
 STATE_FILE = ".harness/estado-da-sessao.md"
 INDEX_FILE = ".harness/microdecisoes.md"
 HEADER_FILE = ".harness/decisoes/_cabecalho.md"
+COMPACT_FILE = ".harness/decisoes-recentes.md"
 
 
 class GateGit:
@@ -81,8 +82,13 @@ def test_ficha_suja_nao_commitada_satisfaz():
 
 
 def test_so_artefatos_do_harness_nao_e_pendente():
-    # Estado de sessão, índice derivado e cabeçalho não são trabalho substantivo.
-    verdict = _evaluate(GateGit(changed=[STATE_FILE, INDEX_FILE, HEADER_FILE]))
+    # Estado de sessão, visões derivadas (índice E compacta) e cabeçalho não
+    # são trabalho substantivo. A compacta entrou na MD-0025: sem a exclusão,
+    # a derivação da borda de encerramento disparava DECISAO_PENDENTE espúrio
+    # por um arquivo que o próprio harness escreveu.
+    verdict = _evaluate(
+        GateGit(changed=[STATE_FILE, INDEX_FILE, HEADER_FILE, COMPACT_FILE])
+    )
     assert verdict.pendente is False
     assert verdict.mudancas == []
 

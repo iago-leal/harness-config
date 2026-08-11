@@ -876,3 +876,129 @@ def test_marker_nao_versionado_sai_depois_do_sucesso_e_antes_das_ofertas():
     )
     idx_oferta = next(i for i, o in enumerate(outs) if "SENTINELA_OFERTAS" in o)
     assert idx_sucesso < idx_marker < idx_oferta
+
+
+# --- Derivação das visões de decisões no encerramento (MD-0025, RN-N56) ---
+#
+# A borda de encerramento é uma passada sobre o acervo como as demais (CLI
+# `decisions`, ponte Antigravity, MCP): índice completo e visão compacta saem
+# derivados na MESMA passada, write-only-when-changed, sem jamais bloquear o
+# fechamento (mesma disciplina não-bloqueante das ofertas).
+
+DECISIONS_DIR = ".harness/decisoes"
+INDEX_FILE = ".harness/microdecisoes.md"
+COMPACT_FILE = ".harness/decisoes-recentes.md"
+
+FICHA_VALIDA = """---
+id: MD-0001
+gancho: teste
+relacoes: []
+estado: ativo
+---
+
+# MD-0001 — Decisão de teste do encerramento
+
+- **D:** decidiu-se algo.
+- **PORQUÊ:** por um motivo.
+- **DESCARTADO:** a alternativa.
+- **ESTADO:** ativo.
+"""
+
+
+class ListingFS(MockFileSystem):
+    """MockFileSystem com list_dir funcional: o load_decisions precisa
+    enxergar as fichas gravadas sob o diretório de decisões."""
+
+    def list_dir(self, path: str) -> list[str]:
+        prefix = path.rstrip("/") + "/"
+        names = set()
+        for p in set(self.written_files) | set(self.existing_files):
+            if p.startswith(prefix):
+                rest = p[len(prefix):]
+                if "/" not in rest:
+                    names.add(rest)
+        return sorted(names)
+
+
+def _seed_ficha(fs, content=FICHA_VALIDA):
+    fs.existing_files.add(DECISIONS_DIR)
+    fs.write_file(f"{DECISIONS_DIR}/_cabecalho.md", "# Índice de Microdecisões\n")
+    fs.write_file(f"{DECISIONS_DIR}/MD-0001.md", content)
+
+
+def test_encerramento_deriva_ambas_as_visoes_de_decisoes():
+    fs = ListingFS()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git)
+    _seed_ficha(fs)
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, _ = _run(flow)
+
+    assert code == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    index = fs.written_files.get(INDEX_FILE, "")
+    compact = fs.written_files.get(COMPACT_FILE, "")
+    assert "MD-0001" in index
+    assert "- **MD-0001** — Decisão de teste do encerramento" in compact
+
+
+def test_erro_de_integridade_avisa_e_nao_deriva_nem_bloqueia():
+    # Semântica da borda CLI menos o abort: com o grafo quebrado, avisa em
+    # stderr e NÃO regrava as visões (evita visão derivada de acervo inválido),
+    # mas o fechamento segue.
+    fs = ListingFS()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git)
+    _seed_ficha(fs, content="---\nid: MD-0001\ngancho: t\n---\n\nsem H1 nem seções\n")
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, errs = _run(flow)
+
+    assert code == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    assert any("integridade" in e for e in errs)
+    assert INDEX_FILE not in fs.written_files
+    assert COMPACT_FILE not in fs.written_files
+
+
+def test_falha_na_derivacao_nao_bloqueia_o_encerramento():
+    # Não-bloqueante como as ofertas (RN-01/02): exceção interna vira aviso em
+    # stderr; o fechamento nunca é sacrificado pela derivação.
+    fs = ListingFS()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git)
+    _seed_ficha(fs, content="---\n:::yaml quebrado\n---\n\ncorpo\n")
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, errs = _run(flow)
+
+    assert code == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    # Substring exclusiva do ramo de exceção (o ramo de integridade avisa
+    # "não derivadas"): garante que é o except que este teste exercita.
+    assert any("falhou (não-bloqueante)" in e for e in errs)
+    assert INDEX_FILE not in fs.written_files
+    assert COMPACT_FILE not in fs.written_files
+
+
+def test_acervo_sem_fichas_nao_deriva_nada():
+    # O init cria `decisions.dir` (com `_cabecalho.md`) em TODO projeto, então
+    # a fronteira do no-op é o acervo sem fichas, não o diretório ausente:
+    # projeto que nunca registrou decisão não ganha visões inventadas no
+    # fechamento (nem sobrescrito o placeholder do init). A compilação com
+    # acervo vazio fica reservada à invocação explícita da CLI `decisions`.
+    fs = ListingFS()
+    git = FakeGit(dirty=[])
+    _seed_active_session(fs, git)
+    fs.existing_files.add(DECISIONS_DIR)
+    fs.write_file(f"{DECISIONS_DIR}/_cabecalho.md", "# Índice de Microdecisões\n")
+    flow = SpyFlow(fs, git, MagicMock())
+
+    code, outs, errs = _run(flow)
+
+    assert code == 0
+    assert any("Sessão encerrada com sucesso" in o for o in outs)
+    assert INDEX_FILE not in fs.written_files
+    assert COMPACT_FILE not in fs.written_files
+    assert errs == []

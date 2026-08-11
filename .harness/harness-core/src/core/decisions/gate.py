@@ -85,6 +85,7 @@ def evaluate_registration_gate(git, repo_path: str, session, config) -> GateVerd
         config.session.state_file,
         config.decisions.index_file,
         config.decisions.header_file,
+        config.decisions.compact_file,
     }
     dir_prefix = config.decisions.dir.rstrip("/") + "/"
     fichas = [

@@ -412,6 +412,13 @@ class SessionCloseFlow:
             return self._abort_malformed(session_file, exc, err)
 
         if sessao_existente is not None:
+            # Derivação das duas visões de decisões (MD-0025, RN-N56): a borda
+            # de encerramento também é uma passada sobre o acervo, como CLI,
+            # ponte Antigravity e MCP. Roda ANTES do 1º portão: uma visão
+            # regravada aqui vira trabalho pendente e entra na disciplina de
+            # consentimento (024), em vez de sujar a árvore depois do fechamento.
+            self._derive_decision_views(config, err)
+
             # 1º portão — trabalho pendente (016/019), agora consentido (024/RN-06).
             # No terminal, o core anuncia e pergunta o DESFECHO ("encerrar mesmo
             # assim?"); sem terminal, emite o marker e a autorização só vem da flag
@@ -539,6 +546,48 @@ class SessionCloseFlow:
                 is_interactive=is_interactive,
             )
         return 0
+
+    def _derive_decision_views(self, config, err) -> None:
+        """Deriva índice completo + visão compacta na mesma passada (RN-N56).
+
+        Estritamente não-bloqueante, como as ofertas: erro de integridade ou
+        falha interna vira aviso em stderr e o encerramento segue. Com o grafo
+        inválido, as visões NÃO são regravadas (semântica da borda CLI menos o
+        abort): visão derivada de acervo quebrado seria pior que visão velha.
+        """
+        try:
+            from src.core.decisions.service import DecisionService
+
+            service = DecisionService(self.fs)
+            decisions = service.load_decisions(config.decisions.dir)
+            # Sem fichas, sem derivação: o init cria `decisions.dir` em todo
+            # projeto, então o critério é o acervo vazio — projeto que nunca
+            # registrou decisão não ganha visões inventadas no fechamento (a
+            # borda CLI, invocada explicitamente, continua compilando mesmo
+            # com acervo vazio).
+            if not decisions:
+                return
+            errors = service.validate_integrity(decisions)
+            if errors:
+                err(
+                    "Aviso: visões de decisões não derivadas no encerramento "
+                    "(erros de integridade no grafo):"
+                )
+                for e in errors:
+                    err(f" - {e}")
+                return
+            service.compile_index(
+                decisions, config.decisions.index_file, config.decisions.header_file
+            )
+            service.compile_compact_view(
+                decisions,
+                config.decisions.compact_file,
+                config.decisions.index_file,
+                config.decisions.dir,
+                config.decisions.compact_index_size,
+            )
+        except Exception as exc:
+            err(f"Aviso: derivação das visões de decisões falhou (não-bloqueante): {exc}")
 
     @staticmethod
     def _resolve_versionar_encerramento(

@@ -1193,3 +1193,72 @@ def test_progress_sem_optin_nao_cria_board(tmp_path):
     assert not (tmp_path / ".vscode").exists()
     md = (tmp_path / ".harness" / "progresso.md").read_text()
     assert "Demandas do board" not in md
+
+
+def test_encerrar_deriva_visoes_com_git_real(tmp_path):
+    # MD-0025 com git de verdade e âncora real (os demais smokes usam âncora
+    # inexistente e repo sem acervo, que silenciam a derivação e o 3º portão):
+    # ficha commitada com visões defasadas → 1ª passada deriva as duas visões e
+    # bounça no 1º portão SÓ por elas; commitadas, a 2ª passada fecha sem
+    # DECISAO_PENDENTE (a compacta está excluída do gate) e as visões terminam
+    # coerentes com o acervo.
+    main_path, python_bin = _harness_cli_paths()
+    _seed_session_repo(tmp_path, "0" * 40, "active")
+    decisoes = tmp_path / ".harness" / "decisoes"
+    decisoes.mkdir(parents=True, exist_ok=True)
+    (decisoes / "_cabecalho.md").write_text("# Índice de Microdecisões\n")
+    (decisoes / "MD-0001.md").write_text(
+        "---\nid: MD-0001\ngancho: smoke\nrelacoes: []\nestado: ativo\n---\n\n"
+        "# MD-0001 — Decisão de fumaça\n\n"
+        "- **D:** algo.\n- **PORQUÊ:** motivo.\n"
+        "- **DESCARTADO:** alternativa.\n- **ESTADO:** ativo.\n"
+    )
+    subprocess.run(["git", "add", "-A"], cwd=str(tmp_path), capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "seed"], cwd=str(tmp_path), capture_output=True
+    )
+    ancora = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=str(tmp_path), capture_output=True, text=True
+    ).stdout.strip()
+    estado = tmp_path / ".harness" / "estado-da-sessao.md"
+    estado.write_text(
+        f"---\ncommit: {ancora}\nfeature: feat-1\n"
+        "start_time: 2026-06-01T10:00:00+00:00\nstatus: active\n---\n\n"
+        "## O que foi feito\n- consolidou o trabalho da sessão\n"
+    )
+    subprocess.run(
+        ["git", "commit", "-am", "estado"], cwd=str(tmp_path), capture_output=True
+    )
+
+    # 1ª passada: deriva as visões, que viram trabalho pendente — e nada mais.
+    primeira = subprocess.run(
+        [python_bin, main_path, "cmd", "encerrar-sessao", "--com-commit-encerramento"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+    assert primeira.returncode == 0
+    assert "[HARNESS:COMMIT_PENDENTE" in primeira.stdout
+    assert ".harness/decisoes-recentes.md" in primeira.stdout
+    assert ".harness/microdecisoes.md" in primeira.stdout
+    assert 'total=2' in primeira.stdout
+
+    subprocess.run(["git", "add", "-A"], cwd=str(tmp_path), capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "visoes"], cwd=str(tmp_path), capture_output=True
+    )
+
+    # 2ª passada: derivação idempotente, gate satisfeito, fechamento completo.
+    segunda = subprocess.run(
+        [python_bin, main_path, "cmd", "encerrar-sessao", "--com-commit-encerramento"],
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+    assert segunda.returncode == 0
+    assert "Sessão encerrada com sucesso" in segunda.stdout
+    assert "[HARNESS:DECISAO_PENDENTE" not in segunda.stdout
+    assert "MD-0001" in (tmp_path / ".harness" / "microdecisoes.md").read_text()
+    assert "- **MD-0001** — Decisão de fumaça" in (
+        tmp_path / ".harness" / "decisoes-recentes.md"
+    ).read_text()
