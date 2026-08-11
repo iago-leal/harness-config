@@ -1,0 +1,12 @@
+{"ts":"2026-08-11T09:52:00-03:00","action":"T001","status":"done","files":[],"nota":"linha de base: 320 passed"}
+{"ts":"2026-08-11T09:56:00-03:00","action":"T002","status":"done","files":[".harness/harness-core/tests/test_cli.py"],"nota":"3 cenários retargetados; vermelho confirmado (3 failed)"}
+{"ts":"2026-08-11T09:58:00-03:00","action":"T003","status":"done","files":[".harness/harness-core/src/main.py"],"nota":"block JSON → advisory stderr; persistência/reindex/fail-open/exit 0 intactos"}
+{"ts":"2026-08-11T10:01:00-03:00","action":"T002","status":"corrected","files":[".harness/harness-core/tests/test_cli.py"],"nota":"as-built: informativos da reindexação já saem em stderr sob --gate; asserções de silêncio viram ausência do marker DECISAO_PENDENTE"}
+{"ts":"2026-08-11T10:02:00-03:00","action":"T004","status":"done","files":[],"nota":"320 passed; teste-guarda do portão intocado"}
+{"ts":"2026-08-11T10:04:00-03:00","action":"T005","status":"done","files":[".harness/harness-core/src/core/domain/config.py"],"nota":"version 2.2.0 → 2.3.0; suíte verde"}
+{"ts":"2026-08-11T10:08:00-03:00","action":"T006","status":"done","files":[],"nota":"smoke em repo git descartável: stdout vazio, advisory único, 2ª rodada sem marker, portão ainda bloqueia (status: active); shim reportou v2.3.0 sem reinstalação"}
+{"ts":"2026-08-11T10:12:00-03:00","action":"T007","status":"done","files":[".harness/harness-core/src/main.py",".harness/harness-core/src/core/domain/config.py"],"nota":"helps do argparse e comentário da DecisionsSection atualizados; gate.py preservado (escopo negativo); suíte verde"}
+{"ts":"2026-08-11T10:18:00-03:00","action":"T008","status":"done","files":[".harness/decisoes/MD-0018.md",".harness/microdecisoes.md"],"nota":"grafo validado; vocabulário fixo de relações exigiu substitui/refina no lugar de reverte-parcialmente"}
+{"ts":"2026-08-11T10:22:00-03:00","action":"T009","status":"done","files":["_reversa_forward/025-aposentar-soft-block-stop/regression-watch.md"],"nota":"6 watch items novos + tabela de supersessões (022/W005, 023/W002, 023/W004)"}
+{"ts":"2026-08-11T10:24:00-03:00","action":"T010","status":"done","files":["_reversa_forward/025-aposentar-soft-block-stop/legacy-impact.md"],"nota":"5 arquivos mapeados; escopo negativo conferido no diff"}
+{"ts":"2026-08-11T10:25:00-03:00","action":"T011","status":"done","files":["_reversa_forward/025-aposentar-soft-block-stop/regression-watch.md"],"nota":"pendência de reconciliação do _reversa_sdd registrada (RN-N44, code-analysis §11), junto à dívida da RN-N31 (MD-0017)"}

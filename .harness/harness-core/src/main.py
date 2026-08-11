@@ -102,16 +102,16 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Valida e indexa microdecisões Markdown. Com --gate (hook Stop do "
             "Claude), também avalia pendência de registro: trabalho substantivo "
-            "sem ficha MD-NNNN gera um soft-block JSON único por estado de "
-            "pendência (desativável por decisions.require_registration)."
+            "sem ficha MD-NNNN gera um aviso em stderr, único por sessão, sem "
+            "bloquear o turno (desativável por decisions.require_registration)."
         ),
     )
     parser_decisions.add_argument(
         "--gate",
         action="store_true",
         help=(
-            "Modo hook Stop: informativos vão para stderr e o stdout fica "
-            "reservado ao JSON do lembrete de registro (exit 0 sempre)."
+            "Modo hook Stop: toda a saída (informativos e o aviso de registro) "
+            "vai para stderr; o stdout fica sempre vazio (exit 0 sempre)."
         ),
     )
 
@@ -260,6 +260,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Apenas relata o que faria (espaço a liberar, ações), sem escrever nem remover",
     )
 
+    # 13. Comando: progress (feature 026)
+    parser_progress = subparsers.add_parser(
+        "progress",
+        help=(
+            "Mede o progresso dos entregáveis (ciclo forward + harness) e regrava "
+            "o artefato derivado quando o estado mudou"
+        ),
+    )
+    grupo_progress = parser_progress.add_mutually_exclusive_group()
+    grupo_progress.add_argument(
+        "--json",
+        dest="json_mode",
+        action="store_true",
+        help="Emite a medição em JSON no stdout (com aferido_em), sem tocar o artefato",
+    )
+    grupo_progress.add_argument(
+        "--em-hook",
+        dest="em_hook",
+        action="store_true",
+        help=(
+            "Modo pre-commit: regrava o artefato defasado e falha (exit 1) para o "
+            "commit incluí-lo; alerta grave vira aviso, nunca bloqueio"
+        ),
+    )
+
     return parser
 
 
@@ -372,9 +397,11 @@ def main():
             if not gate_mode:
                 sys.exit(1)
 
-        # Gate de registro (022, D-04): lembrete como soft-block JSON, no máximo
-        # UM por sessão (023: identidade grossa — a âncora — persistida no
-        # estado; a identidade fina fica com o portão do encerramento).
+        # Gate de registro (022→025): advisory em stderr, no máximo UM por
+        # sessão (023: identidade grossa — a âncora — persistida no estado; a
+        # identidade fina fica com o portão do encerramento). O stdout fica
+        # sempre vazio: nenhum JSON de controle alcança o runner de hooks
+        # (MD-0018 aposentou o soft-block das MD-0015/0016).
         # Qualquer falha interna avisa em stderr e libera o turno.
         try:
             from src.core.decisions.gate import evaluate_registration_gate
@@ -396,18 +423,14 @@ def main():
                 ):
                     session.gate_lembrete_fingerprint = verdict.fingerprint_lembrete
                     cmd_service.save_session(config.session.state_file, session)
-                    reason = (
-                        render_decisao_pendente_marker(verdict.mudancas)
+                    aviso = (
+                        "Aviso: "
+                        + render_decisao_pendente_marker(verdict.mudancas)
                         + " Registre a decisão como ficha MD-NNNN em "
                         + f"{decisoes_dir}/ (ou declare a ausência ao encerrar "
-                        "com --sem-decisao) e conclua o turno."
+                        "com --sem-decisao)."
                     )
-                    print(
-                        json.dumps(
-                            {"decision": "block", "reason": reason},
-                            ensure_ascii=False,
-                        )
-                    )
+                    print(aviso, file=sys.stderr)
         except Exception as e:
             print(
                 f"Aviso: gate de registro (não-bloqueante) falhou: {e}",
@@ -657,6 +680,82 @@ def main():
         print(
             f"{prefixo}{len(results)} instalação(ões) avaliada(s); {migrated} migrada(s)."
         )
+        sys.exit(0)
+
+    elif args.command == "progress":
+        from datetime import datetime
+
+        from src.core.progress.render import render_json, render_markdown
+        from src.core.progress.service import ProgressService
+
+        medicao = ProgressService(fs, git).measure(os.getcwd(), config)
+        for aviso in medicao.avisos:
+            print(f"Aviso: {aviso}", file=sys.stderr)
+        if medicao.falhas:
+            # Falha REAL de leitura (fonte presente mas ilegível): não regrava o
+            # artefato, para não sobrescrever medição boa com medição degradada.
+            for falha in medicao.falhas:
+                print(f"Erro de leitura: {falha}", file=sys.stderr)
+            sys.exit(2)
+
+        if args.json_mode:
+            print(render_json(medicao, datetime.now().astimezone().isoformat()))
+            sys.exit(0)
+
+        target = config.progress.file
+        novo = render_markdown(medicao)
+        atual = fs.read_file(target) if fs.exists(target) else None
+
+        if args.em_hook:
+            if atual is None and not fs.exists(".reversa"):
+                # Instalação sem Reversa e sem artefato prévio: nada a vigiar.
+                sys.exit(0)
+            if novo != atual:
+                pai = os.path.dirname(target)
+                if pai and not fs.exists(pai):
+                    fs.makedirs(pai)
+                fs.write_file_atomic(target, novo)
+                print(
+                    f"{target} estava defasado e foi regravado. Confira e repita "
+                    f"o commit: git add {target} && git commit",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+            for alerta in medicao.alertas:
+                if alerta.severidade == "alta":
+                    print(
+                        f"Aviso: [{alerta.severidade}] {alerta.origem}: "
+                        f"{alerta.mensagem}",
+                        file=sys.stderr,
+                    )
+            sys.exit(0)
+
+        if novo != atual:
+            pai = os.path.dirname(target)
+            if pai and not fs.exists(pai):
+                fs.makedirs(pai)
+            fs.write_file_atomic(target, novo)
+            print(f"{target} regravado.")
+        else:
+            print(f"{target} já estava em dia.")
+
+        if medicao.board_habilitado:
+            # Exportador kanban (027): segundo artefato derivado, só no modo
+            # padrão e por opt-in. Board ilegível nunca chega aqui — vira
+            # falha real na medição e o comando já saiu com 2 lá em cima.
+            from src.core.progress.kanban import render_board
+
+            board_path = config.progress.kanban.file
+            board_atual = fs.read_file(board_path) if fs.exists(board_path) else None
+            board_novo = render_board(medicao, board_atual)
+            if board_novo != board_atual:
+                pai = os.path.dirname(board_path)
+                if pai and not fs.exists(pai):
+                    fs.makedirs(pai)
+                fs.write_file_atomic(board_path, board_novo)
+                print(f"{board_path} regravado.")
+            else:
+                print(f"{board_path} já estava em dia.")
         sys.exit(0)
 
     elif args.command == "agy-hook":

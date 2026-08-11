@@ -838,24 +838,29 @@ def _run_decisions(tmp_path, *extra):
     )
 
 
-def test_decisions_gate_pendencia_emite_json_de_bloqueio_uma_vez(tmp_path):
+def test_decisions_gate_pendencia_emite_advisory_em_stderr_uma_vez(tmp_path):
+    # 025: o soft-block foi aposentado; stdout nunca carrega JSON de controle
+    # e o aviso migra para stderr, invisível ao runner de hooks (MD-0018).
     _gate_repo(tmp_path)
     (tmp_path / "notas-contrato.md").write_text("mudança substantiva")
 
     result = _run_decisions(tmp_path, "--gate")
 
     assert result.returncode == 0
-    payload = json.loads(result.stdout)  # stdout é SÓ o JSON do hook
-    assert payload["decision"] == "block"
-    assert "DECISAO_PENDENTE" in payload["reason"]
+    assert result.stdout.strip() == ""  # stdout SEMPRE vazio no --gate
+    assert "Aviso: [HARNESS:DECISAO_PENDENTE" in result.stderr
+    assert "--sem-decisao" in result.stderr
     # O fingerprint do lembrete ficou persistido no estado de sessão.
     estado = (tmp_path / ".harness" / "estado-da-sessao.md").read_text()
     assert "gate_lembrete_fingerprint" in estado
 
-    # Mesmo estado de pendência → nunca lembra duas vezes (anti-loop, D-04).
+    # Mesmo estado de pendência → nunca avisa duas vezes (anti-ruído, D-02).
+    # O stderr pode carregar linhas informativas da reindexação; o que não
+    # pode reaparecer é o advisory.
     de_novo = _run_decisions(tmp_path, "--gate")
     assert de_novo.returncode == 0
     assert de_novo.stdout.strip() == ""
+    assert "DECISAO_PENDENTE" not in de_novo.stderr
 
 
 def test_decisions_gate_sem_pendencia_stdout_vazio(tmp_path):
@@ -905,21 +910,24 @@ def test_decisions_gate_desligado_por_config(tmp_path):
 
 
 def test_decisions_gate_arquivo_novo_nao_rearma_lembrete(tmp_path):
-    # Teste-queixa da 023: antes, cada arquivo tocado mudava o fingerprint fino
-    # e rearmava o soft-block; a identidade do lembrete agora é a âncora.
+    # Teste-queixa da 023 (mantido na 025): a identidade do advisory é a
+    # âncora; arquivo novo não rearma o aviso dentro da mesma sessão.
     _gate_repo(tmp_path)
     (tmp_path / "um.md").write_text("mudança")
     primeiro = _run_decisions(tmp_path, "--gate")
-    assert json.loads(primeiro.stdout)["decision"] == "block"
+    assert primeiro.stdout.strip() == ""
+    assert "DECISAO_PENDENTE" in primeiro.stderr
 
     (tmp_path / "dois.md").write_text("outra mudança")
     segundo = _run_decisions(tmp_path, "--gate")
     assert segundo.returncode == 0
     assert segundo.stdout.strip() == ""
+    assert "DECISAO_PENDENTE" not in segundo.stderr
 
     (tmp_path / "tres.md").write_text("mais uma")
     terceiro = _run_decisions(tmp_path, "--gate")
     assert terceiro.stdout.strip() == ""
+    assert "DECISAO_PENDENTE" not in terceiro.stderr
 
 
 def test_decisions_gate_persiste_identidade_grossa(tmp_path):
@@ -935,8 +943,8 @@ def test_decisions_gate_persiste_identidade_grossa(tmp_path):
 
 
 def test_decisions_gate_formato_antigo_transiciona_com_um_lembrete(tmp_path):
-    # RF-05 da 023: valor fino da 022 gravado no estado → exatamente 1 bloqueio
-    # pós-atualização (transição autoresolvente), depois silêncio.
+    # RF-05 da 023 (mantido na 025): valor fino da 022 gravado no estado →
+    # exatamente 1 advisory pós-atualização (transição autoresolvente).
     _gate_repo(tmp_path)
     estado_path = tmp_path / ".harness" / "estado-da-sessao.md"
     estado_path.write_text(
@@ -948,10 +956,12 @@ def test_decisions_gate_formato_antigo_transiciona_com_um_lembrete(tmp_path):
     (tmp_path / "um.md").write_text("mudança")
 
     primeiro = _run_decisions(tmp_path, "--gate")
-    assert json.loads(primeiro.stdout)["decision"] == "block"
+    assert primeiro.stdout.strip() == ""
+    assert "DECISAO_PENDENTE" in primeiro.stderr
 
     segundo = _run_decisions(tmp_path, "--gate")
     assert segundo.stdout.strip() == ""
+    assert "DECISAO_PENDENTE" not in segundo.stderr
 
 
 def test_decisions_sem_gate_preserva_saida_humana(tmp_path):
@@ -964,3 +974,222 @@ def test_decisions_sem_gate_preserva_saida_humana(tmp_path):
     assert result.returncode == 0
     assert "Grafo de microdecisões validado" in result.stdout
     assert "decision" not in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# harness progress (feature 026): termômetro derivado de progresso
+# ---------------------------------------------------------------------------
+
+
+def _progress_repo(tmp_path, declarado="coding"):
+    """Projeto mínimo com ciclo forward: feature ativa em coding (1/2 ações)."""
+    reversa = tmp_path / ".reversa"
+    reversa.mkdir()
+    (reversa / "state.json").write_text(
+        json.dumps({"output_folder": "_reversa_sdd", "forward_folder": "_reversa_forward"})
+    )
+    (reversa / "active-requirements.json").write_text(
+        json.dumps(
+            {
+                "schema-version": 1,
+                "feature-dir": "_reversa_forward/026-x",
+                "feature-id": "026",
+                "short-name": "x",
+                "current-stage": declarado,
+                "paused-features": [],
+            }
+        )
+    )
+    fdir = tmp_path / "_reversa_forward" / "026-x"
+    fdir.mkdir(parents=True)
+    (fdir / "requirements.md").write_text("# r")
+    (fdir / "roadmap.md").write_text("# p")
+    (fdir / "actions.md").write_text(
+        "## Fase 1, Preparação\n\n"
+        "| ID | Descrição | Dependências | Paralelismo | Arquivo alvo | Confidência | Status |\n"
+        "|----|-----------|--------------|-------------|--------------|-------------|--------|\n"
+        "| T001 | a | - | - | `x` | 🟢 | `[X]` |\n"
+        "| T002 | b | - | - | `y` | 🟢 | `[ ]` |\n"
+    )
+    return fdir
+
+
+def _run_progress(tmp_path, *extra):
+    python_bin, main_path = _gate_paths()
+    return subprocess.run(
+        [python_bin, main_path, "progress", *extra],
+        input="",
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+
+def test_progress_padrao_regrava_e_depois_fica_em_dia(tmp_path):
+    _progress_repo(tmp_path)
+    alvo = tmp_path / ".harness" / "progresso.md"
+
+    primeiro = _run_progress(tmp_path)
+    assert primeiro.returncode == 0, primeiro.stderr
+    assert "regravado" in primeiro.stdout
+    assert alvo.exists()
+    bytes_1 = alvo.read_bytes()
+    assert b"coding-em-progresso" in bytes_1
+
+    segundo = _run_progress(tmp_path)
+    assert segundo.returncode == 0
+    assert "em dia" in segundo.stdout
+    assert alvo.read_bytes() == bytes_1
+
+
+def test_progress_json_parseavel_sem_tocar_arquivo(tmp_path):
+    _progress_repo(tmp_path)
+
+    result = _run_progress(tmp_path, "--json")
+
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert "aferido_em" in data
+    assert data["ativa"]["estagio_fisico"] == "coding-em-progresso"
+    assert not (tmp_path / ".harness" / "progresso.md").exists()
+
+
+def test_progress_em_hook_defasado_regrava_reprova_e_depois_passa(tmp_path):
+    _progress_repo(tmp_path)
+    alvo = tmp_path / ".harness" / "progresso.md"
+    _run_progress(tmp_path)
+    alvo.write_text(alvo.read_text() + "\nlinha espúria\n")
+
+    defasado = _run_progress(tmp_path, "--em-hook")
+    assert defasado.returncode == 1
+    assert "git add .harness/progresso.md" in defasado.stderr
+    assert "linha espúria" not in alvo.read_text()
+
+    em_dia = _run_progress(tmp_path, "--em-hook")
+    assert em_dia.returncode == 0
+    assert em_dia.stderr.strip() == ""
+
+
+def test_progress_em_hook_alerta_alto_nao_reprova(tmp_path):
+    # Divergência declarado×físico é alerta `alta`; com o arquivo em dia, o
+    # hook avisa em stderr e deixa o commit passar (contrato §5).
+    _progress_repo(tmp_path, declarado="requirements")
+    _run_progress(tmp_path)
+
+    result = _run_progress(tmp_path, "--em-hook")
+
+    assert result.returncode == 0
+    assert "Aviso" in result.stderr
+    assert "[alta]" in result.stderr
+
+
+def test_progress_flags_sao_mutuamente_exclusivas(tmp_path):
+    _progress_repo(tmp_path)
+    result = _run_progress(tmp_path, "--json", "--em-hook")
+    assert result.returncode == 2
+
+
+def test_progress_fonte_corrompida_e_exit_2_sem_gravar(tmp_path):
+    _progress_repo(tmp_path)
+    (tmp_path / ".reversa" / "active-requirements.json").write_text("{ não é json")
+
+    result = _run_progress(tmp_path)
+
+    assert result.returncode == 2
+    assert "Erro de leitura" in result.stderr
+    assert not (tmp_path / ".harness" / "progresso.md").exists()
+
+
+def test_progress_em_hook_instalacao_nova_sem_reversa_passa(tmp_path):
+    result = _run_progress(tmp_path, "--em-hook")
+    assert result.returncode == 0
+    assert not (tmp_path / ".harness" / "progresso.md").exists()
+
+
+def test_progress_modo_padrao_sem_reversa_grava_na(tmp_path):
+    result = _run_progress(tmp_path)
+    assert result.returncode == 0
+    conteudo = (tmp_path / ".harness" / "progresso.md").read_text()
+    assert "n/a" in conteudo
+
+
+# ---------------------------------------------------------------------------
+# harness progress + kanban (feature 027): exportador do board
+# ---------------------------------------------------------------------------
+
+
+def _kanban_repo(tmp_path):
+    fdir = _progress_repo(tmp_path)
+    (tmp_path / "harness.toml").write_text("[progress.kanban]\nenabled = true\n")
+    return fdir
+
+
+def test_progress_kanban_grava_board_e_fica_em_dia(tmp_path):
+    _kanban_repo(tmp_path)
+    board = tmp_path / ".vscode" / "vscode-kanban.json"
+
+    primeiro = _run_progress(tmp_path)
+    assert primeiro.returncode == 0, primeiro.stderr
+    assert ".vscode/vscode-kanban.json regravado" in primeiro.stdout
+    data = json.loads(board.read_text())
+    ids = [c["id"] for coluna in data.values() for c in coluna]
+    assert "hns:026" in ids and "hns:026:T001" in ids and "hns:026:T002" in ids
+    assert all(
+        c["category"] == "harness" for coluna in data.values() for c in coluna
+    )
+    bytes_1 = board.read_bytes()
+
+    segundo = _run_progress(tmp_path)
+    assert segundo.returncode == 0
+    assert ".vscode/vscode-kanban.json já estava em dia" in segundo.stdout
+    assert board.read_bytes() == bytes_1
+
+
+def test_progress_kanban_preserva_card_manual_que_vira_demanda(tmp_path):
+    _kanban_repo(tmp_path)
+    _run_progress(tmp_path)
+    board = tmp_path / ".vscode" / "vscode-kanban.json"
+    data = json.loads(board.read_text())
+    manual = {
+        "id": "99",
+        "title": "Nova demanda urgente",
+        "type": "note",
+        "prio": 0,
+        "creation_time": "2026-08-11T00:00:00.000Z",
+        "category": "medico",
+    }
+    data["todo"].append(manual)
+    board.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+    result = _run_progress(tmp_path)
+
+    assert result.returncode == 0, result.stderr
+    assert manual in json.loads(board.read_text())["todo"]
+    md = (tmp_path / ".harness" / "progresso.md").read_text()
+    assert "## Demandas do board" in md
+    assert "Nova demanda urgente" in md
+
+
+def test_progress_kanban_board_corrompido_exit_2_sem_regravar(tmp_path):
+    _kanban_repo(tmp_path)
+    _run_progress(tmp_path)
+    board = tmp_path / ".vscode" / "vscode-kanban.json"
+    md = tmp_path / ".harness" / "progresso.md"
+    md_bytes = md.read_bytes()
+    board.write_text("{ quebrado")
+
+    result = _run_progress(tmp_path)
+
+    assert result.returncode == 2
+    assert "Erro de leitura" in result.stderr
+    assert board.read_text() == "{ quebrado"
+    assert md.read_bytes() == md_bytes
+
+
+def test_progress_sem_optin_nao_cria_board(tmp_path):
+    _progress_repo(tmp_path)
+    result = _run_progress(tmp_path)
+    assert result.returncode == 0
+    assert not (tmp_path / ".vscode").exists()
+    md = (tmp_path / ".harness" / "progresso.md").read_text()
+    assert "Demandas do board" not in md

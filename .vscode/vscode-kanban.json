@@ -1,0 +1,201 @@
+{
+  "todo": [
+    {
+      "id": "hns:024",
+      "title": "024-oferta-commit-consentida — 27/28 ações",
+      "type": "note",
+      "prio": 1,
+      "creation_time": "2026-07-23T00:00:00-03:00",
+      "description": {
+        "content": "Feature pausada (estágio físico: coding-em-progresso).",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    }
+  ],
+  "in-progress": [
+    {
+      "id": "hns:027",
+      "title": "027-exportador-kanban — 14/14 ações",
+      "type": "note",
+      "prio": 1,
+      "creation_time": "2026-08-11T13:00:21.110752+00:00",
+      "description": {
+        "content": "Feature ativa (estágio físico: done).",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    }
+  ],
+  "testing": [],
+  "done": [
+    {
+      "id": "hns:027:T001",
+      "title": "T001 — Config: `ProgressKanbanSection(enabled=False, file=\".vscode/vscode-kanban.json\")` aninhada em `ProgressSection.kanban` (D-03; herança sem migração)",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:32:30Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 1, Preparação'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T002",
+      "title": "T002 — Scaffold: modelo `Demanda` + campo `Medicao.demandas` em `service.py`; stub `kanban.py` com assinaturas `extrair_manuais(board_json)` e `render_board(medicao, board_atual)` levantando NotImplementedError",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:32:30Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 1, Preparação'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T003",
+      "title": "T003 — Testes (red) de `kanban.py`: determinismo byte a byte, namespace `category==\"harness\"`, ids `hns:*`, mapeamento de colunas (D-05), `creation_time` derivado sem `now()` (D-06), merge preservando manuais byte a byte em qualquer coluna, `testing` sem card gerenciado",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:32:30Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 2, Testes'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T004",
+      "title": "T004 — Testes (red) do serviço/render: `demandas` extraídas de manuais não-`done` quando `enabled`; board não lido quando `enabled=False`; board ilegível → falha real; `## Demandas do board` no markdown (`- nenhuma` vazio); `demandas` no JSON",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:32:30Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 2, Testes'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T005",
+      "title": "T005 — Testes (red) da CLI em subprocesso: com `[progress.kanban].enabled=true` grava board e markdown; idempotência dupla; card manual sobrevive; board corrompido → exit 2 sem regravar nada; default desligado não cria board",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:32:30Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 2, Testes'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T006",
+      "title": "T006 — Implementar `kanban.py`: parser de manuais (posse por categoria) e `render_board` (mapeamento D-05, ids D-02, `creation_time` D-06, serialização estável)",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:32:30Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 3, Núcleo'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T007",
+      "title": "T007 — Serviço: quinta fonte condicionada à config (ler board só para manuais; `demandas` de colunas não-`done`; ilegível → `falhas`) (D-04)",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:32:30Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 3, Núcleo'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T008",
+      "title": "T008 — Render: seção `## Demandas do board` no markdown e exposição no JSON (D-08)",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:32:30Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 3, Núcleo'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T009",
+      "title": "T009 — Borda: no modo padrão do `progress`, com kanban habilitado, gravar o board (atômico, write-only-when-changed, `makedirs`, linha própria no stdout); falha real cobre board ilegível antes de qualquer escrita (D-07, D-09)",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:32:30Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 4, Integração'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T010",
+      "title": "T010 — Suíte completa verde + ruff nos arquivos tocados",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:32:30Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 4, Integração'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T011",
+      "title": "T011 — Smoke real neste repo: opt-in no `harness.toml`, exportar, conferir no fork (RF-06), card manual → demanda, re-exportação preservando, corromper e conferir exit 2",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:36:57Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 4, Integração'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T012",
+      "title": "T012 — Bump `version` 2.4.0 → 2.5.0 (D-10)",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:36:57Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 5, Polimento'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T013",
+      "title": "T013 — Ficha MD-0020 + recompilação do índice de decisões",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:36:57Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 5, Polimento'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    },
+    {
+      "id": "hns:027:T014",
+      "title": "T014 — Reconciliação as-built de `interfaces/kanban-board.md` e `onboarding.md` se o smoke divergir; regenerar `progresso.md` e board finais",
+      "type": "note",
+      "prio": 0,
+      "creation_time": "2026-08-11T13:36:57Z",
+      "description": {
+        "content": "Ação da feature `027-exportador-kanban`, fase 'Fase 5, Polimento'.",
+        "mime": "text/markdown"
+      },
+      "category": "harness"
+    }
+  ]
+}

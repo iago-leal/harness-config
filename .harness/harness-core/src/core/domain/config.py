@@ -10,7 +10,7 @@ class HarnessSection(BaseModel):
     upstream_path: Optional[str] = None
     # Manter o valor como LITERAL nesta linha: `_get_upstream_version` (012,
     # RN-03) lê a versão do upstream parseando este arquivo por regex.
-    version: str = "2.2.0"
+    version: str = "2.5.0"
 
 
 # Versão canônica do core, derivada do literal acima — fonte única para o help
@@ -32,8 +32,9 @@ class DecisionsSection(BaseModel):
     dir: str = ".harness/decisoes"
     index_file: str = ".harness/microdecisoes.md"
     header_file: str = ".harness/decisoes/_cabecalho.md"
-    # Feature 022: liga o gate de registro de microdecisões (bloqueio no
-    # encerrar-sessao, lembrete no Stop do Claude, advisory no Antigravity).
+    # Feature 022 (→025): liga o gate de registro de microdecisões (bloqueio
+    # no encerrar-sessao; advisory em stderr no fim de turno de Claude e
+    # Antigravity — o soft-block do Stop foi aposentado na MD-0018).
     # Habilitado por padrão; desativável por projeto. Tomls sem o campo herdam True.
     require_registration: bool = True
 
@@ -59,6 +60,32 @@ class RegenSection(BaseModel):
     command: Optional[str] = None
 
 
+class ProgressKanbanSection(BaseModel):
+    """Exportador kanban do medidor (feature 027), opt-in por projeto.
+
+    Desligado por padrão: nenhum projeto instalado ganha board sem habilitar
+    ``[progress.kanban] enabled = true`` no toml. ``file`` segue a convenção
+    do vscode-kanban; o arquivo é derivado no namespace gerenciado (cards
+    ``category == "harness"``) e preserva os cards manuais do mantenedor.
+    """
+
+    enabled: bool = False
+    file: str = ".vscode/vscode-kanban.json"
+
+
+class ProgressSection(BaseModel):
+    """Medidor de progresso de entregáveis (feature 026).
+
+    ``file`` é o artefato DERIVADO gravado por ``harness progress`` — 100%
+    recomputável das fontes (ciclo forward do Reversa + estado do harness),
+    versionado no git do projeto e sem timestamp de geração (o diff só existe
+    quando o estado muda). Tomls sem a seção herdam o default sem migração.
+    """
+
+    file: str = ".harness/progresso.md"
+    kanban: ProgressKanbanSection = Field(default_factory=ProgressKanbanSection)
+
+
 class HarnessConfig(BaseModel):
     harness: HarnessSection = Field(default_factory=HarnessSection)
     formatting: FormattingSection = Field(default_factory=FormattingSection)
@@ -66,6 +93,7 @@ class HarnessConfig(BaseModel):
     decisions: DecisionsSection = Field(default_factory=DecisionsSection)
     session: SessionSection = Field(default_factory=SessionSection)
     regen: RegenSection = Field(default_factory=RegenSection)
+    progress: ProgressSection = Field(default_factory=ProgressSection)
 
 
 def load_config(fs: FileSystemPort, config_path: str = "harness.toml") -> HarnessConfig:
