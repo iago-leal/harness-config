@@ -10,6 +10,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ABS_VENV_PYTHON="$SCRIPT_DIR/$VENV_PYTHON"
 ABS_MAIN_PY="$SCRIPT_DIR/$MAIN_PY"
 
+# Ancora o cwd na raiz do projeto (BUG-20260811-TVCP, mesmo contrato do shim
+# da feature 020): o core resolve harness.toml e .harness/ por os.getcwd(),
+# então invocação de subpasta (hook, script, terminal) semearia artefatos fora
+# da raiz sem esta âncora.
+cd "$SCRIPT_DIR" || exit 1
+
 # Valida a presença do core. Ele pode faltar quando a cópia vendored foi
 # gitignorada e o repositório foi clonado sem reidratar — restaure do upstream.
 if [ ! -f "$ABS_MAIN_PY" ]; then

@@ -82,3 +82,38 @@ def test_shim_fails_loudly_without_upstream(tmp_path):
 
     assert result.returncode != 0
     assert "Erro" in result.stderr
+
+
+# Wrapper LOCAL do repositório upstream (era da cópia vendorizada): resolve o
+# core pelo próprio diretório, mas até o BUG-20260811-TVCP preservava o cwd do
+# chamador — e o core é cwd-relativo, então hook/script invocado de subpasta
+# semeava .harness/ fora da raiz (episódio: SessionStart do compact com o shell
+# em .harness/harness-core/). O contrato é o mesmo do shim da 020: âncora na raiz.
+LOCAL_WRAPPER = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "harness")
+)
+
+
+def test_wrapper_local_do_upstream_ancora_o_cwd(tmp_path):
+    if not os.path.isfile(LOCAL_WRAPPER):
+        pytest.skip("wrapper local do upstream ausente neste checkout")
+    root = str(tmp_path)
+    # O layout que o wrapper espera é o mesmo do upstream fake: core vendorizado
+    # em .harness/harness-core com venv própria.
+    _fake_upstream(root)
+    wrapper = os.path.join(root, "harness")
+    shutil.copyfile(LOCAL_WRAPPER, wrapper)
+    _make_executable(wrapper)
+
+    subdir = os.path.join(root, "sub")
+    os.makedirs(subdir)
+    result = subprocess.run(
+        [wrapper, "cmd", "resume"], cwd=subdir, capture_output=True, text=True
+    )
+
+    assert result.returncode == 0, result.stderr
+    cwd_line = next(
+        line for line in result.stdout.splitlines() if line.startswith("CWD:")
+    )
+    reported = os.path.realpath(cwd_line.split("CWD:", 1)[1].strip())
+    assert reported == os.path.realpath(root)  # raiz, nunca a subpasta do chamador

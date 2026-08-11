@@ -24,7 +24,7 @@
 - **MD-0010** — caminhos dos regression-watch pré-011 atualizados para o layout `.harness/`
   ↳ relaciona MD-0005
 - **MD-0011** — Slash command de encerrar-sessao resolve a raiz via git (robusto a cwd)
-  ↳ relacionado-com MD-0012 · relacionado-com MD-0024
+  ↳ relacionado-com MD-0012 · relacionado-com MD-0024 · relacionado-com MD-0027
 - **MD-0012** — `encerrar-sessao` resolve o core do upstream quando não há core local (fonte única)
   ↳ relaciona MD-0011 · relacionado-com MD-0013
 - **MD-0013** — Caminho do cache de sync centralizado em `layout.py` (saneamento do T7)
@@ -50,8 +50,10 @@
 - **MD-0023** — MCP `process_decisions` também deriva a visão compacta (fecha G-20/T8)
   ↳ refina MD-0022, relaciona MD-0013 · relacionado-com MD-0025 · relacionado-com MD-0026
 - **MD-0024** — SessionStart também dispara no compact (reabertura da sessão na mesma conversa)
-  ↳ relaciona MD-0017, relaciona MD-0011
+  ↳ relaciona MD-0017, relaciona MD-0011 · relacionado-com MD-0027
 - **MD-0025** — Encerramento de sessão também deriva as duas visões de decisões (fecha BUG-20260811-XZ3B)
   ↳ refina MD-0022, relaciona MD-0023 · refinado-por MD-0026
 - **MD-0026** — Borda MCP de encerramento deriva as visões e as versiona no commit de fechamento
   ↳ refina MD-0025, relaciona MD-0023
+- **MD-0027** — Wrapper local do upstream ancora o cwd na raiz, como o shim da 020 (fecha BUG-20260811-TVCP)
+  ↳ relaciona MD-0024, relaciona MD-0011
